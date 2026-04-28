@@ -89,8 +89,35 @@ const CONDITIONS_LIST = [
 ];
 
 const ANCESTRIES = {
-    "Common Folk": ["Human", "Dwarf", "Elf", "Halfling", "Gnome", "Bunbun", "Dragonborn", "Fiendkin", "Goblin", "Kobold", "Orc"],
-    "Rare & Exotic": ["Birdfolk", "Celestial", "Changeling", "Crystalborn", "Dryad/Shroomling", "Half-Giant", "Minotaur/Beastfolk", "Oozeling/Construct", "Planarbeing", "Ratfolk", "Stoatling", "Turtlefolk", "Wyrdling"]
+    "Common Folk": ["Human", "Dwarf", "Elf", "Halfling", "Gnome"],
+    "Rare & Exotic": ["Bunbun", "Dragonborn", "Fiendkin", "Goblin", "Kobold", "Orc", "Birdfolk", "Celestial", "Changeling", "Crystalborn", "Dryad/Shroomling", "Half-Giant", "Minotaur/Beastfolk", "Oozeling/Construct", "Planarbeing", "Ratfolk", "Stoatling", "Turtlefolk", "Wyrdling"]
+};
+
+const ANCESTRY_FEATURES = {
+    "Human": { desc: "Tenacious: +1 to all skills and Initiative.", modInit: 1, modAllSkills: 1 },
+    "Dwarf": { desc: "Stout: +2 max Hit Dice, +1 max Wounds, -1 Speed. You know Dwarvish if your INT is not negative.", modHD: 2, modWounds: 1, modSpeed: -1 },
+    "Elf": { desc: "Lithe: Advantage on Initiative, +1 Speed. You know Elvish if your INT is not negative.", modSpeed: 1, modInitAdv: true },
+    "Halfling": { desc: "Elusive: +1 to Stealth. If you fail a save, you can succeed instead, 1/Safe Rest.", modSkill: { id: 'stealth', val: 1 } },
+    "Gnome": { desc: "Optimistic: Allow an ally within Reach 6 to reroll any single die, resets when healed to your max HP. -1 Speed. You know Dwarvish if your INT is not negative.", modSpeed: -1 },
+    "Bunbun": { desc: "Bunny Legs: Before Interposing or after Defending (after damage), hop up to your Speed in any direction for free, 1/encounter." },
+    "Dragonborn": { desc: "Draconic Heritage: +1 Armor. When you attack: deal an additional LVL+KEY damage (ignoring armor) divided as you choose among any of your targets; recharges whenever you Safe Rest or gain a Wound.", modArmor: 1 },
+    "Fiendkin": { desc: "Flameborn: 1 of your neutral saves is advantaged instead." },
+    "Goblin": { desc: "Skedaddle: Can move 2 spaces for free after you become the target of an attack or negative effect (after damage, ignoring difficult terrain). You know Goblin if your INT is not negative." },
+    "Kobold": { desc: "Wily: Force an enemy to reroll a non-critical attack against you, 1/encounter. +3 to Influence friendly characters. Advantage on skill checks related to dragons. You know Draconic if your INT is not negative.", modSkill: { id: 'influence', val: 3 } },
+    "Orc": { desc: "Relentless: When you would drop to 0 HP, you may set your HP to LVL instead, 1/Safe Rest. +1 Might. You know Goblin if your INT is not negative.", modSkill: { id: 'might', val: 1 } },
+    "Birdfolk": { desc: "Hollow Bones: You have a fly Speed as long as you are wearing armor no heavier than Leather. Crits against you are Vicious (the attacker rolls 1 additional die). Forced movement moves you twice as far.", modFlySpeed: true },
+    "Celestial": { desc: "Highborn: Your disadvantaged save is Neutral instead. You know Celestial if your INT isn't negative." },
+    "Changeling": { desc: "New Place, New Face: +2 shifting skill points. You may take on the appearance of any ancestry. When you do, you may place your 2 shifting skill points into any 1 skill. 1/day." },
+    "Crystalborn": { desc: "Reflective Aura: When you Defend, gain KEY armor and deal KEY damage back to the attacker. 1/encounter." },
+    "Dryad/Shroomling": { desc: "Danger Pollen/Spores: Whenever an enemy causes you one or more Wounds, you excrete soporific spores: all adjacent enemies are Dazed. You know Elvish if your INT is not negative." },
+    "Half-Giant": { desc: "Strength of Stone: Force an enemy to reroll a crit against you, 1/encounter. +2 Might. You know Dwarvish if your INT is not negative.", modSkill: { id: 'might', val: 2 }, modSize: 'Large' },
+    "Minotaur/Beastfolk": { desc: "Charge: When you move at least 4 spaces, you can push a creature in your path. Medium: 1 space; Small/Tiny: up to 2 spaces. 1/turn." },
+    "Oozeling/Construct": { desc: "Odd Constitution: Increment your Hit Dice one step (d6 » d8 » d10 » d12 » d20); they always heal you for the maximum amount. Magical healing always heals you for the minimum amount.", modHDStep: 1 },
+    "Planarbeing": { desc: "Planeshift: Whenever you Defend, you can gain 1 Wound to temporarily phase out of the material plane and ignore the damage. -2 max Wounds.", modWounds: -2 },
+    "Ratfolk": { desc: "Scurry: Gain +2 armor if you moved on your last turn." },
+    "Stoatling": { desc: "Small But Ferocious: Whenever you make a single-target attack against a creature larger than you, roll 1 additional d6 for each size category it is larger. They do the same." },
+    "Turtlefolk": { desc: "Slow & Steady: +4 Armor, -2 speed.", modArmor: 4, modSpeed: -2 },
+    "Wyrdling": { desc: "Chaotic Surge: Whenever you or a willing ally within Reach 6 casts a tiered spell, you may allow them to roll on the Chaos Table. 1/encounter." }
 };
 
 const BACKGROUNDS = {
