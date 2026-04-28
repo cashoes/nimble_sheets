@@ -29,7 +29,7 @@ def build(class_name):
     output = template.replace('<!-- INJECT_SCRIPTS -->', full_script)
 
     # 5. Write to final file
-    filename = f"nimble_tracker_{class_name}_v4.0.html"
+    filename = f"nimble_tracker_{class_name}_v1.0.0.html"
     with open(filename, 'w', encoding='utf-8') as f:
         f.write(output)
 

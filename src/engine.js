@@ -69,7 +69,7 @@ function saveState() {
 
 function loadState() {
     state = {
-        version: 4.0,
+        version: "1.0.0",
         charName: '', level: 1, ancestry: 'Human', background: 'None', subclass: 'None',
         baseStr: 0, addStr: 0, baseDex: 0, addDex: 0, baseInt: 0, addInt: 0, baseWil: 0, addWil: 0,
         hpCurrent: null, tempHP: 0, hdCurrent: null, wounds: 0,
@@ -84,10 +84,10 @@ function loadState() {
         Object.assign(state, loaded);
         
         // Force update to new standardized arrays if character is fresh (Lvl 1, no name) OR version is old
-        if ((!loaded.version || loaded.version < 4.0) && state.level === 1 && !state.charName) {
+        if ((!loaded.version || loaded.version < 1.0) && state.level === 1 && !state.charName) {
             if (CLASS_CONFIG.initialStats) {
                 Object.assign(state, CLASS_CONFIG.initialStats);
-                state.version = 4.0;
+                state.version = "1.0.0";
             }
         }
     } else {
