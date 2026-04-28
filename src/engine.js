@@ -45,7 +45,19 @@ function saveState() {
     };
 
     const ancFeat = ANCESTRY_FEATURES[state.ancestry];
-    let maxHP = CLASS_CONFIG.baseHp + ((lvlInput - 1) * CLASS_CONFIG.hpPerLevel);
+    let hdFace = CLASS_CONFIG.hitDie;
+    if (ancFeat && ancFeat.modHDStep) {
+        const dieSteps = [6, 8, 10, 12, 20];
+        let idx = dieSteps.indexOf(hdFace);
+        if (idx !== -1) {
+            idx = Math.min(dieSteps.length - 1, idx + ancFeat.modHDStep);
+            hdFace = dieSteps[idx];
+        }
+    }
+    const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
+    let hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
+
+    let maxHP = CLASS_CONFIG.baseHp + ((lvlInput - 1) * hpPerLevel);
     let maxHD = lvlInput + (ancFeat?.modHD || 0);
 
     if (oldLevel !== lvlInput || state.hpCurrent === null) { 
@@ -231,7 +243,9 @@ function renderAttributes(level, statsMap) {
 }
 
 function renderResources(level, derived, statsMap, hdFace) {
-    let maxHP = CLASS_CONFIG.baseHp + ((level - 1) * CLASS_CONFIG.hpPerLevel);
+    const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
+    let hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
+    let maxHP = CLASS_CONFIG.baseHp + ((level - 1) * hpPerLevel);
     let hdMax = derived.hdMax;
     
     if (state.hpCurrent === null) state.hpCurrent = maxHP;
@@ -478,10 +492,28 @@ function render() {
         derived.speed = `${derived.speed} (${derived.speed} Fly)`;
     }
 
+    const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
+    let hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
+    let maxHP = CLASS_CONFIG.baseHp + ((level - 1) * hpPerLevel);
+
+    if (state.hpCurrent === null) state.hpCurrent = maxHP;
+    if (state.hdCurrent === null) state.hdCurrent = derived.hdMax;
+
+    const hpEl = document.getElementById('displayCurrentHP');
+    const thpEl = document.getElementById('displayTempHP');
+    const hdEl = document.getElementById('displayHD');
+
+    if (hpEl && document.activeElement !== hpEl) hpEl.value = state.hpCurrent; 
+    if (thpEl && document.activeElement !== thpEl) thpEl.value = state.tempHP || 0;
+    if (hdEl && document.activeElement !== hdEl) hdEl.value = state.hdCurrent; 
+
+    document.getElementById('displayMaxHP').innerText = maxHP;
+    document.getElementById('maxHD').innerText = derived.hdMax;
+    document.getElementById('hitDiceLabel').innerText = `Hit Dice (d${hdFace})`;
+
     // Execute modular renders
     renderHeader(derived, armorVal, init);
     renderAttributes(level, statsMap);
-    renderResources(level, derived, statsMap, hdFace);
     renderInventory(statsMap, armorVal, str, iStatsBound);
     renderSkills(level, statsMap, passMods);
     renderConditions();
@@ -597,7 +629,8 @@ function adjTempHP(a, isAbsolute = false) {
 }
 
 function adjHD(a, isAbsolute = false) { 
-    let max = state.level + (state.ancestry==='Dwarf'?2:0); 
+    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
+    let max = state.level + (ancFeat?.modHD || 0); 
     state.hdCurrent = Math.min(max, Math.max(0, isAbsolute ? a : (state.hdCurrent===null?max:state.hdCurrent) + a)); 
     saveState(); render(); 
 }
