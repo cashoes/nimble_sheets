@@ -1,0 +1,11 @@
+# Generated character trackers
+nimble_tracker_*.html
+
+# Logs
+*.log
+
+# Config
+*.md
+
+# Assets
+/assets
