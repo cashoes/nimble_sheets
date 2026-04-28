@@ -281,6 +281,11 @@ function renderInventory(statsMap, armorVal, str, iStats) {
     let slotsUsed = 0;
     state.inventory.forEach(item => { slotsUsed += (parseFloat(item.slots) || 0); });
 
+    const DICE_OPTS = ["1d4", "1d6", "1d8", "1d10", "1d12", "2d4", "2d6", "3d4", "4d4", "1d20"];
+    const STAT_OPTS = ["str", "dex", "int", "wil"];
+    const TYPE_OPTS = ["weapon", "armor", "shield", "misc"];
+    const ARMOR_OPTS = ["light", "medium", "heavy"];
+
     let invHtml = `<div class="inv-header"><div></div><div>Item</div><div>Type</div><div style="text-align:center;">Stats</div><div style="text-align:center;">Effect</div><div>Props</div><div style="text-align:center;">GP</div><div style="text-align:center;">Wt</div><div></div></div>`;
     state.inventory.forEach(item => {
         let sH = '-'; let eH = '-';
@@ -298,7 +303,35 @@ function renderInventory(statsMap, armorVal, str, iStats) {
         else if (item.type === 'shield' && item.equipped) {
             eH = `🛡️ +${item.armor} AC`;
         }
-        invHtml += `<div class="inv-row"><div style="text-align:center;"><input type="checkbox" ${item.equipped?'checked':''} onchange="updateItem(${item.id}, 'equipped', this.checked, true)"></div><div><input type="text" class="inv-input" value="${item.name}" onchange="updateItem(${item.id}, 'name', this.value)"></div><div>${item.type}</div><div style="text-align:center;">${sH}</div><div style="font-weight:bold; color:var(--class-accent); text-align:center;">${eH}</div><div>${item.props||''}</div><div style="text-align:center;"><input type="number" class="inv-input" value="${item.cost||0}" onchange="updateItem(${item.id}, 'cost', this.value)"></div><div style="text-align:center;">${item.slots}</div><div style="text-align:center;"><button onclick="deleteItem(${item.id})" style="background:none; border:none; color:var(--save-dis); cursor:pointer;">×</button></div></div>`;
+
+        // UI Logic
+        let typeHtml = `<div style="font-size:0.9em; color:var(--text-muted);">${item.type}</div>`;
+        let statsHtml = `<div style="text-align:center; font-size:0.95em;">${sH}</div>`;
+        let propsHtml = `<div style="font-size:0.9em; color:var(--text-muted);">${item.props||''}</div>`;
+        let slotsHtml = `<div style="text-align:center;">${item.slots}</div>`;
+
+        if (item.isCustom) {
+            typeHtml = `<select class="inv-input" onchange="updateItem(${item.id}, 'type', this.value)">${TYPE_OPTS.map(t => `<option value="${t}" ${item.type===t?'selected':''}>${t}</option>`).join('')}</select>`;
+            
+            if (item.type === 'weapon') {
+                statsHtml = `<div style="display:flex; gap:2px;">
+                    <select class="inv-input" style="flex:1.2;" onchange="updateItem(${item.id}, 'dmgDice', this.value)">${DICE_OPTS.map(d => `<option value="${d}" ${item.dmgDice===d?'selected':''}>${d}</option>`).join('')}</select>
+                    <select class="inv-input" style="flex:1;" onchange="updateItem(${item.id}, 'stat', this.value)">${STAT_OPTS.map(s => `<option value="${s}" ${item.stat===s?'selected':''}>${s.toUpperCase()}</option>`).join('')}</select>
+                </div>`;
+            } else if (item.type === 'armor') {
+                statsHtml = `<div style="display:flex; gap:2px;">
+                    <input type="number" class="inv-input" style="width:35px;" value="${item.armor}" onchange="updateItem(${item.id}, 'armor', this.value)">
+                    <select class="inv-input" style="flex:1;" onchange="updateItem(${item.id}, 'armorType', this.value)">${ARMOR_OPTS.map(a => `<option value="${a}" ${item.armorType===a?'selected':''}>${a.charAt(0).toUpperCase()}</option>`).join('')}</select>
+                </div>`;
+            } else if (item.type === 'shield') {
+                statsHtml = `<input type="number" class="inv-input" value="${item.armor}" onchange="updateItem(${item.id}, 'armor', this.value)">`;
+            }
+
+            propsHtml = `<input type="text" class="inv-input" value="${item.props||''}" onchange="updateItem(${item.id}, 'props', this.value)">`;
+            slotsHtml = `<input type="number" class="inv-input" value="${item.slots}" onchange="updateItem(${item.id}, 'slots', this.value)">`;
+        }
+
+        invHtml += `<div class="inv-row"><div style="text-align:center;"><input type="checkbox" ${item.equipped?'checked':''} onchange="updateItem(${item.id}, 'equipped', this.checked, true)"></div><div><input type="text" class="inv-input" value="${item.name}" onchange="updateItem(${item.id}, 'name', this.value)"></div><div>${typeHtml}</div><div>${statsHtml}</div><div style="font-weight:bold; color:var(--class-accent); text-align:center;">${eH}</div><div>${propsHtml}</div><div style="text-align:center;"><input type="number" class="inv-input" value="${item.cost||0}" onchange="updateItem(${item.id}, 'cost', this.value)"></div><div style="text-align:center;">${slotsHtml}</div><div style="text-align:center;"><button onclick="deleteItem(${item.id})" style="background:none; border:none; color:var(--save-dis); cursor:pointer;">×</button></div></div>`;
     });
     document.getElementById('inventoryContainer').innerHTML = invHtml;
     document.getElementById('inventorySlots').innerHTML = `SLOTS: <span style="color:${slotsUsed > maxSlots?'var(--save-dis)':'var(--class-accent)'}">${slotsUsed} / ${maxSlots}</span>`;
@@ -574,7 +607,7 @@ function addQuickItem(cat, key) {
 function addItem() { 
     state.inventory.push({ 
         id: Date.now(), name: 'New Item', type: 'misc', slots: 1, equipped: false, 
-        dmgDice: '1d6', stat: 'str', props: '', armor: 1, armorType: 'light', cost: 0 
+        dmgDice: '1d6', stat: 'str', props: '', armor: 1, armorType: 'light', cost: 0, isCustom: true
     }); 
     saveState(); render(); 
 }
