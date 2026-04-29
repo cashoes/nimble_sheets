@@ -167,7 +167,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 4) {
-            fHtml += bFeat("Unyielding Resolve", 4, `Ignore the first Wound each encounter (Wounded abilities still trigger).`);
+            fHtml += bFeat("Unyielding Resolve", 4, `Ignore the first Wound each encounter (Wounded abilities still trigger).<br><strong>Key Stat Increase:</strong> +1 DEX or STR.`);
             
             let nArts = level>=18?8 : level>=16?7 : level>=14?6 : level>=12?5 : level>=10?4 : level>=8?3 : level>=6?2 : 1;
             let aState = state.selectedArts || [];
@@ -184,7 +184,53 @@ const CLASS_CONFIG = {
             fHtml += bFeat("Martial Arts", 4, `Choose <strong>${nArts}</strong> abilities.${aHtml}</div>`, "", true);
         }
 
-        if (level >= 5) fHtml += bFeat("Reverberating Strikes", 5, `Add <strong>LVL</strong> bludgeoning damage to all melee attacks.`);
+        if (level >= 5) {
+            fHtml += bFeat("Reverberating Strikes", 5, `Add <strong>LVL</strong> bludgeoning damage to all melee attacks.`);
+            fHtml += bFeat("Secondary Stat Increase", 5, `+1 INT or WIL.`);
+        }
+
+        if (level >= 6) {
+            fHtml += bFeat("Infuse Strength", 6, `Action: Make unarmed strike against ally and infuse them with your own strength. They heal as if you used a Field Rest (roll HD + your STR).`);
+        }
+
+        if (level >= 7) {
+            if (subclass === "WayOfPain") fHtml += bFeat("Share My Pain", 7, `Your Swiftstrike can also target a 2nd creature within Reach 2.`, sCls);
+            else if (subclass === "WayOfFlame") fHtml += bFeat("Blazing Speed", 7, `Gain +2 speed in Windstep. Targets you pass through take <strong>STR+DEX</strong> fire dmg (2x to Smoldering targets).`, sCls);
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 DEX or STR.`);
+
+        if (level >= 9) {
+            fHtml += bFeat("Swift Feet (2)", 9, `Gain +2 additional speed as long as you are unarmored.`);
+            fHtml += bFeat("Secondary Stat Increase", 9, `+1 INT or WIL.`);
+        }
+
+        if (level >= 11) {
+            if (subclass === "WayOfPain") fHtml += bFeat("Pain Sharpens the Mind", 11, `While you are Bloodied, gain advantage on the first attack you make each turn, and on all saves.`, sCls);
+            else if (subclass === "WayOfFlame") fHtml += bFeat("Chain Reaction", 11, `(1/turn) When you crit, deal <strong>STR+Wounds</strong> fire dmg to targets within 2 spaces of your target.`, sCls);
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 DEX or STR.`);
+
+        if (level >= 13) {
+            fHtml += bFeat("Iron Defense (2)", 13, `Your armor is doubled while unarmored.`);
+            fHtml += bFeat("Secondary Stat Increase", 13, `+1 INT or WIL.`);
+        }
+
+        if (level >= 15) {
+            if (subclass === "WayOfPain") fHtml += bFeat("Echoed Agony", 15, `Your Swiftstrike can also target a 3rd creature within Reach 4.`, sCls);
+            else if (subclass === "WayOfFlame") fHtml += bFeat("Burning Soul", 15, `Double any fire damage you deal.`, sCls);
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 DEX or STR.`);
+
+        if (level >= 17) {
+            fHtml += bFeat("Unyielding Resolve (3)", 17, `Ignore the first 3 Wounds you would suffer each encounter. Advantage on STR saves while Dying.`);
+            fHtml += bFeat("Secondary Stat Increase", 17, `+1 INT or WIL.`);
+        }
+
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("Windborne", 20, `+1 to any 2 stats. +1 burst of speed on Init. Permanently gain 1 action.`);
 
         return fHtml;
     }
