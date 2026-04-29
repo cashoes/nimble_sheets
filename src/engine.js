@@ -235,8 +235,8 @@ function renderAttributes(level, statsMap) {
     document.getElementById('displayInt').innerText = statsMap.int; 
     document.getElementById('displayWil').innerText = statsMap.wil;
 
-    let keyAllowed = Math.floor(level/4); 
-    let secAllowed = Math.floor((level-1)/4);
+    let keyAllowed = Math.min(4, Math.floor(level/4)); 
+    let secAllowed = Math.min(4, Math.floor((level-1)/4));
     let flexAllowed = (level >= 20) ? 2 : 0;
     let keySpent = 0; let secSpent = 0;
     
