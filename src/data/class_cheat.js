@@ -148,6 +148,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 4) {
+            fHtml += bFeat("Key Stat Increase", 4, `+1 DEX or INT.`);
             let numAbilities = level>=18?8 : level>=16?7 : level>=14?6 : level>=12?5 : level>=10?4 : level>=8?3 : level>=6?2 : 1;
             let aState = state.selectedUnderhanded || [];
             let opts = `<option value="None">Select an Underhanded Ability...</option>`;
@@ -171,7 +172,63 @@ const CLASS_CONFIG = {
         if (level >= 5) {
             fHtml += bFeat("Twist the Blade", 5, `Action: Change one of your Sneak Attack dice to whatever you like.`);
             fHtml += bFeat("Quick Read", 5, `Advantage on Assess (1/encounter) and Examination (1/day).`);
+            fHtml += bFeat("Secondary Stat Increase", 5, `+1 WIL or STR.`);
         }
+
+        if (level >= 6) {
+            fHtml += bFeat("THAT'S Not What Happened!", 6, `(1/Safe Rest) Action: After a Distracted enemy attacks you, you may change the Primary Die roll to whatever you like (min value counts as a miss).`);
+        }
+
+        if (level >= 7) {
+            fHtml += bFeat("Sneak Attack (3)", 7, `Your Sneak Attack becomes <strong>2d8</strong>.`);
+            if (subclass === "SilentBlade") {
+                fHtml += bFeat("Cunning Strike", 7, `(2/encounter) When you land a Sneak Attack, force target to make STR save (DC 10+INT). Failure: Deal max damage instead of rolling.`, sCls);
+            } else if (subclass === "Scoundrel") {
+                fHtml += bFeat("Pocket Sand", 7, `(2/encounter) When you Defend against melee, Blind attacker until next turn and force reroll.`, sCls);
+            }
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 DEX or INT.`);
+
+        if (level >= 9) {
+            fHtml += bFeat("Sneak Attack (4)", 9, `Your Sneak Attack becomes <strong>2d10</strong>.`);
+            fHtml += bFeat("Secondary Stat Increase", 9, `+1 WIL or STR.`);
+        }
+
+        if (level >= 11) {
+            fHtml += bFeat("Sneak Attack (5)", 11, `Your Sneak Attack becomes <strong>2d12</strong>.`);
+            if (subclass === "SilentBlade") {
+                fHtml += bFeat("Professional Skulker", 11, `Gain climbing speed and advantage on Stealth (replaces Leave No Trace).`, sCls);
+            } else if (subclass === "Scoundrel") {
+                fHtml += bFeat("Escape Plan", 11, `(1/Safe Rest) When you would drop to 0 HP or gain a Wound, you don’t. Instead, turn Invisible for 1 minute or until you attack.`, sCls);
+            }
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 DEX or INT.`);
+
+        if (level >= 13) {
+            fHtml += bFeat("Twist the Blade (2)", 13, `(1/turn) You can Twist the Blade for free.`);
+            fHtml += bFeat("Secondary Stat Increase", 13, `+1 WIL or STR.`);
+        }
+
+        if (level >= 15) {
+            fHtml += bFeat("Sneak Attack (6)", 15, `Your Sneak Attack becomes <strong>2d20</strong>.`);
+            if (subclass === "SilentBlade") {
+                fHtml += bFeat("KILL", 15, `When you crit an enemy with fewer max HP than you, it dies.`, sCls);
+            } else if (subclass === "Scoundrel") {
+                fHtml += bFeat("Heads I Win, Tails You Lose", 15, `(1/encounter) Attacks this round don't miss, you crit on 1 less than normally needed, and you gain <strong>LVL</strong> temp HP.`, sCls);
+            }
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 DEX or INT.`);
+
+        if (level >= 17) {
+            fHtml += bFeat("Sneak Attack (7)", 17, `Your Sneak Attack becomes <strong>3d20</strong>.`);
+            fHtml += bFeat("Secondary Stat Increase", 17, `+1 WIL or STR.`);
+        }
+
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("Supreme Execution", 20, `+1 to any 2 stats. When you attack with a blade, you do not require targets to be Distracted to trigger Vicious Opportunist.`);
 
         return fHtml;
     }
