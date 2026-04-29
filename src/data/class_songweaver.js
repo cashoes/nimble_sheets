@@ -157,6 +157,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 4) {
+            fHtml += bFeat("Key Stat Increase", 4, `+1 WIL or INT.`);
             let nLyrical = level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1;
             let lState = state.selectedLyrical || [];
             let opts = `<option value="None">Select Lyrical Weaponry...</option>`;
@@ -181,7 +182,41 @@ const CLASS_CONFIG = {
                 <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(PEOPLE_DESCS[pSize] || "")}</div>
             </div>`;
             fHtml += bFeat("A \"People\" Person", 5, `Summon friends (1/Safe Rest each).${pHtml}`, "", true);
+            fHtml += bFeat("Secondary Stat Increase", 5, `+1 STR or DEX.`);
         }
+
+        if (level >= 6) {
+            fHtml += bFeat("Windbag (2)", 6, `Learn a 2nd Utility Spell from each spell school you know.`);
+        }
+
+        if (level >= 7) {
+            if (subclass === "Snark") fHtml += bFeat("Fight Picker", 7, `(1/turn) When enemy is damaged by Vicious Mockery, you may have one ally Taunt them until the end of the enemy's turn instead.`, sCls);
+            else if (subclass === "Courage") fHtml += bFeat("Unfailing Courage", 7, `Your presence inspires others to feats of heroism. Your Inspiration allows target to roll with advantage.`, sCls);
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 WIL or INT.`);
+        if (level >= 9) fHtml += bFeat("Secondary Stat Increase", 9, `+1 STR or DEX.`);
+
+        if (level >= 11) {
+            if (subclass === "Snark") fHtml += bFeat("Chord of Chaos", 11, `(1/encounter) Action: Move ALL creatures within hearing up to 3 spaces (not into obviously dangerous places).`, sCls);
+            else if (subclass === "Courage") fHtml += bFeat("Fire in my Bones", 11, `Your Songweaver's Inspiration also grants the target 1 additional action.`, sCls);
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 WIL or INT.`);
+        if (level >= 13) fHtml += bFeat("Secondary Stat Increase", 13, `+1 STR or DEX.`);
+
+        if (level >= 14) fHtml += bFeat("Windbag (3)", 14, `You know ALL Utility Spells from the spell schools you know.`);
+
+        if (level >= 15) {
+            if (subclass === "Snark") fHtml += bFeat("Words Like Swords", 15, `Your Vicious Mockery damage becomes <strong>1d6 + INT + WIL</strong>.`, sCls);
+            else if (subclass === "Courage") fHtml += bFeat("Chorus of Champions", 15, `(1/encounter) Free Reaction: Give all party members 1 action.`, sCls);
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 WIL or INT.`);
+        if (level >= 17) fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or DEX.`);
+
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("I'm So Famous!", 20, `+1 to any 2 stats. Your Songweaver's Inspiration cannot fail (your target succeeds).`);
 
         return fHtml;
     },
