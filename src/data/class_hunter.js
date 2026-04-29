@@ -184,7 +184,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 4) {
-            fHtml += bFeat("Explorer of the Wilds", 4, `+2 speed and gain a climbing speed.`);
+            fHtml += bFeat("Explorer of the Wilds", 4, `+2 speed and gain a climbing speed.<br><strong>Key Stat Increase:</strong> +1 DEX or WIL.`);
             
             let numToth = level>=14?7 : level>=12?6 : level>=10?5 : level>=8?4 : level>=6?3 : level>=4?2 : 2;
             let hState = state.selectedToth || [];
@@ -206,7 +206,76 @@ const CLASS_CONFIG = {
             fHtml += bFeat("Thrill of the Hunt Abilities", 2, `Choose <strong>${numToth}</strong> abilities.${hHtml}</div>`, "", true);
         }
 
-        if (level >= 5) fHtml += bFeat("Final Takedown", 5, `Spend 1 TotH charge to turn a hit on a Bloodied quarry into a crit and double Mark damage.`);
+        if (level >= 5) {
+            fHtml += bFeat("Hunter's Resolve", 5, `When you have no TotH charges, treat all creatures as your quarry for movement and melee attacks.`);
+            fHtml += bFeat("Final Takedown", 5, `Spend 1 TotH charge to turn a hit on a Bloodied quarry into a crit and double Mark damage. If they survive, they crit you back.`);
+            fHtml += bFeat("Secondary Stat Increase", 5, `+1 STR or INT.`);
+        }
+
+        if (level >= 6) fHtml += bFeat("Versatile Bowmaster", 6, `When attacking with Longbow, roll <strong>2d4</strong> instead of 1d8; or Crossbow, <strong>2d8</strong> instead of 4d4.`);
+
+        if (level >= 7) {
+            if (subclass === "Shadowpath") {
+                fHtml += bFeat("Primal Predator", 7, `(1/encounter) Your weapon attacks ignore cover and armor this turn.`, sCls);
+            } else if (subclass === "WildHeart") {
+                fHtml += bFeat("Resourceful Herbalist", 7, `(1/Safe Rest) Craft <strong>WIL</strong> Healing Salves (Heal WIL d6 HP).`, sCls);
+            } else if (subclass === "Beastmaster") {
+                let upgrade = "Small: Keen Eyes (2/enc), Protect Me! upgrades. Med: Ferocious (4 spaces). Large: Protect Me! upgrades.";
+                fHtml += bFeat("Companion Scaling", 7, upgrade, sCls);
+            }
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 DEX or WIL.`);
+
+        if (level >= 9) {
+            fHtml += bFeat("No Escape", 9, `When an ally makes an opportunity attack, you may make a ranged opportunity attack against the same target.`);
+            fHtml += bFeat("Secondary Stat Increase", 9, `+1 STR or INT.`);
+        }
+
+        if (level >= 10) {
+            fHtml += bFeat("Veteran Stalker", 10, `Gain a TotH charge when first Bloodied and for every Wound gained.`);
+            fHtml += bFeat("Keen Eye, Steady Hand", 10, `Add <strong>WIL</strong> to your ranged weapon damage.`);
+        }
+
+        if (level >= 11) {
+            if (subclass === "Shadowpath") {
+                fHtml += bFeat("Pack Hunter", 11, `When you mark a creature, mark another within 6 spaces for free.`, sCls);
+            } else if (subclass === "WildHeart") {
+                fHtml += bFeat("Ha! I'm Over Here!", 11, `(1/Safe Rest) If an attack would drop you to 0 HP, move speed away and take no damage.`, sCls);
+            } else if (subclass === "Beastmaster") {
+                let upgrade = "Small: Keen Eyes (3/enc), Go for the Throat! (2/enc). Med: Go for the Throat! (2/enc). Large: Go for the Throat! (2/enc).";
+                fHtml += bFeat("Companion Scaling", 11, upgrade, sCls);
+            }
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 DEX or WIL.`);
+
+        if (level >= 13) {
+            fHtml += bFeat("Keen Sight", 13, `Advantage on Perception checks.`);
+            fHtml += bFeat("Secondary Stat Increase", 13, `+1 STR or INT.`);
+        }
+
+        if (level >= 15) {
+            if (subclass === "Shadowpath") {
+                fHtml += bFeat("Apex Predator", 15, `Use Primal Predator twice per encounter. Gain 1 TotH charge on Initiative.`, sCls);
+            } else if (subclass === "WildHeart") {
+                fHtml += bFeat("Unparalleled Survivalist", 15, `Gain <strong>+WIL</strong> Armor. When attacking at range, move 1/2 speed for free first.`, sCls);
+            } else if (subclass === "Beastmaster") {
+                let upgrade = "Small: Go for the Throat! (3/enc). Med: Ferocious (6 spaces). Large: Protect Me! (2/enc).";
+                fHtml += bFeat("Companion Scaling", 15, upgrade, sCls);
+            }
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 DEX or WIL.`);
+
+        if (level >= 17) {
+            fHtml += bFeat("Peerless Hunter", 17, `You can Defend against your quarry for free.`);
+            fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or INT.`);
+        }
+
+        if (level >= 18) fHtml += bFeat("Wild Endurance", 18, `Gain 1 Thrill of the Hunt charge at the start of your turns.`);
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("Nemesis", 20, `+1 to any 2 stats. Your Hunter’s Mark can target any number of creatures simultaneously.`);
 
         return fHtml;
     }
