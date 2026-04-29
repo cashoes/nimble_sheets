@@ -86,7 +86,8 @@ const CLASS_CONFIG = {
     subclasses: [
         { value: "None", label: "None (Lvl 3)" },
         { value: "RedDragon", label: "Pact of the Red Dragon", accent: "#ef4444" },
-        { value: "Abyssal", label: "Pact of the Abyssal Depths", accent: "#38bdf8" }
+        { value: "Abyssal", label: "Pact of the Abyssal Depths", accent: "#38bdf8" },
+        { value: "Reaver", label: "Reaver", accent: "#94a3b8" }
     ],
 
     resources: [
@@ -98,9 +99,12 @@ const CLASS_CONFIG = {
     getDerivedStats: function(level, subclass, state) {
         let speed = 6; let woundMax = 6;
         let minionLimit = Math.min(state.baseInt + state.addInt, level);
-        if (level >= 20) minionLimit += 2; // Approximate Eldritch Usurper
+        if (level >= 20) minionLimit += 2; 
 
-        return { speed, woundMax, minionLimit };
+        let bsDice = 2 + Math.floor(level/5);
+        let bsText = subclass === "Reaver" ? `${bsDice}d12+DEX` : "";
+
+        return { speed, woundMax, minionLimit, bsText };
     },
 
     getShieldBonus: function(level, subclass, stats) { return 0; },
@@ -111,15 +115,21 @@ const CLASS_CONFIG = {
         return `
         <div class="panel mechanic-panel">
             <div style="display: flex; align-items: stretch; gap: 15px;">
-                <!-- Column 1: Pilfered Power -->
+                <!-- Column 1: Favor/Scythe -->
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Patron Favor</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px;">
-                        <button onclick="adjRes('pilfer', -1, ${dexVal})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_pilfer" value="${state.resourceValues.pilfer||0}" onchange="adjRes('pilfer', parseInt(this.value), ${dexVal}, true)" style="width:35px; font-size: 1.4em;">
-                        <button onclick="adjRes('pilfer', 1, ${dexVal})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
-                    </div>
-                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 5px; font-family:'Crimson Text'; font-style:italic;">Next: 1/2 Max HP Dmg</div>
+                    ${subclass === "Reaver" ? `
+                        <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Bonescythe</label>
+                        <div style="font-size: 1.8em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.1; margin: auto 0;">${derived.bsText}</div>
+                        <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MELEE DMG</div>
+                    ` : `
+                        <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Patron Favor</label>
+                        <div class="dark-incrementer" style="padding: 4px 10px;">
+                            <button onclick="adjRes('pilfer', -1, ${dexVal})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_pilfer" value="${state.resourceValues.pilfer||0}" onchange="adjRes('pilfer', parseInt(this.value), ${dexVal}, true)" style="width:35px; font-size: 1.4em;">
+                            <button onclick="adjRes('pilfer', 1, ${dexVal})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 5px; font-family:'Crimson Text'; font-style:italic;">Next: 1/2 Max HP Dmg</div>
+                    `}
                 </div>
 
                 <!-- Column 2: Shadow Minions -->
@@ -132,7 +142,7 @@ const CLASS_CONFIG = {
                 <!-- Column 3: Casting Tier -->
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Power Level</label>
-                    <div style="font-size: 1.6em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.1;">Tier ${Math.floor(level/2)}</div>
+                    <div style="font-size: 1.6em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.1;">Tier ${Math.max(1, Math.floor(level/2))}</div>
                     <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 5px; font-family:'Crimson Text'; font-style:italic;">All spells cast at max tier</div>
                 </div>
             </div>
@@ -146,9 +156,14 @@ const CLASS_CONFIG = {
         const sCls = "subclass-feature";
 
         fHtml += bFeat("Shadowmancer Basics", "", `<strong>Hit Die:</strong> 1d${this.hitDie} | <strong>Saves:</strong> INT(+), WIL(-)<br><strong>Armor:</strong> Cloth | <strong>Weapons:</strong> Blades, Wands`, "", true);
-        fHtml += bFeat("Conduit of Shadow", 1, `You know the <strong>Shadow Blast</strong> and <strong>Summon Shadows</strong> cantrips.`);
+        
+        if (subclass === "Reaver") {
+            fHtml += bFeat("Hollow One", 1, `You can no longer cast Shadow Blast or tiered spells using Pilfered Power. Instead, you summon a magical <strong>Bonescythe</strong> (<strong>${derived.bsText}</strong>).`, sCls);
+        } else {
+            fHtml += bFeat("Conduit of Shadow", 1, `You know the <strong>Shadow Blast</strong> and <strong>Summon Shadows</strong> cantrips.`);
+        }
 
-        if (level >= 2) {
+        if (level >= 2 && subclass !== "Reaver") {
             fHtml += bFeat("Pilfered Power", 2, `You may cast tiered spells using Patron Favor (<strong>DEX</strong> times). Exceeding this limit deals 1/2 max HP dmg.`);
         }
 
@@ -157,6 +172,9 @@ const CLASS_CONFIG = {
                 fHtml += bFeat("Draconic Crimson Rite", 3, `Learn Fire spells. Minions become wyrmlings. Crits deal Fire/Necrotic and Smolder.`, sCls);
             } else if (subclass === "Abyssal") {
                 fHtml += bFeat("Master of Nightfrost", 3, `Learn Ice spells. Breathe underwater. Minions deal Cold/Necrotic; crits grant <strong>INT+LVL</strong> temp HP.`, sCls);
+            } else if (subclass === "Reaver") {
+                fHtml += bFeat("Shadow Exploit", 3, `Sacrifice a minion to cast a tiered spell at max tier. Cost increases by 1 minion each time this encounter.`, sCls);
+                fHtml += bFeat("Martyr Spawn", 3, `Whenever you Defend, you can sacrifice a minion to take no damage.`, sCls);
             }
 
             // Invocations logic
@@ -179,13 +197,59 @@ const CLASS_CONFIG = {
             fHtml += buildInvocations("Lesser Invocations", nLesser, "selectedLesser", SHADOWMANCER_DATA.lesserInvocations);
             
             if (level >= 4) {
+                fHtml += bFeat("Key Stat Increase", 4, `+1 INT or DEX.`);
                 let nGreater = level >= 18 ? 5 : level >= 14 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1;
                 fHtml += buildInvocations("Greater Invocations", nGreater, "selectedGreater", SHADOWMANCER_DATA.greaterInvocations);
             }
         }
 
-        if (level >= 12) fHtml += bFeat("Greedy Pact", 12, `When taking Pilfer dmg, make a STR save: 10-19 (Take only 10 dmg), 20+ (No dmg, cast 1 tier higher).`);
-        if (level >= 17) fHtml += bFeat("Dire Shadows", 17, `Attacks against your minions have DIS. They take no damage from successful saves.`);
+        if (level >= 5) {
+            fHtml += bFeat("Secondary Stat Increase", 5, `+1 STR or WIL.`);
+            fHtml += bFeat("Upgraded Cantrips", 5, `Your shadow cantrips grow stronger.`);
+        }
+
+        if (level >= 7) {
+            if (subclass === "RedDragon") fHtml += bFeat("We'll ALL Burn!", 7, `May cast Pyroclasm without Pilfering by including self in damage. ADV on save.`, sCls);
+            else if (subclass === "Abyssal") fHtml += bFeat("Shadowfrost", 7, `Shadow Blast also Slows. Cast Cryosleep/Rimeblades for 10 temp HP instead of Favor.`, sCls);
+            else if (subclass === "Reaver") {
+                fHtml += bFeat("Grim Harrow", 7, `Divide Bonescythe dice amongst any number of adjacent targets within Reach.`, sCls);
+                fHtml += bFeat("Reap", 7, `When your Bonescythe crits or kills a creature, summon a minion for free.`, sCls);
+            }
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 INT or DEX.`);
+        if (level >= 9) fHtml += bFeat("Secondary Stat Increase", 9, `+1 STR or WIL.`);
+
+        if (level >= 11) {
+            if (subclass === "RedDragon") fHtml += bFeat("Heart of Burning Fire", 11, `Regain 1 use of Patron Favor each time you roll Initiative.`, sCls);
+            else if (subclass === "Abyssal") fHtml += bFeat("Glacial Resilience", 11, `(1/Safe Rest) Reaction: Gain 10xLVL temp HP and end ALL negative conditions on yourself.`, sCls);
+            else if (subclass === "Reaver") {
+                fHtml += bFeat("My Blood, My Power", 11, `Take 1 Wound to cast a tiered spell at max tier. ADV on concentration if you have minions.`, sCls);
+            }
+        }
+
+        if (level >= 12) {
+            fHtml += bFeat("Greedy Pact", 12, `When taking Pilfer dmg, make a STR save: 10-19 (Take only 10 dmg), 20+ (No dmg, cast 1 tier higher).`);
+            fHtml += bFeat("Key Stat Increase", 12, `+1 INT or DEX.`);
+        }
+
+        if (level >= 13) fHtml += bFeat("Secondary Stat Increase", 13, `+1 STR or WIL.`);
+
+        if (level >= 15) {
+            if (subclass === "RedDragon") fHtml += bFeat("Enveloped by the Master", 15, `Gain 1d4 Wounds to cast Dragonform.`, sCls);
+            else if (subclass === "Abyssal") fHtml += bFeat("Cryomancer's Reprisal", 15, `Pay half max HP for ANY Ice spell. Gain aura: melee attackers take half that HP as cold dmg.`, sCls);
+            else if (subclass === "Reaver") fHtml += bFeat("I'm the Patron Now!", 15, `Summon 2 shadow minions for free when you roll Initiative.`, sCls);
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 INT or DEX.`);
+
+        if (level >= 17) {
+            fHtml += bFeat("Dire Shadows", 17, `Attacks against your minions have DIS. They take no damage from successful saves.`);
+            fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or WIL.`);
+        }
+
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("Eldritch Usurper", 20, `+1 to any 2 stats. Summon 2 minions instead of 1. They die only when receiving 12+ damage at once.`);
 
         return fHtml;
     },

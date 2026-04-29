@@ -135,6 +135,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 4) {
+            fHtml += bFeat("Key Stat Increase", 4, `+1 INT or WIL.`);
             let nShapers = level >= 13 ? 3 : level >= 9 ? 2 : 1;
             let sState = state.selectedShapers || [];
             let opts = `<option value="None">Select a Spellshaper...</option>`;
@@ -156,7 +157,57 @@ const CLASS_CONFIG = {
             if (level >= 17) surge = `WIL+2d4`;
             else if (level >= 10) surge = `WIL+1d4`;
             fHtml += bFeat("Elemental Surge", 5, `Roll Init: Regain <strong>${surge}</strong> mana (expires end of combat).`);
+            fHtml += bFeat("Secondary Stat Increase", 5, `+1 STR or DEX.`);
         }
+
+        if (level >= 6) {
+            fHtml += bFeat("Elemental Mastery (2)", 6, `Learn all Utility spells from a 2nd elemental school of your choice.`);
+        }
+
+        if (level >= 7) {
+            if (subclass === "Control") {
+                fHtml += bFeat("At Any Cost", 7, `Learn 1 cantrip and 1 tiered spell from the Necrotic school.`, sCls);
+                fHtml += bFeat("Nullify", 7, `(1/encounter) Ignore all disadvantage and other negative effects on your next action, then Demand Control.`, sCls);
+            } else if (subclass === "Chaos") {
+                fHtml += bFeat("Tempest Mage", 7, `Learn 1 cantrip and 1 tiered spell from the Wind school.`, sCls);
+                fHtml += bFeat("Chaos Lash", 7, `(1/encounter) Reaction: When enemy moves adjacent, push them back 2 spaces and potentially knock Prone (WIL save).`, sCls);
+            }
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 INT or WIL.`);
+
+        if (level >= 9) fHtml += bFeat("Secondary Stat Increase", 9, `+1 STR or DEX.`);
+
+        if (level >= 11) {
+            if (subclass === "Control") {
+                fHtml += bFeat("Steel Will", 11, `(1/Safe Rest) Automatically succeed on a failed save. Reroll 1s on Elemental Surge dice.`, sCls);
+            } else if (subclass === "Chaos") {
+                fHtml += bFeat("Thrive in Chaos", 11, `Whenever you Invoke Chaos, roll twice and cause BOTH effects. (1/Safe Rest) You may choose which roll to use instead.`, sCls);
+            }
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 INT or WIL.`);
+
+        if (level >= 13) fHtml += bFeat("Secondary Stat Increase", 13, `+1 STR or DEX.`);
+
+        if (level >= 14) {
+            fHtml += bFeat("Elemental Mastery (3)", 14, `Learn all Utility spells from a 3rd elemental school.`);
+        }
+
+        if (level >= 15) {
+            if (subclass === "Control") {
+                fHtml += bFeat("Supreme Control", 15, `Trigger selected Control option twice. You may Demand Control as a reaction.`, sCls);
+            } else if (subclass === "Chaos") {
+                fHtml += bFeat("Master of Chaos", 15, `Whenever you Invoke Chaos, roll with advantage.`, sCls);
+            }
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 INT or WIL.`);
+
+        if (level >= 17) fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or DEX.`);
+
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("Archmage", 20, `+1 to any 2 stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana.`);
 
         return fHtml;
     },

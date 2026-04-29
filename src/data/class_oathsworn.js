@@ -244,7 +244,44 @@ const CLASS_CONFIG = {
                 fHtml += bFeat("Bring Me Your Pain", 3, `Reaction: Switch HP with willing dying ally.`, sCls);
             }
         }
-        if (level >= 4) fHtml += bFeat("My Life, for My Friends", 4, "Free Interpose reaction.");
+        if (level >= 4) fHtml += bFeat("My Life, for My Friends", 4, "Free Interpose reaction.<br><strong>Key Stat Increase:</strong> +1 STR or WIL.");
+        
+        if (level >= 5) {
+            fHtml += bFeat("Secondary Stat Increase", 5, "+1 DEX or INT.");
+            fHtml += bFeat("Upgraded Cantrips", 5, "Your Radiant/Necrotic cantrips grow stronger.");
+        }
+
+        if (level >= 7) {
+            if (subclass === "Vengeance") fHtml += bFeat("Avenger", 7, "When you/ally in aura gain Wounds, set max JD to their max value. Move 1/2 speed free.", sCls);
+            else if (subclass === "Refuge") fHtml += bFeat("Face Me, Foul Creature!", 7, "When you Interpose, attacker is also Taunted by you.", sCls);
+            else if (subclass === "Oathbreaker") fHtml += bFeat("Torment", 7, "LOH heals you 2x / others 1/2x. Expend LOH points to increase damage (ignoring armor).", sCls);
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, "+1 STR or WIL.");
+        if (level >= 9) fHtml += bFeat("Secondary Stat Increase", 9, "+1 DEX or INT.");
+
+        if (level >= 11) {
+            if (subclass === "Vengeance") fHtml += bFeat("Unerring Judgment", 11, "+1 to Primary Die rolls on melee attacks while you have JD.", sCls);
+            else if (subclass === "Refuge") fHtml += bFeat("Glorious Reprieve", 11, "Allies in aura gain 1 Wound instead of dropping below 1 HP.", sCls);
+            else if (subclass === "Oathbreaker") fHtml += bFeat("Exploit", 11, "Reaction: When ally in aura Defends, force enemy in aura to Interpose.", sCls);
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, "+1 STR or WIL.");
+        if (level >= 13) fHtml += bFeat("Secondary Stat Increase", 13, "+1 DEX or INT.");
+
+        if (level >= 15) {
+            if (subclass === "Vengeance") fHtml += bFeat("Maximum Judgment", 15, "When attacked, set a Judgment Die to its max value.", sCls);
+            else if (subclass === "Refuge") fHtml += bFeat("Divine Grace", 15, "Resistant to ALL damage while Interposing.", sCls);
+            else if (subclass === "Oathbreaker") fHtml += bFeat("Bloody Terror", 15, "Attacker gains 1 instance of DIS for each Wound you have (max 3).", sCls);
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, "+1 STR or WIL.");
+        if (level >= 17) fHtml += bFeat("Secondary Stat Increase", 17, "+1 DEX or INT.");
+
+        if (level >= 18) fHtml += bFeat("Unending Judgment", 18, "While you have no Judgment Dice, gain +5 damage to melee attacks.");
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, "Choose an Epic Boon (see pg. 23 of the GM's Guide).");
+        if (level >= 20) fHtml += bFeat("Glorious Paragon", 20, "+1 to any 2 stats. Defend for free whenever you Interpose.");
+
         return fHtml;
     },
 

@@ -160,8 +160,12 @@ const CLASS_CONFIG = {
             }
         }
 
+        if (level >= 4) {
+            fHtml += bFeat("Key Stat Increase", 4, `+1 WIL or STR.`);
+        }
+
         if (level >= 5) {
-            let numGraces = level >= 13 ? 3 : level >= 9 ? 2 : 1;
+            let numGraces = level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1;
             let gState = state.selectedGraces || [];
             let opts = `<option value="None">Select a Sacred Grace...</option>`;
             SHEPHERD_DATA.graces.forEach(k => opts += `<option value="${k}">${k}</option>`);
@@ -175,7 +179,41 @@ const CLASS_CONFIG = {
                 </div>`;
             }
             fHtml += bFeat("Sacred Graces", 5, `Choose <strong>${numGraces}</strong> graces.${gHtml}</div>`, "", true);
+            fHtml += bFeat("Secondary Stat Increase", 5, `+1 INT or DEX.`);
+            fHtml += bFeat("Upgraded Cantrips", 5, `Your shadow/radiant cantrips grow stronger.`);
         }
+
+        if (level >= 7) {
+            if (subclass === "Mercy") fHtml += bFeat("Conduit of Light", 7, `When an effect caused by you would heal HP, you may expend 1 use of Searing Light to heal another target within 6 spaces for the same amount.`, sCls);
+            else if (subclass === "Malice") fHtml += bFeat("Veilwalker’s Blessing", 7, `(1/Safe Rest) Reaction: When you would drop to 0 HP, drop to 1 instead and force enemy in 6 reach to STR save or become Bloodied (or 0 HP if already Bloodied).`, sCls);
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 WIL or STR.`);
+        if (level >= 9) fHtml += bFeat("Secondary Stat Increase", 9, `+1 INT or DEX.`);
+
+        if (level >= 11) {
+            if (subclass === "Mercy") fHtml += bFeat("Powerful Healer", 11, `(WIL times/Safe Rest) When rolling dice to heal, you may take the max possible amount or give that many Temp HP.`, sCls);
+            else if (subclass === "Malice") fHtml += bFeat("Deathbringer’s Touch", 11, `First melee attack each round against Bloodied creature is auto-crit. Spirit deals +STR damage.`, sCls);
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 WIL or STR.`);
+        if (level >= 13) fHtml += bFeat("Secondary Stat Increase", 13, `+1 INT or DEX.`);
+
+        if (level >= 15) {
+            if (subclass === "Mercy") fHtml += bFeat("Empowered Conduit", 15, `Conduit of Light may target 1 additional creature. Regain 1 Searing Light use on Initiative.`, sCls);
+            else if (subclass === "Malice") fHtml += bFeat("Conduit of Death", 15, `Veilwalker’s Blessing recharges whenever you roll Initiative.`, sCls);
+            fHtml += bFeat("Upgraded Cantrips", 15, `Your cantrips grow stronger.`);
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 WIL or STR.`);
+
+        if (level >= 17) {
+            fHtml += bFeat("Revitalizing Blessing", 17, `(1/round) Whenever you roll a 6 or higher on a healing die, target may recover one Wound.`);
+            fHtml += bFeat("Secondary Stat Increase", 17, `+1 INT or DEX.`);
+        }
+
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("Twilight Sage", 20, `+1 to any 2 stats. Your Lifebinding Spirit rolls twice as many dice. Upgraded Cantrips.`);
 
         return fHtml;
     },
