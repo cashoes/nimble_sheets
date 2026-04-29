@@ -230,7 +230,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Windborne", 20, `+1 to any 2 stats. +1 burst of speed on Init. Permanently gain 1 action.`);
+        if (level >= 20) fHtml += bFeat("Windborne", 20, `+1 to any 2 of your stats. +1 burst of speed on Init. Permanently gain 1 action.`);
 
         return fHtml;
     }

@@ -216,7 +216,7 @@ const CLASS_CONFIG = {
         if (level >= 17) fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or DEX.`);
 
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("I'm So Famous!", 20, `+1 to any 2 stats. Your Songweaver's Inspiration cannot fail (your target succeeds).`);
+        if (level >= 20) fHtml += bFeat("I'm So Famous!", 20, `+1 to any 2 of your stats. Your Songweaver's Inspiration cannot fail (your target succeeds).`);
 
         return fHtml;
     },

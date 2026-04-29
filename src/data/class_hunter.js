@@ -275,7 +275,7 @@ const CLASS_CONFIG = {
 
         if (level >= 18) fHtml += bFeat("Wild Endurance", 18, `Gain 1 Thrill of the Hunt charge at the start of your turns.`);
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Nemesis", 20, `+1 to any 2 stats. Your Hunter’s Mark can target any number of creatures simultaneously.`);
+        if (level >= 20) fHtml += bFeat("Nemesis", 20, `+1 to any 2 of your stats. Your Hunter’s Mark can target any number of creatures simultaneously.`);
 
         return fHtml;
     }

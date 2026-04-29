@@ -280,7 +280,7 @@ const CLASS_CONFIG = {
 
         if (level >= 18) fHtml += bFeat("Unending Judgment", 18, "While you have no Judgment Dice, gain +5 damage to melee attacks.");
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, "Choose an Epic Boon (see pg. 23 of the GM's Guide).");
-        if (level >= 20) fHtml += bFeat("Glorious Paragon", 20, "+1 to any 2 stats. Defend for free whenever you Interpose.");
+        if (level >= 20) fHtml += bFeat("Glorious Paragon", 20, "+1 to any 2 of your stats. Defend for free whenever you Interpose.");
 
         return fHtml;
     },

@@ -213,7 +213,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Twilight Sage", 20, `+1 to any 2 stats. Your Lifebinding Spirit rolls twice as many dice. Upgraded Cantrips.`);
+        if (level >= 20) fHtml += bFeat("Twilight Sage", 20, `+1 to any 2 of your stats. Your Lifebinding Spirit rolls twice as many dice. Upgraded Cantrips.`);
 
         return fHtml;
     },

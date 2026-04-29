@@ -237,25 +237,28 @@ function renderAttributes(level, statsMap) {
 
     let keyAllowed = Math.floor(level/4); 
     let secAllowed = Math.floor((level-1)/4);
+    let flexAllowed = (level >= 20) ? 2 : 0;
     let keySpent = 0; let secSpent = 0;
     
     CLASS_CONFIG.keyStats.forEach(s => keySpent += state[`add${s.charAt(0).toUpperCase()+s.slice(1)}`]);
     ['str', 'dex', 'int', 'wil'].filter(s => !CLASS_CONFIG.keyStats.includes(s)).forEach(s => secSpent += state[`add${s.charAt(0).toUpperCase()+s.slice(1)}`]);
     
+    let keyOver = Math.max(0, keySpent - keyAllowed);
+    let secOver = Math.max(0, secSpent - secAllowed);
+    let flexSpent = keyOver + secOver;
+
     let unspentHtml = ""; 
-    let keyLeft = keyAllowed - keySpent; 
-    let secLeft = secAllowed - secSpent;
+    let keyLeft = Math.max(0, keyAllowed - keySpent); 
+    let secLeft = Math.max(0, secAllowed - secSpent);
+    let flexLeft = flexAllowed - flexSpent;
     
     document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.remove('error-glow'));
     
-    if (keySpent > keyAllowed) {
-        unspentHtml = `<span style='color:var(--save-dis)'>OVERSPENT: ${keyLeft} Key</span>`;
-        CLASS_CONFIG.keyStats.forEach(s => document.getElementById(`add${s.charAt(0).toUpperCase()+s.slice(1)}`).classList.add('error-glow'));
-    } else if (secSpent > secAllowed) {
-        unspentHtml = `<span style='color:var(--save-dis)'>OVERSPENT: ${secLeft} Sec</span>`;
-        ['str', 'dex', 'int', 'wil'].filter(s => !CLASS_CONFIG.keyStats.includes(s)).forEach(s => document.getElementById(`add${s.charAt(0).toUpperCase()+s.slice(1)}`).classList.add('error-glow'));
+    if (flexSpent > flexAllowed) {
+        unspentHtml = `<span style='color:var(--save-dis)'>OVERSPENT: ${flexLeft} Pts</span>`;
+        document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.add('error-glow'));
     } else {
-        unspentHtml = `<span style='color:var(--class-accent)'>UNSPENT: ${keyLeft} Key, ${secLeft} Sec</span>`;
+        unspentHtml = `<span style='color:var(--class-accent)'>UNSPENT: ${keyLeft} Key, ${secLeft} Sec${level >= 20 ? `, ${flexLeft} Flex` : ''}</span>`;
     }
     document.getElementById('unspentStats').innerHTML = unspentHtml;
 }

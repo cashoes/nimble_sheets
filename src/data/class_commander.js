@@ -333,7 +333,7 @@ const CLASS_CONFIG = {
 
         if (level >= 18) fHtml += bFeat("Unparalleled Tactics", 18, `1/encounter: The first time you use Coordinated Strike, an ally also gains 1 action.`);
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Captain of Legions", 20, `+1 to any 2 stats. 1/encounter: Coordinated Strike grants EVERY ally within 12 spaces +1 action.`);
+        if (level >= 20) fHtml += bFeat("Captain of Legions", 20, `+1 to any 2 of your stats. 1/encounter: Coordinated Strike grants EVERY ally within 12 spaces +1 action.`);
 
         return fHtml;
     }

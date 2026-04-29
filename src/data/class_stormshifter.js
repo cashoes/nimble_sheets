@@ -237,7 +237,7 @@ const CLASS_CONFIG = {
         if (level >= 17) fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or INT.`);
 
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Archdruid", 20, `+1 to any 2 stats. (1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form. Upgraded Cantrips.`);
+        if (level >= 20) fHtml += bFeat("Archdruid", 20, `+1 to any 2 of your stats. (1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form. Upgraded Cantrips.`);
 
         return fHtml;
     },

@@ -207,7 +207,7 @@ const CLASS_CONFIG = {
         if (level >= 17) fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or DEX.`);
 
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Archmage", 20, `+1 to any 2 stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana.`);
+        if (level >= 20) fHtml += bFeat("Archmage", 20, `+1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana.`);
 
         return fHtml;
     },

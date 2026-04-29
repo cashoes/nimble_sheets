@@ -249,7 +249,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Eldritch Usurper", 20, `+1 to any 2 stats. Summon 2 minions instead of 1. They die only when receiving 12+ damage at once.`);
+        if (level >= 20) fHtml += bFeat("Eldritch Usurper", 20, `+1 to any 2 of your stats. Summon 2 minions instead of 1. They die only when receiving 12+ damage at once.`);
 
         return fHtml;
     },
