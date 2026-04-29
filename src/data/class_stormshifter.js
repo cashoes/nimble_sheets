@@ -169,11 +169,19 @@ const CLASS_CONFIG = {
                 fHtml += bFeat("Deepening Study", 3, `Learn all spells from the Ice or Radiant school. Cast spells while Beastshifted.`, sCls);
             } else if (subclass === "FangClaw") {
                 fHtml += bFeat("Swiftshift", 3, `Init: Beastshift or Move for free. Shift between Direbeast forms for free (Reaction for 1 mana).`, sCls);
+                fHtml += bFeat("Windborne Protector", 3, `(1/encounter) Reaction: When an enemy attacks, spend 2 mana to shift into Fearsome Beast, Interpose from 12 reach, and Defend for free.`, sCls);
+                fHtml += bFeat("Friend of Beasts", 3, `Beasts won't attack unless harmed. Transform into harmless beasts without spending charges.`, sCls);
             }
         }
 
-        if (level >= 4) fHtml += bFeat("Stormcaller", 4, `Learn 1 Utility Spell from each elemental spell school.`);
-        if (level >= 5) fHtml += bFeat("Direbeast Form (3)", 5, `You can now Beastshift into a <strong>Beast of Nightmares</strong> (Tiny).`);
+        if (level >= 4) {
+            fHtml += bFeat("Stormcaller", 4, `Learn 1 Utility Spell from each elemental spell school.<br><strong>Key Stat Increase:</strong> +1 WIL or DEX.`);
+        }
+        if (level >= 5) {
+            fHtml += bFeat("Direbeast Form (3)", 5, `You can now Beastshift into a <strong>Beast of Nightmares</strong> (Tiny).`);
+            fHtml += bFeat("Secondary Stat Increase", 5, `+1 STR or INT.`);
+            fHtml += bFeat("Upgraded Cantrips", 5, `Your lightning/wind cantrips grow stronger.`);
+        }
 
         if (level >= 6) {
             let nBoons = level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2;
@@ -190,10 +198,46 @@ const CLASS_CONFIG = {
                 </div>`;
             }
             fHtml += bFeat("Chimeric Boons", 6, `Choose <strong>${nBoons}</strong> form mutations.${bHtml}</div>`, "", true);
+            fHtml += bFeat("Expert Shifter", 6, `Gain 1 additional use of Beastshift per Safe Rest.`);
         }
 
-        if (level >= 8) fHtml += bFeat("Stormborn", 8, `Resistance to lightning damage. (1/day) Advantage on Naturecraft or Concentration.`);
-        if (level >= 13) fHtml += bFeat("Stormborn (2)", 13, `Spend Beastshift charge to deal max damage with a Wind spell. Cast cantrip for free when ending shift.`);
+        if (level >= 7) {
+            if (subclass === "SkyStorm") fHtml += bFeat("Raging Tempest", 7, `Whenever you crit with a tiered spell, you may cast a cantrip for free from a school you know and haven't used this turn.`, sCls);
+            else if (subclass === "FangClaw") {
+                fHtml += bFeat("Unleash the Beast", 7, `(1/encounter) When you miss, you can crit instead.`, sCls);
+                fHtml += bFeat("Storm Wake", 7, `(1/encounter) Action: Spend 3 mana to shift into Beast of the Pack, teleport 12 reach in a line, and deal <strong>WIL</strong> d8 lightning dmg to targets in path.`, sCls);
+            }
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 WIL or DEX.`);
+        if (level >= 9) fHtml += bFeat("Secondary Stat Increase", 9, `+1 STR or INT.`);
+
+        if (level >= 11) {
+            if (subclass === "SkyStorm") fHtml += bFeat("Primordial Force", 11, `2+ mana spells grant riders: Ice (WIL temp HP), Lightning (WIL dmg), Radiant (Heal WIL HP in 6), Wind (Fly speed + 6 move free).`, sCls);
+            else if (subclass === "FangClaw") {
+                fHtml += bFeat("Master of Forms", 11, `Your shapeshift forms can have 2 Chimeric Boons at a time.`, sCls);
+                fHtml += bFeat("Venomous Gaze", 11, `(1/encounter) Action: Spend 2 mana to shift into Beast of Nightmares, pull enemy within 12 by 2xWIL spaces, and free Sting on contact.`, sCls);
+            }
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 WIL or DEX.`);
+
+        if (level >= 13) {
+            fHtml += bFeat("Stormborn (2)", 13, `Spend Beastshift charge to deal max damage with a Wind spell. Cast cantrip for free when ending shift.`);
+            fHtml += bFeat("Secondary Stat Increase", 13, `+1 STR or INT.`);
+        }
+
+        if (level >= 15) {
+            if (subclass === "SkyStorm") fHtml += bFeat("Master of Storm", 15, `Concentrate on 1 lightning and 1 wind spell at the same time. (1/Safe Rest) Cast Ride the Lightning for 0 mana.`, sCls);
+            else if (subclass === "FangClaw") fHtml += bFeat("Master of Forms (2)", 15, `Beastshift 2 additional times per Safe Rest. Your Direbeast forms can have 3 Boons at a time.`, sCls);
+            fHtml += bFeat("Upgraded Cantrips", 15, `Your cantrips grow stronger.`);
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 WIL or DEX.`);
+        if (level >= 17) fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or INT.`);
+
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("Archdruid", 20, `+1 to any 2 stats. (1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form. Upgraded Cantrips.`);
 
         return fHtml;
     },
