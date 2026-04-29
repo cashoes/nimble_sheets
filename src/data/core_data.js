@@ -137,7 +137,7 @@ const BACKGROUND_FEATURES = {
     "Bumblewise": { desc: "(Req. 0 or negative WIL) A result of 1 or less on any WIL-related roll counts as a natural 20." },
     "Devoted Protector": { desc: "Choose 1 ally in your party. You can survive +3 max Wounds as long as they are nearby. Whenever they take a Wound, you do too.", modWounds: 3 },
     "Ear to the Ground": { desc: "Advantage on checks to obtain gossip for recent or upcoming events." },
-    "Fearless": { desc: "You simply do not feel fear like others do. You cannot be Frightened or Intimidated." },
+    "Fearless": { desc: "You are immune to the Frightened condition. +1 Initiative. -1 Armor.", modInit: 1, modArmor: -1 },
     "Fey Touched": { desc: "Half damage from all magical effects, double damage from metal weapons." },
     "(Former) Con Artist": { desc: "You can forge most documents or mimic voices flawlessly. You have a criminal contact in most major cities." },
     "Haunted Past": { desc: "Advantage against fear." },

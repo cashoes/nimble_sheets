@@ -102,7 +102,7 @@ function loadState() {
         baseStr: 0, addStr: 0, baseDex: 0, addDex: 0, baseInt: 0, addInt: 0, baseWil: 0, addWil: 0,
         hpCurrent: null, tempHP: 0, hdCurrent: null, wounds: 0,
         skills: {}, activeConditions: [], inventory: [], gold: 0,
-        resourceValues: {}, 
+        resourceValues: {}, bgSpell: 'None',
         selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: []
     };
 
@@ -513,7 +513,17 @@ function render() {
     }
     
     let bgTxt = "";
-    // ... (rest of background logic) ...
+    const bgFeat = BACKGROUND_FEATURES[background];
+    if (bgFeat) {
+        bgTxt = bgFeat.desc;
+        if (bgFeat.modInit) init += bgFeat.modInit;
+        if (bgFeat.modSpeed) derived.speed += bgFeat.modSpeed;
+        if (bgFeat.modWounds) derived.woundMax = Math.max(1, derived.woundMax + bgFeat.modWounds);
+        if (bgFeat.modSize) derived.size = bgFeat.modSize;
+        if (bgFeat.modHD) derived.hdMax += bgFeat.modHD;
+        if (bgFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += bgFeat.modAllSkills);
+        if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val;
+    }
 
     // Armor Calculation
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : dex;
@@ -537,6 +547,7 @@ function render() {
     if (bestArmorVal !== -1) armorVal = bestArmorVal;
     armorVal += shieldBonus + (CLASS_CONFIG.getShieldBonus ? CLASS_CONFIG.getShieldBonus(level, subclass, statsMap) : 0);
     if (ancFeat && ancFeat.modArmor) armorVal += ancFeat.modArmor;
+    if (bgFeat && bgFeat.modArmor) armorVal += bgFeat.modArmor;
 
     // Birdfolk flight speed logic
     if (ancFeat && ancFeat.modFlySpeed && armorIsLight) {
@@ -571,7 +582,30 @@ function render() {
 
     // Features and Spells Orchestration
     let fHtml = CLASS_CONFIG.getFeaturesHTML(level, subclass, state, derived, bFeatBound, iStatsBound, formatPips);
-    if(bgTxt) fHtml = bFeatBound(`Background: ${background}`, "", bgTxt, "", true) + fHtml;
+    
+    if (bgFeat) {
+        let bgDesc = bgTxt;
+        if (bgFeat.customUI === "academyDropout") {
+            let opts = `<option value="None">-- Select Spell --</option>`;
+            Object.keys(UTILITY_SPELLS).forEach(school => {
+                opts += `<optgroup label="${school}">`;
+                Object.keys(UTILITY_SPELLS[school]).forEach(sName => {
+                    opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`;
+                });
+                opts += `</optgroup>`;
+            });
+            bgDesc += `<div style="margin-top:10px;"><select onchange="updateBgSpell(this.value)" style="width:100%; background:rgba(0,0,0,0.2); color:#fff; border:1px solid var(--class-accent); padding:4px;">${opts}</select></div>`;
+            
+            // Add selected spell description
+            if (state.bgSpell && state.bgSpell !== "None") {
+                let sData = null;
+                Object.values(UTILITY_SPELLS).forEach(school => { if(school[state.bgSpell]) sData = school[state.bgSpell]; });
+                if (sData) bgDesc += `<div style="margin-top:8px; font-size:0.9em; border-left: 2px solid var(--class-accent); padding-left: 10px; color: var(--text-muted);">${iStatsBound(sData)}</div>`;
+            }
+        }
+        fHtml = bFeatBound(`Background: ${background}`, "", bgDesc, "", true) + fHtml;
+    }
+    
     if(ancTxt) fHtml = bFeatBound(`Ancestry: ${ancestry}`, "", ancTxt, "", true) + fHtml;
     document.getElementById('featuresContainer').innerHTML = fHtml;
     
