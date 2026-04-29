@@ -31,10 +31,25 @@ function saveState() {
     if (state.gold > oldGold) triggerAnimation('gold', 'green');
     else if (state.gold < oldGold) triggerAnimation('gold', 'red');
 
-    state.baseStr = parseInt(document.getElementById('baseStr').value) || 0; state.addStr = parseInt(document.getElementById('addStr').value) || 0;
-    state.baseDex = parseInt(document.getElementById('baseDex').value) || 0; state.addDex = parseInt(document.getElementById('addDex').value) || 0;
-    state.baseInt = parseInt(document.getElementById('baseInt').value) || 0; state.addInt = parseInt(document.getElementById('addInt').value) || 0;
-    state.baseWil = parseInt(document.getElementById('baseWil').value) || 0; state.addWil = parseInt(document.getElementById('addWil').value) || 0;
+    // Enforce Stat Cap (+5 Total)
+    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
+        const baseEl = document.getElementById(`base${s}`);
+        const addEl = document.getElementById(`add${s}`);
+        let b = parseInt(baseEl.value) || 0;
+        let a = parseInt(addEl.value) || 0;
+        
+        // Enforce Cap: b + a <= 5
+        if (b + a > 5) {
+            a = Math.max(0, 5 - b);
+            addEl.value = a;
+        }
+
+        // Dynamically update HTML max attribute for spinner feedback
+        addEl.max = Math.max(0, 5 - b);
+
+        state[`base${s}`] = b;
+        state[`add${s}`] = a;
+    });
     
     // New Stat Map after UI update
     let statsMap = { 
@@ -156,10 +171,13 @@ function loadState() {
     document.getElementById('charName').value = state.charName || ''; document.getElementById('level').value = state.level || 1;
     document.getElementById('ancestry').value = state.ancestry || 'Human'; document.getElementById('background').value = state.background || 'None';
     document.getElementById('subclass').value = state.subclass || 'None'; document.getElementById('gold').value = state.gold || 0;
-    document.getElementById('baseStr').value = state.baseStr; document.getElementById('addStr').value = state.addStr;
-    document.getElementById('baseDex').value = state.baseDex; document.getElementById('addDex').value = state.addDex;
-    document.getElementById('baseInt').value = state.baseInt; document.getElementById('addInt').value = state.addInt;
-    document.getElementById('baseWil').value = state.baseWil; document.getElementById('addWil').value = state.addWil;
+    
+    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
+        document.getElementById(`base${s}`).value = state[`base${s}`];
+        const addEl = document.getElementById(`add${s}`);
+        addEl.value = state[`add${s}`];
+        addEl.max = Math.max(0, 5 - state[`base${s}`]);
+    });
     
     mSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
     rSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
