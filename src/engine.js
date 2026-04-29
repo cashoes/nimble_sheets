@@ -576,6 +576,7 @@ function render() {
     // Execute modular renders
     renderHeader(derived, armorVal, init);
     renderAttributes(level, statsMap);
+    renderResources(level, derived, statsMap, hdFace);
     renderInventory(statsMap, armorVal, str, iStatsBound);
     renderSkills(level, statsMap, passMods);
     renderConditions();
