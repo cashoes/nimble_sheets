@@ -193,7 +193,7 @@ const CLASS_CONFIG = {
         }
 
         if (level >= 4) {
-            fHtml += bFeat("Enduring Rage", 4, `While Dying, Rage automatically for free. Max 2 actions, ignore STR saves to make attacks.`);
+            fHtml += bFeat("Enduring Rage", 4, `While Dying, Rage automatically for free. Max 2 actions, ignore STR saves to make attacks.<br><strong>Key Stat Increase:</strong> +1 STR or DEX.`);
             
             let numArsenal = level>=16?7 : level>=14?6 : level>=12?5 : level>=10?4 : level>=8?3 : level>=6?2 : 1;
             let aState = state.selectedArsenal || [];
@@ -214,6 +214,59 @@ const CLASS_CONFIG = {
             }
             fHtml += bFeat("Savage Arsenal", 4, `Choose <strong>${numArsenal}</strong> abilities.${aHtml}</div>`, "", true);
         }
+
+        if (level >= 5) fHtml += bFeat("Secondary Stat Increase", 5, `+1 INT or WIL.`);
+
+        if (level >= 6) fHtml += bFeat("Intensifying Fury (2)", 6, `Your Fury Dice are now <strong>d6</strong>s.`);
+
+        if (level >= 7) {
+            if (subclass === "Mountainheart") {
+                fHtml += bFeat("Unbreakable", 7, `(1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don’t.`, sCls);
+            } else if (subclass === "RedMist") {
+                fHtml += bFeat("Unstoppable Brutality", 7, `While Raging, you may gain 1 Wound to reroll any attack or save.`, sCls);
+            }
+        }
+
+        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 STR or DEX.`);
+
+        if (level >= 9) {
+            fHtml += bFeat("Intensifying Fury (3)", 9, `Your Fury Dice are now <strong>d8</strong>s.`);
+            fHtml += bFeat("Secondary Stat Increase", 9, `+1 INT or WIL.`);
+        }
+
+        if (level >= 11) {
+            if (subclass === "Mountainheart") {
+                fHtml += bFeat("Titan's Fury", 11, `After you miss an attack or are crit by an enemy, Rage for free.`, sCls);
+            } else if (subclass === "RedMist") {
+                fHtml += bFeat("Opportunistic Frenzy", 11, `While Raging, you can make opportunity attacks without disadvantage, and you may make them whenever an enemy enters your melee weapon’s reach.`, sCls);
+            }
+        }
+
+        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 STR or DEX.`);
+
+        if (level >= 13) {
+            fHtml += bFeat("Intensifying Fury (4)", 13, `Your Fury Dice are now <strong>d10</strong>s.`);
+            fHtml += bFeat("Secondary Stat Increase", 13, `+1 INT or WIL.`);
+        }
+
+        if (level >= 15) {
+            if (subclass === "Mountainheart") {
+                fHtml += bFeat("Mountain's Endurance", 15, `While Dying, if an attack against you would be a crit, the attack is rerolled instead.`, sCls);
+            } else if (subclass === "RedMist") {
+                fHtml += bFeat("Onslaught", 15, `While Raging, gain +2 speed. (1/round) you may move for free.`, sCls);
+            }
+        }
+
+        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 STR or DEX.`);
+
+        if (level >= 17) {
+            fHtml += bFeat("Intensifying Fury (5)", 17, `Your Fury Dice are now <strong>d12</strong>s.`);
+            fHtml += bFeat("Secondary Stat Increase", 17, `+1 INT or WIL.`);
+        }
+
+        if (level >= 18) fHtml += bFeat("DEEP RAGE", 18, `Dropping to 0 HP does not cause your Rage to end.`);
+        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
+        if (level >= 20) fHtml += bFeat("BOUNDLESS RAGE", 20, `+1 to any 2 of your stats. Anytime you roll less than 6 on a Fury Die, change it to 6 instead.`);
 
         return fHtml;
     }
