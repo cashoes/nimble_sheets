@@ -27,6 +27,7 @@ function saveState() {
     state.background = document.getElementById('background').value;
     state.subclass = document.getElementById('subclass').value;
     state.gold = parseInt(document.getElementById('gold').value) || 0;
+    state.showMinor = document.getElementById('toggleMinorFeatures')?.checked || false;
     
     if (state.gold > oldGold) triggerAnimation('gold', 'green');
     else if (state.gold < oldGold) triggerAnimation('gold', 'red');
@@ -102,7 +103,7 @@ function loadState() {
         baseStr: 0, addStr: 0, baseDex: 0, addDex: 0, baseInt: 0, addInt: 0, baseWil: 0, addWil: 0,
         hpCurrent: null, tempHP: 0, hdCurrent: null, wounds: 0,
         skills: {}, activeConditions: [], inventory: [], gold: 0,
-        resourceValues: {}, bgSpell: 'None',
+        resourceValues: {}, bgSpell: 'None', showMinor: false,
         selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: []
     };
 
@@ -290,7 +291,7 @@ function renderResources(level, derived, statsMap, hdFace) {
     let resHtml = "";
     (CLASS_CONFIG.resources || []).forEach(r => {
         if (r.manual) return; // Skip rendering if class handles it in the mechanic panel
-        let max = r.calcMax(level, statsMap); if (max <= 0) return;
+        let max = r.calcMax(level, statsMap, state, state.subclass); if (max <= 0) return;
         if (state.resourceValues[r.id] === undefined) state.resourceValues[r.id] = max;
         resHtml += `<div class="res-row"><label>${r.label}</label><div style="display: flex; align-items: center; gap: 8px;"><div class="res-val dark-incrementer"><button onclick="adjRes('${r.id}', -1)">-</button><input type="number" id="res_${r.id}" value="${state.resourceValues[r.id]}" onchange="adjRes('${r.id}', parseInt(this.value), ${max}, true)"><button onclick="adjRes('${r.id}', 1, ${max})">+</button></div><div class="max-text">/ <span style="color:var(--text-main);">${max}</span></div></div></div>`;
     });
@@ -585,6 +586,9 @@ function render() {
     renderConditions();
 
     // Features and Spells Orchestration
+    if (document.getElementById('toggleMinorFeatures')) document.getElementById('toggleMinorFeatures').checked = state.showMinor || false;
+    document.body.classList.toggle('show-minor', state.showMinor);
+
     let fHtml = CLASS_CONFIG.getFeaturesHTML(level, subclass, state, derived, bFeatBound, iStatsBound, formatPips);
     
     if (bgFeat) {

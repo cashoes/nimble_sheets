@@ -181,6 +181,8 @@
   .add-item-btn:hover { background: var(--class-accent); color: #000; border-color: var(--class-accent); }
   select.add-item-btn { font-family: 'Crimson Text', serif; font-weight: 600; letter-spacing: 0; }
 
+  .feature.minor-feature { display: none; }
+  body.show-minor .feature.minor-feature { display: block; }
   .feature { background: var(--class-panel-bg); border: 1px solid var(--class-border); border-left: 4px solid var(--class-border); padding: 10px; margin-bottom: 10px; border-radius: 0 4px 4px 0; width: 100%; box-sizing: border-box; }
   .feature.subclass-feature { border-left-color: var(--subclass-accent, var(--class-accent)); background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, transparent 100%), var(--class-panel-bg); }
   .feature.subclass-feature h3 { color: var(--subclass-accent, var(--class-accent)); }
@@ -382,7 +384,13 @@
   <div class="layout-1col" id="featuresSpellsLayout">
     <div class="left-col">
       <div>
-        <h2 class="section-header">Features & Traits</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px;">
+          <h2 class="section-header" style="border: none; margin: 0; padding: 0;">Features & Traits</h2>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--class-accent); cursor: pointer; user-select: none; font-family: 'Cinzel', serif; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--class-border);">
+            <input type="checkbox" id="toggleMinorFeatures" onchange="document.body.classList.toggle('show-minor', this.checked); saveState();" style="width: 16px; height: 16px; cursor: pointer; margin: 0;"> 
+            <span style="margin-top: 1px;">Show All</span>
+          </label>
+        </div>
         <div id="featuresContainer"></div>
       </div>
     </div>
