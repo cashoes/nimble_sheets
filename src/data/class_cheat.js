@@ -165,6 +165,18 @@ const CLASS_CONFIG = {
     getShieldBonus: function (level, subclass, stats) { return 0; },
 
     getMechanicPanelHTML: function (level, subclass, state, derived) {
+        let cunningHtml = "";
+        let oppBorder = "";
+        if (level >= 2) {
+            oppBorder = " border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;";
+            cunningHtml = `
+               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                   <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Cunning</label>
+                   <div style="font-size: 2.0em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; margin: auto 0;">10+</div>
+                   <div style="font-size: 0.7em; color: var(--text-muted); margin-top: auto; font-family:'Crimson Text'; font-style:italic;">Init Floor. Free Move/Hide.</div>
+               </div>`;
+        }
+
         return `
         <div class="panel mechanic-panel">
             <div style="display: flex; align-items: stretch; gap: 15px;">
@@ -174,17 +186,12 @@ const CLASS_CONFIG = {
                    <div style="font-size: 0.75em; color: var(--text-muted); text-align: center; margin-top: auto; font-family:'Cinzel'; font-weight:bold;">On Critical Hit</div>
                </div>
 
-               <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; text-align: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+               <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; text-align: center;${oppBorder}">
                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Opportunist</label>
                    <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; text-transform: uppercase; line-height: 1.1; margin: auto 0;">Max Roll</div>
                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: auto; font-family:'Crimson Text'; font-style:italic;">Vs. Distracted targets</div>
                </div>
-
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                   <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Cunning</label>
-                   <div style="font-size: 2.0em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; margin: auto 0;">10+</div>
-                   <div style="font-size: 0.7em; color: var(--text-muted); margin-top: auto; font-family:'Crimson Text'; font-style:italic;">Init Floor. Free Move/Hide.</div>
-               </div>
+${cunningHtml}
             </div>
         </div>`;
     },
