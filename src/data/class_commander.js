@@ -1,61 +1,145 @@
-const COMMANDER_DATA = {
-    orders: [
-        "Coordinated Strike!",
-        "Face Me!",
-        "Hold the Line!",
-        "I Can Do This ALL DAY!",
-        "Move it! Move it!",
-        "Reposition!"
-    ],
-    tactics: [
-        "Commanding Presence",
-        "Heavy Strike",
-        "Inerrant Strike",
-        "Lunging Strike",
-        "Sweeping Strike"
-    ],
-    masteries: [
-        "Slashing",
-        "Bludgeoning",
-        "Piercing"
-    ]
+const COMMANDER_OPTIONS = {
+    orders: {
+        "Coordinated Strike!": {
+            desc: "1/round, Free: You and an ally within 6 both immediately make a weapon attack or cast a cantrip for free. Uses: INT/Safe Rest.",
+            empowered: "<strong>(Withering Strike)</strong> Attacks made this way deal additional Necrotic damage equal to the max value of your Combat Die. Target considered undead for 1 round."
+        },
+        "Face Me!": {
+            desc: "Reaction (ally crit within 12): Taunt enemy until you drop to 0 HP.",
+            empowered: "<strong>(Glimmering Decree)</strong> Target takes STR d8 radiant damage, is pulled up to 4 spaces toward you, and is Taunted until you drop to 0 HP."
+        },
+        "Hold the Line!": {
+            desc: "(1/encounter) Reaction (ally drops to 0 HP): Command them to continue; set their HP to 3 x LVL.",
+            empowered: "<strong>(Crystalline Armor)</strong> Target set to 3 x LVL HP and gains that much Temp HP. Enemies who reduce this Temp HP in melee have speed halved for next turn."
+        },
+        "I Can Do This ALL DAY!": {
+            desc: "(1/encounter) Reaction (you drop to 0 HP): Expend Hit Dice and set HP to the sum rolled (no STR bonus).",
+            empowered: "<strong>(Rising Phoenix)</strong> Roll HD for HP, then deal HD fire damage to each enemy within 2. They gain Smoldering."
+        },
+        "Move it! Move it!": {
+            desc: "When you roll Initiative: Grant self and ally advantage on the roll and +3 speed for 1 round.",
+            empowered: "<strong>(Borne upon the Wind)</strong> Gain advantage on Initiative, +3 speed, and FLY for 1 round. You and chosen ally both move for free."
+        },
+        "Reposition!": {
+            desc: "Action/Reaction (on ally's turn): Command 1 ally to move their speed (or 2 allies 1/2 speed) for free.",
+            empowered: "<strong>(Flashstep)</strong> Command ally to move their speed (or 2 allies 1/2 speed) for free. You may exchange places with one of them."
+        }
+    },
+    tactics: {
+        "Commanding Presence": { desc: "Action: Command enemy (2 words). Failed WIL save (DC 10+STR): They obey for next turn. Immune for 1 day after." },
+        "Heavy Strike": { desc: "When you hit: Push Med creature STR spaces and deal extra dmg = Combat Die. Small: 2x distance. Large: 1/2 distance." },
+        "Inerrant Strike": { desc: "Reroll missed attack, add 1 to Primary Die, deal extra damage = Combat Die." },
+        "Lunging Strike": { desc: "Gain +1 Reach and deal extra damage = 2 x Combat Die." },
+        "Sweeping Strike": { desc: "2 actions: Select 3x3 area. Attack ALL targets; does not miss on a 1." }
+    },
+    masteries: {
+        "Slashing": { desc: "Your attacks with slashing weapons cannot miss unarmored enemies." },
+        "Bludgeoning": { desc: "When your primary die rolls a 7 or higher with a bludgeoning weapon, ignore Heavy Armor." },
+        "Piercing": { desc: "Your attacks with piercing weapons ignore Medium Armor." }
+    }
 };
 
-const COMMANDER_DESCS = {
-    "Coordinated Strike!": "1/round, Free: You and an ally within 6 both immediately make a weapon attack or cast a cantrip for free. Uses: INT/Safe Rest.",
-    "Face Me!": "Reaction (ally crit within 12): Taunt enemy until you drop to 0 HP.",
-    "Hold the Line!": "(1/encounter) Reaction (ally drops to 0 HP): Command them to continue; set their HP to 3 x LVL.",
-    "I Can Do This ALL DAY!": "(1/encounter) Reaction (you drop to 0 HP): Expend Hit Dice and set HP to the sum rolled (no STR bonus).",
-    "Move it! Move it!": "When you roll Initiative: Grant self and ally advantage on the roll and +3 speed for 1 round.",
-    "Reposition!": "Action/Reaction (on ally's turn): Command 1 ally to move their speed (or 2 allies 1/2 speed) for free.",
-    "Commanding Presence": "Action: Command enemy (2 words). Failed WIL save (DC 10+STR): They obey for next turn. Immune for 1 day after.",
-    "Heavy Strike": "When you hit: Push Med creature STR spaces and deal extra dmg = Combat Die. Small: 2x distance. Large: 1/2 distance.",
-    "Inerrant Strike": "Reroll missed attack, add 1 to Primary Die, deal extra damage = Combat Die.",
-    "Lunging Strike": "Gain +1 Reach and deal extra damage = 2 x Combat Die.",
-    "Sweeping Strike": "2 actions: Select 3x3 area. Attack ALL targets; does not miss on a 1.",
-    "Slashing": "Your attacks with slashing weapons cannot miss unarmored enemies.",
-    "Bludgeoning": "When your primary die rolls a 7 or higher with a bludgeoning weapon, ignore Heavy Armor.",
-    "Piercing": "Your attacks with piercing weapons ignore Medium Armor."
-};
-
-const SPELLBLADE_ORDERS = {
-    "Face Me!": "<strong>(Glimmering Decree)</strong> Target takes STR d8 radiant damage, is pulled up to 4 spaces toward you, and is Taunted until you drop to 0 HP.",
-    "Move it! Move it!": "<strong>(Borne upon the Wind)</strong> Gain advantage on Initiative, +3 speed, and FLY for 1 round. You and chosen ally both move for free.",
-    "Hold the Line!": "<strong>(Crystalline Armor)</strong> Target set to 3 x LVL HP and gains that much Temp HP. Enemies who reduce this Temp HP in melee have speed halved for next turn.",
-    "Reposition!": "<strong>(Flashstep)</strong> Command ally to move their speed (or 2 allies 1/2 speed) for free. You may exchange places with one of them.",
-    "I Can Do This ALL DAY!": "<strong>(Rising Phoenix)</strong> Roll HD for HP, then deal HD fire damage to each enemy within 2. They gain Smoldering.",
-    "Coordinated Strike!": "<strong>(Withering Strike)</strong> Attacks made this way deal additional Necrotic damage equal to the max value of your Combat Die. Target considered undead for 1 round."
+const COMMANDER_FEATURES = {
+    core: {
+        1: [
+            { id: "basics", name: "Commander Basics", desc: "Hit Die: 1d10 | Saves: STR(+), DEX(-)<br>Armor: Mail, Shields | Weapons: All Martial Weapons" },
+            { id: "coord_strike", name: "Coordinated Strike!", desc: "1/round, Free action: you and an ally within 6 spaces both immediately make a weapon attack or cast a cantrip for free. You can do this INT times/Safe Rest." }
+        ],
+        2: [
+            { id: "orders", name: "Commander’s Orders", type: "dynamic_choice", collection: "orders", stateKey: "selectedOrders", desc: "Choose 2 Commander's Orders.", getCount: (level) => 2 },
+            { id: "medic", name: "Field Medic", desc: "Roll 1 additional die for any health potion you administer. Whenever you or an ally spends any number of Hit Dice to recover HP, if you spent at least ten minutes examining their wounds, they can add your Examination bonus to the HP recovered." }
+        ],
+        3: [
+            { id: "subclass", name: "Subclass", desc: "Choose a Commander subclass.", minor: true }
+        ],
+        4: [
+            { id: "tactics", name: "Fit for Any Battlefield", type: "dynamic_choice", collection: "tactics", stateKey: "selectedTactics", desc: "Choose Combat Tactics. When you roll Initiative, gain STR Combat Dice, each a d6 (d8 at 5, d10 at 9, d12 at 13, d20 at 17). (1/attack) You may expend a Combat Die to perform a special maneuver. Combat Dice are lost when combat ends.", getCount: (level) => level >= 16 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 },
+            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 STR or INT.", minor: true }
+        ],
+        5: [
+            { id: "master_commander_1", name: "Master Commander", desc: "When you roll Initiative, regain 1 spent use of Coordinated Strike (it is lost if not spent during that encounter). Attacks made from your Coordinated Strikes also now ignore disadvantage." },
+            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 DEX or WIL.", minor: true }
+        ],
+        6: [
+            { id: "mastery", name: "Weapon Mastery", type: "dynamic_choice", collection: "masteries", stateKey: "selectedMastery", desc: "You may sheathe a weapon and draw a different one 2×/round for free. Choose weapon types to specialize in.", getCount: (level) => level >= 14 ? 3 : level >= 10 ? 2 : 1 }
+        ],
+        8: [
+            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 STR or INT.", minor: true }
+        ],
+        9: [
+            { id: "master_commander_2", name: "Master Commander (2)", desc: "+1 use of Coordinated Strike/Safe Rest.", minor: true },
+            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 DEX or WIL.", minor: true }
+        ],
+        12: [
+            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 STR or INT.", minor: true }
+        ],
+        13: [
+            { id: "master_commander_3", name: "Master Commander (3)", desc: "+1 use of Coordinated Strike/Safe Rest.", minor: true },
+            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 DEX or WIL.", minor: true }
+        ],
+        16: [
+            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 STR or INT.", minor: true }
+        ],
+        17: [
+            { id: "master_commander_4", name: "Master Commander (4)", desc: "+1 use of Coordinated Strike/Safe Rest.", minor: true },
+            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 DEX or WIL.", minor: true }
+        ],
+        18: [
+            { id: "unparalleled_tactics", name: "Unparalleled Tactics", desc: "The first time each encounter you use Coordinated Strike, an ally who can hear you also gains 1 action to use on their next turn." }
+        ],
+        20: [
+            { id: "captain_of_legions", name: "Captain of Legions", desc: "+1 to any 2 of your stats. The first time each encounter you use Coordinated Strike, EVERY ally within 12 spaces gains +1 action (replaces Unparalleled Tactics)." }
+        ]
+    },
+    subclasses: {
+        "Bulwark": {
+            3: [
+                { id: "armor_master", name: "Armor Master", desc: "You are proficient with plate armor." },
+                { id: "shield_expert", name: "Shield Expert", desc: "While wearing a shield, you may Defend 2× each round. The first time each round you block all of the damage from an attack, you may make an opportunity attack against the attacker for free." }
+            ],
+            7: [
+                { id: "juggernaut", name: "Juggernaut", desc: "When you use Coordinated Strike, you deal extra damage equal to your armor, and you can add 1 to your primary die." }
+            ],
+            11: [
+                { id: "taunting_strike", name: "Taunting Strike", desc: "(1/turn) You may Taunt a creature you hit until the end of their next turn." }
+            ],
+            15: [
+                { id: "shield_wall", name: "Shield Wall", desc: "Allies within 2 spaces gain ALL the benefits of the shield you have equipped." }
+            ]
+        },
+        "Vanguard": {
+            3: [
+                { id: "advance", name: "Advance!", desc: "(1/round) After you move toward an enemy, gain advantage on the first melee attack you make against it. When you use your Coordinated Strike, you and all allies within 12 spaces can first move up to half their speed for free." }
+            ],
+            7: [
+                { id: "exp_commander", name: "Experienced Commander", desc: "Your Coordinated Strike may target 1 additional ally. Gain +1 use of Coordinated Strike/Safe Rest." }
+            ],
+            11: [
+                { id: "survey_battlefield", name: "Survey the Battlefield", desc: "When you roll Initiative, regain 1 use of Coordinated Strike. +1 max Combat Dice." }
+            ],
+            15: [
+                { id: "as_one", name: "As One!", desc: "Attacks made with your Coordinated Strike also grant advantage and ignore all disadvantage. Your chosen allies gain 1 additional action to use on their next turn." }
+            ]
+        },
+        "Spellblade": {
+            3: [
+                { id: "arcane_command_passive", replaces: ["tactics", "mastery"], name: "Arcane Command", desc: "You gain INT mana when you roll Initiative. Your Commander's Orders are empowered. (See your updated Arcane Command feature above).", minor: true },
+                { id: "firebrand", name: "Firebrand", desc: "When you roll Initiative you may cast Enchant Weapon for free (can be upcast as normal by spending additional mana)." },
+                { id: "deep_knowledge", name: "Deep Knowledge", type: "dynamic_spell_choice", stateKey: "selectedSpells", desc: "Choose a tiered spell (based on your level) and any Utility Spell.", utility: true, utilStateKey: "selectedUtilitySpells", getCount: (level) => level >= 15 ? 4 : level >= 11 ? 3 : level >= 7 ? 2 : 1, getTier: (idx) => idx + 1 }
+            ]
+        }
+    }
 };
 
 const CLASS_CONFIG = {
     name: "Commander",
     subtitle: "Fearless leader, battlefield tactician, and weapon master",
-    keyStats: ['str', 'int'], 
-    saves: { adv: 'str', dis: 'dex' }, 
+    keyStats: ['str', 'int'],
+    saves: { adv: 'str', dis: 'dex' },
     baseHp: 17,
     hpPerLevel: 8,
     hitDie: 10,
-    
+
     theme: {
         accent: "#f59e0b",
         accentDim: "#b45309",
@@ -77,16 +161,27 @@ const CLASS_CONFIG = {
     ],
 
     resources: [
-        { id: 'combatDice', label: 'Combat Dice', manual: true, calcMax: (level, stats) => stats.str },
-        { id: 'coordStrike', label: 'Coordinated Strike', manual: true, calcMax: (level, stats) => stats.int }
+        { id: 'combatDice', label: 'Combat Dice', manual: true, calcMax: (level, stats, state, subclass) => {
+            let max = stats.str;
+            if (level >= 11 && subclass === "Vanguard") max += 1;
+            return max;
+        }},
+        { id: 'coordStrike', label: 'Coordinated Strike', manual: true, calcMax: (level, stats, state, subclass) => {
+            let max = stats.int;
+            if (level >= 9) max += 1;
+            if (level >= 13) max += 1;
+            if (level >= 17) max += 1;
+            if (level >= 7 && subclass === "Vanguard") max += 1;
+            return max;
+        }}
     ],
 
     customHeaderStats: [],
 
-    getDerivedStats: function(level, subclass, state) {
-        let speed = 6; 
+    getDerivedStats: function (level, subclass, state) {
+        let speed = 6;
         let woundMax = 6;
-        
+
         let cdType = "d6";
         if (level >= 5) cdType = "d8";
         if (level >= 9) cdType = "d10";
@@ -96,23 +191,29 @@ const CLASS_CONFIG = {
         return { speed, woundMax, cdType };
     },
 
-    getStatOverrides: function(level, subclass, state, statsMap) {
+    getStatOverrides: function (level, subclass, state, statsMap) {
         let overrides = {};
         return overrides;
     },
 
-    getShieldBonus: function(level, subclass, stats) { return 0; },
+    getShieldBonus: function (level, subclass, stats) { return 0; },
 
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
+    getMechanicPanelHTML: function (level, subclass, state, derived) {
         let maxCD = state.baseStr + state.addStr;
-        let currentCD = state.resourceValues.combatDice || 0;
+        if (level >= 11 && subclass === "Vanguard") maxCD += 1;
+
         let strikeMax = state.baseInt + state.addInt;
-        let strikeCur = state.resourceValues.coordStrike || 0;
+        if (level >= 7 && subclass === "Vanguard") strikeMax += 1;
+        if (level >= 9) strikeMax += 1;
+        if (level >= 13) strikeMax += 1;
+        if (level >= 17) strikeMax += 1;
+
+        let currentCD = state.resourceValues.combatDice !== undefined ? state.resourceValues.combatDice : maxCD;
+        let strikeCur = state.resourceValues.coordStrike !== undefined ? state.resourceValues.coordStrike : strikeMax;
 
         return `
         <div class="panel mechanic-panel">
             <div style="display: flex; align-items: stretch; gap: 12px;">
-               <!-- Column 1: Combat Dice -->
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Combat Dice (${derived.cdType})</label>
                    <div class="dark-incrementer" style="padding: 4px 10px;">
@@ -123,7 +224,6 @@ const CLASS_CONFIG = {
                    <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">MAX ${maxCD}</div>
                </div>
 
-               <!-- Column 2: Strike Uses -->
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Coord. Strike</label>
                    <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--gold-dim);">
@@ -134,7 +234,6 @@ const CLASS_CONFIG = {
                    <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">USES: ${strikeMax}</div>
                </div>
 
-               <!-- Column 3: Tactical Presence -->
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Tactical DC</label>
                    <div style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; margin: auto 0;">${10 + state.baseStr + state.addStr}</div>
@@ -146,195 +245,186 @@ const CLASS_CONFIG = {
 
     actions: {},
 
-    getFeaturesHTML: function(level, subclass, state, derived, bFeat, iStats) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
         let fHtml = "";
         const sCls = "subclass-feature";
+        const subData = COMMANDER_FEATURES.subclasses[subclass] || {};
+        const replacedIds = new Set();
 
-        fHtml += bFeat("Commander Basics", "", `<strong>Hit Die:</strong> 1d${this.hitDie} | <strong>Saves:</strong> STR(+), DEX(-)<br><strong>Armor:</strong> Mail, Shields | <strong>Weapons:</strong> All Martial Weapons`, "", true);
-        
-        if (subclass === "Spellblade") {
-            fHtml += bFeat("Arcane Command", "", `Your focus causes you to lose access to Weapon Mastery and Combat Tactics, but you gain <strong>INT</strong> mana on Initiative. Your Orders are empowered with magical effects.`, sCls);
-        }
-        
-        fHtml += bFeat("Coordinated Strike!", 1, `1/round, Free: You and ally within 6 spaces make a weapon attack/cantrip for free. Uses: <strong>INT</strong>.`);
-
-        if (level >= 2) {
-            let nOrders = 2;
-            let oState = state.selectedOrders || [];
-            let opts = `<option value="None">Select a Commander's Order...</option>`;
-            COMMANDER_DATA.orders.forEach(k => opts += `<option value="${k}">${k}</option>`);
-            let oHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            for(let i=0; i<nOrders; i++) {
-                let val = oState[i] || "None";
-                let desc = (val !== "None") ? (subclass === "Spellblade" ? SPELLBLADE_ORDERS[val] : COMMANDER_DESCS[val]) : "";
-                oHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('selectedOrders', ${i}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(desc)}</div>
-                </div>`;
-            }
-            fHtml += bFeat("Commander's Orders", 2, `Choose <strong>${nOrders}</strong> orders.${oHtml}</div>`, "", true);
-            fHtml += bFeat("Field Medic", 2, `Roll +1 die for health potions. Allies you examine for 10 min add your Examination bonus to HD recovery.`);
-        }
-
-        if (level >= 3) {
-            if (subclass === "Bulwark") {
-                fHtml += bFeat("Armor Master", 3, `Proficient with Plate armor.`, sCls);
-                fHtml += bFeat("Shield Expert", 3, `Defend 2x each round. First block each round grants free opportunity attack.`, sCls);
-            } else if (subclass === "Vanguard") {
-                fHtml += bFeat("Advance!", 3, `1/round: Move toward enemy to gain advantage on first melee attack. Ally/Self within 12 move 1/2 speed for free on Coordinated Strike.`, sCls);
-            } else if (subclass === "Spellblade") {
-                fHtml += bFeat("Firebrand", 3, `When you roll Initiative, you may cast Enchant Weapon for free.`, sCls);
-                
-                let sState = state.selectedSpells || [];
-                let sHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-                for(let i=0; i<1; i++) {
-                    let val = sState[i] || "None";
-                    let opts = `<option value="None">Select Tier 1 Spell...</option>`;
-                    Object.keys(SPELLS).forEach(sch => {
-                        opts += `<optgroup label="${sch}">`;
-                        Object.keys(SPELLS[sch][1] || {}).forEach(sn => opts += `<option value="${sn}">${sn}</option>`);
-                        opts += `</optgroup>`;
-                    });
-                    sHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                        <select onchange="updateClassState('selectedSpells', ${i}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    </div>`;
+        // 1. Identify Replaced Features (scan ALL subclass features to see what they replace)
+        Object.values(subData).forEach(lvlFeats => {
+            lvlFeats.forEach(f => {
+                if (f.replaces) {
+                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
+                    else replacedIds.add(f.replaces);
                 }
-                fHtml += bFeat("Deep Knowledge (1)", 3, `Pick any Tier 1 spell and any Utility Spell.${sHtml}</div>`, sCls, true);
-            }
-        }
+            });
+        });
 
-        if (level >= 4) {
-            fHtml += bFeat("Key Stat Increase", 4, `+1 STR or INT.`);
-            if (subclass !== "Spellblade") {
-                let nTactics = level>=16?6 : level>=12?5 : level>=10?4 : level>=8?3 : level>=6?2 : 1;
-                let tState = state.selectedTactics || [];
-                let opts = `<option value="None">Select a Combat Tactic...</option>`;
-                COMMANDER_DATA.tactics.forEach(k => opts += `<option value="${k}">${k}</option>`);
-                let tHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-                for(let i=0; i<nTactics; i++) {
-                    let val = tState[i] || "None";
-                    tHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--gold-light);">
-                        <select onchange="updateClassState('selectedTactics', ${i}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${val !== "None" ? iStats(COMMANDER_DESCS[val]) : ""}</div>
-                    </div>`;
-                }
-                fHtml += bFeat("Combat Tactics", 4, `When rolling Init, gain <strong>STR</strong> Combat Dice (<strong>${derived.cdType}</strong>). Spend dice on maneuvers. Choose <strong>${nTactics}</strong>.${tHtml}</div>`, "", true);
-            }
-        }
-
-        if (level >= 5) {
-            fHtml += bFeat("Master Commander", 5, `Regain 1 Strike on Init. Strikes ignore disadvantage.`);
-            fHtml += bFeat("Secondary Stat Increase", 5, `+1 DEX or WIL.`);
-        }
-
-        if (level >= 6 && subclass !== "Spellblade") {
-            let mState = state.selectedMastery || [];
-            let opts = `<option value="None">Select Weapon Mastery...</option>`;
-            COMMANDER_DATA.masteries.forEach(k => opts += `<option value="${k}">${k}</option>`);
-            let mHtml = `<div style="margin-top: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                <select onchange="updateClassState('selectedMastery', 0, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${mState[0]}"`, `value="${mState[0]}" selected`)}</select>
-                <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${mState[0] ? iStats(COMMANDER_DESCS[mState[0]]) : ""}</div>
-            </div>`;
-            fHtml += bFeat("Weapon Mastery", 6, `You may sheathe/draw different weapons 2x/round free. Choose a specialty.${mHtml}`, "", true);
-        }
-
-        if (level >= 7) {
-            if (subclass === "Bulwark") fHtml += bFeat("Juggernaut", 7, `On Coordinated Strike, deal extra dmg = Armor and add +1 to Primary Die.`, sCls);
-            else if (subclass === "Vanguard") fHtml += bFeat("Experienced Commander", 7, `Coordinated Strike targets 1 additional ally. Gain +1 use/Safe Rest.`, sCls);
-            else if (subclass === "Spellblade") {
-                let sState = state.selectedSpells || [];
-                let val = sState[1] || "None";
-                let opts = `<option value="None">Select Tier 2 Spell...</option>`;
-                Object.keys(SPELLS).forEach(sch => {
-                    opts += `<optgroup label="${sch}">`;
-                    Object.keys(SPELLS[sch][2] || {}).forEach(sn => opts += `<option value="${sn}">${sn}</option>`);
-                    opts += `</optgroup>`;
+        // 2. Render level by level
+        for (let l = 1; l <= level; l++) {
+            // Core
+            if (COMMANDER_FEATURES.core[l]) {
+                COMMANDER_FEATURES.core[l].forEach(feat => {
+                    if (!replacedIds.has(feat.id)) {
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                    }
                 });
-                let sHtml = `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent); margin-top:10px;">
-                    <select onchange="updateClassState('selectedSpells', 1, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                </div>`;
-                fHtml += bFeat("Deep Knowledge (2)", 7, `Pick any Tier 2 spell and any Utility Spell.${sHtml}`, sCls, true);
             }
-        }
-
-        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 STR or INT.`);
-
-        if (level >= 9) {
-            fHtml += bFeat("Combat Tactics (2)", 9, `Your Combat Dice are now <strong>d10</strong>s.`);
-            fHtml += bFeat("Secondary Stat Increase", 9, `+1 DEX or WIL.`);
-        }
-
-        if (level >= 10 && subclass !== "Spellblade") {
-            let mState = state.selectedMastery || [];
-            let opts = `<option value="None">Select 2nd Mastery...</option>`;
-            COMMANDER_DATA.masteries.forEach(k => opts += `<option value="${k}">${k}</option>`);
-            let mHtml = `<div style="margin-top: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                <select onchange="updateClassState('selectedMastery', 1, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${mState[1]}"`, `value="${mState[1]}" selected`)}</select>
-                <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${mState[1] ? iStats(COMMANDER_DESCS[mState[1]]) : ""}</div>
-            </div>`;
-            fHtml += bFeat("Weapon Mastery (2)", 10, `Choose a 2nd specialty.${mHtml}`, "", true);
-        }
-
-        if (level >= 11) {
-            if (subclass === "Bulwark") fHtml += bFeat("Taunting Strike", 11, `1/turn: You may Taunt a creature you hit until the end of their next turn.`, sCls);
-            else if (subclass === "Vanguard") fHtml += bFeat("Survey the Battlefield", 11, `When you roll Initiative, regain 1 use of Coordinated Strike. +1 max Combat Dice.`, sCls);
-            else if (subclass === "Spellblade") {
-                let sState = state.selectedSpells || [];
-                let val = sState[2] || "None";
-                let opts = `<option value="None">Select Tier 3 Spell...</option>`;
-                Object.keys(SPELLS).forEach(sch => {
-                    opts += `<optgroup label="${sch}">`;
-                    Object.keys(SPELLS[sch][3] || {}).forEach(sn => opts += `<option value="${sn}">${sn}</option>`);
-                    opts += `</optgroup>`;
+            // Subclass
+            if (subData[l]) {
+                subData[l].forEach(feat => {
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
                 });
-                let sHtml = `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent); margin-top:10px;">
-                    <select onchange="updateClassState('selectedSpells', 2, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                </div>`;
-                fHtml += bFeat("Deep Knowledge (3)", 11, `Pick any Tier 3 spell and any Utility Spell.${sHtml}`, sCls, true);
             }
         }
-
-        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 STR or INT.`);
-
-        if (level >= 13) {
-            fHtml += bFeat("Combat Tactics (3)", 13, `Your Combat Dice are now <strong>d12</strong>s.`);
-            fHtml += bFeat("Secondary Stat Increase", 13, `+1 DEX or WIL.`);
-        }
-
-        if (level >= 14 && subclass !== "Spellblade") {
-            fHtml += bFeat("Complete Mastery", 14, `You have complete mastery of ALL weapon types.`);
-        }
-
-        if (level >= 15) {
-            if (subclass === "Bulwark") fHtml += bFeat("Shield Wall", 15, `Allies within 2 spaces gain ALL the benefits of the shield you have equipped.`, sCls);
-            else if (subclass === "Vanguard") fHtml += bFeat("As One!", 15, `Coordinated Strike attacks grant advantage and ignore disadvantage. Chosen allies gain 1 action on their turn.`, sCls);
-            else if (subclass === "Spellblade") {
-                let sState = state.selectedSpells || [];
-                let val = sState[3] || "None";
-                let opts = `<option value="None">Select Tier 4 Spell...</option>`;
-                Object.keys(SPELLS).forEach(sch => {
-                    opts += `<optgroup label="${sch}">`;
-                    Object.keys(SPELLS[sch][4] || {}).forEach(sn => opts += `<option value="${sn}">${sn}</option>`);
-                    opts += `</optgroup>`;
-                });
-                let sHtml = `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent); margin-top:10px;">
-                    <select onchange="updateClassState('selectedSpells', 3, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                </div>`;
-                fHtml += bFeat("Deep Knowledge (4)", 15, `Pick any Tier 4 spell and any Utility Spell.${sHtml}`, sCls, true);
-            }
-        }
-
-        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 STR or INT.`);
-
-        if (level >= 17) {
-            fHtml += bFeat("Combat Tactics (4)", 17, `Your Combat Dice are now <strong>d20</strong>s.`);
-            fHtml += bFeat("Secondary Stat Increase", 17, `+1 DEX or WIL.`);
-        }
-
-        if (level >= 18) fHtml += bFeat("Unparalleled Tactics", 18, `1/encounter: The first time you use Coordinated Strike, an ally also gains 1 action.`);
-        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Captain of Legions", 20, `+1 to any 2 of your stats. 1/encounter: Coordinated Strike grants EVERY ally within 12 spaces +1 action.`);
 
         return fHtml;
+    },
+
+    renderFeature: function(feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "spell_choice" || feat.type === "dynamic_spell_choice";
+        let name = feat.name;
+        let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
+        let collection = feat.collection;
+        let desc = feat.desc || "";
+
+        let finalCssClass = cssClass || "";
+        if (feat.minor) {
+            finalCssClass += " minor-feature";
+        }
+
+        // Dynamic renaming and transformation of the Orders card into Arcane Command for Spellblade
+        if (feat.id === "orders" && subclass === "Spellblade") {
+            name = "Arcane Command";
+            collection = "sb_options";
+            desc = "Your focus on the arcane causes you to lose access to Weapon Mastery and Combat Tactics, but you now gain INT mana when you roll Initiative. Your Commander's Orders are empowered with magical power. Whenever you could choose a Combat Tactic or Weapon Mastery, instead choose another Commander’s Order or a tier 1 (or lower) spell from any spell school.";
+            let c = 2; // base 2 orders
+            if (level >= 4) c += 1;
+            if (level >= 6) c += 2;
+            if (level >= 8) c += 1;
+            if (level >= 10) c += 2;
+            if (level >= 12) c += 1;
+            if (level >= 14) c += 1;
+            if (level >= 16) c += 1;
+            count = c;
+        }
+
+        if (feat.type === "choice" || feat.type === "dynamic_choice") {
+            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
+            let selection = state[feat.stateKey] || [];
+
+            for (let i = 0; i < count; i++) {
+                let idx = (feat.startIndex || 0) + i;
+                let val = selection[idx] || "None";
+                let d = "";
+
+                if (collection === "sb_options") {
+                    let orderOpts = `<option value="None">Select Commander's Order...</option>`;
+                    Object.keys(COMMANDER_OPTIONS.orders).forEach(o => orderOpts += `<option value="${o}">${o}</option>`);
+
+                    let spellOpts = `<option value="None">Select Tier 1 Spell...</option>`;
+                    Object.keys(SPELL_REGISTRY).forEach(sch => {
+                        spellOpts += `<optgroup label="${sch}">`;
+                        Object.entries(SPELL_REGISTRY[sch]).forEach(([sn, data]) => {
+                            let t = parseInt(data.tier.replace(/\D/g, '')) || 0;
+                            if (data.tier.includes("Cantrip") || t <= 1) {
+                                spellOpts += `<option value="${sn}">${sn} (${data.tier})</option>`;
+                            }
+                        });
+                        spellOpts += `</optgroup>`;
+                    });
+
+                    if (val !== "None") {
+                        let itemName = val.split(" (")[0];
+                        if (COMMANDER_OPTIONS.orders[itemName]) {
+                            d = subclass === "Spellblade" && COMMANDER_OPTIONS.orders[itemName].empowered ? COMMANDER_OPTIONS.orders[itemName].empowered : COMMANDER_OPTIONS.orders[itemName].desc;
+                        } else {
+                            Object.values(SPELL_REGISTRY).forEach(sch => {
+                                if (sch[itemName]) d = sch[itemName].desc;
+                            });
+                            if (!d) d = "Selected Spell/Order";
+                        }
+                    }
+
+                    choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                        <div style="display:flex; gap: 8px; margin-bottom: 5px;">
+                            <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="flex:1; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.85em; background: rgba(0,0,0,0.4); padding: 2px;">${orderOpts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                            <span style="color:var(--text-muted); font-size:0.8em; align-self:center; font-family:'Cinzel'; font-weight:bold;">OR</span>
+                            <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="flex:1; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.85em; background: rgba(0,0,0,0.4); padding: 2px;">${spellOpts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                        </div>
+                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3; margin-top:4px;">${iStats(d)}</div>
+                    </div>`;
+                } else {
+                    let options = [];
+                    if (collection === "orders") options = Object.keys(COMMANDER_OPTIONS.orders);
+                    else if (collection === "tactics") options = Object.keys(COMMANDER_OPTIONS.tactics);
+                    else if (collection === "masteries") options = Object.keys(COMMANDER_OPTIONS.masteries);
+
+                    let optsHtml = `<option value="None">-- Select Option --</option>`;
+                    options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+
+                    if (val !== "None") {
+                        if (COMMANDER_OPTIONS[collection] && COMMANDER_OPTIONS[collection][val]) {
+                            d = COMMANDER_OPTIONS[collection][val].desc;
+                        }
+                    }
+                    choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                        <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    </div>`;
+                }
+            }
+            desc += choiceHtml + `</div>`;
+        }
+
+        if (feat.type === "spell_choice" || feat.type === "dynamic_spell_choice") {
+            let sHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
+
+            let selection = state[feat.stateKey] || [];
+            let count = feat.type === "dynamic_spell_choice" ? feat.getCount(level) : (feat.count || 1);
+
+            for (let i = 0; i < count; i++) {
+                let idx = (feat.startIndex || 0) + i;
+                let val = selection[idx] || "None";
+                let maxTier = feat.getTier ? feat.getTier(idx) : feat.tiered;
+
+                let opts = `<option value="None">Select Tier ${maxTier} Spell...</option>`;
+                Object.keys(SPELL_REGISTRY).forEach(sch => {
+                    opts += `<optgroup label="${sch}">`;
+                    Object.entries(SPELL_REGISTRY[sch]).forEach(([sn, data]) => {
+                        let t = parseInt(data.tier.replace(/\D/g, '')) || 0;
+                        let isCantrip = data.tier.includes("Cantrip");
+                        if (isCantrip || t <= maxTier) {
+                            opts += `<option value="${sn}">${sn} (${data.tier})</option>`;
+                        }
+                    });
+                    opts += `</optgroup>`;
+                });
+                sHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                    <label style="font-size:0.7em; color:var(--gold-light); display:block; margin-bottom:2px;">TIERED SPELL (UP TO T${maxTier})</label>
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: rgba(0,0,0,0.4); padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                </div>`;
+
+                if (feat.utility) {
+                    let uSelection = state[feat.utilStateKey] || [];
+                    let uVal = uSelection[idx] || "None";
+                    let uOpts = `<option value="None">Select Utility Spell...</option>`;
+                    Object.keys(UTILITY_SPELLS).forEach(sch => {
+                        uOpts += `<optgroup label="${sch}">`;
+                        Object.keys(UTILITY_SPELLS[sch]).forEach(sn => uOpts += `<option value="${sn}">${sn}</option>`);
+                        uOpts += `</optgroup>`;
+                    });
+                    sHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent); margin-top: 4px;">
+                        <label style="font-size:0.7em; color:var(--gold-light); display:block; margin-bottom:2px;">UTILITY SPELL</label>
+                        <select onchange="updateClassState('${feat.utilStateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: rgba(0,0,0,0.4); padding: 2px; width: 100%;">${uOpts.replace(`value="${uVal}"`, `value="${uVal}" selected`)}</select>
+                    </div>`;
+                }
+            }
+
+            desc += sHtml + `</div>`;
+        }
+
+        return bFeat(name, feat.level || "", desc, finalCssClass, isChoice);
     }
 };
