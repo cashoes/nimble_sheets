@@ -1,41 +1,111 @@
-const BERSERKER_DATA = {
+const BERSERKER_OPTIONS = {
     arsenal: {
-        "Combat Offense": [
-            "Death Blow",
-            "Rampage",
-            "Whirlwind"
-        ],
-        "Mobility & Speed": [
-            "Eager for Battle",
-            "Into the Fray",
-            "Swift Fury",
-            "Thunderous Steps"
-        ],
-        "Survival & Grit": [
-            "Deathless Rage",
-            "Mighty Endurance",
-            "Unstoppable Force"
-        ],
-        "Utility & Control": [
-            "MORE BLOOD!",
-            "You're Next!"
-        ]
+        "Death Blow": { desc: "After you deal damage from a crit, you may expend any number of Fury Dice. Sum the dice and deal double that amount of damage." },
+        "Deathless Rage": { desc: "(1/turn) While Dying, you may suffer 1 Wound to gain 1 action." },
+        "Eager for Battle": { desc: "Gain advantage on Initiative. Move 2× DEX spaces for free on your first turn each encounter." },
+        "Into the Fray": { desc: "Action: Leap up to 2× DEX spaces toward an enemy. If you land adjacent to at least 2 enemies, make an attack against 1 of them for free." },
+        "Mighty Endurance": { desc: "You can now survive an additional 4 Wounds before death." },
+        "MORE BLOOD!": { desc: "Whenever an enemy crits you, gain 1 Fury Die." },
+        "Rampage": { desc: "(1/turn) After you land a hit, you may treat your next attack this turn as if you rolled that same amount instead of rolling again." },
+        "Swift Fury": { desc: "Whenever you gain one or more Fury Dice, move up to DEX spaces for free, ignoring difficult terrain." },
+        "Thunderous Steps": { desc: "After moving at least 4 spaces while Raging, you may deal STR Bludgeoning damage to all adjacent creatures where you stop." },
+        "Unstoppable Force": { desc: "While Dying and Raging, taking damage causes 1 Wound (instead of 2) and critical hits inflict 2 Wounds (instead of 3)." },
+        "Whirlwind": { desc: "2 actions: Attack ALL targets within your melee weapon's reach." },
+        "You're Next!": { desc: "Action: While Raging, you can make a Might skill check to demoralize an enemy within Reach 12 (DC: their current HP). On a success, they immediately flee the battle." }
     }
 };
 
-const ARSENAL_DESCS = {
-    "Death Blow": "After you deal damage from a crit, you sum the Fury Dice and deal double that amount of damage.",
-    "Deathless Rage": "(1/turn) While Dying, you may suffer 1 Wound to gain 1 action.",
-    "Eager for Battle": "Gain advantage on Initiative. Move 2x DEX spaces for free on your first turn each encounter.",
-    "Into the Fray": "Action: Leap up to 2x DEX spaces toward an enemy. If you land adjacent to at least 2 enemies, make an attack against 1 of them for free.",
-    "Mighty Endurance": "You can now survive an additional 4 Wounds before death.",
-    "MORE BLOOD!": "Whenever an enemy crits you, gain 1 Fury Die.",
-    "Rampage": "(1/turn) After you land a hit, you may treat your next attack this turn as if you rolled that same amount instead of rolling again.",
-    "Swift Fury": "Whenever you gain one or more Fury Dice, move up to DEX spaces for free, ignoring difficult terrain.",
-    "Thunderous Steps": "After moving at least 4 spaces while Raging, you may deal STR Bludgeoning damage to all adjacent creatures where you stop.",
-    "Unstoppable Force": "While Dying and Raging, taking damage causes 1 Wound (instead of 2) and critical hits inflict 2 Wounds (instead of 3).",
-    "Whirlwind": "2 actions: Attack ALL targets within your melee weapon's reach.",
-    "You're Next!": "Action: While Raging, make a Might skill check to demoralize an enemy within Reach 12 (DC: their current HP). On a success, they immediately flee."
+const BERSERKER_FEATURES = {
+    core: {
+        1: [
+            { id: "basics", name: "Berserker Basics", desc: "Hit Die: 1d12 | Saves: STR(+), INT(-)<br>Armor: None | Weapons: all STR weapons" },
+            { id: "rage", name: "Rage", desc: "(1/turn) Action: Roll a Fury Die (1d4) and set it aside. Add it to every STR attack you make. You can have a max of KEY Fury Dice; they are lost when your Rage ends." },
+            { id: "that_all", name: "That all you got?!", desc: "When you are attacked, you may expend 1 or more Fury Dice to reduce the damage taken by STR+DEX for each die spent." },
+            { id: "rage_ends", name: "Your Rage Ends...", desc: "If you leave combat, drop to 0 HP, or go 1 round without attacking or Raging.", minor: true }
+        ],
+        2: [
+            { id: "intensifying", name: "Intensifying Fury", desc: "If you are Raging at the beginning of your turn, roll 1 Fury Die for free." },
+            { id: "ancients", name: "One with the Ancients", desc: "(1/Safe Rest) When faced with a decision about which direction or course of action to take, you can call upon your ancestors to guide you toward the most dangerous or challenging path." }
+        ],
+        3: [
+            { id: "subclass", name: "Subclass", desc: "Choose a Berserker subclass.", minor: true },
+            { id: "bloodlust", name: "Bloodlust", desc: "Expend 1 or more Fury Dice on your turn, move DEX spaces per die spent for free." }
+        ],
+        4: [
+            { id: "enduring_rage", name: "Enduring Rage", desc: "While Dying, you Rage automatically for free at the beginning of your turn, have a max of 2 actions instead of 1, and ignore the STR saves to make attacks." },
+            { id: "arsenal", name: "Savage Arsenal", type: "dynamic_choice", collection: "arsenal", stateKey: "selectedArsenal", desc: "Choose Savage Arsenal abilities as you level up.", getCount: (level) => level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 },
+            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true }
+        ],
+        5: [
+            { id: "rage_2", name: "Rage (2)", desc: "Whenever you Rage, gain 2 Fury Dice instead." },
+            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+        ],
+        6: [
+            { id: "intensifying_2", name: "Intensifying Fury (2)", desc: "Your Fury Dice are now d6s.", minor: true }
+        ],
+        8: [
+            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true }
+        ],
+        9: [
+            { id: "intensifying_3", name: "Intensifying Fury (3)", desc: "Your Fury Dice are now d8s.", minor: true },
+            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+        ],
+        12: [
+            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true }
+        ],
+        13: [
+            { id: "intensifying_4", name: "Intensifying Fury (4)", desc: "Your Fury Dice are now d10s.", minor: true },
+            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+        ],
+        16: [
+            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true }
+        ],
+        17: [
+            { id: "intensifying_5", name: "Intensifying Fury (5)", desc: "Your Fury Dice are now d12s.", minor: true },
+            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+        ],
+        18: [
+            { id: "deep_rage", name: "DEEP RAGE", desc: "Dropping to 0 HP does not cause your Rage to end." }
+        ],
+        19: [
+            { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
+        ],
+        20: [
+            { id: "boundless_rage", name: "BOUNDLESS RAGE", desc: "+1 to any 2 of your stats. Anytime you roll less than 6 on a Fury Die, change it to 6 instead." }
+        ]
+    },
+    subclasses: {
+        "Mountainheart": {
+            3: [
+                { id: "stone_resilience", name: "Stone's Resilience", desc: "Whenever you expend Fury Dice to reduce incoming damage, add the value of the die to the amount reduced." },
+                { id: "mountainous_tenacity", name: "Mountainous Tenacity", desc: "Whenever you expend your Hit Dice to recover HP, for every 10 HP you would recover, you may heal 1 Wound instead." }
+            ],
+            7: [
+                { id: "unbreakable", name: "Unbreakable", desc: "(1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don't." }
+            ],
+            11: [
+                { id: "titans_fury", name: "Titan's Fury", desc: "After you miss an attack or are crit by an enemy, Rage for free." }
+            ],
+            15: [
+                { id: "mountains_endurance", name: "Mountain's Endurance", desc: "While Dying, if an attack against you would be a crit, the attack is rerolled instead (when-crit abilities, such as Titan's Fury, still trigger)." }
+            ]
+        },
+        "RedMist": {
+            3: [
+                { id: "blood_frenzy", name: "Blood Frenzy", desc: "(1/turn) While Raging, whenever you crit or kill an enemy, change 1 Fury Die to the maximum." },
+                { id: "savage_awareness", name: "Savage Awareness", desc: "Advantage on Perception checks to notice or track down blood. Blindsight 2 while Raging: you ignore the Blinded condition and can see through darkness and Invisibility within that Range." }
+            ],
+            7: [
+                { id: "unstoppable_brutality", name: "Unstoppable Brutality", desc: "While Raging, you may gain 1 Wound to reroll any attack or save." }
+            ],
+            11: [
+                { id: "opportunistic_frenzy", name: "Opportunistic Frenzy", desc: "While Raging, you can make opportunity attacks without disadvantage, and you may make them whenever an enemy enters your melee weapon's reach." }
+            ],
+            15: [
+                { id: "onslaught", name: "Onslaught", desc: "While Raging, gain +2 speed. (1/round) you may move for free." }
+            ]
+        }
+    }
 };
 
 const CLASS_CONFIG = {
@@ -43,7 +113,7 @@ const CLASS_CONFIG = {
     subtitle: "An unstoppable force of wrath and ruin",
     keyStats: ['str', 'dex'], 
     saves: { adv: 'str', dis: 'int' }, 
-    baseHp: 22,
+    baseHp: 20,
     hpPerLevel: 9,
     hitDie: 12,
     
@@ -115,14 +185,12 @@ const CLASS_CONFIG = {
         return `
         <div class="panel mechanic-panel" style="padding: 12px 15px; height: 165px; display: flex; flex-direction: column; justify-content: space-between;">
             <div style="display: flex; align-items: stretch; justify-content: space-around; flex: 1;">
-               <!-- Column 1: Bonus -->
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 15px; justify-content: center;">
                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Fury Bonus</label>
                    <div style="font-size: 3.2em; font-family: 'Cinzel', serif; font-weight: 900; color: var(--save-dis); line-height: 1; text-shadow: 0 0 15px rgba(239, 68, 68, 0.3);">+${totalFury}</div>
                    <div style="font-size: 0.7em; color: var(--text-muted); text-align: center; margin-top: 8px; font-weight: bold; font-family: 'Cinzel';">STR Dmg Bonus</div>
                </div>
 
-               <!-- Column 2: Pool & Controls -->
                <div style="flex: 2.8; display: flex; flex-direction: column; align-items: center; padding: 0 15px; justify-content: center;">
                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
                        <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Dice Pool (${fdType})</label>
@@ -168,106 +236,69 @@ const CLASS_CONFIG = {
         }
     },
 
-    getFeaturesHTML: function(level, subclass, state, derived, bFeat, iStats) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
         let fHtml = "";
         const sCls = "subclass-feature";
+        const subData = BERSERKER_FEATURES.subclasses[subclass] || {};
+        const replacedIds = new Set();
 
-        fHtml += bFeat("Berserker Basics", "", `<strong>Hit Die:</strong> 1d${this.hitDie} | <strong>Saves:</strong> STR(+), INT(-)<br><strong>Armor:</strong> None | <strong>Weapons:</strong> All Weapons`, "", true);
-        fHtml += bFeat("Rage", 1, `(1/turn) Action: Roll a Fury Die (<strong>${derived.fdType}</strong>) and set it aside. Add it to every STR attack you make. Max Fury Dice: <strong>KEY</strong>. Lost when Rage ends.`);
-        fHtml += bFeat("That all you got?!", 1, `When attacked, expend any number of Fury Dice to reduce damage by <strong>STR + DEX</strong> per die spent.`);
-        
-        if (level >= 2) {
-            fHtml += bFeat("Intensifying Fury", 2, `If Raging at start of turn, roll 1 Fury Die for free.`);
-            fHtml += bFeat("One with the Ancients", 2, `(1/Safe Rest) Ask the ancestors for guidance on a direction or course of action.`);
-        }
-        
-        if (level >= 3) {
-            fHtml += bFeat("Bloodlust", 3, `Expend 1+ Fury Dice to move <strong>DEX</strong> spaces per die for free.`);
-            if (subclass === "Mountainheart") {
-                fHtml += bFeat("Stone's Resilience", 3, `When expending Fury Dice to reduce damage, add the value of the die to the amount reduced.`, sCls);
-                fHtml += bFeat("Mountainous Tenacity", 3, `When expending Hit Dice to recover HP, for every 10 HP recovered, heal 1 Wound.`, sCls);
-            } else if (subclass === "RedMist") {
-                fHtml += bFeat("Blood Frenzy", 3, `(1/turn) When you crit or kill an enemy, change 1 Fury Die to its maximum value.`, sCls);
-                fHtml += bFeat("Savage Awareness", 3, `Advantage on Perception to track blood. Blindsight 2 while Raging (ignore Blinded, see Invisibility).`, sCls);
-            }
-        }
-
-        if (level >= 4) {
-            fHtml += bFeat("Enduring Rage", 4, `While Dying, Rage automatically for free. Max 2 actions, ignore STR saves to make attacks.<br><strong>Key Stat Increase:</strong> +1 STR or DEX.`);
-            
-            let numArsenal = level>=16?7 : level>=14?6 : level>=12?5 : level>=10?4 : level>=8?3 : level>=6?2 : 1;
-            let aState = state.selectedArsenal || [];
-            let opts = `<option value="None">Select from Savage Arsenal...</option>`;
-            Object.keys(BERSERKER_DATA.arsenal).forEach(group => {
-                opts += `<optgroup label="${group}">`;
-                BERSERKER_DATA.arsenal[group].forEach(k => opts += `<option value="${k}">${k}</option>`);
-                opts += `</optgroup>`;
+        Object.values(subData).forEach(lvlFeats => {
+            lvlFeats.forEach(f => {
+                if (f.replaces) {
+                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
+                    else replacedIds.add(f.replaces);
+                }
             });
-            
-            let aHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            for(let i=0; i<numArsenal; i++) {
-                let val = aState[i] || "None";
-                aHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--slate-lighter); border-left: 3px solid var(--save-dis);">
-                    <select onchange="updateClassState('selectedArsenal', ${i}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid var(--slate-lighter); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${val !== "None" ? iStats(ARSENAL_DESCS[val]) : ""}</div>
-                </div>`;
+        });
+
+        for (let l = 1; l <= level; l++) {
+            if (BERSERKER_FEATURES.core[l]) {
+                BERSERKER_FEATURES.core[l].forEach(feat => {
+                    if (!replacedIds.has(feat.id)) {
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                    }
+                });
             }
-            fHtml += bFeat("Savage Arsenal", 4, `Choose <strong>${numArsenal}</strong> abilities.${aHtml}</div>`, "", true);
-        }
-
-        if (level >= 5) fHtml += bFeat("Secondary Stat Increase", 5, `+1 INT or WIL.`);
-
-        if (level >= 6) fHtml += bFeat("Intensifying Fury (2)", 6, `Your Fury Dice are now <strong>d6</strong>s.`);
-
-        if (level >= 7) {
-            if (subclass === "Mountainheart") {
-                fHtml += bFeat("Unbreakable", 7, `(1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don’t.`, sCls);
-            } else if (subclass === "RedMist") {
-                fHtml += bFeat("Unstoppable Brutality", 7, `While Raging, you may gain 1 Wound to reroll any attack or save.`, sCls);
+            if (subData[l]) {
+                subData[l].forEach(feat => {
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                });
             }
         }
-
-        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 STR or DEX.`);
-
-        if (level >= 9) {
-            fHtml += bFeat("Intensifying Fury (3)", 9, `Your Fury Dice are now <strong>d8</strong>s.`);
-            fHtml += bFeat("Secondary Stat Increase", 9, `+1 INT or WIL.`);
-        }
-
-        if (level >= 11) {
-            if (subclass === "Mountainheart") {
-                fHtml += bFeat("Titan's Fury", 11, `After you miss an attack or are crit by an enemy, Rage for free.`, sCls);
-            } else if (subclass === "RedMist") {
-                fHtml += bFeat("Opportunistic Frenzy", 11, `While Raging, you can make opportunity attacks without disadvantage, and you may make them whenever an enemy enters your melee weapon’s reach.`, sCls);
-            }
-        }
-
-        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 STR or DEX.`);
-
-        if (level >= 13) {
-            fHtml += bFeat("Intensifying Fury (4)", 13, `Your Fury Dice are now <strong>d10</strong>s.`);
-            fHtml += bFeat("Secondary Stat Increase", 13, `+1 INT or WIL.`);
-        }
-
-        if (level >= 15) {
-            if (subclass === "Mountainheart") {
-                fHtml += bFeat("Mountain's Endurance", 15, `While Dying, if an attack against you would be a crit, the attack is rerolled instead.`, sCls);
-            } else if (subclass === "RedMist") {
-                fHtml += bFeat("Onslaught", 15, `While Raging, gain +2 speed. (1/round) you may move for free.`, sCls);
-            }
-        }
-
-        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 STR or DEX.`);
-
-        if (level >= 17) {
-            fHtml += bFeat("Intensifying Fury (5)", 17, `Your Fury Dice are now <strong>d12</strong>s.`);
-            fHtml += bFeat("Secondary Stat Increase", 17, `+1 INT or WIL.`);
-        }
-
-        if (level >= 18) fHtml += bFeat("DEEP RAGE", 18, `Dropping to 0 HP does not cause your Rage to end.`);
-        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("BOUNDLESS RAGE", 20, `+1 to any 2 of your stats. Anytime you roll less than 6 on a Fury Die, change it to 6 instead.`);
 
         return fHtml;
+    },
+
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
+        let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
+        let collection = feat.collection;
+        let desc = feat.desc || "";
+
+        let finalCssClass = cssClass || "";
+        if (feat.minor) finalCssClass += " minor-feature";
+
+        if (feat.type === "choice" || feat.type === "dynamic_choice") {
+            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
+            let selection = state[feat.stateKey] || [];
+            let options = Object.keys(BERSERKER_OPTIONS[collection] || {});
+
+            let optsHtml = `<option value="None">-- Select Option --</option>`;
+            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+
+            for (let i = 0; i < count; i++) {
+                let idx = (feat.startIndex || 0) + i;
+                let val = selection[idx] || "None";
+                let d = (val !== "None" && BERSERKER_OPTIONS[collection][val]) ? BERSERKER_OPTIONS[collection][val].desc : "";
+
+                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                </div>`;
+            }
+            desc += choiceHtml + `</div>`;
+        }
+
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
     }
 };
