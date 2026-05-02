@@ -466,9 +466,34 @@ function formatPips(tier) {
 }
 
 function renderSpells(level, subclass, state, derived, iStatsBound) {
-    if (!CLASS_CONFIG.getAvailableSpells) return "";
+    let spells = [];
     
-    const spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived);
+    // 1. Gather Class Spells
+    if (CLASS_CONFIG.getAvailableSpells) {
+        spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived);
+    }
+
+    // 2. Intercept Background Spells (Academy Dropout)
+    if (state.background === "Academy Dropout") {
+        let opts = `<option value="None">-- Select Spell --</option>`;
+        Object.keys(UTILITY_SPELLS).forEach(school => {
+            opts += `<optgroup label="${school}">`;
+            Object.keys(UTILITY_SPELLS[school]).forEach(sName => {
+                opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`;
+            });
+            opts += `</optgroup>`;
+        });
+        
+        let customHtml = `<select onchange="updateBgSpell(this.value)" style="border-bottom-color: var(--class-accent);">${opts}</select>`;
+        if (state.bgSpell && state.bgSpell !== "None") {
+            let sData = null;
+            Object.values(UTILITY_SPELLS).forEach(school => { if(school[state.bgSpell]) sData = school[state.bgSpell]; });
+            if (sData) customHtml += `<div style="margin-top:8px;">${iStatsBound(sData)}</div>`;
+        }
+
+        spells.unshift({ name: "Academy Dropout", tier: "Utility", school: "Radiant", customHtml: customHtml });
+    }
+
     if (!spells || spells.length === 0) return "";
 
     const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 5": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
@@ -643,24 +668,7 @@ function render() {
     let fHtml = CLASS_CONFIG.getFeaturesHTML(level, subclass, state, derived, bFeatBound, iStatsBound, formatPips);
     
     if (bgFeat) {
-        let bgDesc = bgTxt;
-        if (bgFeat.customUI === "academyDropout") {
-            let opts = `<option value="None">-- Select Spell --</option>`;
-            Object.keys(UTILITY_SPELLS).forEach(school => {
-                opts += `<optgroup label="${school}">`;
-                Object.keys(UTILITY_SPELLS[school]).forEach(sName => {
-                    opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`;
-                });
-                opts += `</optgroup>`;
-            });
-            bgDesc += `<div style="margin-top:10px;"><select onchange="updateBgSpell(this.value)" style="border-bottom-color: var(--class-accent);">${opts}</select></div>`;
-            if (state.bgSpell && state.bgSpell !== "None") {
-                let sData = null;
-                Object.values(UTILITY_SPELLS).forEach(school => { if(school[state.bgSpell]) sData = school[state.bgSpell]; });
-                if (sData) bgDesc += `<div style="margin-top:8px; font-size:0.9em; border-left: 2px solid var(--class-accent); padding-left: 10px; color: var(--text-muted);">${iStatsBound(sData)}</div>`;
-            }
-        }
-        fHtml = bFeatBound(`Background: ${background}`, "", bgDesc, "", true) + fHtml;
+        fHtml = bFeatBound(`Background: ${background}`, "", bgTxt, "", true) + fHtml;
     }
     
     if(ancTxt) fHtml = bFeatBound(`Ancestry: ${ancestry}`, "", ancTxt, "", true) + fHtml;
