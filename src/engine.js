@@ -1,105 +1,110 @@
 /**
  * STATE MANAGEMENT
  */
-// Generate a unique key based on the filename to allow "Copy & Rename" for multiple characters
+// Use full URL to isolate different character files on the same domain/local drive
 const getStorageKey = () => {
-    const filename = window.location.pathname.split('/').pop() || 'index.html';
-    return `nimble_v4_${CLASS_CONFIG.name.toLowerCase()}_${filename}`;
+    return `nimble_v4_${CLASS_CONFIG.name.toLowerCase()}_${window.location.href}`;
 };
 
 const STORAGE_KEY = getStorageKey();
 
-function saveState() {
-    const lvlInput = parseInt(document.getElementById('level').value) || 1;
-    let oldLevel = state.level;
-    let oldGold = state.gold;
-    
-    // Capture old stats to check for max resource changes
-    let oldStatsMap = { 
-        str: state.baseStr + state.addStr, 
-        dex: state.baseDex + state.addDex, 
-        int: state.baseInt + state.addInt, 
-        wil: state.baseWil + state.addWil 
-    };
+// Embedded state placeholder - populated during "Save as File"
+const EMBEDDED_STATE = null;
 
-    state.charName = document.getElementById('charName').value;
-    state.ancestry = document.getElementById('ancestry').value;
-    state.background = document.getElementById('background').value;
-    state.subclass = document.getElementById('subclass').value;
-    state.gold = parseInt(document.getElementById('gold').value) || 0;
-    state.showMinor = document.getElementById('toggleMinorFeatures')?.checked || false;
-    
-    if (state.gold > oldGold) triggerAnimation('gold', 'green');
-    else if (state.gold < oldGold) triggerAnimation('gold', 'red');
-
-    // Enforce Stat Cap (+5 Total)
-    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
-        const baseEl = document.getElementById(`base${s}`);
-        const addEl = document.getElementById(`add${s}`);
-        let b = parseInt(baseEl.value) || 0;
-        let a = parseInt(addEl.value) || 0;
+function saveState(newState = null) {
+    // If newState is provided (from Import), bypass DOM reading
+    if (newState) {
+        state = JSON.parse(JSON.stringify(newState)); // Deep clone
+    } else {
+        const lvlInput = parseInt(document.getElementById('level').value) || 1;
+        let oldLevel = state.level;
+        let oldSubclass = state.subclass;
+        let oldGold = state.gold;
         
-        // Enforce Cap: b + a <= 5
-        if (b + a > 5) {
-            a = Math.max(0, 5 - b);
-            addEl.value = a;
-        }
+        // Capture old stats to check for max resource changes
+        let oldStatsMap = { 
+            str: state.baseStr + state.addStr, 
+            dex: state.baseDex + state.addDex, 
+            int: state.baseInt + state.addInt, 
+            wil: state.baseWil + state.addWil 
+        };
 
-        // Dynamically update HTML max attribute for spinner feedback
-        addEl.max = Math.max(0, 5 - b);
-
-        state[`base${s}`] = b;
-        state[`add${s}`] = a;
-    });
-    
-    // New Stat Map after UI update
-    let statsMap = { 
-        str: state.baseStr + state.addStr, 
-        dex: state.baseDex + state.addDex, 
-        int: state.baseInt + state.addInt, 
-        wil: state.baseWil + state.addWil 
-    };
-
-    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
-    let hdFace = CLASS_CONFIG.hitDie;
-    if (ancFeat && ancFeat.modHDStep) {
-        const dieSteps = [6, 8, 10, 12, 20];
-        let idx = dieSteps.indexOf(hdFace);
-        if (idx !== -1) {
-            idx = Math.min(dieSteps.length - 1, idx + ancFeat.modHDStep);
-            hdFace = dieSteps[idx];
-        }
-    }
-    const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
-    let hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
-
-    let maxHP = CLASS_CONFIG.baseHp + ((lvlInput - 1) * hpPerLevel);
-    let maxHD = lvlInput + (ancFeat?.modHD || 0);
-
-    if (oldLevel !== lvlInput || state.hpCurrent === null) { 
-        state.hpCurrent = maxHP; 
-        state.hdCurrent = maxHD; 
-    }
-
-    // Reset Class Resources if Level or Stats changed their Maximum
-    (CLASS_CONFIG.resources || []).forEach(r => {
-        let newMax = r.calcMax(lvlInput, statsMap);
-        let prevMax = r.calcMax(oldLevel, oldStatsMap); 
+        state.charName = document.getElementById('charName').value;
+        state.ancestry = document.getElementById('ancestry').value;
+        state.background = document.getElementById('background').value;
+        state.subclass = document.getElementById('subclass').value;
+        state.gold = parseInt(document.getElementById('gold').value) || 0;
+        state.showMinor = document.getElementById('toggleMinorFeatures')?.checked || false;
         
-        if (state.resourceValues[r.id] === undefined || newMax !== prevMax || oldLevel !== lvlInput) {
-            state.resourceValues[r.id] = newMax;
+        if (state.gold > oldGold) triggerAnimation('gold', 'green');
+        else if (state.gold < oldGold) triggerAnimation('gold', 'red');
+
+        // Enforce Stat Cap (+5 Total)
+        ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
+            const baseEl = document.getElementById(`base${s}`);
+            const addEl = document.getElementById(`add${s}`);
+            let b = parseInt(baseEl.value) || 0;
+            let a = parseInt(addEl.value) || 0;
+            
+            if (b + a > 5) {
+                a = Math.max(0, 5 - b);
+                addEl.value = a;
+            }
+            addEl.max = Math.max(0, 5 - b);
+
+            state[`base${s}`] = b;
+            state[`add${s}`] = a;
+        });
+        
+        let statsMap = { 
+            str: state.baseStr + state.addStr, 
+            dex: state.baseDex + state.addDex, 
+            int: state.baseInt + state.addInt, 
+            wil: state.baseWil + state.addWil 
+        };
+
+        const ancFeat = ANCESTRY_FEATURES[state.ancestry];
+        let hdFace = CLASS_CONFIG.hitDie;
+        if (ancFeat && ancFeat.modHDStep) {
+            const dieSteps = [6, 8, 10, 12, 20];
+            let idx = dieSteps.indexOf(hdFace);
+            if (idx !== -1) {
+                idx = Math.min(dieSteps.length - 1, idx + ancFeat.modHDStep);
+                hdFace = dieSteps[idx];
+            }
         }
-    });
-    
-    state.level = lvlInput;
+        const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
+        let hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
+
+        let maxHP = CLASS_CONFIG.baseHp + ((lvlInput - 1) * hpPerLevel);
+        let maxHD = lvlInput + (ancFeat?.modHD || 0);
+
+        if (oldLevel !== lvlInput || state.hpCurrent === null) { 
+            state.hpCurrent = maxHP; 
+            state.hdCurrent = maxHD; 
+        }
+
+        // Reset Class Resources if Level, Subclass, or Stats changed their Maximum
+        (CLASS_CONFIG.resources || []).forEach(r => {
+            let newMax = r.calcMax(lvlInput, statsMap, state, state.subclass);
+            let prevMax = r.calcMax(oldLevel, oldStatsMap, state, oldSubclass); 
+            
+            if (state.resourceValues[r.id] === undefined || newMax !== prevMax || oldLevel !== lvlInput) {
+                state.resourceValues[r.id] = newMax;
+            }
+        });
+        
+        state.level = lvlInput;
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     const ind = document.getElementById('saveIndicator'); ind.textContent = 'Saved ✓'; setTimeout(() => { ind.textContent = 'Auto-saved'; }, 1500);
 }
 
 function loadState() {
     state = {
-        version: "1.0.0",
-        charName: '', level: 1, ancestry: 'Human', background: 'None', subclass: 'None',
+        version: "1.1.0",
+        charName: '', level: 1, ancestry: 'None', background: 'None', subclass: 'None',
         baseStr: 0, addStr: 0, baseDex: 0, addDex: 0, baseInt: 0, addInt: 0, baseWil: 0, addWil: 0,
         hpCurrent: null, tempHP: 0, hdCurrent: null, wounds: 0,
         skills: {}, activeConditions: [], inventory: [], gold: 0,
@@ -108,31 +113,42 @@ function loadState() {
     };
 
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
+    
+    // Priority: 1. Embedded State (from Save as File), 2. LocalStorage, 3. Defaults
+    if (EMBEDDED_STATE) {
+        Object.assign(state, EMBEDDED_STATE);
+        // Clean up embedded state after load so subsequent refreshes use LocalStorage (the latest edits)
+    } else if (raw) {
         const loaded = JSON.parse(raw);
         Object.assign(state, loaded);
-        
-        // Force update to new standardized arrays if character is fresh (Lvl 1, no name) OR version is old
-        if ((!loaded.version || loaded.version < 1.0) && state.level === 1 && !state.charName) {
-            if (CLASS_CONFIG.initialStats) {
-                Object.assign(state, CLASS_CONFIG.initialStats);
-                state.version = "1.0.0";
-            }
+    }
+
+    // Force update to new standardized arrays if character is fresh (Lvl 1, no name)
+    if (state.level === 1 && !state.charName) {
+        if (CLASS_CONFIG.initialStats) {
+            Object.assign(state, CLASS_CONFIG.initialStats);
+            state.version = "1.0.0";
         }
-    } else {
-        // Initialize with class defaults if first load
-        if (CLASS_CONFIG.initialStats) Object.assign(state, CLASS_CONFIG.initialStats);
     }
 
     applyTheme(CLASS_CONFIG.theme);
+    syncStateToDOM();
+}
 
+// Ensure UI reflects current state (used after load or import)
+function syncStateToDOM() {
     document.getElementById('classNameDisplay').innerText = CLASS_CONFIG.name;
     document.getElementById('classSubtitleDisplay').innerText = CLASS_CONFIG.subtitle;
+
+    if (CLASS_CONFIG.proficiencies) {
+        document.getElementById('profArmor').innerText = CLASS_CONFIG.proficiencies.armor || "--";
+        document.getElementById('profWeapons').innerText = CLASS_CONFIG.proficiencies.weapons || "--";
+    }
     
     let subHtml = ""; CLASS_CONFIG.subclasses.forEach(s => subHtml += `<option value="${s.value}">${s.label}</option>`);
     document.getElementById('subclass').innerHTML = subHtml;
     
-    let ancHtml = "";
+    let ancHtml = `<option value="None">None</option>`;
     Object.keys(ANCESTRIES).forEach(group => {
         ancHtml += `<optgroup label="${group}">`;
         ANCESTRIES[group].forEach(a => ancHtml += `<option value="${a}">${a}</option>`);
@@ -169,9 +185,12 @@ function loadState() {
         aSel.innerHTML += `</optgroup>`;
     });
 
-    document.getElementById('charName').value = state.charName || ''; document.getElementById('level').value = state.level || 1;
-    document.getElementById('ancestry').value = state.ancestry || 'Human'; document.getElementById('background').value = state.background || 'None';
-    document.getElementById('subclass').value = state.subclass || 'None'; document.getElementById('gold').value = state.gold || 0;
+    document.getElementById('charName').value = state.charName || ''; 
+    document.getElementById('level').value = state.level || 1;
+    document.getElementById('ancestry').value = state.ancestry || 'None'; 
+    document.getElementById('background').value = state.background || 'None';
+    document.getElementById('subclass').value = state.subclass || 'None'; 
+    document.getElementById('gold').value = state.gold || 0;
     
     ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
         document.getElementById(`base${s}`).value = state[`base${s}`];
@@ -362,7 +381,19 @@ function renderInventory(statsMap, armorVal, str, iStats) {
 function renderSkills(level, statsMap, passMods) {
     let totalPts = 3 + level; 
     let spent = 0; 
-    SKILL_LIST.forEach(s => spent += (state.skills[s.id] || 0));
+    
+    SKILL_LIST.forEach(s => {
+        let pts = state.skills[s.id] || 0;
+        let base = statsMap[s.stat] + passMods[s.id];
+        let minPts = Math.min(0, -base); 
+        let maxPts = 12 - base;
+        
+        if (pts < minPts) pts = minPts;
+        if (pts > maxPts) pts = maxPts;
+        
+        state.skills[s.id] = pts;
+        spent += pts;
+    });
     
     let isOverspent = (totalPts - spent) < 0;
     let sHtml = `<div class="skill-header"><span>SKILLS</span><span style="color:${isOverspent ? 'var(--save-dis)' : 'var(--class-accent)'}">UNSPENT: ${totalPts - spent}</span></div>`;
@@ -375,7 +406,7 @@ function renderSkills(level, statsMap, passMods) {
         let validationClass = isOverspent && pts > 0 ? 'error-glow' : '';
         sHtml += `<div class="skill-row">
             <div class="skill-name">${s.name} <span class="skill-stat">${s.stat.toUpperCase()}</span></div>
-            <div class="skill-pts"><input type="number" min="0" class="${validationClass}" value="${pts}" onchange="updateSkill('${s.id}', this.value)"></div>
+            <div class="skill-pts"><input type="number" class="${validationClass}" value="${pts}" onchange="updateSkill('${s.id}', this.value)"></div>
             <div class="skill-total">${t >= 0 ? '+' : ''}${t}</div>
         </div>`;
     });
@@ -434,6 +465,34 @@ function formatPips(tier) {
     return `<span style="letter-spacing:2px; color:var(--subclass-accent, var(--class-accent)); margin-right:8px;">${pips}</span> ${tStr}`;
 }
 
+function renderSpells(level, subclass, state, derived, iStatsBound) {
+    if (!CLASS_CONFIG.getAvailableSpells) return "";
+    
+    const spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived);
+    if (!spells || spells.length === 0) return "";
+
+    const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 5": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
+    
+    spells.sort((a, b) => {
+        let aOrder = tierOrder[a.tier] ?? 99;
+        let bOrder = tierOrder[b.tier] ?? 99;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        if (a.school !== b.school) return (a.school || "").localeCompare(b.school || "");
+        return (a.name || "").localeCompare(b.name || "");
+    });
+
+    return spells.map(s => {
+        const schoolClass = (s.school || "").toLowerCase();
+        const desc = s.customHtml ? s.customHtml : iStatsBound(s.desc);
+        const namePart = s.name ? `${s.name} ` : "";
+        return `
+            <div class="spell-card ${schoolClass}">
+                <h4>${namePart}<span class="tier-tag">${formatPips(s.tier)}</span></h4>
+                <div class="spell-desc">${desc}</div>
+            </div>`;
+    }).join("");
+}
+
 /**
  * MAIN ORCHESTRATOR
  */
@@ -446,11 +505,9 @@ function render() {
     const wil = state.baseWil + state.addWil;
     const statsMap = { str, dex, int, wil };
 
-    // Bound helpers for this specific render pass
     const iStatsBound = (txt) => iStats(txt, level, statsMap);
     const bFeatBound = (t, l, d, theme = "", skip = false) => bFeat(t, l, d, theme, skip, level, statsMap);
 
-    // Logic Gate for Subclass
     const subclassSelect = document.getElementById('subclass');
     if (level < 3) { 
         if (subclassSelect.value !== "None") {
@@ -462,22 +519,21 @@ function render() {
         subclassSelect.disabled = false;
     }
     
-    // Logic Gate for Base Stats
-    const baseLocked = level > 1;
+    const baseLocked = true;
     ['baseStr', 'baseDex', 'baseInt', 'baseWil'].forEach(id => {
       let el = document.getElementById(id); 
       if (el) {
           el.readOnly = baseLocked; 
-          el.style.opacity = baseLocked ? '0.4' : '1'; 
-          el.style.cursor = baseLocked ? 'not-allowed' : 'auto';
+          el.style.opacity = '0.5'; 
+          el.style.cursor = 'not-allowed';
+          el.style.borderBottom = 'none';
       }
     });
 
     const derived = CLASS_CONFIG.getDerivedStats(level, subclass, state);
-    derived.size = "Med"; // Default
+    derived.size = "Med"; 
     derived.hdMax = level;
 
-    // Apply Subclass Accent Color
     const subConfig = CLASS_CONFIG.subclasses.find(s => s.value === subclass);
     document.documentElement.style.setProperty('--subclass-accent', (subConfig && subConfig.accent) ? subConfig.accent : 'var(--class-accent)');
     
@@ -487,10 +543,9 @@ function render() {
     
     let classOverrides = CLASS_CONFIG.getStatOverrides ? CLASS_CONFIG.getStatOverrides(level, subclass, state, statsMap) : {};
 
-    // Passives/Ancestry
     let init = dex + (classOverrides.init || 0); 
     let hdFace = CLASS_CONFIG.hitDie;
-    derived.speed = 6 + (classOverrides.speed || 0); 
+    derived.speed = (derived.speed || 6) + (classOverrides.speed || 0); 
 
     let ancTxt = ""; let passMods = {}; SKILL_LIST.forEach(s => passMods[s.id] = 0);
     
@@ -505,7 +560,6 @@ function render() {
         if (ancFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += ancFeat.modAllSkills);
         if (ancFeat.modSkill) passMods[ancFeat.modSkill.id] += ancFeat.modSkill.val;
         
-        // Handle Hit Die step increments (e.g. Oozeling)
         if (ancFeat.modHDStep) {
             const dieSteps = [6, 8, 10, 12, 20];
             let idx = dieSteps.indexOf(hdFace);
@@ -529,7 +583,6 @@ function render() {
         if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val;
     }
 
-    // Armor Calculation
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : dex;
     let bestArmorVal = -1;
     let shieldBonus = 0;
@@ -550,15 +603,15 @@ function render() {
 
     if (bestArmorVal !== -1) armorVal = bestArmorVal;
     armorVal += shieldBonus + (CLASS_CONFIG.getShieldBonus ? CLASS_CONFIG.getShieldBonus(level, subclass, statsMap) : 0);
+    if (classOverrides.armor) armorVal += classOverrides.armor;
     if (ancFeat && ancFeat.modArmor) armorVal += ancFeat.modArmor;
     if (bgFeat && bgFeat.modArmor) armorVal += bgFeat.modArmor;
 
-    // Birdfolk flight speed logic
-    if (ancFeat && ancFeat.modFlySpeed && armorIsLight) {
+    if ((ancFeat?.modFlySpeed || classOverrides.modFlySpeed) && armorIsLight) {
         derived.speed = `${derived.speed} (${derived.speed} Fly)`;
     }
 
-    const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
+    let hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
     let hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
     let maxHP = CLASS_CONFIG.baseHp + ((level - 1) * hpPerLevel);
 
@@ -577,7 +630,6 @@ function render() {
     document.getElementById('maxHD').innerText = derived.hdMax;
     document.getElementById('hitDiceLabel').innerText = `Hit Dice (d${hdFace})`;
 
-    // Execute modular renders
     renderHeader(derived, armorVal, init);
     renderAttributes(level, statsMap);
     renderResources(level, derived, statsMap, hdFace);
@@ -585,7 +637,6 @@ function render() {
     renderSkills(level, statsMap, passMods);
     renderConditions();
 
-    // Features and Spells Orchestration
     if (document.getElementById('toggleMinorFeatures')) document.getElementById('toggleMinorFeatures').checked = state.showMinor || false;
     document.body.classList.toggle('show-minor', state.showMinor);
 
@@ -603,8 +654,6 @@ function render() {
                 opts += `</optgroup>`;
             });
             bgDesc += `<div style="margin-top:10px;"><select onchange="updateBgSpell(this.value)" style="width:100%; background:rgba(0,0,0,0.2); color:#fff; border:1px solid var(--class-accent); padding:4px;">${opts}</select></div>`;
-            
-            // Add selected spell description
             if (state.bgSpell && state.bgSpell !== "None") {
                 let sData = null;
                 Object.values(UTILITY_SPELLS).forEach(school => { if(school[state.bgSpell]) sData = school[state.bgSpell]; });
@@ -617,7 +666,17 @@ function render() {
     if(ancTxt) fHtml = bFeatBound(`Ancestry: ${ancestry}`, "", ancTxt, "", true) + fHtml;
     document.getElementById('featuresContainer').innerHTML = fHtml;
     
-    let sHtml = (CLASS_CONFIG.getSpellCardsHTML) ? CLASS_CONFIG.getSpellCardsHTML(level, subclass, state, derived, formatPips, iStatsBound) : "";
+    let maxTier = 0;
+    const isSpellcaster = CLASS_CONFIG.getAvailableSpells || CLASS_CONFIG.spellProgression || (subclass === "Spellblade");
+    if (isSpellcaster) {
+        const defaultProgress = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18];
+        const progress = (subclass === "Spellblade") ? [0, 3, 7, 11, 15] : (CLASS_CONFIG.spellProgression || defaultProgress);
+        maxTier = progress.findLastIndex(l => level >= l);
+    }
+    const mtEl = document.getElementById('maxTierDisplay');
+    if (mtEl) mtEl.innerText = maxTier > 0 ? `(Max Tier: ${maxTier})` : "";
+
+    let sHtml = renderSpells(level, subclass, state, derived, iStatsBound);
     const sWrapper = document.getElementById('spellsColWrapper');
     if (sHtml && sHtml.trim().length > 0) {
         document.getElementById('featuresSpellsLayout').className = 'layout-2col'; 
@@ -638,7 +697,7 @@ function triggerAnimation(id, type) {
     if (!el) return;
     const cls = type === 'green' ? 'flash-green' : 'flash-red';
     el.classList.remove('flash-green', 'flash-red');
-    void el.offsetWidth; // trigger reflow
+    void el.offsetWidth;
     el.classList.add(cls);
     setTimeout(() => el.classList.remove(cls), 1000);
 }
@@ -688,7 +747,7 @@ function updateItem(id, field, val, check = false) {
 }
 
 function toggleCondition(id) { if (state.activeConditions.includes(id)) state.activeConditions = state.activeConditions.filter(c => c !== id); else state.activeConditions.push(id); saveState(); render(); }
-function updateSkill(id, val) { state.skills[id] = Math.max(0, parseInt(val) || 0); saveState(); render(); }
+function updateSkill(id, val) { state.skills[id] = parseInt(val) || 0; saveState(); render(); }
 
 function adjHP(a, isAbsolute = false) {
     const max = CLASS_CONFIG.baseHp + ((state.level - 1) * CLASS_CONFIG.hpPerLevel);
@@ -733,8 +792,6 @@ window.addEventListener('wheel', (e) => {
     if (e.target.type === 'number') { 
         e.preventDefault(); 
         let d = e.deltaY < 0 ? 1 : -1; 
-        
-        // Directly trigger the correct state update using relative changes
         if (e.target.id === 'displayCurrentHP') adjHP(d, false);
         else if (e.target.id === 'displayTempHP') adjTempHP(d, false);
         else if (e.target.id === 'displayHD') adjHD(d, false);
@@ -758,7 +815,7 @@ function exportCharacter() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${state.charName || 'Hero'}_${CLASS_CONFIG.name}.json`;
+    a.download = `nimble_${state.charName || 'Hero'}_${CLASS_CONFIG.name}.json`;
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -770,8 +827,8 @@ function importCharacter(input) {
     reader.onload = (e) => {
         try {
             const imported = JSON.parse(e.target.result);
-            Object.assign(state, imported);
-            saveState();
+            saveState(imported); // Refactored saveState handles the state update and UI sync
+            loadState(); // Re-initialize UI from the newly saved state
             render();
             alert("Character imported successfully!");
         } catch (err) {
@@ -779,6 +836,33 @@ function importCharacter(input) {
         }
     };
     reader.readAsText(file);
+}
+
+// NEW: Save the entire HTML file with the state embedded
+function saveAsHTML() {
+    const currentHtml = document.documentElement.outerHTML;
+    const stateJson = JSON.stringify(state);
+    
+    // Find the placeholder and inject the state (handles both null and existing objects)
+    const placeholderRegex = /const EMBEDDED_STATE = (null|{.*?});/;
+    const injection = `const EMBEDDED_STATE = ${stateJson};`;
+    
+    let newHtml = currentHtml.replace(placeholderRegex, injection);
+    
+    // Also update the title to include the character name for the filename default
+    const titleRegex = /<title>(.*?)<\/title>/;
+    const newTitle = `NIMBLE — ${state.charName || 'Hero'} (${CLASS_CONFIG.name})`;
+    newHtml = newHtml.replace(titleRegex, `<title>${newTitle}</title>`);
+
+    const blob = new Blob([newHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nimble_${state.charName || 'Hero'}_${CLASS_CONFIG.name}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 const debounce = (fn, ms) => {

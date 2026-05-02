@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NIMBLE — Character Tracker v1.0.0</title>
+<title>NIMBLE — Character Tracker v1.1.0</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
 <style>
@@ -136,7 +136,7 @@
   .core-stat.key-stat { border: 1px solid var(--class-accent); background: linear-gradient(180deg, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0.4) 100%); box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.1), 0 0 6px rgba(56, 189, 248, 0.3); }
   .core-stat.key-stat label { color: var(--class-accent); text-shadow: 0 0 5px rgba(56, 189, 248, 0.5); font-weight: 700; }
 
-  .res-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .res-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-bottom: 5px; border-bottom: none; }
   .res-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
   .res-val { font-family: 'Cinzel', serif; font-size: 1.3em; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: color 0.3s; }
   
@@ -183,12 +183,12 @@
 
   .feature.minor-feature { display: none; }
   body.show-minor .feature.minor-feature { display: block; }
-  .feature { background: var(--class-panel-bg); border: 1px solid var(--class-border); border-left: 4px solid var(--class-border); padding: 10px; margin-bottom: 10px; border-radius: 0 4px 4px 0; width: 100%; box-sizing: border-box; }
+  .feature { background: var(--class-panel-bg); border: 1px solid var(--class-border); border-left: 4px solid var(--class-accent); padding: 10px; margin-bottom: 10px; border-radius: 0 4px 4px 0; width: 100%; box-sizing: border-box; }
   .feature.subclass-feature { border-left-color: var(--subclass-accent, var(--class-accent)); background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, transparent 100%), var(--class-panel-bg); }
   .feature.subclass-feature h3 { color: var(--subclass-accent, var(--class-accent)); }
-  .feature h3 { font-family: 'Cinzel', serif; font-size: 1.05em; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px; color: var(--text-main); }
+  .feature h3 { font-family: 'Cinzel', serif; font-size: 1.05em; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px; color: var(--text-main); border-bottom: 1px solid var(--class-border); padding-bottom: 4px; }
   .feature h3 span.level-tag { font-size: 0.6em; background: var(--slate-light); color: var(--text-main); padding: 2px 6px; border-radius: 2px; letter-spacing: 1px; }
-  .feature p { margin: 0; line-height: 1.4; font-size: 0.9em; color: var(--text-muted); }
+  .feature p { margin: 4px 0 0 0; line-height: 1.4; font-size: 0.9em; color: var(--text-muted); }
   .feature ul { margin: 8px 0 0 0; padding-left: 20px; list-style-type: circle; color: var(--text-muted); }
   .feature li { margin-bottom: 4px; font-size: 0.9em; line-height: 1.4; }
 
@@ -198,14 +198,14 @@
   .spell-card.subclass-spell h4 { color: var(--subclass-accent, var(--class-accent)); }
 
   /* Spell School Colors */
-  .spell-card.fire { border-left-color: #f97316; background: linear-gradient(90deg, rgba(249, 115, 22, 0.08) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.ice { border-left-color: #06b6d4; background: linear-gradient(90deg, rgba(6, 182, 212, 0.08) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.lightning { border-left-color: #eab308; background: linear-gradient(90deg, rgba(234, 179, 8, 0.08) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.wind { border-left-color: #14b8a6; background: linear-gradient(90deg, rgba(20, 184, 166, 0.08) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.radiant { border-left-color: #38bdf8; background: linear-gradient(90deg, rgba(56, 189, 248, 0.08) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.necrotic { border-left-color: #a855f7; background: linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, transparent 100%), var(--class-panel-bg); }
+  .spell-card.fire { border-left-color: #f87171; background: linear-gradient(90deg, rgba(248, 113, 113, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
+  .spell-card.ice { border-left-color: #60a5fa; background: linear-gradient(90deg, rgba(96, 165, 250, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
+  .spell-card.lightning { border-left-color: #fbbf24; background: linear-gradient(90deg, rgba(251, 191, 36, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
+  .spell-card.wind { border-left-color: #34d399; background: linear-gradient(90deg, rgba(52, 211, 153, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
+  .spell-card.radiant { border-left-color: #38bdf8; background: linear-gradient(90deg, rgba(56, 189, 248, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
+  .spell-card.necrotic { border-left-color: #a855f7; background: linear-gradient(90deg, rgba(168, 85, 247, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
   .spell-card h4 { margin: 0; font-family: 'Cinzel', serif; font-size: 1.0em; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--class-border); padding-bottom: 4px; color: var(--text-main); }
-  .spell-card h4 span.tier-tag { font-family: 'Crimson Text', serif; font-size: 0.7em; font-weight: normal; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; }
+  .spell-card h4 span.tier-tag { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: normal; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; letter-spacing: 1px; }
   
   .stat-hl { color: var(--gold-light); font-weight: bold; background: rgba(232, 184, 75, 0.1); border-radius: 3px; }
   .dice-hl { color: #fff; font-weight: bold; }
@@ -234,9 +234,10 @@
     <div class="header-center">
         <h1 id="classNameDisplay">Class Name</h1>
         <div class="subtitle" id="classSubtitleDisplay">Subtitle</div>
-        <div style="margin-top: 10px; display: flex; justify-content: center; gap: 10px;">
-            <button onclick="exportCharacter()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Export Data</button>
-            <button onclick="document.getElementById('importFile').click()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Import Data</button>
+        <div style="margin-top: 10px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <button onclick="saveAsHTML()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: var(--class-accent); color: #000;">Save as File (.html)</button>
+            <button onclick="exportCharacter()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Export JSON</button>
+            <button onclick="document.getElementById('importFile').click()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Import JSON</button>
             <input type="file" id="importFile" style="display:none" onchange="importCharacter(this)">
         </div>
     </div>
@@ -268,7 +269,7 @@
            <span style="font-family: 'Cinzel', serif; font-size: 0.85em; font-weight: bold;" id="unspentStats">UNSPENT: MAXED OUT</span>
         </div>
         
-        <div class="core-stats-row">
+        <div class="core-stats-row" style="border-bottom: none;">
           <div class="core-stat" id="statCard_str">
             <div class="save-indicator"></div>
             <label>STR</label>
@@ -343,6 +344,16 @@
         </div>
 
         <div id="dynamicResourcesContainer"></div>
+
+        <!-- Proficiency Info -->
+        <div class="proficiency-row" style="margin-top: auto; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+            <div style="text-align: left; flex: 1.5;">
+                WEAPONS: <span id="profWeapons" style="font-weight: bold; color: #fff;">--</span>
+            </div>
+            <div style="text-align: right; flex: 1;">
+                ARMOR: <span id="profArmor" style="font-weight: bold; color: #fff;">--</span>
+            </div>
+        </div>
       </div>
     </div>
 
@@ -384,7 +395,7 @@
   <div class="layout-1col" id="featuresSpellsLayout">
     <div class="left-col">
       <div>
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; min-height: 32px;">
           <h2 class="section-header" style="border: none; margin: 0; padding: 0;">Features & Traits</h2>
           <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--class-accent); cursor: pointer; user-select: none; font-family: 'Cinzel', serif; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--class-border);">
             <input type="checkbox" id="toggleMinorFeatures" onchange="document.body.classList.toggle('show-minor', this.checked); saveState();" style="width: 16px; height: 16px; cursor: pointer; margin: 0;"> 
@@ -396,7 +407,9 @@
     </div>
     <div class="right-col" id="spellsColWrapper" style="display: none;">
       <div id="spellsSection" style="height: 100%;">
-        <h2 class="section-header" id="spellSectionTitle">Spells</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; min-height: 32px;">
+          <h2 class="section-header" style="border: none; margin: 0; padding: 0;">Spells <span id="maxTierDisplay" style="font-size:0.6em; opacity:0.7; margin-left:10px; font-weight:normal; color:var(--gold-light);"></span></h2>
+        </div>
         <div id="spellsContainer" class="spell-grid"></div>
       </div>
     </div>
