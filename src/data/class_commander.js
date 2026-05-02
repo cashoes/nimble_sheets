@@ -153,7 +153,7 @@ const CLASS_CONFIG = {
     },
 
     initialStats: {
-        baseStr: 2, baseDex: 0, baseInt: 1, baseWil: 1
+        baseStr: 2, baseDex: 0, baseInt: 2, baseWil: -1
     },
 
     subclasses: [
