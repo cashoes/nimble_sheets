@@ -18,7 +18,6 @@ const BERSERKER_OPTIONS = {
 const BERSERKER_FEATURES = {
     core: {
         1: [
-            { id: "basics", name: "Berserker Basics", desc: "Hit Die: 1d12 | Saves: STR(+), INT(-)<br>Armor: None | Weapons: all STR weapons" },
             { id: "rage", name: "Rage", desc: "(1/turn) Action: Roll a Fury Die (1d4) and set it aside. Add it to every STR attack you make. You can have a max of KEY Fury Dice; they are lost when your Rage ends." },
             { id: "that_all", name: "That all you got?!", desc: "When you are attacked, you may expend 1 or more Fury Dice to reduce the damage taken by STR+DEX for each die spent." },
             { id: "rage_ends", name: "Your Rage Ends...", desc: "If you leave combat, drop to 0 HP, or go 1 round without attacking or Raging.", minor: true }
@@ -113,6 +112,10 @@ const CLASS_CONFIG = {
     subtitle: "An unstoppable force of wrath and ruin",
     keyStats: ['str', 'dex'], 
     saves: { adv: 'str', dis: 'int' }, 
+    proficiencies: {
+        armor: "None",
+        weapons: "All STR weapons"
+    },
     baseHp: 20,
     hpPerLevel: 9,
     hitDie: 12,

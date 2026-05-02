@@ -1,31 +1,102 @@
-const ZEPHYR_DATA = {
-    martialArts: [
-        "Airshift",
-        "Blur.",
-        "Bodily Discipline",
-        "Enduring Soul.",
-        "I Jump On His Back!",
-        "Kinetic Barrage.",
-        "Mighty Soul.",
-        "Quickstrike.",
-        "Use Momentum.",
-        "Vital Rejuvenation.",
-        "Windstrider."
-    ]
+const ZEPHYR_OPTIONS = {
+    martialArts: {
+        "Airshift": { desc: "Cannot be Grappled while conscious. Move across all terrain as if normal (ignore walls, water, spikes, etc)." },
+        "Blur.": { desc: "(1/encounter) When you Defend: Move up to 1/2 speed away first. No damage if out of range or have Full Cover." },
+        "Bodily Discipline": { desc: "Spend 1 action to end any non-Wound condition on yourself." },
+        "Enduring Soul.": { desc: "When you roll Initiative: Gain Hit Dice equal to your actions on first turn (expire end of combat)." },
+        "I Jump On His Back!": { desc: "Move through larger creature's space: Jump on back. Advantage on melee; you avoid damage (it hits them instead)." },
+        "Kinetic Barrage.": { desc: "Whenever you miss: Gain cumulative +STR bonus to all damage for rest of encounter." },
+        "Mighty Soul.": { desc: "Cannot be moved against will. Fail save: Gain 1 Wound to add STR to result. May repeat." },
+        "Quickstrike.": { desc: "When you Interpose: You may first make an unarmed strike against the enemy for free." },
+        "Use Momentum.": { desc: "Avoid all dmg from melee: Swap places with attacker; choose another target in reach to be hit instead." },
+        "Vital Rejuvenation.": { desc: "When healed: Heal another target within 6 spaces HP equal to your STR." },
+        "Windstrider.": { desc: "Move through willing creature's space: They move with you and end in any adjacent space." }
+    }
 };
 
-const MARTIAL_DESCS = {
-    "Airshift": "Cannot be Grappled while conscious. Move across all terrain as if normal (ignore walls, water, spikes, etc).",
-    "Blur.": "(1/encounter) When you Defend: Move up to 1/2 speed away first. No damage if out of range or have Full Cover.",
-    "Bodily Discipline": "Spend 1 action to end any non-Wound condition on yourself.",
-    "Enduring Soul.": "When you roll Initiative: Gain Hit Dice equal to your actions on first turn (expire end of combat).",
-    "I Jump On His Back!": "Move through larger creature's space: Jump on back. Advantage on melee; you avoid damage (it hits them instead).",
-    "Kinetic Barrage.": "Whenever you miss: Gain cumulative +STR bonus to all damage for rest of encounter.",
-    "Mighty Soul.": "Cannot be moved against will. Fail save: Gain 1 Wound to add STR to result. May repeat.",
-    "Quickstrike.": "When you Interpose: You may first make an unarmed strike against the enemy for free.",
-    "Use Momentum.": "Avoid all dmg from melee: Swap places with attacker; choose another target in reach to be hit instead.",
-    "Vital Rejuvenation.": "When healed: Heal another target within 6 spaces HP equal to your STR.",
-    "Windstrider.": "Move through willing creature's space: They move with you and end in any adjacent space."
+const ZEPHYR_FEATURES = {
+    core: {
+        1: [
+            { id: "iron", name: "Iron Defense", desc: (level) => `Unarmored: Armor = <strong>DEX + STR</strong>.${level >= 13 ? ' <strong>(Doubled)</strong>' : ''}` },
+            { id: "fists", name: "Swift Fists", desc: "Unarmed strikes (1d4+STR) ignore disadvantage from Rushed Attacks." }
+        ],
+        2: [
+            { id: "feet", name: "Swift Feet", desc: "Unarmored: +2 speed and +<strong>LVL</strong> Initiative." },
+            { id: "burst", name: "Burst of Speed", desc: "Roll Init: gain <strong>DEX</strong> Bursts. Spend 1 to: Slipstream (Defend/Miss), Whirling Defense (Defend+Armor to all), Swiftstrike (No DIS on attack), Windstep (Ignore Terrain)." }
+        ],
+        3: [
+            { id: "momentum", name: "Kinetic Momentum", desc: "Gain 1 Burst of Speed whenever you gain a Wound." },
+            { id: "projection", name: "Ethereal Projection", desc: "(1/day) 10 min meditation: Project version of self up to 30ft. See through its eyes, move freely, cannot interact." }
+        ],
+        4: [
+            { id: "resolve", name: "Unyielding Resolve", desc: "Ignore the first Wound each encounter (Wounded abilities still trigger).<br><strong>Key Stat Increase:</strong> +1 DEX or STR." },
+            { id: "arts", name: "Martial Arts", type: "dynamic_choice", collection: "martialArts", stateKey: "selectedArts", desc: "Choose modular abilities.", getCount: (level) => level >= 18 ? 8 : level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 }
+        ],
+        5: [
+            { id: "strikes", name: "Reverberating Strikes", desc: "Add <strong>LVL</strong> bludgeoning damage to all melee attacks." },
+            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+        ],
+        6: [
+            { id: "infuse", name: "Infuse Strength", desc: "Action: Make unarmed strike against ally and infuse them with your own strength. They heal as if you used a Field Rest (roll HD + your STR)." }
+        ],
+        8: [
+            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 DEX or STR.", minor: true }
+        ],
+        9: [
+            { id: "feet_2", name: "Swift Feet (2)", desc: "Gain +2 additional speed as long as you are unarmored.", minor: true },
+            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+        ],
+        12: [
+            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 DEX or STR.", minor: true }
+        ],
+        13: [
+            { id: "iron_2", name: "Iron Defense (2)", desc: "Your armor is doubled while unarmored.", minor: true },
+            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+        ],
+        16: [
+            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 DEX or STR.", minor: true }
+        ],
+        17: [
+            { id: "resolve_3", name: "Unyielding Resolve (3)", desc: "Ignore the first 3 Wounds you would suffer each encounter. You have advantage on STR saves while Dying." },
+            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+        ],
+        19: [
+            { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
+        ],
+        20: [
+            { id: "windborne", name: "Windborne", desc: "+1 to any 2 of your stats. +1 additional burst of speed when you roll Initiative. Permanently gain 1 action (while Dying, you have a max of 2 actions)." }
+        ]
+    },
+    subclasses: {
+        "WayOfPain": {
+            3: [
+                { id: "pain", name: "Bring the Pain", desc: "(1/round) Turn any melee attack against you into a crit. Reduce dmg by 1/2. Attacker takes same amount. Spend 1 Wound to double dmg taken by enemy." }
+            ],
+            7: [
+                { id: "share", name: "Share My Pain", desc: "Your Swiftstrike can also target a 2nd creature within Reach 2." }
+            ],
+            11: [
+                { id: "sharps", name: "Pain Sharpens the Mind", desc: "While you are Bloodied, gain advantage on the first attack you make each turn, and on all saves." }
+            ],
+            15: [
+                { id: "echo", name: "Echoed Agony", desc: "Your Swiftstrike can also target a 3rd creature within Reach 4." }
+            ]
+        },
+        "WayOfFlame": {
+            3: [
+                { id: "exploding", name: "Exploding Soul", desc: (level, subclass, state, derived) => `(1/round) Gain Wound: Deal <strong>STR+Wounds</strong> damage to creatures within 2 spaces (ignore armor) and Smolder them.` }
+            ],
+            7: [
+                { id: "blazing", name: "Blazing Speed", desc: "Gain +2 speed in Windstep. Targets you pass through take <strong>STR+DEX</strong> fire dmg (2x to Smoldering targets)." }
+            ],
+            11: [
+                { id: "chain", name: "Chain Reaction", desc: (level, subclass, state, derived) => `(1/turn) When you crit, deal <strong>STR+Wounds</strong> fire dmg to targets within 2 spaces of your target.` }
+            ],
+            15: [
+                { id: "burning", name: "Burning Soul", desc: "Double any fire damage you deal." }
+            ]
+        }
+    }
 };
 
 const CLASS_CONFIG = {
@@ -33,6 +104,10 @@ const CLASS_CONFIG = {
     subtitle: "Disciplined martial artist with swift hands and feet",
     keyStats: ['dex', 'str'], 
     saves: { adv: 'dex', dis: 'int' }, 
+    proficiencies: {
+        armor: "None",
+        weapons: "Melee"
+    },
     baseHp: 13,
     hpPerLevel: 6,
     hitDie: 8,
@@ -73,8 +148,6 @@ const CLASS_CONFIG = {
 
     getStatOverrides: function(level, subclass, state, statsMap) {
         let overrides = {};
-        // Iron Defense logic is handled in the custom AC calculation in engine, 
-        // but we can flag it here if we want to force unarmored check.
         let isUnarmored = true;
         state.inventory.forEach(item => { if(item.type==='armor' && item.equipped) isUnarmored = false; });
         
@@ -98,14 +171,12 @@ const CLASS_CONFIG = {
         let acVal = (state.baseDex + state.addDex) + (state.baseStr + state.addStr);
         if (level >= 13) acVal *= 2;
         
-        // Only show Iron Defense if unarmored
         let isUnarmored = true;
         state.inventory.forEach(item => { if(item.type==='armor' && item.equipped) isUnarmored = false; });
 
         return `
-        <div class="panel mechanic-panel">
+        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
             <div style="display: flex; align-items: stretch; justify-content: space-around; flex: 1; width: 100%;">
-               <!-- Column 1: Iron Defense -->
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Iron Defense</label>
                    ${isUnarmored ? `
@@ -116,7 +187,6 @@ const CLASS_CONFIG = {
                    `}
                </div>
 
-               <!-- Column 2: Momentum -->
                <div style="flex: 1.5; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 10px; justify-content: center;">
                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Bursts of Speed</label>
                    <div class="dark-incrementer" style="padding: 4px 10px;">
@@ -130,7 +200,6 @@ const CLASS_CONFIG = {
                    <div style="font-size: 0.7em; color: var(--text-muted); font-family: 'Cinzel'; font-weight: bold; margin-top: auto;">CAPACITY: ${burstMax}</div>
                </div>
 
-               <!-- Column 3: Swift Fists -->
                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Swift Fists</label>
                    <div style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: 900; line-height: 1; margin: 2px 0;">1d4+STR</div>
@@ -143,95 +212,69 @@ const CLASS_CONFIG = {
 
     actions: {},
 
-    getFeaturesHTML: function(level, subclass, state, derived, bFeat, iStats) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
         let fHtml = "";
         const sCls = "subclass-feature";
+        const subData = ZEPHYR_FEATURES.subclasses[subclass] || {};
+        const replacedIds = new Set();
 
-        fHtml += bFeat("Zephyr Basics", "", `<strong>Hit Die:</strong> 1d${this.hitDie} | <strong>Saves:</strong> DEX(+), INT(-)<br><strong>Armor:</strong> None | <strong>Weapons:</strong> Melee`, "", true);
-        fHtml += bFeat("Iron Defense", 1, `Unarmored: Armor = <strong>DEX + STR</strong>. Level 13: Double this amount.`);
-        fHtml += bFeat("Swift Fists", 1, `Unarmed strikes (1d4+STR) ignore disadvantage from Rushed Attacks.`);
+        Object.values(subData).forEach(lvlFeats => {
+            lvlFeats.forEach(f => {
+                if (f.replaces) {
+                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
+                    else replacedIds.add(f.replaces);
+                }
+            });
+        });
 
-        if (level >= 2) {
-            fHtml += bFeat("Swift Feet", 2, `Unarmored: +2 speed and +<strong>LVL</strong> Initiative.`);
-            fHtml += bFeat("Burst of Speed", 2, `Roll Init: gain <strong>DEX</strong> Bursts. Spend 1 to: Slipstream (Defend/Miss), Whirling Defense (Defend+Armor to all), Swiftstrike (No DIS on attack), Windstep (Ignore Terrain).`);
-        }
-
-        if (level >= 3) {
-            fHtml += bFeat("Kinetic Momentum", 3, `Gain 1 Burst of Speed whenever you gain a Wound.`);
-            fHtml += bFeat("Ethereal Projection", 3, `(1/day) 10 min meditation: Project version of self up to 30ft. See through its eyes, move freely, cannot interact.`);
-            if (subclass === "WayOfPain") {
-                fHtml += bFeat("Bring the Pain", 3, `(1/round) Turn any melee attack against you into a crit. Reduce dmg by 1/2. Attacker takes same amount. Spend 1 Wound to double dmg taken by enemy.`, sCls);
-            } else if (subclass === "WayOfFlame") {
-                fHtml += bFeat("Exploding Soul", 3, `(1/round) Gain Wound: Deal <strong>STR+Wounds</strong> damage to creatures within 2 spaces (ignore armor) and Smolder them.`, sCls);
+        for (let l = 1; l <= level; l++) {
+            if (ZEPHYR_FEATURES.core[l]) {
+                ZEPHYR_FEATURES.core[l].forEach(feat => {
+                    if (!replacedIds.has(feat.id)) {
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                    }
+                });
+            }
+            if (subData[l]) {
+                subData[l].forEach(feat => {
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                });
             }
         }
-
-        if (level >= 4) {
-            fHtml += bFeat("Unyielding Resolve", 4, `Ignore the first Wound each encounter (Wounded abilities still trigger).<br><strong>Key Stat Increase:</strong> +1 DEX or STR.`);
-            
-            let nArts = level>=18?8 : level>=16?7 : level>=14?6 : level>=12?5 : level>=10?4 : level>=8?3 : level>=6?2 : 1;
-            let aState = state.selectedArts || [];
-            let opts = `<option value="None">Select a Martial Art...</option>`;
-            ZEPHYR_DATA.martialArts.forEach(k => opts += `<option value="${k}">${k}</option>`);
-            let aHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            for(let i=0; i<nArts; i++) {
-                let val = aState[i] || "None";
-                aHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('selectedArts', ${i}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(56, 189, 248, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${val !== "None" ? iStats(MARTIAL_DESCS[val]) : ""}</div>
-                </div>`;
-            }
-            fHtml += bFeat("Martial Arts", 4, `Choose <strong>${nArts}</strong> abilities.${aHtml}</div>`, "", true);
-        }
-
-        if (level >= 5) {
-            fHtml += bFeat("Reverberating Strikes", 5, `Add <strong>LVL</strong> bludgeoning damage to all melee attacks.`);
-            fHtml += bFeat("Secondary Stat Increase", 5, `+1 INT or WIL.`);
-        }
-
-        if (level >= 6) {
-            fHtml += bFeat("Infuse Strength", 6, `Action: Make unarmed strike against ally and infuse them with your own strength. They heal as if you used a Field Rest (roll HD + your STR).`);
-        }
-
-        if (level >= 7) {
-            if (subclass === "WayOfPain") fHtml += bFeat("Share My Pain", 7, `Your Swiftstrike can also target a 2nd creature within Reach 2.`, sCls);
-            else if (subclass === "WayOfFlame") fHtml += bFeat("Blazing Speed", 7, `Gain +2 speed in Windstep. Targets you pass through take <strong>STR+DEX</strong> fire dmg (2x to Smoldering targets).`, sCls);
-        }
-
-        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 DEX or STR.`);
-
-        if (level >= 9) {
-            fHtml += bFeat("Swift Feet (2)", 9, `Gain +2 additional speed as long as you are unarmored.`);
-            fHtml += bFeat("Secondary Stat Increase", 9, `+1 INT or WIL.`);
-        }
-
-        if (level >= 11) {
-            if (subclass === "WayOfPain") fHtml += bFeat("Pain Sharpens the Mind", 11, `While you are Bloodied, gain advantage on the first attack you make each turn, and on all saves.`, sCls);
-            else if (subclass === "WayOfFlame") fHtml += bFeat("Chain Reaction", 11, `(1/turn) When you crit, deal <strong>STR+Wounds</strong> fire dmg to targets within 2 spaces of your target.`, sCls);
-        }
-
-        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 DEX or STR.`);
-
-        if (level >= 13) {
-            fHtml += bFeat("Iron Defense (2)", 13, `Your armor is doubled while unarmored.`);
-            fHtml += bFeat("Secondary Stat Increase", 13, `+1 INT or WIL.`);
-        }
-
-        if (level >= 15) {
-            if (subclass === "WayOfPain") fHtml += bFeat("Echoed Agony", 15, `Your Swiftstrike can also target a 3rd creature within Reach 4.`, sCls);
-            else if (subclass === "WayOfFlame") fHtml += bFeat("Burning Soul", 15, `Double any fire damage you deal.`, sCls);
-        }
-
-        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 DEX or STR.`);
-
-        if (level >= 17) {
-            fHtml += bFeat("Unyielding Resolve (3)", 17, `Ignore the first 3 Wounds you would suffer each encounter. Advantage on STR saves while Dying.`);
-            fHtml += bFeat("Secondary Stat Increase", 17, `+1 INT or WIL.`);
-        }
-
-        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Windborne", 20, `+1 to any 2 of your stats. +1 burst of speed on Init. Permanently gain 1 action.`);
 
         return fHtml;
+    },
+
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
+        let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
+        let collection = feat.collection;
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state)) : (feat.desc || "");
+
+        let finalCssClass = cssClass || "";
+        if (feat.minor) finalCssClass += " minor-feature";
+
+        if (feat.type === "choice" || feat.type === "dynamic_choice") {
+            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
+            let selection = state[feat.stateKey] || [];
+            let options = Object.keys(ZEPHYR_OPTIONS[collection] || {});
+
+            let optsHtml = `<option value="None">-- Select Option --</option>`;
+            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+
+            for (let i = 0; i < count; i++) {
+                let idx = (feat.startIndex || 0) + i;
+                let val = selection[idx] || "None";
+                let d = (val !== "None" && ZEPHYR_OPTIONS[collection][val]) ? ZEPHYR_OPTIONS[collection][val].desc : "";
+
+                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(56, 189, 248, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                </div>`;
+            }
+            desc += choiceHtml + `</div>`;
+        }
+
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
     }
 };

@@ -16,8 +16,7 @@ const CHEAT_OPTIONS = {
 const CHEAT_FEATURES = {
     core: {
         1: [
-            { id: "basics", name: "Cheat Basics", desc: "Hit Die: 1d6 | Saves: DEX(+), WIL(-)<br>Armor: Leather Armor | Weapons: DEX Weapons" },
-            { id: "sneak_attack", name: "Sneak Attack", desc: "(1/turn) When you crit, deal +LVL damage (scales with level)." },
+            { id: "sneak_attack", name: "Sneak Attack", desc: (level, subclass, state, derived) => `(1/turn) When you crit, deal <strong>+${derived.saDice}</strong> damage.` },
             { id: "vicious_opp", name: "Vicious Opportunist", desc: "(1/turn) When you hit a Distracted target with a melee attack, you may change the Primary Die roll to whatever you like (changing it to the max value counts as a crit)." }
         ],
         2: [
@@ -113,6 +112,10 @@ const CLASS_CONFIG = {
     subtitle: "Master of stealth, dirty fighting, and breaking rules",
     keyStats: ['dex', 'int'],
     saves: { adv: 'dex', dis: 'wil' },
+    proficiencies: {
+        armor: "Leather Armor",
+        weapons: "DEX Weapons"
+    },
     baseHp: 10,
     hpPerLevel: 5,
     hitDie: 6,
@@ -178,7 +181,7 @@ const CLASS_CONFIG = {
         }
 
         return `
-        <div class="panel mechanic-panel">
+        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
             <div style="display: flex; align-items: stretch; gap: 15px;">
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Sneak Attack</label>
@@ -235,7 +238,8 @@ ${cunningHtml}
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = feat.desc || "";
+        let derived = CLASS_CONFIG.getDerivedStats(level, subclass, state);
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";

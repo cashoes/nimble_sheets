@@ -1,56 +1,136 @@
-const HUNTER_DATA = {
+const HUNTER_OPTIONS = {
     tothAbilities: {
-        "Offensive": [
-            "Addling Arrow",
-            "Heavy Shot",
-            "Incendiary Shot",
-            "Multishot",
-            "Sharpshooter",
-            "Vital Shot"
-        ],
-        "Tactical & Control": [
-            "Come Get Some!",
-            "Decoy",
-            "Grease Trap",
-            "Pinning Shot",
-            "Snare Trap"
-        ],
-        "Utility & Survival": [
-            "Fleet Feet",
-            "Hail of Arrows",
-            "Wild Instinct"
-        ],
-        "Beastmaster (Subclass)": [
-            "Go for the Throat!",
-            "Protect Me!"
-        ]
+        "Addling Arrow": { desc: "Action: Attack with a ranged weapon. The next attack the target makes must be against the closest other creature, chosen at random." },
+        "Come Get Some!": { desc: "Action: Attack a target. It is Taunted by you until the end of their next turn." },
+        "Decoy": { desc: "When you Defend: The attack misses instead, and you can move up to half your speed away (where you really were all along!)." },
+        "Fleet Feet": { desc: "Move up to your speed for free, ignoring difficult terrain." },
+        "Grease Trap": { desc: "(1/encounter) Reaction (enemy moves within 6 spaces): Target falls Prone, is vulnerable to fire damage, and is treated as Smoldering." },
+        "Hail of Arrows": { desc: "(Half range) 2 actions: Shoot all creatures within a 3x3 area. Their speed is halved until the end of their next turn." },
+        "Heavy Shot": { desc: "(Half range) Action: Attack with a ranged weapon and push your target: 4 spaces for small, 2 for medium, 1 for large." },
+        "Incendiary Shot": { desc: "(Half range) Action: Attack with a ranged weapon, add WIL d8 fire damage." },
+        "Multishot": { desc: "(Half range) Action: Attack your quarry with a ranged weapon and load an extra projectile. Select a 2nd target within 2 spaces to take the same damage." },
+        "Pinning Shot": { desc: "Spend 3 actions shooting your quarry. They are Restrained until they can escape (DC 10+WIL)." },
+        "Snare Trap": { desc: "(1/encounter) Reaction (enemy moves within 6 spaces): Move them back 1 space, they are Restrained until they can escape (DC 10+WIL)." },
+        "Sharpshooter": { desc: "Action: If you have not moved this turn and your quarry is 4 or more spaces away, attack them for double damage." },
+        "Vital Shot": { desc: "(Half range) Action: Attack your Hampered quarry with a ranged weapon, ignoring armor or doubling Hunter's Mark damage." },
+        "Wild Instinct": { desc: "(1/round, costs 0 TotH) If you have none, Assess for free, with advantage." },
+        "Go for the Throat!": { desc: "Command companion to attack your quarry. Small: 1 TotH (1d4+LVL), Med: 1 TotH (1d8+3xLVL), Large: 2 TotH/2 Actions (1d12+4xLVL)." },
+        "Protect Me!": { desc: "Command companion to defend you. Small: Miss on Defend, Med: Free counter-attack (1d4+LVL), Large: Half damage from first attack each round." }
+    },
+    companionSizes: {
+        "None": { desc: "No companion selected." },
+        "Small": { desc: "Keen Eyes: Mark a target for free (1/encounter). Protect Me!: Attacks against you miss when you Defend. Go for the Throat! (1/round): 1 TotH charge, 1d4+LVL dmg." },
+        "Medium": { desc: "Ferocious: When you or companion crit, companion attacks again for LVL dmg. Protect Me!: When you Defend, first attack that creature (1d4+LVL). Go for the Throat!: 1 TotH charge, 1d8+3xLVL dmg." },
+        "Large": { desc: "Alpha Protector: Damage from first attack against you each round is halved. Protect Me!: After a Wound, whisked up to 12 spaces away. Go for the Throat!: 2 TotH charges, 2 actions, 1d12+4xLVL dmg." }
     }
 };
 
-const TOTH_DESCS = {
-    "Addling Arrow": "Action: Attack with a ranged weapon. The next attack the target makes must be against the closest other creature, chosen at random.",
-    "Come Get Some!": "Action: Attack a target. It is Taunted by you until the end of their next turn.",
-    "Decoy": "When you Defend: The attack misses instead, and you can move up to half your speed away (where you really were all along!).",
-    "Fleet Feet": "Move up to your speed for free, ignoring difficult terrain.",
-    "Grease Trap": "(1/encounter) Reaction (enemy moves within 6 spaces): Target falls Prone, is vulnerable to fire damage, and is treated as Smoldering.",
-    "Hail of Arrows": "(Half range) 2 actions: Shoot all creatures within a 3x3 area. Their speed is halved until the end of their next turn.",
-    "Heavy Shot": "(Half range) Action: Attack with a ranged weapon and push your target: 4 spaces for small, 2 for medium, 1 for large.",
-    "Incendiary Shot": "(Half range) Action: Attack with a ranged weapon, add WIL d8 fire damage.",
-    "Multishot": "(Half range) Action: Attack your quarry with a ranged weapon and load an extra projectile. Select a 2nd target within 2 spaces to take the same damage.",
-    "Pinning Shot": "Spend 3 actions shooting your quarry. They are Restrained until they can escape (DC 10+WIL).",
-    "Snare Trap": "(1/encounter) Reaction (enemy moves within 6 spaces): Move them back 1 space, they are Restrained until they can escape (DC 10+WIL).",
-    "Sharpshooter": "Action: If you have not moved this turn and your quarry is 4 or more spaces away, attack them for double damage.",
-    "Vital Shot": "(Half range) Action: Attack your Hampered quarry with a ranged weapon, ignoring armor or doubling Hunter's Mark damage.",
-    "Wild Instinct": "(1/round, costs 0 TotH) If you have none, Assess for free, with advantage.",
-    "Go for the Throat!": "Command companion to attack your quarry. Small: 1 TotH (1d4+LVL), Med: 1 TotH (1d8+3xLVL), Large: 2 TotH/2 Actions (1d12+4xLVL).",
-    "Protect Me!": "Command companion to defend you. Small: Miss on Defend, Med: Free counter-attack (1d4+LVL), Large: Half damage from first attack each round."
-};
-
-const COMPANION_DATA = {
-    "None": "No companion selected.",
-    "Small": "Keen Eyes: Mark a target for free (1/encounter). Protect Me!: Attacks against you miss when you Defend. Go for the Throat! (1/round): 1 TotH charge, 1d4+LVL dmg.",
-    "Medium": "Ferocious: When you or companion crit, companion attacks again for LVL dmg. Protect Me!: When you Defend, first attack that creature (1d4+LVL). Go for the Throat!: 1 TotH charge, 1d8+3xLVL dmg.",
-    "Large": "Alpha Protector: Damage from first attack against you each round is halved. Protect Me!: After a Wound, whisked up to 12 spaces away. Go for the Throat!: 2 TotH charges, 2 actions, 1d12+4xLVL dmg."
+const HUNTER_FEATURES = {
+    core: {
+        1: [
+            { id: "mark", name: "Hunter's Mark", desc: "Action: Mark a quarry for 1 day. Attacks against it have advantage OR +<strong>LVL</strong> damage." },
+            { id: "forager", name: "Forager", desc: "Advantage on skill checks to find food and water in the wild." }
+        ],
+        2: [
+            { id: "toth", name: "Thrill of the Hunt", desc: "Gain a charge whenever: Quarry dies, you hit quarry in melee, or you crit quarry at range." },
+            { id: "roll_strike", name: "Roll & Strike", desc: "Action: If you have no TotH charges, move up to speed and make a free melee attack." },
+            { id: "toth_abilities", name: "Thrill of the Hunt Abilities", type: "dynamic_choice", collection: "tothAbilities", stateKey: "selectedToth", desc: "Choose TotH abilities as you level up.", getCount: (level) => level >= 14 ? 7 : level >= 12 ? 6 : level >= 8 ? 5 : level >= 6 ? 4 : level >= 4 ? 3 : 2 }
+        ],
+        3: [
+            { id: "intuition", name: "Tracker's Intuition", desc: "Accurately discern numbers, direction, and timing of past encounters by tracks." }
+        ],
+        4: [
+            { id: "explorer", name: "Explorer of the Wilds", desc: "+2 speed and gain a climbing speed.<br><strong>Key Stat Increase:</strong> +1 DEX or WIL." }
+        ],
+        5: [
+            { id: "resolve", name: "Hunter's Resolve", desc: "When you have no TotH charges, treat all creatures as your quarry for movement and melee attacks." },
+            { id: "takedown", name: "Final Takedown", desc: "Spend 1 TotH charge to turn a hit on a Bloodied quarry into a crit and double Mark damage. If they survive, they crit you back." },
+            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
+        ],
+        6: [
+            { id: "bowmaster", name: "Versatile Bowmaster", desc: "When attacking with Longbow, roll <strong>2d4</strong> instead of 1d8; or Crossbow, <strong>2d8</strong> instead of 4d4." }
+        ],
+        8: [
+            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 DEX or WIL.", minor: true }
+        ],
+        9: [
+            { id: "no_escape", name: "No Escape", desc: "When an ally makes an opportunity attack, you may make a ranged opportunity attack against the same target." },
+            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
+        ],
+        10: [
+            { id: "stalker", name: "Veteran Stalker", desc: "Gain a TotH charge when first Bloodied and for every Wound gained." },
+            { id: "steady_hand", name: "Keen Eye, Steady Hand", desc: "Add <strong>WIL</strong> to your ranged weapon damage." }
+        ],
+        12: [
+            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 DEX or WIL.", minor: true }
+        ],
+        13: [
+            { id: "keen_sight", name: "Keen Sight", desc: "Advantage on Perception checks." },
+            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
+        ],
+        16: [
+            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 DEX or WIL.", minor: true }
+        ],
+        17: [
+            { id: "peerless", name: "Peerless Hunter", desc: "You can Defend against your quarry for free." },
+            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
+        ],
+        18: [
+            { id: "wild_endurance", name: "Wild Endurance", desc: "Gain 1 Thrill of the Hunt charge at the start of your turns." }
+        ],
+        19: [
+            { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
+        ],
+        20: [
+            { id: "nemesis", name: "Nemesis", desc: "+1 to any 2 of your stats. Your Hunter’s Mark can target any number of creatures simultaneously." }
+        ]
+    },
+    subclasses: {
+        "Shadowpath": {
+            3: [
+                { id: "ambusher", name: "Ambusher", desc: "Mark quarry for free on Initiative. Advantage on first attack each encounter." },
+                { id: "skilled_tracker", name: "Skilled Tracker", desc: "Advantage on skill checks to track creatures." }
+            ],
+            7: [
+                { id: "primal_predator", name: "Primal Predator", desc: "(1/encounter) Your weapon attacks ignore cover and armor this turn." }
+            ],
+            11: [
+                { id: "pack_hunter", name: "Pack Hunter", desc: "When you mark a creature, mark another within 6 spaces for free." }
+            ],
+            15: [
+                { id: "apex_predator", name: "Apex Predator", desc: "Use Primal Predator twice per encounter. Gain 1 TotH charge on Initiative." }
+            ]
+        },
+        "WildHeart": {
+            3: [
+                { id: "form", name: "Impressive Form", desc: "+5 max HP. Upgrade Hit Dice to d10s." },
+                { id: "high_ground", name: "I Have the High Ground", desc: "Gain 1/2 speed for free on Init or when gaining TotH charges." }
+            ],
+            7: [
+                { id: "herbalist", name: "Resourceful Herbalist", desc: "(1/Safe Rest) Craft <strong>WIL</strong> Healing Salves (Heal WIL d6 HP)." }
+            ],
+            11: [
+                { id: "here", name: "Ha! I'm Over Here!", desc: "(1/Safe Rest) If an attack would drop you to 0 HP, move speed away and take no damage." }
+            ],
+            15: [
+                { id: "survivalist", name: "Unparalleled Survivalist", desc: "Gain <strong>+WIL</strong> Armor. When attacking at range, move 1/2 speed for free first." }
+            ]
+        },
+        "Beastmaster": {
+            3: [
+                { id: "companion", name: "Animal Companion", type: "choice", collection: "companionSizes", stateKey: "selectedCompanion", desc: "No stats or actions to track. Your companion's attacks count as your own for TotH." }
+            ],
+            7: [
+                { id: "scaling_1", name: "Companion Scaling", desc: "Small: Keen Eyes (2/enc), Protect Me! upgrades. Med: Ferocious (4 spaces). Large: Protect Me! upgrades." }
+            ],
+            11: [
+                { id: "scaling_2", name: "Companion Scaling", desc: "Small: Keen Eyes (3/enc), Go for the Throat! (2/enc). Med: Go for the Throat! (2/enc). Large: Go for the Throat! (2/enc)." }
+            ],
+            15: [
+                { id: "scaling_3", name: "Companion Scaling", desc: "Small: Go for the Throat! (3/enc). Med: Ferocious (6 spaces). Large: Protect Me! (2/enc)." }
+            ]
+        }
+    }
 };
 
 const CLASS_CONFIG = {
@@ -58,6 +138,10 @@ const CLASS_CONFIG = {
     subtitle: "Resourceful survivalist, bowmaster, and skilled tracker",
     keyStats: ['dex', 'wil'], 
     saves: { adv: 'dex', dis: 'int' }, 
+    proficiencies: {
+        armor: "Leather Armor",
+        weapons: "DEX Weapons"
+    },
     baseHp: 13,
     hpPerLevel: 6,
     hitDie: 8,
@@ -91,13 +175,18 @@ const CLASS_CONFIG = {
     getDerivedStats: function(level, subclass, state) {
         let speed = 6; 
         let woundMax = 6;
-        if (level >= 4) speed += 2; // Explorer of the Wilds
+        if (level >= 4) speed += 2; 
 
-        // Wild Heart Upgrades
-        let hpBonus = (subclass === "WildHeart" && level >= 3) ? 5 : 0;
-        let hdFace = (subclass === "WildHeart" && level >= 3) ? 10 : 8;
+        // Dynamic HP scaling for Impressive Form
+        if (subclass === "WildHeart" && level >= 3) {
+            CLASS_CONFIG.hitDie = 10;
+            CLASS_CONFIG.baseHp = 18; // Base 13 + 5
+        } else {
+            CLASS_CONFIG.hitDie = 8;
+            CLASS_CONFIG.baseHp = 13;
+        }
 
-        return { speed, woundMax, hpBonus, hdFace };
+        return { speed, woundMax };
     },
 
     getStatOverrides: function(level, subclass, state, statsMap) {
@@ -113,16 +202,14 @@ const CLASS_CONFIG = {
         let currentCharges = state.resourceValues.tothCharges || 0;
 
         return `
-        <div class="panel mechanic-panel">
-            <div style="display: flex; align-items: stretch; gap: 12px;">
-               <!-- Column 1: Bonus -->
+        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: flex; align-items: stretch; gap: 15px;">
                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Hunter's Mark</label>
                    <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2; text-align: center; margin: auto 0;">Advantage<br><span style="font-size: 0.8em; color: var(--gold-light);">OR</span> +${level} Dmg</div>
                    <div style="font-size: 0.65em; color: var(--text-muted); text-align: center; margin-top: auto; font-family:'Cinzel'; font-weight:bold;">Primary Quarry</div>
                </div>
 
-               <!-- Column 2: Charges -->
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">TotH Charges</label>
                    <div class="dark-incrementer" style="padding: 4px 10px;">
@@ -134,7 +221,6 @@ const CLASS_CONFIG = {
                    <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">MAX ${maxCharges}</div>
                </div>
 
-               <!-- Column 3: The Hunt -->
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Gain Charge</label>
                    <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.3; margin: auto 0; font-family:'Crimson Text'; font-style:italic;">
@@ -150,133 +236,69 @@ const CLASS_CONFIG = {
 
     actions: {},
 
-    getFeaturesHTML: function(level, subclass, state, derived, bFeat, iStats) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
         let fHtml = "";
         const sCls = "subclass-feature";
+        const subData = HUNTER_FEATURES.subclasses[subclass] || {};
+        const replacedIds = new Set();
 
-        fHtml += bFeat("Hunter Basics", "", `<strong>Hit Die:</strong> 1d${derived.hdFace} | <strong>Saves:</strong> DEX(+), INT(-)<br><strong>Armor:</strong> Leather Armor | <strong>Weapons:</strong> DEX Weapons`, "", true);
-        fHtml += bFeat("Hunter's Mark", 1, `Action: Mark a quarry for 1 day. Attacks against it have advantage OR +<strong>LVL</strong> damage.`);
-        fHtml += bFeat("Forager", 1, `Advantage on skill checks to find food and water in the wild.`);
-
-        if (level >= 2) {
-            fHtml += bFeat("Thrill of the Hunt", 2, `Gain a charge whenever: Quarry dies, you hit quarry in melee, or you crit quarry at range.`);
-            fHtml += bFeat("Roll & Strike", 2, `Action: If you have no TotH charges, move up to speed and make a free melee attack.`);
-        }
-
-        if (level >= 3) {
-            fHtml += bFeat("Tracker's Intuition", 3, `Accurately discern numbers, direction, and timing of past encounters by tracks.`);
-            if (subclass === "Shadowpath") {
-                fHtml += bFeat("Ambusher", 3, `Mark quarry for free on Initiative. Advantage on first attack each encounter.`, sCls);
-                fHtml += bFeat("Skilled Tracker", 3, `Advantage on skill checks to track creatures.`, sCls);
-            } else if (subclass === "WildHeart") {
-                fHtml += bFeat("Impressive Form", 3, `+5 max HP. Upgrade Hit Dice to d10s.`, sCls);
-                fHtml += bFeat("I Have the High Ground", 3, `Gain 1/2 speed for free on Init or when gaining TotH charges.`, sCls);
-            } else if (subclass === "Beastmaster") {
-                let cSize = (state.selectedCompanion && state.selectedCompanion[0]) || "None";
-                let opts = ""; Object.keys(COMPANION_DATA).forEach(k => opts += `<option value="${k}" ${k===cSize?'selected':''}>${k}</option>`);
-                let cHtml = `<div style="margin-top: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px; display: block;">Companion Size</label>
-                    <select onchange="updateClassState('selectedCompanion', 0, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(134, 239, 172, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(COMPANION_DATA[cSize])}</div>
-                </div>`;
-                fHtml += bFeat("Animal Companion", 3, `No stats or actions to track. Your companion's attacks count as your own for TotH.${cHtml}`, sCls, true);
-            }
-        }
-
-        if (level >= 4) {
-            fHtml += bFeat("Explorer of the Wilds", 4, `+2 speed and gain a climbing speed.<br><strong>Key Stat Increase:</strong> +1 DEX or WIL.`);
-            
-            let numToth = level>=14?7 : level>=12?6 : level>=10?5 : level>=8?4 : level>=6?3 : level>=4?2 : 2;
-            let hState = state.selectedToth || [];
-            let opts = `<option value="None">Select a TotH Ability...</option>`;
-            Object.keys(HUNTER_DATA.tothAbilities).forEach(group => {
-                opts += `<optgroup label="${group}">`;
-                HUNTER_DATA.tothAbilities[group].forEach(k => opts += `<option value="${k}">${k}</option>`);
-                opts += `</optgroup>`;
+        Object.values(subData).forEach(lvlFeats => {
+            lvlFeats.forEach(f => {
+                if (f.replaces) {
+                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
+                    else replacedIds.add(f.replaces);
+                }
             });
-            
-            let hHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            for(let i=0; i<numToth; i++) {
-                let val = hState[i] || "None";
-                hHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('selectedToth', ${i}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(74, 222, 128, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${val !== "None" ? iStats(TOTH_DESCS[val]) : ""}</div>
-                </div>`;
+        });
+
+        for (let l = 1; l <= level; l++) {
+            if (HUNTER_FEATURES.core[l]) {
+                HUNTER_FEATURES.core[l].forEach(feat => {
+                    if (!replacedIds.has(feat.id)) {
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                    }
+                });
             }
-            fHtml += bFeat("Thrill of the Hunt Abilities", 2, `Choose <strong>${numToth}</strong> abilities.${hHtml}</div>`, "", true);
-        }
-
-        if (level >= 5) {
-            fHtml += bFeat("Hunter's Resolve", 5, `When you have no TotH charges, treat all creatures as your quarry for movement and melee attacks.`);
-            fHtml += bFeat("Final Takedown", 5, `Spend 1 TotH charge to turn a hit on a Bloodied quarry into a crit and double Mark damage. If they survive, they crit you back.`);
-            fHtml += bFeat("Secondary Stat Increase", 5, `+1 STR or INT.`);
-        }
-
-        if (level >= 6) fHtml += bFeat("Versatile Bowmaster", 6, `When attacking with Longbow, roll <strong>2d4</strong> instead of 1d8; or Crossbow, <strong>2d8</strong> instead of 4d4.`);
-
-        if (level >= 7) {
-            if (subclass === "Shadowpath") {
-                fHtml += bFeat("Primal Predator", 7, `(1/encounter) Your weapon attacks ignore cover and armor this turn.`, sCls);
-            } else if (subclass === "WildHeart") {
-                fHtml += bFeat("Resourceful Herbalist", 7, `(1/Safe Rest) Craft <strong>WIL</strong> Healing Salves (Heal WIL d6 HP).`, sCls);
-            } else if (subclass === "Beastmaster") {
-                let upgrade = "Small: Keen Eyes (2/enc), Protect Me! upgrades. Med: Ferocious (4 spaces). Large: Protect Me! upgrades.";
-                fHtml += bFeat("Companion Scaling", 7, upgrade, sCls);
+            if (subData[l]) {
+                subData[l].forEach(feat => {
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                });
             }
         }
-
-        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 DEX or WIL.`);
-
-        if (level >= 9) {
-            fHtml += bFeat("No Escape", 9, `When an ally makes an opportunity attack, you may make a ranged opportunity attack against the same target.`);
-            fHtml += bFeat("Secondary Stat Increase", 9, `+1 STR or INT.`);
-        }
-
-        if (level >= 10) {
-            fHtml += bFeat("Veteran Stalker", 10, `Gain a TotH charge when first Bloodied and for every Wound gained.`);
-            fHtml += bFeat("Keen Eye, Steady Hand", 10, `Add <strong>WIL</strong> to your ranged weapon damage.`);
-        }
-
-        if (level >= 11) {
-            if (subclass === "Shadowpath") {
-                fHtml += bFeat("Pack Hunter", 11, `When you mark a creature, mark another within 6 spaces for free.`, sCls);
-            } else if (subclass === "WildHeart") {
-                fHtml += bFeat("Ha! I'm Over Here!", 11, `(1/Safe Rest) If an attack would drop you to 0 HP, move speed away and take no damage.`, sCls);
-            } else if (subclass === "Beastmaster") {
-                let upgrade = "Small: Keen Eyes (3/enc), Go for the Throat! (2/enc). Med: Go for the Throat! (2/enc). Large: Go for the Throat! (2/enc).";
-                fHtml += bFeat("Companion Scaling", 11, upgrade, sCls);
-            }
-        }
-
-        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 DEX or WIL.`);
-
-        if (level >= 13) {
-            fHtml += bFeat("Keen Sight", 13, `Advantage on Perception checks.`);
-            fHtml += bFeat("Secondary Stat Increase", 13, `+1 STR or INT.`);
-        }
-
-        if (level >= 15) {
-            if (subclass === "Shadowpath") {
-                fHtml += bFeat("Apex Predator", 15, `Use Primal Predator twice per encounter. Gain 1 TotH charge on Initiative.`, sCls);
-            } else if (subclass === "WildHeart") {
-                fHtml += bFeat("Unparalleled Survivalist", 15, `Gain <strong>+WIL</strong> Armor. When attacking at range, move 1/2 speed for free first.`, sCls);
-            } else if (subclass === "Beastmaster") {
-                let upgrade = "Small: Go for the Throat! (3/enc). Med: Ferocious (6 spaces). Large: Protect Me! (2/enc).";
-                fHtml += bFeat("Companion Scaling", 15, upgrade, sCls);
-            }
-        }
-
-        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 DEX or WIL.`);
-
-        if (level >= 17) {
-            fHtml += bFeat("Peerless Hunter", 17, `You can Defend against your quarry for free.`);
-            fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or INT.`);
-        }
-
-        if (level >= 18) fHtml += bFeat("Wild Endurance", 18, `Gain 1 Thrill of the Hunt charge at the start of your turns.`);
-        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Nemesis", 20, `+1 to any 2 of your stats. Your Hunter’s Mark can target any number of creatures simultaneously.`);
 
         return fHtml;
+    },
+
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
+        let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
+        let collection = feat.collection;
+        let desc = (typeof feat.desc === "function") ? feat.desc(CLASS_CONFIG.getDerivedStats(level, subclass, state)) : (feat.desc || "");
+
+        let finalCssClass = cssClass || "";
+        if (feat.minor) finalCssClass += " minor-feature";
+
+        if (feat.type === "choice" || feat.type === "dynamic_choice") {
+            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
+            let selection = state[feat.stateKey] || [];
+            let options = Object.keys(HUNTER_OPTIONS[collection] || {});
+
+            let optsHtml = `<option value="None">-- Select Option --</option>`;
+            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+
+            for (let i = 0; i < count; i++) {
+                let idx = (feat.startIndex || 0) + i;
+                let val = selection[idx] || "None";
+                let d = (val !== "None" && HUNTER_OPTIONS[collection][val]) ? HUNTER_OPTIONS[collection][val].desc : "";
+
+                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(74, 222, 128, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                </div>`;
+            }
+            desc += choiceHtml + `</div>`;
+        }
+
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
     }
 };

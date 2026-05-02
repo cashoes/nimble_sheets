@@ -1,31 +1,129 @@
-const MAGE_DATA = {
-    spellshapers: [
-        "Dimensional Compression",
-        "Echo Casting",
-        "Elemental Destruction",
-        "Elemental Transmutation",
-        "Extra-Dimensional Vision",
-        "Methodical Spellweaver",
-        "Precise Casting",
-        "Stretch Time"
-    ],
-    controlTable: [
-        "I INSIST (Cast free cantrip, no DIS, cannot miss)",
-        "ELEMENTAL AFFLICTION (12 reach: Charged, Smoldering, or Slowed)",
-        "NO (Choose creature; cannot harm chosen target next turn)",
-        "LOSE CONTROL (GM chooses one of the above)"
-    ]
+const MAGE_OPTIONS = {
+    spellshapers: {
+        "Dimensional Compression": { desc: "+4 range to a spell for each additional mana spent." },
+        "Echo Casting": { desc: "(2x mana) Cast a tiered, single-target spell, then cast a free copy on a 2nd target." },
+        "Elemental Destruction": { desc: "(1+ mana) After hit: spend 1-WIL mana to reroll 1 die per mana spent." },
+        "Elemental Transmutation": { desc: "(1 mana) Change spell damage type to: Fire, Ice, Lightning, Necrotic, or Radiant." },
+        "Extra-Dimensional Vision": { desc: "(2 mana) Ignore line of sight and obstacles to reach target you know is within range." },
+        "Methodical Spellweaver": { desc: "(-2 mana) Spend 1 additional action to reduce spell cost by 2 (min 1)." },
+        "Precise Casting": { desc: "(1+ mana) Choose 1 creature per mana spent to be unaffected by your AoE spell." },
+        "Stretch Time": { desc: "(2 mana) Reduce the action cost of a spell by 1 (min 1)." }
+    },
+    masterySchools: {
+        "Fire": { desc: "Gain access to all Fire utility spells." },
+        "Ice": { desc: "Gain access to all Ice utility spells." },
+        "Lightning": { desc: "Gain access to all Lightning utility spells." }
+    }
 };
 
-const MAGE_DESCS = {
-    "Dimensional Compression": "+4 range to a spell for each additional mana spent.",
-    "Echo Casting": "(2x mana) Cast a tiered, single-target spell, then cast a free copy on a 2nd target.",
-    "Elemental Destruction": "(1+ mana) After hit: spend 1-WIL mana to reroll 1 die per mana spent.",
-    "Elemental Transmutation": "(1 mana) Change spell damage type to: Fire, Ice, Lightning, Necrotic, or Radiant.",
-    "Extra-Dimensional Vision": "(2 mana) Ignore line of sight and obstacles to reach target you know is within range.",
-    "Methodical Spellweaver": "(-2 mana) Spend 1 additional action to reduce spell cost by 2 (min 1).",
-    "Precise Casting": "(1+ mana) Choose 1 creature per mana spent to be unaffected by your AoE spell.",
-    "Stretch Time": "(2 mana) Reduce the action cost of a spell by 1 (min 1)."
+const MAGE_FEATURES = {
+    core: {
+        1: [
+            { id: "spellcasting", name: "Elemental Spellcasting", desc: "You know all cantrips from the Fire, Ice, and Lightning schools." }
+        ],
+        2: [
+            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>INTx3+LVL</strong>) to cast tiered spells." },
+            { id: "researcher", name: "Talented Researcher", desc: "Advantage on Arcana/Lore checks when you have access to books/study time." }
+        ],
+        3: [
+            { id: "mastery_1", name: "Elemental Mastery", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1, desc: "Learn all Utility spells from one elemental school of your choice." }
+        ],
+        4: [
+            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 INT or WIL.", minor: true },
+            { id: "tier_2", name: "Tier 2 Spells", desc: "You gain access to Tier 2 spells.", minor: true },
+            { id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", desc: "Choose modular spell upgrades.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 }
+        ],
+        5: [
+            { id: "surge", name: "Elemental Surge", desc: (level) => {
+                let surge = `WIL`;
+                if (level >= 17) surge = `WIL+2d4`;
+                else if (level >= 10) surge = `WIL+1d4`;
+                return `Roll Init: Regain <strong>${surge}</strong> mana (expires end of combat).`;
+            }},
+            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true },
+            { id: "cantrips_1", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (+5 damage).", minor: true }
+        ],
+        6: [
+            { id: "mastery_2", name: "Elemental Mastery (2)", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1, startIndex: 1, desc: "Learn all Utility spells from a 2nd elemental school of your choice." },
+            { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }
+        ],
+        8: [
+            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 INT or WIL.", minor: true },
+            { id: "tier_4", name: "Tier 4 Spells", desc: "You gain access to Tier 4 spells.", minor: true }
+        ],
+        9: [
+            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true }
+        ],
+        10: [
+            { id: "cantrips_2", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (+5 damage).", minor: true },
+            { id: "tier_5", name: "Tier 5 Spells", desc: "You gain access to Tier 5 spells.", minor: true }
+        ],
+        12: [
+            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 INT or WIL.", minor: true },
+            { id: "tier_6", name: "Tier 6 Spells", desc: "You gain access to Tier 6 spells.", minor: true }
+        ],
+        13: [
+            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true }
+        ],
+        14: [
+            { id: "mastery_3", name: "Elemental Mastery (3)", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1, startIndex: 2, desc: "Learn all Utility spells from your 3rd elemental school." },
+            { id: "tier_7", name: "Tier 7 Spells", desc: "You gain access to Tier 7 spells.", minor: true }
+        ],
+        15: [
+            { id: "cantrips_3", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (+5 damage).", minor: true }
+        ],
+        16: [
+            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 INT or WIL.", minor: true },
+            { id: "tier_8", name: "Tier 8 Spells", desc: "You gain access to Tier 8 spells.", minor: true }
+        ],
+        17: [
+            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true }
+        ],
+        18: [
+            { id: "tier_9", name: "Tier 9 Spells", desc: "You gain access to Tier 9 spells.", minor: true }
+        ],
+        20: [
+            { id: "archmage", name: "Archmage", desc: "+1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana." },
+            { id: "cantrips_4", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (+5 damage).", minor: true }
+        ]
+    },
+    subclasses: {
+        "Control": {
+            3: [
+                { id: "force_will", name: "Force of Will", desc: "1/round: Choose 1 option from the Control Table. You must cycle through all options before resetting (resets on Initiative). <br><strong>Deny Fate:</strong> Whenever you miss with a spell or an effect you cause is saved against, you MUST Demand Control." },
+                { id: "control_table", name: "Control Table", desc: `<div style="font-size:0.9em; color:var(--text-muted); margin-top:8px;">
+                    ● <strong>I INSIST:</strong> Cast a cantrip for free, ignoring all disadvantage; it cannot miss.<br>
+                    ● <strong>ELEMENTAL AFFLICTION:</strong> A creature within 12 reach gains the Charged, Smoldering, or Slowed condition.<br>
+                    ● <strong>NO:</strong> Choose a creature; it cannot harm a creature of your choice during its next turn.<br>
+                    ● <strong>LOSE CONTROL:</strong> Do ALL of the above, but the GM chooses each time.</div>` }
+            ],
+            7: [
+                { id: "cost", name: "At Any Cost", desc: "Learn 1 cantrip and 1 tiered spell from the Necrotic school." },
+                { id: "nullify", name: "Nullify", desc: "(1/encounter) Ignore all disadvantage and other negative effects on your next action, then Demand Control." }
+            ],
+            11: [
+                { id: "steel_will", name: "Steel Will", desc: "(1/Safe Rest) Automatically succeed on a failed save. Reroll 1s on Elemental Surge dice." }
+            ],
+            15: [
+                { id: "supreme_control", name: "Supreme Control", desc: "Whenever you Demand Control, you may choose to trigger the selected option twice. You may Demand Control as a Reaction." }
+            ]
+        },
+        "Chaos": {
+            3: [
+                { id: "force_chaos", name: "Force of Chaos", desc: "Whenever you cast a spell, you can choose to spend 1 less mana. Whenever you do this and whenever you crit, Invoke Chaos: Roll on the Chaos Table." }
+            ],
+            7: [
+                { id: "tempest", name: "Tempest Mage", desc: "Learn 1 cantrip and 1 tiered spell from the Wind school." },
+                { id: "chaos_lash", name: "Chaos Lash", desc: "(1/encounter) Reaction (when an enemy moves adjacent to you): They are pushed back 2 spaces, and on a failed WIL save, knocked Prone as well. Invoke Chaos." }
+            ],
+            11: [
+                { id: "thrive", name: "Thrive in Chaos", desc: "Whenever you Invoke Chaos, roll twice and cause BOTH effects. (1/Safe Rest) You may choose which roll to use instead." }
+            ],
+            15: [
+                { id: "master_chaos", name: "Master of Chaos", desc: "Whenever you Invoke Chaos, roll with advantage." }
+            ]
+        }
+    }
 };
 
 const CLASS_CONFIG = {
@@ -33,6 +131,10 @@ const CLASS_CONFIG = {
     subtitle: "Master of elemental forces and spellshaping",
     keyStats: ['int', 'wil'], 
     saves: { adv: 'int', dis: 'str' }, 
+    proficiencies: {
+        armor: "Cloth",
+        weapons: "Blades, Staves, Wands"
+    },
     baseHp: 10,
     hpPerLevel: 5,
     hitDie: 6,
@@ -79,11 +181,10 @@ const CLASS_CONFIG = {
         const manaMax = (state.baseInt + state.addInt) * 3 + level;
 
         return `
-        <div class="panel mechanic-panel">
+        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
             <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center;">
                 ${level >= 2 ? `
-                <!-- Column 1: Mana -->
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
                     <div class="dark-incrementer" style="padding: 4px 10px;">
                         <button onclick="adjRes('mana', -1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
@@ -93,139 +194,144 @@ const CLASS_CONFIG = {
                     <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${manaMax}</div>
                 </div>` : ''}
 
-                <!-- Column 2: Elemental Surge -->
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; ${level >= 2 ? 'border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 10px;' : ''} justify-content: center; text-align: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Surge</label>
+                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Elemental Surge</label>
                     <div style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">+${state.baseWil + state.addWil}</div>
-                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 8px; font-family: 'Crimson Text'; font-style: italic;">Regain on Initiative</div>
+                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 8px; font-family: 'Crimson Text'; font-style: italic;">Regain on Initiative ${level >= 17 ? '(+2d4)' : level >= 10 ? '(+1d4)' : ''}</div>
                 </div>
 
-                <!-- Column 3: Cantrip Power -->
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Cantrips</label>
                     <div style="font-size: 2.2em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">+${derived.cDmg}</div>
                     <div style="font-size: 0.8em; color: var(--gold-light); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">BONUS</div>
                 </div>
             </div>
+            ${subclass === "Control" && level >= 3 ? `
+            <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 4px; text-align: center;">
+                <div style="color: var(--gold-light); font-size: 0.75em; font-weight: bold; text-transform: uppercase; font-family: 'Cinzel'; letter-spacing: 1px;">Control Table Reference</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; font-size: 0.7em; color: var(--text-muted); font-family: 'Crimson Text';">
+                    <div style="text-align: right;"><strong>I INSIST:</strong> Free Cantrip (No DIS)</div>
+                    <div style="text-align: left;"><strong>AFFLICTION:</strong> Condition (12 reach)</div>
+                    <div style="text-align: right;"><strong>NO:</strong> Target cannot harm chosen</div>
+                    <div style="text-align: left;"><strong>LOSE CONTROL:</strong> ALL (GM chooses)</div>
+                </div>
+            </div>` : ''}
         </div>`;
     },
 
     actions: {},
 
-    getFeaturesHTML: function(level, subclass, state, derived, bFeat, iStats) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
         let fHtml = "";
         const sCls = "subclass-feature";
+        const subData = MAGE_FEATURES.subclasses[subclass] || {};
+        const replacedIds = new Set();
 
-        fHtml += bFeat("Mage Basics", "", `<strong>Hit Die:</strong> 1d${this.hitDie} | <strong>Saves:</strong> INT(+), STR(-)<br><strong>Armor:</strong> Cloth | <strong>Weapons:</strong> Blades, Staves, Wands`, "", true);
-        fHtml += bFeat("Elemental Spellcasting", 1, `You know all cantrips from the Fire, Ice, and Lightning schools.`);
-
-        if (level >= 2) {
-            fHtml += bFeat("Mana Pool", 2, `You gain a mana pool (<strong>INTx3+LVL</strong>) to cast tiered spells.`);
-            fHtml += bFeat("Talented Researcher", 2, `Advantage on Arcana/Lore checks when you have access to books/study time.`);
-        }
-
-        if (level >= 3) {
-            fHtml += bFeat("Elemental Mastery", 3, `Learn all Utility spells from one elemental school of your choice.`);
-            if (subclass === "Control") {
-                fHtml += bFeat("Force of Will", 3, `1/round: Choose 1 option from the Control Table. You must cycle through all options before resetting.`, sCls);
-                fHtml += bFeat("Control Table", 3, `<div style="font-size:0.9em; color:var(--text-muted); margin-top:8px;">● <strong>I INSIST:</strong> Free cantrip, no DIS, cannot miss.<br>● <strong>AFFLICTION:</strong> Target in 12 reach Smolders, Slows, or Charges.<br>● <strong>NO:</strong> Creature cannot harm chosen target next turn.</div>`, sCls, true);
-            } else if (subclass === "Chaos") {
-                fHtml += bFeat("Force of Chaos", 3, `Spend 1 less mana on a spell to Invoke Chaos: Roll on the Chaos Table if you crit or roll a 1.`, sCls);
-            }
-        }
-
-        if (level >= 4) {
-            fHtml += bFeat("Key Stat Increase", 4, `+1 INT or WIL.`);
-            let nShapers = level >= 13 ? 3 : level >= 9 ? 2 : 1;
-            let sState = state.selectedShapers || [];
-            let opts = `<option value="None">Select a Spellshaper...</option>`;
-            MAGE_DATA.spellshapers.forEach(k => opts += `<option value="${k}">${k}</option>`);
-
-            let sHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            for(let i=0; i<nShapers; i++) {
-                let val = sState[i] || "None";
-                sHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('selectedShapers', ${i}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(96, 165, 250, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${val !== "None" ? iStats(MAGE_DESCS[val]) : ""}</div>
-                </div>`;
-            }
-            fHtml += bFeat("Spellshaper", 4, `Choose <strong>${nShapers}</strong> modular spell upgrades.${sHtml}</div>`, "", true);
-        }
-
-        if (level >= 5) {
-            let surge = `WIL`;
-            if (level >= 17) surge = `WIL+2d4`;
-            else if (level >= 10) surge = `WIL+1d4`;
-            fHtml += bFeat("Elemental Surge", 5, `Roll Init: Regain <strong>${surge}</strong> mana (expires end of combat).`);
-            fHtml += bFeat("Secondary Stat Increase", 5, `+1 STR or DEX.`);
-        }
-
-        if (level >= 6) {
-            fHtml += bFeat("Elemental Mastery (2)", 6, `Learn all Utility spells from a 2nd elemental school of your choice.`);
-        }
-
-        if (level >= 7) {
-            if (subclass === "Control") {
-                fHtml += bFeat("At Any Cost", 7, `Learn 1 cantrip and 1 tiered spell from the Necrotic school.`, sCls);
-                fHtml += bFeat("Nullify", 7, `(1/encounter) Ignore all disadvantage and other negative effects on your next action, then Demand Control.`, sCls);
-            } else if (subclass === "Chaos") {
-                fHtml += bFeat("Tempest Mage", 7, `Learn 1 cantrip and 1 tiered spell from the Wind school.`, sCls);
-                fHtml += bFeat("Chaos Lash", 7, `(1/encounter) Reaction: When enemy moves adjacent, push them back 2 spaces and potentially knock Prone (WIL save).`, sCls);
-            }
-        }
-
-        if (level >= 8) fHtml += bFeat("Key Stat Increase", 8, `+1 INT or WIL.`);
-
-        if (level >= 9) fHtml += bFeat("Secondary Stat Increase", 9, `+1 STR or DEX.`);
-
-        if (level >= 11) {
-            if (subclass === "Control") {
-                fHtml += bFeat("Steel Will", 11, `(1/Safe Rest) Automatically succeed on a failed save. Reroll 1s on Elemental Surge dice.`, sCls);
-            } else if (subclass === "Chaos") {
-                fHtml += bFeat("Thrive in Chaos", 11, `Whenever you Invoke Chaos, roll twice and cause BOTH effects. (1/Safe Rest) You may choose which roll to use instead.`, sCls);
-            }
-        }
-
-        if (level >= 12) fHtml += bFeat("Key Stat Increase", 12, `+1 INT or WIL.`);
-
-        if (level >= 13) fHtml += bFeat("Secondary Stat Increase", 13, `+1 STR or DEX.`);
-
-        if (level >= 14) {
-            fHtml += bFeat("Elemental Mastery (3)", 14, `Learn all Utility spells from a 3rd elemental school.`);
-        }
-
-        if (level >= 15) {
-            if (subclass === "Control") {
-                fHtml += bFeat("Supreme Control", 15, `Trigger selected Control option twice. You may Demand Control as a reaction.`, sCls);
-            } else if (subclass === "Chaos") {
-                fHtml += bFeat("Master of Chaos", 15, `Whenever you Invoke Chaos, roll with advantage.`, sCls);
-            }
-        }
-
-        if (level >= 16) fHtml += bFeat("Key Stat Increase", 16, `+1 INT or WIL.`);
-
-        if (level >= 17) fHtml += bFeat("Secondary Stat Increase", 17, `+1 STR or DEX.`);
-
-        if (level >= 19) fHtml += bFeat("Epic Boon", 19, `Choose an Epic Boon (see pg. 23 of the GM's Guide).`);
-        if (level >= 20) fHtml += bFeat("Archmage", 20, `+1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana.`);
-
-        return fHtml;
-    },
-
-    getSpellCardsHTML: function(level, subclass, state, derived, formatPips, iStats) {
-        let sHtml = "";
-        const schools = ["Fire", "Ice", "Lightning"];
-
-        schools.forEach(school => {
-            sHtml += `<h3 style="font-family:'Cinzel'; font-size:0.8em; color:var(--gold-light); margin:10px 0 5px 0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:2px;">${school}</h3>`;
-            Object.entries(SPELL_REGISTRY[school]).forEach(([name, data]) => {
-                let tNum = parseInt(data.tier.replace(/\D/g, '')) || 0;
-                if (data.tier.includes("Cantrip") || (level >= 2 && level >= (tNum*2))) {
-                    sHtml += `<div class="spell-card ${school.toLowerCase()}"><h4>${name} <span class="tier-tag">${formatPips(data.tier)}</span></h4><div class="spell-desc">${iStats(data.desc)}</div></div>`;
+        Object.values(subData).forEach(lvlFeats => {
+            lvlFeats.forEach(f => {
+                if (f.replaces) {
+                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
+                    else replacedIds.add(f.replaces);
                 }
             });
         });
 
-        return sHtml;
+        for (let l = 1; l <= level; l++) {
+            if (MAGE_FEATURES.core[l]) {
+                MAGE_FEATURES.core[l].forEach(feat => {
+                    if (!replacedIds.has(feat.id)) {
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                    }
+                });
+            }
+            if (subData[l]) {
+                subData[l].forEach(feat => {
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                });
+            }
+        }
+
+        return fHtml;
+    },
+
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
+        let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
+        let collection = feat.collection;
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state)) : (feat.desc || "");
+
+        let finalCssClass = cssClass || "";
+        if (feat.minor) finalCssClass += " minor-feature";
+
+        if (feat.type === "choice" || feat.type === "dynamic_choice") {
+            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
+            let selection = state[feat.stateKey] || [];
+            let options = Object.keys(MAGE_OPTIONS[collection] || {});
+
+            let optsHtml = `<option value="None">-- Select Option --</option>`;
+            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+
+            for (let i = 0; i < count; i++) {
+                let idx = (feat.startIndex || 0) + i;
+                let val = selection[idx] || "None";
+                let d = (val !== "None" && MAGE_OPTIONS[collection][val]) ? MAGE_OPTIONS[collection][val].desc : "";
+
+                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(129, 140, 248, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                </div>`;
+            }
+            desc += choiceHtml + `</div>`;
+        }
+
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+    },
+
+    getAvailableSpells: function(level, subclass, state, derived) {
+        let spells = [];
+        const baseSchools = ["Fire", "Ice", "Lightning"];
+        
+        // 1. Gather all tiered spells and cantrips from base schools
+        baseSchools.forEach(school => {
+            if (!SPELL_REGISTRY[school]) return;
+            Object.entries(SPELL_REGISTRY[school]).forEach(([name, data]) => {
+                let tNum = parseInt(data.tier.replace(/\D/g, '')) || 0;
+                let requiredLevel = data.tier.includes("Cantrip") ? 1 : (tNum * 2);
+                if (level >= requiredLevel) {
+                    spells.push({ name, ...data, school });
+                }
+            });
+        });
+
+        // 2. Subclass-specific additions
+        if (subclass === "Control" && level >= 7) {
+            if (SPELL_REGISTRY["Necrotic"]) {
+                const necroticSpells = Object.entries(SPELL_REGISTRY["Necrotic"]);
+                const cantrip = necroticSpells.find(([n, d]) => d.tier.includes("Cantrip"));
+                if (cantrip) spells.push({ name: cantrip[0], ...cantrip[1], school: "Necrotic" });
+                const tiered = necroticSpells.find(([n, d]) => !d.tier.includes("Cantrip"));
+                if (tiered) spells.push({ name: tiered[0], ...tiered[1], school: "Necrotic" });
+            }
+        } else if (subclass === "Chaos" && level >= 7) {
+            if (SPELL_REGISTRY["Wind"]) {
+                const windSpells = Object.entries(SPELL_REGISTRY["Wind"]);
+                const cantrip = windSpells.find(([n, d]) => d.tier.includes("Cantrip"));
+                if (cantrip) spells.push({ name: cantrip[0], ...cantrip[1], school: "Wind" });
+                const tiered = windSpells.find(([n, d]) => !d.tier.includes("Cantrip"));
+                if (tiered) spells.push({ name: tiered[0], ...tiered[1], school: "Wind" });
+            }
+        }
+
+        // 3. Elemental Mastery (Utility Spells)
+        const masterySelections = state.selectedMastery || [];
+        masterySelections.forEach(sch => {
+            if (sch !== "None" && UTILITY_SPELLS[sch]) {
+                Object.entries(UTILITY_SPELLS[sch]).forEach(([name, desc]) => {
+                    spells.push({ name, desc, tier: "Utility", school: sch });
+                });
+            }
+        });
+
+        return spells;
     }
 };

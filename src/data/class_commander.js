@@ -42,7 +42,6 @@ const COMMANDER_OPTIONS = {
 const COMMANDER_FEATURES = {
     core: {
         1: [
-            { id: "basics", name: "Commander Basics", desc: "Hit Die: 1d10 | Saves: STR(+), DEX(-)<br>Armor: Mail, Shields | Weapons: All Martial Weapons" },
             { id: "coord_strike", name: "Coordinated Strike!", desc: "1/round, Free action: you and an ally within 6 spaces both immediately make a weapon attack or cast a cantrip for free. You can do this INT times/Safe Rest." }
         ],
         2: [
@@ -136,6 +135,10 @@ const CLASS_CONFIG = {
     subtitle: "Fearless leader, battlefield tactician, and weapon master",
     keyStats: ['str', 'int'],
     saves: { adv: 'str', dis: 'dex' },
+    proficiencies: {
+        armor: "Mail, Shields",
+        weapons: "All Martial Weapons"
+    },
     baseHp: 17,
     hpPerLevel: 8,
     hitDie: 10,
@@ -144,7 +147,7 @@ const CLASS_CONFIG = {
         accent: "#f59e0b",
         accentDim: "#b45309",
         bodyBg: "#0f0a0a",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0f0f 0%, #0f0a0a 100%)",
+        containerBg: "radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0f11 0%, #0f0a0a 100%)",
         panelBg: "rgba(35, 20, 20, 0.8)",
         border: "rgba(245, 158, 11, 0.25)"
     },
@@ -173,7 +176,8 @@ const CLASS_CONFIG = {
             if (level >= 17) max += 1;
             if (level >= 7 && subclass === "Vanguard") max += 1;
             return max;
-        }}
+        }},
+        { id: 'mana', label: 'Mana Pool', manual: true, isVisible: (level, subclass) => subclass === "Spellblade", calcMax: (level, stats) => stats.int }
     ],
 
     customHeaderStats: [],
@@ -208,12 +212,16 @@ const CLASS_CONFIG = {
         if (level >= 13) strikeMax += 1;
         if (level >= 17) strikeMax += 1;
 
+        let manaMax = state.baseInt + state.addInt;
+
         let currentCD = state.resourceValues.combatDice !== undefined ? state.resourceValues.combatDice : maxCD;
         let strikeCur = state.resourceValues.coordStrike !== undefined ? state.resourceValues.coordStrike : strikeMax;
+        let manaCur = state.resourceValues.mana !== undefined ? state.resourceValues.mana : 0;
 
         return `
-        <div class="panel mechanic-panel">
+        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
             <div style="display: flex; align-items: stretch; gap: 12px;">
+               ${subclass !== "Spellblade" ? `
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Combat Dice (${derived.cdType})</label>
                    <div class="dark-incrementer" style="padding: 4px 10px;">
@@ -222,7 +230,16 @@ const CLASS_CONFIG = {
                        <button onclick="adjRes('combatDice', 1, ${maxCD})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
                    </div>
                    <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">MAX ${maxCD}</div>
-               </div>
+               </div>` : `
+               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+                   <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">INT Mana</label>
+                   <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--class-accent);">
+                       <button onclick="adjRes('mana', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                       <input type="number" id="res_mana" value="${manaCur}" min="0" max="${manaMax}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:30px; font-size: 1.3em;">
+                       <button onclick="adjRes('mana', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                   </div>
+                   <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">INIT REGAIN: ${manaMax}</div>
+               </div>`}
 
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Coord. Strike</label>
