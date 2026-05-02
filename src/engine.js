@@ -1,9 +1,10 @@
 /**
  * STATE MANAGEMENT
  */
-// Use full URL to isolate different character files on the same domain/local drive
+// Use filename to isolate different character files while allowing them to be moved between folders
 const getStorageKey = () => {
-    return `nimble_v4_${CLASS_CONFIG.name.toLowerCase()}_${window.location.href}`;
+    const filename = window.location.pathname.split('/').pop() || 'index.html';
+    return `nimble_v4_${CLASS_CONFIG.name.toLowerCase()}_${filename}`;
 };
 
 const STORAGE_KEY = getStorageKey();
