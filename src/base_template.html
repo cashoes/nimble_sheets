@@ -109,8 +109,11 @@
 
   .panel-title { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; display: block; border-bottom: 1px solid var(--class-border); padding-bottom: 1px; }
   
-  input[type="text"], input[type="number"], select { width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--class-border); font-family: 'Crimson Text', serif; font-size: 1.0em; color: var(--text-main); padding: 1px; text-align: left; text-align-last: left; font-weight: 600; transition: border-color 0.2s, opacity 0.2s; box-sizing: border-box; }
+  input[type="text"], input[type="number"], select { width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--class-border); font-family: 'Crimson Text', serif; font-size: 1.0em; color: var(--text-main); padding: 1px; font-weight: 600; transition: border-color 0.2s, opacity 0.2s; box-sizing: border-box; }
+  input[type="text"], input[type="number"] { text-align: center; }
   select {
+    text-align: left;
+    text-align-last: left;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
