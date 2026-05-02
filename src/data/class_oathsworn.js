@@ -205,8 +205,17 @@ const CLASS_CONFIG = {
 
         let decrees = state.selectedDecrees || [];
         let isAdv = decrees.includes("Reliable Justice");
-        let tags = `<span style="color:var(--text-muted); opacity:0.6; font-size:1.1em;">● Expended on hit/miss</span>`;
-        if (isAdv) tags += `<span style="color:var(--save-adv); margin-left:12px; font-size:1.1em;">● Advantage</span>`;
+        let isExploding = !!(state.explodingDice?.[0]);
+
+        let tagItems = [];
+        tagItems.push(`<span style="color:var(--text-muted); opacity:0.6;">● Expended on hit/miss</span>`);
+        if (isAdv) tagItems.push(`<span style="color:var(--save-adv);">● Advantage</span>`);
+        tagItems.push(`
+            <label style="display: flex; align-items: center; gap: 4px; color: ${isExploding ? 'var(--class-accent)' : 'var(--text-muted)'}; cursor: pointer; user-select: none; transition: color 0.2s;">
+                <input type="checkbox" onchange="updateClassState('explodingDice', 0, this.checked)" ${isExploding ? 'checked' : ''} style="width:12px; height:12px; margin:0; cursor:pointer;"> 
+                <span>● Boom</span>
+            </label>
+        `);
 
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
@@ -223,7 +232,7 @@ const CLASS_CONFIG = {
                         <span style="font-size: 2.8em; font-family: 'Cinzel', serif; font-weight: bold; color: ${valColor}; line-height: 1;">${valText}</span>
                         <span style="font-size: 0.9em; color: var(--text-muted); font-style: italic; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${state.judgmentRolls}">${detailText}</span>
                     </div>
-                    <div style="font-size: 0.7em; display: flex; width: 100%; justify-content: center; margin-top: auto; font-family:'Cinzel'; font-weight:bold; letter-spacing:1px;">${tags}</div>
+                    <div style="font-size: 0.75em; display: flex; width: 100%; justify-content: center; gap: 12px; margin-top: auto; font-family:'Cinzel'; font-weight:bold; letter-spacing:1px; align-items: center;">${tagItems.join('')}</div>
                 </div>
 
                 ${level >= 2 ? `
@@ -262,22 +271,40 @@ const CLASS_CONFIG = {
             if (subclass === "Vengeance" && level >= 3) jdCount += 1;
 
             let hasAdv = decrees.includes("Reliable Justice");
+            let isExploding = !!(state.explodingDice?.[0]);
             let rollCount = hasAdv ? jdCount + 1 : jdCount;
-            let rolls = [];
+            
+            let finalValues = [];
+            let rollDetails = [];
+
             for (let i = 0; i < rollCount; i++) {
-                rolls.push(Math.floor(Math.random() * faces) + 1);
+                let r = Math.floor(Math.random() * faces) + 1;
+                let totalForThisDie = r;
+                let detailsForThisDie = r.toString();
+                
+                if (isExploding) {
+                    while (r === faces) {
+                        r = Math.floor(Math.random() * faces) + 1;
+                        totalForThisDie += r;
+                        detailsForThisDie += '!' + r;
+                    }
+                }
+                finalValues.push(totalForThisDie);
+                rollDetails.push(detailsForThisDie);
             }
 
             if (hasAdv) {
-                let minVal = Math.min(...rolls);
-                let minIdx = rolls.indexOf(minVal);
-                let droppedValue = rolls[minIdx];
-                rolls.splice(minIdx, 1);
-                state.judgmentValue = rolls.reduce((a, b) => a + b, 0);
-                state.judgmentRolls = `${rolls.join(' + ')} <s>(${droppedValue})</s>`;
+                let minVal = Math.min(...finalValues);
+                let minIdx = finalValues.indexOf(minVal);
+                let droppedValue = rollDetails[minIdx];
+                finalValues.splice(minIdx, 1);
+                rollDetails.splice(minIdx, 1);
+                
+                state.judgmentValue = finalValues.reduce((a, b) => a + b, 0);
+                state.judgmentRolls = `${rollDetails.join(' + ')} <s>(${droppedValue})</s>`;
             } else {
-                state.judgmentValue = rolls.reduce((a, b) => a + b, 0);
-                state.judgmentRolls = rolls.join(' + ');
+                state.judgmentValue = finalValues.reduce((a, b) => a + b, 0);
+                state.judgmentRolls = rollDetails.join(' + ');
             }
             saveState(); render();
         },
