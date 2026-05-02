@@ -207,15 +207,30 @@ const CLASS_CONFIG = {
         let isAdv = decrees.includes("Reliable Justice");
         let isExploding = !!(state.explodingDice?.[0]);
 
-        let tagItems = [];
-        tagItems.push(`<span style="color:var(--text-muted); opacity:0.6;">● Expended on hit/miss</span>`);
-        if (isAdv) tagItems.push(`<span style="color:var(--save-adv);">● Advantage</span>`);
-        tagItems.push(`
-            <label style="display: flex; align-items: center; gap: 4px; color: ${isExploding ? 'var(--class-accent)' : 'var(--text-muted)'}; cursor: pointer; user-select: none; transition: color 0.2s;">
-                <input type="checkbox" onchange="updateClassState('explodingDice', 0, this.checked)" ${isExploding ? 'checked' : ''} style="width:12px; height:12px; margin:0; cursor:pointer;"> 
-                <span>● Boom</span>
-            </label>
+        let tagRows = [];
+        
+        // Top Row: Active Indicators (Advantage, Boom)
+        let topRowItems = [];
+        if (isAdv) {
+            topRowItems.push(`<div style="display: flex; align-items: center; gap: 4px; color: var(--save-adv);">
+                <div style="width: 8px; height: 8px; background: var(--save-adv); border-radius: 50%; box-shadow: 0 0 5px var(--save-adv);"></div>
+                <span>Advantage</span>
+            </div>`);
+        }
+        
+        // Boom Toggle as a Radial/Pip
+        topRowItems.push(`
+            <div onclick="updateClassState('explodingDice', 0, ${!isExploding}); event.stopPropagation();" 
+                 style="display: flex; align-items: center; gap: 6px; color: ${isExploding ? 'var(--class-accent)' : 'var(--text-muted)'}; cursor: pointer; user-select: none; transition: all 0.2s;">
+                <div style="width: 10px; height: 10px; border: 2px solid ${isExploding ? 'var(--class-accent)' : 'var(--class-border)'}; border-radius: 50%; background: ${isExploding ? 'var(--class-accent)' : 'rgba(0,0,0,0.3)'}; box-shadow: ${isExploding ? '0 0 8px var(--class-accent)' : 'none'}; transition: all 0.2s;"></div>
+                <span style="font-size: 0.9em; letter-spacing: 1px;">BOOM</span>
+            </div>
         `);
+
+        tagRows.push(`<div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 4px; align-items: center;">${topRowItems.join('')}</div>`);
+
+        // Bottom Row: Explanatory Text
+        tagRows.push(`<div style="display: flex; justify-content: center; color: var(--text-muted); opacity: 0.5; font-size: 0.85em; font-style: italic;">Expended on hit/miss</div>`);
 
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
@@ -232,7 +247,7 @@ const CLASS_CONFIG = {
                         <span style="font-size: 2.8em; font-family: 'Cinzel', serif; font-weight: bold; color: ${valColor}; line-height: 1;">${valText}</span>
                         <span style="font-size: 0.9em; color: var(--text-muted); font-style: italic; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${state.judgmentRolls}">${detailText}</span>
                     </div>
-                    <div style="font-size: 0.75em; display: flex; width: 100%; justify-content: center; gap: 12px; margin-top: auto; font-family:'Cinzel'; font-weight:bold; letter-spacing:1px; align-items: center;">${tagItems.join('')}</div>
+                    <div style="width: 100%; margin-top: auto; font-family:'Cinzel'; font-weight:bold;">${tagRows.join('')}</div>
                 </div>
 
                 ${level >= 2 ? `
