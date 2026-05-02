@@ -288,7 +288,7 @@ const CLASS_CONFIG = {
                 let d = (val !== "None" && SHEPHERD_OPTIONS[collection][val]) ? SHEPHERD_OPTIONS[collection][val].desc : "";
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                     <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
                 </div>`;
             }
@@ -332,7 +332,7 @@ const CLASS_CONFIG = {
                     let rVal = state.spiritSpellsRadiant?.[i] || "None";
                     let rOpts = `<option value="None">Select Radiant Utility...</option>`;
                     Object.keys(UTILITY_SPELLS.Radiant).forEach(k => rOpts += `<option value="${k}">${k}</option>`);
-                    let rCustom = `<select onchange="updateClassState('spiritSpellsRadiant', ${i}, this.value)" style="border:none; border-bottom:1px solid var(--slate-lighter); background:transparent; color:#fff; width:70%; font-size: 1em;">${rOpts.replace(`value="${rVal}"`, `value="${rVal}" selected`)}</select>`;
+                    let rCustom = `<select onchange="updateClassState('spiritSpellsRadiant', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${rOpts.replace(`value="${rVal}"`, `value="${rVal}" selected`)}</select>`;
                     if (rVal !== "None") rCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Radiant[rVal]}</div>`;
                     spells.push({ name: "", tier: "Utility", school: "Radiant", customHtml: rCustom });
                     
@@ -340,7 +340,7 @@ const CLASS_CONFIG = {
                     let nVal = state.spiritSpellsNecrotic?.[i] || "None";
                     let nOpts = `<option value="None">Select Necrotic Utility...</option>`;
                     Object.keys(UTILITY_SPELLS.Necrotic).forEach(k => nOpts += `<option value="${k}">${k}</option>`);
-                    let nCustom = `<select onchange="updateClassState('spiritSpellsNecrotic', ${i}, this.value)" style="border:none; border-bottom:1px solid var(--slate-lighter); background:transparent; color:#fff; width:70%; font-size: 1em;">${nOpts.replace(`value="${nVal}"`, `value="${nVal}" selected`)}</select>`;
+                    let nCustom = `<select onchange="updateClassState('spiritSpellsNecrotic', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${nOpts.replace(`value="${nVal}"`, `value="${nVal}" selected`)}</select>`;
                     if (nVal !== "None") nCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Necrotic[nVal]}</div>`;
                     spells.push({ name: "", tier: "Utility", school: "Necrotic", customHtml: nCustom });
                 }

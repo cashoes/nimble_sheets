@@ -366,9 +366,9 @@ const CLASS_CONFIG = {
 
                     choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                         <div style="display:flex; gap: 8px; margin-bottom: 5px;">
-                            <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="flex:1; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.85em; background: rgba(0,0,0,0.4); padding: 2px;">${orderOpts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                            <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="flex:1; border-bottom-color: var(--class-accent);">${orderOpts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                             <span style="color:var(--text-muted); font-size:0.8em; align-self:center; font-family:'Cinzel'; font-weight:bold;">OR</span>
-                            <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="flex:1; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.85em; background: rgba(0,0,0,0.4); padding: 2px;">${spellOpts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                            <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="flex:1; border-bottom-color: var(--class-accent);">${spellOpts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                         </div>
                         <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3; margin-top:4px;">${iStats(d)}</div>
                     </div>`;
@@ -387,7 +387,7 @@ const CLASS_CONFIG = {
                         }
                     }
                     choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                        <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                        <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                         <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
                     </div>`;
                 }
@@ -420,7 +420,7 @@ const CLASS_CONFIG = {
                 });
                 sHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <label style="font-size:0.7em; color:var(--gold-light); display:block; margin-bottom:2px;">TIERED SPELL (UP TO T${maxTier})</label>
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: rgba(0,0,0,0.4); padding: 2px; width: 100%;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                 </div>`;
 
                 if (feat.utility) {
@@ -434,7 +434,7 @@ const CLASS_CONFIG = {
                     });
                     sHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent); margin-top: 4px;">
                         <label style="font-size:0.7em; color:var(--gold-light); display:block; margin-bottom:2px;">UTILITY SPELL</label>
-                        <select onchange="updateClassState('${feat.utilStateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(168, 85, 247, 0.3); color: #fff; font-size: 0.9em; background: rgba(0,0,0,0.4); padding: 2px; width: 100%;">${uOpts.replace(`value="${uVal}"`, `value="${uVal}" selected`)}</select>
+                        <select onchange="updateClassState('${feat.utilStateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${uOpts.replace(`value="${uVal}"`, `value="${uVal}" selected`)}</select>
                     </div>`;
                 }
             }

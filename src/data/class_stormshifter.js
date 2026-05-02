@@ -258,7 +258,7 @@ const CLASS_CONFIG = {
 
                 <div style="flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                     <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Current Form</label>
-                    <select onchange="updateClassState('currentForm', 0, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(45, 212, 191, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%; text-align-last: center;">${opts}</select>
+                    <select onchange="updateClassState('currentForm', 0, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${opts}</select>
                     <div style="height: 38px; display: flex; align-items: center; justify-content: center;">
                         <div style="font-size: 0.75em; color: var(--text-muted); line-height: 1.1; font-family:'Crimson Text'; font-style:italic; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${STORMSHIFTER_OPTIONS.forms[activeForm]?.desc || ""}</div>
                     </div>
@@ -325,7 +325,7 @@ const CLASS_CONFIG = {
                 let d = (val !== "None" && STORMSHIFTER_OPTIONS[collection][val]) ? STORMSHIFTER_OPTIONS[collection][val].desc : "";
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(45, 212, 191, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                     <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
                 </div>`;
             }
@@ -351,7 +351,7 @@ const CLASS_CONFIG = {
 
                     choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                         <div style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; margin-bottom: 4px; font-family:'Cinzel'; font-weight:bold;">${sch} Utility ${i+1}</div>
-                        <select onchange="updateClassState('${stateKey}', ${i}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(45, 212, 191, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                        <select onchange="updateClassState('${stateKey}', ${i}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                         <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
                     </div>`;
                 }

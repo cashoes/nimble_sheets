@@ -653,7 +653,7 @@ function render() {
                 });
                 opts += `</optgroup>`;
             });
-            bgDesc += `<div style="margin-top:10px;"><select onchange="updateBgSpell(this.value)" style="width:100%; background:rgba(0,0,0,0.2); color:#fff; border:1px solid var(--class-accent); padding:4px;">${opts}</select></div>`;
+            bgDesc += `<div style="margin-top:10px;"><select onchange="updateBgSpell(this.value)" style="border-bottom-color: var(--class-accent);">${opts}</select></div>`;
             if (state.bgSpell && state.bgSpell !== "None") {
                 let sData = null;
                 Object.values(UTILITY_SPELLS).forEach(school => { if(school[state.bgSpell]) sData = school[state.bgSpell]; });

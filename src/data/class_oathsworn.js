@@ -340,7 +340,7 @@ const CLASS_CONFIG = {
                 let d = (val !== "None" && OATHSWORN_OPTIONS[collection][val]) ? OATHSWORN_OPTIONS[collection][val].desc : "";
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="margin-bottom: 5px; border-bottom: 1px solid rgba(56, 189, 248, 0.3); color: #fff; font-size: 0.9em; background: transparent; padding: 2px; width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                     <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
                 </div>`;
             }
@@ -407,7 +407,7 @@ const CLASS_CONFIG = {
                 let school = (isOathbreaker && UTILITY_SPELLS.Necrotic[val]) ? "Necrotic" : "Radiant";
                 let desc = UTILITY_SPELLS[school][val] || "";
 
-                let customHtml = `<select onchange="updateClassState('selectedSpells', ${i}, this.value)" style="border:none; border-bottom:1px solid var(--slate-lighter); background:transparent; color:#fff; width:70%; font-size: 1em;">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>`;
+                let customHtml = `<select onchange="updateClassState('selectedSpells', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>`;
                 if (val !== "None") customHtml += `<div style="margin-top:8px;">${desc}</div>`;
 
                 spells.push({ name: "", tier: "Utility", school: school, customHtml: customHtml });
