@@ -251,7 +251,7 @@ const CLASS_CONFIG = {
                 </div>
 
                 ${level >= 2 ? `
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
                     <div class="dark-incrementer" style="padding: 4px 10px;">
                         <button onclick="adjRes('manaCurrent', -1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
@@ -261,7 +261,7 @@ const CLASS_CONFIG = {
                     <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${manaMax}</div>
                 </div>` : ''}
 
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Lay on Hands</label>
                     <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--gold-dim);">
                         <button onclick="adjRes('lohCurrent', -1, ${lohMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
