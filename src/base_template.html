@@ -246,12 +246,14 @@
     <div class="header-center">
         <h1 id="classNameDisplay">Class Name</h1>
         <div class="subtitle" id="classSubtitleDisplay">Subtitle</div>
-        <div style="margin-top: 10px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-            <button onclick="saveAsHTML()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: var(--class-accent); color: #000;">Save as File (.html)</button>
-            <button onclick="exportCharacter()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Export JSON</button>
-            <button onclick="document.getElementById('importFile').click()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Import JSON</button>
-            <input type="file" id="importFile" style="display:none" onchange="importCharacter(this)">
+        <div style="margin-top: 10px; display: flex; justify-content: center;">
+            <button onclick="saveAsHTML()" class="add-item-btn" style="margin:0; padding: 6px 15px; font-size: 0.8em; background: var(--class-accent); color: #000; width: auto;">Save as File (.html)</button>
         </div>
+        <!-- Hidden for simplified UI
+        <button onclick="exportCharacter()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Export JSON</button>
+        <button onclick="document.getElementById('importFile').click()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Import JSON</button>
+        <input type="file" id="importFile" style="display:none" onchange="importCharacter(this)">
+        -->
     </div>
     <div class="header-right-stats" id="headerRightStats"></div>
   </div>
