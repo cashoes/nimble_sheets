@@ -450,7 +450,7 @@ function iStats(txt, level, statsMap) {
 
 function bFeat(t, l, d, theme = "", skip = false, level, statsMap) {
     const desc = skip ? d : iStats(d, level, statsMap);
-    return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><p>${desc}</p></div>`;
+    return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`;
 }
 
 function formatPips(tier) {
@@ -466,33 +466,24 @@ function formatPips(tier) {
     return `<span style="letter-spacing:2px; color:var(--subclass-accent, var(--class-accent)); margin-right:8px;">${pips}</span> ${tStr}`;
 }
 
+function renderSingleSpellCard(s, level, statsMap) {
+    const schoolClass = (s.school || "").toLowerCase();
+    const iStatsBound = (txt) => iStats(txt, level, statsMap);
+    const desc = s.customHtml ? s.customHtml : (s.desc ? iStatsBound(s.desc) : "");
+    const namePart = s.name ? `${s.name} ` : "";
+    return `
+        <div class="spell-card ${schoolClass}" style="margin-top: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+            <h4 style="font-size: 0.9em;">${namePart}<span class="tier-tag">${formatPips(s.tier)}</span></h4>
+            <div class="spell-desc" style="font-size: 0.85em;">${desc}</div>
+        </div>`;
+}
+
 function renderSpells(level, subclass, state, derived, iStatsBound) {
     let spells = [];
     
     // 1. Gather Class Spells
     if (CLASS_CONFIG.getAvailableSpells) {
         spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived);
-    }
-
-    // 2. Intercept Background Spells (Academy Dropout)
-    if (state.background === "Academy Dropout") {
-        let opts = `<option value="None">-- Select Spell --</option>`;
-        Object.keys(UTILITY_SPELLS).forEach(school => {
-            opts += `<optgroup label="${school}">`;
-            Object.keys(UTILITY_SPELLS[school]).forEach(sName => {
-                opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`;
-            });
-            opts += `</optgroup>`;
-        });
-        
-        let customHtml = `<select onchange="updateBgSpell(this.value)" style="border-bottom-color: var(--class-accent);">${opts}</select>`;
-        if (state.bgSpell && state.bgSpell !== "None") {
-            let sData = null;
-            Object.values(UTILITY_SPELLS).forEach(school => { if(school[state.bgSpell]) sData = school[state.bgSpell]; });
-            if (sData) customHtml += `<div style="margin-top:8px;">${iStatsBound(sData)}</div>`;
-        }
-
-        spells.unshift({ name: "Academy Dropout", tier: "Utility", school: "Radiant", customHtml: customHtml });
     }
 
     if (!spells || spells.length === 0) return "";
@@ -507,16 +498,12 @@ function renderSpells(level, subclass, state, derived, iStatsBound) {
         return (a.name || "").localeCompare(b.name || "");
     });
 
-    return spells.map(s => {
-        const schoolClass = (s.school || "").toLowerCase();
-        const desc = s.customHtml ? s.customHtml : iStatsBound(s.desc);
-        const namePart = s.name ? `${s.name} ` : "";
-        return `
-            <div class="spell-card ${schoolClass}">
-                <h4>${namePart}<span class="tier-tag">${formatPips(s.tier)}</span></h4>
-                <div class="spell-desc">${desc}</div>
-            </div>`;
-    }).join("");
+    return spells.map(s => renderSingleSpellCard(s, level, {
+        str: state.baseStr + state.addStr,
+        dex: state.baseDex + state.addDex,
+        int: state.baseInt + state.addInt,
+        wil: state.baseWil + state.addWil
+    })).join("");
 }
 
 /**
@@ -666,10 +653,44 @@ function render() {
     if (document.getElementById('toggleMinorFeatures')) document.getElementById('toggleMinorFeatures').checked = state.showMinor || false;
     document.body.classList.toggle('show-minor', state.showMinor);
 
-    let fHtml = CLASS_CONFIG.getFeaturesHTML(level, subclass, state, derived, bFeatBound, iStatsBound, formatPips);
+    let fHtml = CLASS_CONFIG.getFeaturesHTML(level, subclass, state, derived, bFeatBound, iStatsBound, formatPips, renderSingleSpellCard);
     
     if (bgFeat) {
-        fHtml = bFeatBound(`Background: ${background}`, "", bgTxt, "", true) + fHtml;
+        let bgDesc = bgTxt;
+        if (state.background === "Academy Dropout") {
+            let opts = `<option value="None">-- Select Spell --</option>`;
+            Object.keys(UTILITY_SPELLS).forEach(school => {
+                opts += `<optgroup label="${school}">`;
+                Object.keys(UTILITY_SPELLS[school]).forEach(sName => {
+                    opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`;
+                });
+                opts += `</optgroup>`;
+            });
+            
+            let school = "Radiant"; // Default
+            let sData = null;
+            if (state.bgSpell && state.bgSpell !== "None") {
+                for (const [sch, spells] of Object.entries(UTILITY_SPELLS)) {
+                    if (spells[state.bgSpell]) {
+                        school = sch;
+                        sData = spells[state.bgSpell];
+                        break;
+                    }
+                }
+            }
+            
+            let customHtml = `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)" style="border-bottom-color: var(--class-accent);">${opts}</select></div>`;
+            customHtml += `<div style="font-weight:bold; color:var(--text-muted); font-size:0.85em; margin-bottom:4px;">1 Action</div>`;
+            if (sData) customHtml += `<div>${iStatsBound(sData)}</div>`;
+
+            bgDesc += renderSingleSpellCard({ 
+                name: state.bgSpell !== "None" ? state.bgSpell : "Academy Dropout", 
+                tier: "Utility", 
+                school: school, 
+                customHtml: customHtml 
+            }, level, statsMap);
+        }
+        fHtml = bFeatBound(`Background: ${background}`, "", bgDesc, "", true) + fHtml;
     }
     
     if(ancTxt) fHtml = bFeatBound(`Ancestry: ${ancestry}`, "", ancTxt, "", true) + fHtml;

@@ -17,15 +17,22 @@ const SHEPHERD_FEATURES = {
             { id: "searing", name: "Searing Light", desc: "Action: Heal <strong>WIL</strong> d8 HP to Dying creature within 6. OR: Inflict <strong>WIL</strong> d8 radiant damage to Undead/Bloodied enemy." }
         ],
         2: [
-            { id: "spirit", name: "Lifebinding Spirit", desc: (level, subclass, state, derived) => {
+            { id: "spirit", name: "Lifebinding Spirit", desc: (level, subclass, state, derived, rSSC) => {
                 const totalWil = (state.baseWil || 0) + (state.addWil || 0);
                 const wilDisplay = `${totalWil >= 0 ? "+" : ""}${totalWil}`;
-                return `(Tier 1 Radiant) 1 Action. Summon a spirit companion that follows you and is immune to harm. It lasts until you cast this spell again, take a Safe Rest, or it heals a number of times equal to the mana spent summoning it.
-                <ul style="margin-top: 5px;">
-                    <li>It attacks or heals a creature within Reach 4. It attacks for <strong>1d6${wilDisplay}</strong> radiant damage (ignoring armor), or heals for the same amount.</li>
-                </ul>
-                <strong>Upcast:</strong> Increment its die size by 1 (max d12), +1 healing use per tier. <em>(Your current max upcast damage is <strong>${derived.spiritDmg}${wilDisplay}</strong>)</em>`;
-            }},
+                
+                let intro = `You know the unique Radiant spell <strong>Lifebinding Spirit</strong>:`;
+                let card = rSSC({
+                    name: "Lifebinding Spirit",
+                    tier: "Tier 1",
+                    school: "Radiant",
+                    desc: `1 Action. Reach: 4. Summon a spirit companion that follows you. It lasts until you cast this spell again, take a Safe Rest, or it heals a number of times equal to the mana spent summoning it.<br>
+                    <div style="margin-top:5px;">● It attacks or heals for <strong>1d6${wilDisplay}</strong> radiant damage (ignoring armor), or heals for the same amount.</div>
+                    <div style="margin-top:5px;">● <strong>Upcast:</strong> +1 die size (max d12), +1 healing use per tier. <em>(Current max upcast dmg: <strong>${derived.spiritDmg}${wilDisplay}</strong>)</em></div>`
+                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: state.baseInt+state.addInt, wil: totalWil });
+                
+                return intro + card;
+            } },
             { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true }
         ],
         4: [
@@ -232,7 +239,7 @@ const CLASS_CONFIG = {
 
     actions: {},
 
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
         let fHtml = "";
         const sCls = "subclass-feature";
         const subData = SHEPHERD_FEATURES.subclasses[subclass] || {};
@@ -251,13 +258,13 @@ const CLASS_CONFIG = {
             if (SHEPHERD_FEATURES.core[l]) {
                 SHEPHERD_FEATURES.core[l].forEach(feat => {
                     if (!replacedIds.has(feat.id)) {
-                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC);
                     }
                 });
             }
             if (subData[l]) {
                 subData[l].forEach(feat => {
-                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, sCls);
                 });
             }
         }
@@ -265,11 +272,11 @@ const CLASS_CONFIG = {
         return fHtml;
     },
 
-    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state)) : (feat.desc || "");
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";

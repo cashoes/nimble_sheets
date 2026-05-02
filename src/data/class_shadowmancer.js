@@ -32,17 +32,45 @@ const SHADOWMANCER_OPTIONS = {
 const SHADOWMANCER_FEATURES = {
     core: {
         1: [
-            { id: "conduit", name: "Conduit of Shadow", desc: (level, subclass, state) => {
+            { id: "conduit", name: "Conduit of Shadow", desc: (level, subclass, state, derived, rSSC) => {
                 const totalInt = (state.baseInt || 0) + (state.addInt || 0);
                 const minions = Math.max(1, Math.min(totalInt, level));
                 let blastDice = 1 + Math.floor(level / 5);
                 let bonusReach = Math.floor(level / 5);
                 let blastDmg = `<strong>${blastDice}d12${totalInt >= 0 ? "+" : ""}${totalInt}</strong>`;
-                return `Your Patron grants you knowledge of two unique Necrotic cantrips:<br>
-                <div style="margin-top:8px;"><strong>Shadow Blast.</strong> (1/round) Action. Range: 8. Damage: ${blastDmg}.</div>
-                <div style="margin-top:8px;"><strong>Summon Shadows.</strong> Action. Summon a shadow minion within Reach 1 (max <strong>${minions}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
-                Action: (1/turn) command ALL minions to move 6 then attack (Reach <strong>${1 + bonusReach}</strong>, 1d12 each).</div>`;
-            }}
+                
+                let intro = `Your Patron grants you knowledge of two unique Necrotic cantrips:`;
+                let cards = "";
+
+                if (subclass !== "Reaver") {
+                    cards += rSSC({
+                        name: "Shadow Blast",
+                        tier: "Cantrip",
+                        school: "Necrotic",
+                        desc: `(1/round) 1 Action. Range: 8. Damage: ${blastDmg} necrotic. <div style="margin-top:5px; font-size:0.85em; opacity:0.8;">High Levels: +1d12 every 5 levels.</div>`
+                    }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: totalInt, wil: state.baseWil+state.addWil });
+                } else {
+                    const totalDex = (state.baseDex || 0) + (state.addDex || 0);
+                    let scytheDice = 2 + Math.floor(level / 5);
+                    let scytheDmg = `<strong>${scytheDice}d12${totalDex >= 0 ? "+" : ""}${totalDex}</strong>`;
+                    cards += rSSC({
+                        name: "Bonescythe",
+                        tier: "Cantrip",
+                        school: "Necrotic",
+                        desc: `1 Action. Reach: 2. Summon a magical Bonescythe: ${scytheDmg} slashing + necrotic damage. It shatters after a hit or when combat ends. Any Invocations affecting Shadow Blast affect your Bonescythe instead.`
+                    }, level, { str: state.baseStr+state.addStr, dex: totalDex, int: totalInt, wil: state.baseWil+state.addWil });
+                }
+
+                cards += rSSC({
+                    name: "Summon Shadows",
+                    tier: "Cantrip",
+                    school: "Necrotic",
+                    desc: `1 Action. Reach: 1. Summon a shadow minion (max <strong>${minions}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
+                    <div style="margin-top:5px;">● <strong>Command:</strong> (1/turn) Action: Command ALL minions to move 6 then attack (Reach <strong>${1 + bonusReach}</strong>, 1d12 each).</div>`
+                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: totalInt, wil: state.baseWil+state.addWil });
+
+                return intro + cards;
+            } }
         ],
         2: [
             { id: "master_darkness", name: "Master of Darkness", desc: "You know all Necrotic cantrips and Tier 1 spells." },
@@ -149,17 +177,31 @@ const SHADOWMANCER_FEATURES = {
         },
         "Reaver": {
             1: [
-                { id: "hollow_one", replaces: "conduit", name: "Hollow One & Bonescythe", desc: (level, subclass, state) => {
+                { id: "hollow_one", replaces: "conduit", name: "Hollow One & Bonescythe", desc: (level, subclass, state, derived, rSSC) => {
                     const totalInt = (state.baseInt || 0) + (state.addInt || 0);
                     const totalDex = (state.baseDex || 0) + (state.addDex || 0);
                     const minions = Math.max(1, Math.min(totalInt, level));
                     let bonusReach = Math.floor(level / 5);
                     let scytheDice = 2 + Math.floor(level / 5);
                     let scytheDmg = `<strong>${scytheDice}d12${totalDex >= 0 ? "+" : ""}${totalDex}</strong>`;
-                    return `You can no longer cast Shadow Blast. Instead: <br>
-                    <div style="margin-top:8px;"><strong>Bonescythe.</strong> Action: Summon a magical Bonescythe, a melee weapon: ${scytheDmg} slashing + necrotic damage (Reach: 2). It shatters after a hit or when combat ends. Any Invocations affecting Shadow Blast affect your Bonescythe instead.</div>
-                    <div style="margin-top:8px;"><strong>Summon Shadows.</strong> Action. Summon a shadow minion within Reach 1 (max <strong>${minions}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
-                    Action: (1/turn) command ALL minions to move 6 then attack (Reach <strong>${1 + bonusReach}</strong>, 1d12 each).</div>`;
+                    
+                    let intro = `You can no longer cast Shadow Blast. Instead:`;
+                    let cards = rSSC({
+                        name: "Bonescythe",
+                        tier: "Cantrip",
+                        school: "Necrotic",
+                        desc: `1 Action. Reach: 2. Summon a magical Bonescythe: ${scytheDmg} slashing + necrotic damage. It shatters after a hit or when combat ends. Any Invocations affecting Shadow Blast affect your Bonescythe instead.`
+                    }, level, { str: state.baseStr+state.addStr, dex: totalDex, int: totalInt, wil: state.baseWil+state.addWil });
+
+                    cards += rSSC({
+                        name: "Summon Shadows",
+                        tier: "Cantrip",
+                        school: "Necrotic",
+                        desc: `1 Action. Reach: 1. Summon a shadow minion (max <strong>${minions}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
+                        <div style="margin-top:5px;">● <strong>Command:</strong> (1/turn) Action: Command ALL minions to move 6 then attack (Reach <strong>${1 + bonusReach}</strong>, 1d12 each).</div>`
+                    }, level, { str: state.baseStr+state.addStr, dex: totalDex, int: totalInt, wil: state.baseWil+state.addWil });
+
+                    return intro + cards;
                 }}
             ],
             2: [
@@ -314,7 +356,7 @@ const CLASS_CONFIG = {
 
     actions: {},
 
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
         let fHtml = "";
         const sCls = "subclass-feature";
         const subData = SHADOWMANCER_FEATURES.subclasses[subclass] || {};
@@ -333,13 +375,13 @@ const CLASS_CONFIG = {
             if (SHADOWMANCER_FEATURES.core[l]) {
                 SHADOWMANCER_FEATURES.core[l].forEach(feat => {
                     if (!replacedIds.has(feat.id)) {
-                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC);
                     }
                 });
             }
             if (subData[l]) {
                 subData[l].forEach(feat => {
-                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, sCls);
                 });
             }
         }
@@ -347,11 +389,11 @@ const CLASS_CONFIG = {
         return fHtml;
     },
 
-    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state)) : (feat.desc || "");
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
@@ -377,7 +419,7 @@ const CLASS_CONFIG = {
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", iStats(desc), finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
     },
 
     getAvailableSpells: function(level, subclass, state, derived) {

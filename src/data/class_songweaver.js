@@ -23,15 +23,24 @@ const SONGWEAVER_FEATURES = {
     core: {
         1: [
             { id: "school_choice", name: "Secondary School", type: "choice", collection: "schools", stateKey: "secondarySchool", desc: "Master a second elemental school (Fire, Ice, or Lightning).", count: 1 },
-            { id: "vicious_mockery", name: "Vicious Mockery", desc: (level, subclass, state, derived) => {
+            { id: "vicious_mockery", name: "Vicious Mockery", desc: (level, subclass, state, derived, rSSC) => {
                 const totalInt = (state.baseInt || 0) + (state.addInt || 0);
                 const totalWil = (state.baseWil || 0) + (state.addWil || 0);
                 let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
                 let vmBonus = totalInt + Math.floor(level / 5) * 2;
                 if (level >= 15 && subclass === "HeraldSnark") vmBonus += totalWil;
                 let vmDisplay = `<strong>${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}</strong>`;
-                return `(Cantrip) Action: Range: 12. Damage: ${vmDisplay} psychic (ignoring armor). On hit: target is Taunted during their next turn.`;
-            }},
+                
+                let intro = `You know the unique Wind cantrip <strong>Vicious Mockery</strong>:`;
+                let card = rSSC({ 
+                    name: "Vicious Mockery", 
+                    tier: "Cantrip", 
+                    school: "Wind", 
+                    desc: `1 Action. Range: 12. Damage: ${vmDisplay} psychic (ignoring armor). On hit: target is Taunted during their next turn.` 
+                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: totalInt, wil: totalWil });
+                
+                return intro + card;
+            } },
             { id: "inspiration", name: "Songweaver’s Inspiration", desc: (level, subclass, state) => {
                 let uses = (state.baseWil + state.addWil) * 2;
                 return `(<strong>${uses}</strong> uses/Safe Rest) Free Reaction: Allow an ally to reroll a die for an attack or save (must keep result).`;
@@ -242,7 +251,7 @@ const CLASS_CONFIG = {
 
     actions: {},
 
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
         let fHtml = "";
         const sCls = "subclass-feature";
         const subData = SONGWEAVER_FEATURES.subclasses[subclass] || {};
@@ -261,13 +270,13 @@ const CLASS_CONFIG = {
             if (SONGWEAVER_FEATURES.core[l]) {
                 SONGWEAVER_FEATURES.core[l].forEach(feat => {
                     if (!replacedIds.has(feat.id)) {
-                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC);
                     }
                 });
             }
             if (subData[l]) {
                 subData[l].forEach(feat => {
-                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, sCls);
                 });
             }
         }
@@ -275,11 +284,11 @@ const CLASS_CONFIG = {
         return fHtml;
     },
 
-    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "windbag_choice";
         let count = (typeof feat.getCount === "function") ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state)) : (feat.desc || "");
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";

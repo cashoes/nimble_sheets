@@ -239,7 +239,7 @@ const CLASS_CONFIG = {
         }
     },
 
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
         let fHtml = "";
         const sCls = "subclass-feature";
         const subData = BERSERKER_FEATURES.subclasses[subclass] || {};
@@ -258,13 +258,13 @@ const CLASS_CONFIG = {
             if (BERSERKER_FEATURES.core[l]) {
                 BERSERKER_FEATURES.core[l].forEach(feat => {
                     if (!replacedIds.has(feat.id)) {
-                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC);
                     }
                 });
             }
             if (subData[l]) {
                 subData[l].forEach(feat => {
-                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, sCls);
                 });
             }
         }
@@ -272,11 +272,11 @@ const CLASS_CONFIG = {
         return fHtml;
     },
 
-    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = feat.desc || "";
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
