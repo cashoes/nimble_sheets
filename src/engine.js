@@ -248,6 +248,10 @@ function renderAttributes(level, statsMap) {
             card.classList.remove('save-adv', 'save-dis');
             if (CLASS_CONFIG.saves.adv === stat) card.classList.add('save-adv');
             if (CLASS_CONFIG.saves.dis === stat) card.classList.add('save-dis');
+            
+            // Bridge: Make stat card clickable
+            card.setAttribute('onclick', `dispatchRoll('1d20+${statsMap[stat]}', '${stat.toUpperCase()} Check')`);
+            card.style.cursor = 'pointer';
         }
     });
 
@@ -333,7 +337,11 @@ function renderInventory(statsMap, armorVal, str, iStats) {
         let sH = '-'; let eH = '-';
         if (item.type === 'weapon') { 
             sH = `${item.dmgDice} (${item.stat.toUpperCase()})`; 
-            if (item.equipped) eH = `⚔️ ${item.dmgDice}${statsMap[item.stat] >= 0 ? '+' : ''}${statsMap[item.stat]}`; 
+            if (item.equipped) {
+                const totalMod = statsMap[item.stat];
+                const notation = `${item.dmgDice}${totalMod >= 0 ? '+' : ''}${totalMod}`;
+                eH = `<span class="roll-link" onclick="dispatchRoll('${notation}', '${item.name}')">⚔️ ${notation}</span>`; 
+            }
         }
         else if (item.type === 'armor' && item.equipped) {
             const dMax = item.dexMax !== undefined ? item.dexMax : (item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0));
@@ -408,7 +416,7 @@ function renderSkills(level, statsMap, passMods) {
         sHtml += `<div class="skill-row">
             <div class="skill-name">${s.name} <span class="skill-stat">${s.stat.toUpperCase()}</span></div>
             <div class="skill-pts"><input type="number" class="${validationClass}" value="${pts}" onchange="updateSkill('${s.id}', this.value)"></div>
-            <div class="skill-total">${t >= 0 ? '+' : ''}${t}</div>
+            <div class="skill-total roll-link" onclick="dispatchRoll('1d20${t >= 0 ? '+' : ''}${t}', '${s.name} Skill Check')">${t >= 0 ? '+' : ''}${t}</div>
         </div>`;
     });
 
@@ -425,6 +433,24 @@ function renderConditions() {
 /**
  * UTILITIES
  */
+function dispatchRoll(notation, label) {
+    if (!notation) return;
+    
+    // Clean notation (strip icons and extra spaces)
+    let cleanNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
+    
+    const event = new CustomEvent("NIMBLE_ROLL_EVENT", {
+        detail: {
+            notation: cleanNotation,
+            label: label,
+            playerName: state.charName || "Adventurer",
+            rollTarget: 'everyone',
+            timestamp: Date.now() // Add timestamp for bridge deduplication
+        }
+    });
+    window.dispatchEvent(event);
+}
+
 const STAT_PATTERN = /\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill))/gi;
 const DICE_PATTERN = /\b(\d+d\d+)\b/gi;
 
@@ -432,7 +458,7 @@ function iStats(txt, level, statsMap) {
     if (!txt) return "";
     const { str, dex, int, wil } = statsMap;
     const kv = Math.max(...CLASS_CONFIG.keyStats.map(s => statsMap[s]));
-    const wrap = (val, label) => `<span class="stat-hl">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
+    const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check')">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
 
     const replacer = (match, p1) => {
         const key = p1.toUpperCase();
@@ -445,7 +471,7 @@ function iStats(txt, level, statsMap) {
         return match;
     };
 
-    return txt.replace(STAT_PATTERN, replacer).replace(DICE_PATTERN, `<span class="dice-hl">$1</span>`);
+    return txt.replace(STAT_PATTERN, replacer).replace(DICE_PATTERN, `<span class="dice-hl roll-link" onclick="dispatchRoll('$1', 'Roll')">$1</span>`);
 }
 
 function bFeat(t, l, d, theme = "", skip = false, level, statsMap) {

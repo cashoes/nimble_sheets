@@ -96,6 +96,24 @@
   .left-col, .right-col { min-width: 0; width: 100%; }
 
   .panel { background: var(--class-panel-bg); border: 1px solid var(--class-border); padding: 4px 8px; border-radius: 4px; }
+  
+  /* Bridge Styles */
+  .roll-link {
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+  }
+  .roll-link:hover {
+    color: var(--class-accent) !important;
+    text-shadow: 0 0 8px var(--class-accent-dim) !important;
+    text-decoration: underline !important;
+  }
+  .roll-link:active {
+    transform: scale(0.95) !important;
+  }
+  .core-stat[onclick]:hover {
+    border-color: var(--class-accent) !important;
+    box-shadow: 0 0 15px var(--class-accent-dim) !important;
+  }
   .mechanic-panel { 
     padding: 10px 15px;
     flex: 1;
