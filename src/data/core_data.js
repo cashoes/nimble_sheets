@@ -69,23 +69,23 @@ const SKILL_LIST = [
 ];
 
 const CONDITIONS_LIST = [
-    { id: 'blinded', name: 'Blinded', type: 'debuff', desc: "Can't see. Attacks against you have adv, yours have dis." },
+    { id: 'blinded', name: 'Blinded', type: 'debuff', desc: "Can't see. Attacks against you have ADV; your attacks have DIS." },
     { id: 'bloodied', name: 'Bloodied', type: 'debuff', desc: "At half HP or less." },
-    { id: 'charmed', name: 'Charmed', type: 'debuff', desc: "Sees charmer as ally." },
-    { id: 'dazed', name: 'Dazed', type: 'debuff', desc: "Lose 1 action." },
-    { id: 'dying', name: 'Dying', type: 'debuff', desc: "At 0 HP. Damage causes 2 Wounds." },
-    { id: 'frightened', name: 'Frightened', type: 'debuff', desc: "Disadvantage on rolls." },
-    { id: 'grappled', name: 'Grappled / Restrained', type: 'debuff', desc: "Cannot move." },
-    { id: 'hampered', name: 'Hampered', type: 'debuff', desc: "Actions or movement reduced." },
-    { id: 'incapacitated', name: 'Incapacitated', type: 'debuff', desc: "Can't do anything." },
-    { id: 'invisible', name: 'Invisible', type: 'buff', desc: "Cannot be seen." },
-    { id: 'petrified', name: 'Petrified', type: 'debuff', desc: "Incapacitated. Immune to most damage." },
-    { id: 'poisoned', name: 'Poisoned', type: 'debuff', desc: "Disadvantage on rolls." },
-    { id: 'prone', name: 'Prone', type: 'debuff', desc: "Movement costs 2x. Disadvantage on attacks." },
-    { id: 'riding', name: 'Riding', type: 'buff', desc: "Move with mount." },
-    { id: 'slowed', name: 'Slowed', type: 'debuff', desc: "Speed halved." },
-    { id: 'taunted', name: 'Taunted', type: 'debuff', desc: "Disadvantage except against taunter." },
-    { id: 'wounded', name: 'Wounded', type: 'debuff', desc: "Has any Wounds." }
+    { id: 'charmed', name: 'Charmed', type: 'debuff', desc: "Sees charmer as ally. Charmer has ADV on social interactions with you." },
+    { id: 'dazed', name: 'Dazed', type: 'debuff', desc: "Heroes: lose 1 action. Monsters: 1 less action next turn." },
+    { id: 'dying', name: 'Dying', type: 'debuff', desc: "At 0 HP. Taking damage causes 2 Wounds (3 on a CRIT)." },
+    { id: 'frightened', name: 'Frightened', type: 'debuff', desc: "DIS on rolls while source of fear is nearby. Speed halved moving towards it." },
+    { id: 'grappled', name: 'Grappled / Restrained', type: 'debuff', desc: "Cannot move. Attacks against you have ADV." },
+    { id: 'hampered', name: 'Hampered', type: 'debuff', desc: "Actions or movement reduced (e.g., Dazed, Grappled, Prone, Difficult Terrain)." },
+    { id: 'incapacitated', name: 'Incapacitated', type: 'debuff', desc: "Can't act. Attacks against you have ADV; melee hits against you automatically CRIT." },
+    { id: 'invisible', name: 'Invisible', type: 'buff', desc: "Unseen. Your attacks have ADV; attacks against you have DIS." },
+    { id: 'petrified', name: 'Petrified', type: 'debuff', desc: "Incapacitated (you are a rock). Immune to most damage except explosions or mining tools." },
+    { id: 'poisoned', name: 'Poisoned', type: 'debuff', desc: "DIS on rolls." },
+    { id: 'prone', name: 'Prone', type: 'debuff', desc: "Move costs 2x. Your attacks have DIS. Melee against you has ADV; Ranged has DIS. Costs 3 Speed to stand." },
+    { id: 'riding', name: 'Riding', type: 'buff', desc: "Move with mount. Attacks that miss you strike the mount instead." },
+    { id: 'slowed', name: 'Slowed', type: 'debuff', desc: "Speed halved during your next turn." },
+    { id: 'taunted', name: 'Taunted', type: 'debuff', desc: "DIS on attacks except against the most recent taunter." },
+    { id: 'wounded', name: 'Wounded', type: 'debuff', desc: "Has any Wounds (typically 6 = death)." }
 ];
 
 const ANCESTRIES = {
