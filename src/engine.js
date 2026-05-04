@@ -67,7 +67,7 @@ function loadState() {
         skills: {}, activeConditions: [], inventory: [], gold: 0,
         resourceValues: {}, bgSpell: 'None', showMinor: false,
         selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: [],
-        advantage: 0, actionsSpent: 0, nextRollMod: ""
+        advantage: 0, actionsSpent: 0
     };
     const raw = localStorage.getItem(STORAGE_KEY);
     if (EMBEDDED_STATE) { Object.assign(state, EMBEDDED_STATE); } 
@@ -108,14 +108,13 @@ function syncStateToDOM() {
 }
 
 function renderModField() {
-    const html = `<div class="mod-field-container"><label>Next Mod</label><input type="text" id="nextRollMod" class="mod-input" placeholder="+10, +1d6" value="${state.nextRollMod || ""}" oninput="updateMod(this.value)"></div><div class="advantage-controls"><button class="adv-btn" onclick="adjAdv(-1)">-</button><div id="advDisplay" class="adv-val ${state.advantage > 0 ? 'positive' : (state.advantage < 0 ? 'negative' : '')}">${state.advantage === 0 ? 'Normal' : (state.advantage > 0 ? 'Adv +' + state.advantage : 'Dis ' + state.advantage)}</div><button class="adv-btn" onclick="adjAdv(1)">+</button></div>`;
+    const html = `<div class="advantage-controls"><button class="adv-btn" onclick="adjAdv(-1)">-</button><div id="advDisplay" class="adv-val ${state.advantage > 0 ? 'positive' : (state.advantage < 0 ? 'negative' : '')}">${state.advantage === 0 ? 'Normal' : (state.advantage > 0 ? 'Adv +' + state.advantage : 'Dis ' + state.advantage)}</div><button class="adv-btn" onclick="adjAdv(1)">+</button></div>`;
     const container = document.getElementById('combatControlsContainer');
     if (container) { container.innerHTML = html; }
 }
 
 function adjAdv(amt) { state.advantage = Math.min(3, Math.max(-3, state.advantage + amt)); renderModField(); saveState(); }
 function toggleAction(idx) { state.actionsSpent = (state.actionsSpent > idx) ? idx : idx + 1; for (let i = 0; i < 3; i++) { document.getElementById(`action${i+1}`).checked = (state.actionsSpent > i); } saveState(); }
-function updateMod(val) { state.nextRollMod = val; saveState(); }
 
 function applyTheme(theme) {
     if (!theme) return;
@@ -215,7 +214,6 @@ function dispatchRoll(notation, label, options = {}) {
         if (!isCheckOrSave) diePart += '!';
         finalNotation = diePart + rest;
     }
-    if (state.nextRollMod) { let mod = state.nextRollMod.trim(); if (!mod.startsWith('+') && !mod.startsWith('-')) mod = '+' + mod; finalNotation += ` ${mod}`; state.nextRollMod = ""; const modInput = document.getElementById('nextRollMod'); if (modInput) modInput.value = ""; saveState(); }
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", { detail: { notation: finalNotation, label: label, playerName: state.charName || "Adventurer", rollTarget: 'everyone', timestamp: Date.now() } }));
 }
 
