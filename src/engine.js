@@ -211,19 +211,28 @@ function syncStateToDOM() {
     aSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
 }
 
+function renderModField() {
+    const html = `
+        <div class="advantage-controls">
+            <button class="adv-btn" onclick="adjAdv(-1)">-</button>
+            <div id="advDisplay" class="adv-val ${state.advantage > 0 ? 'positive' : (state.advantage < 0 ? 'negative' : '')}">${state.advantage === 0 ? 'Normal' : (state.advantage > 0 ? 'Adv +' + state.advantage : 'Dis ' + state.advantage)}</div>
+            <button class="adv-btn" onclick="adjAdv(1)">+</button>
+        </div>
+        <div class="mod-field-container">
+            <label>Next Mod</label>
+            <input type="text" id="nextRollMod" class="mod-input" placeholder="+10, +1d6" value="${state.nextRollMod || ""}" oninput="updateMod(this.value)">
+        </div>
+    `;
+    
+    const container = document.getElementById('combatControlsContainer');
+    if (container) {
+        container.innerHTML = html;
+    }
+}
+
 function adjAdv(amt) {
     state.advantage = Math.min(3, Math.max(-3, state.advantage + amt));
-    const el = document.getElementById('advDisplay');
-    if (state.advantage === 0) {
-        el.innerText = 'Normal';
-        el.className = 'adv-val';
-    } else if (state.advantage > 0) {
-        el.innerText = `Advantage +${state.advantage}`;
-        el.className = 'adv-val positive';
-    } else {
-        el.innerText = `Disadvantage ${state.advantage}`;
-        el.className = 'adv-val negative';
-    }
+    renderModField(); 
     saveState();
 }
 
@@ -274,15 +283,18 @@ function renderHeader(derived, armorVal, init) {
     const ancFeat = ANCESTRY_FEATURES[state.ancestry];
     const hasInitAdv = (ancFeat && ancFeat.modInitAdv);
     const initAdvIcon = hasInitAdv ? '<span style="font-size:0.5em; vertical-align:middle; color:var(--save-adv); margin-left:2px;">▲</span>' : '';
-    
-    // Bridge: Make Initiative clickable
     const initNotation = `1d20${init >= 0 ? '+' : ''}${init}`;
     
     document.getElementById('headerRightStats').innerHTML = `
-        <div class="header-stat"><label>Size</label><div class="header-stat-val">${derived.size}</div></div>
-        <div class="header-stat"><label>Speed</label><div class="header-stat-val">${derived.speed}</div></div>
-        <div class="header-stat"><label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">Init</label><div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">${init >= 0 ? "+" : ""}${init}${initAdvIcon}</div></div>
+        <div id="combatControlsContainer" class="combat-controls-group"></div>
+        <div style="display:flex; gap:12px; margin-top:5px;">
+            <div class="header-stat"><label>Size</label><div class="header-stat-val" style="font-size:1.2em;">${derived.size}</div></div>
+            <div class="header-stat"><label>Speed</label><div class="header-stat-val" style="font-size:1.2em;">${derived.speed}</div></div>
+            <div class="header-stat"><label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">Init</label><div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })" style="font-size:1.2em;">${init >= 0 ? "+" : ""}${init}${initAdvIcon}</div></div>
+        </div>
     `;
+    
+    renderModField();
 }
 
 function renderAttributes(level, statsMap) {
@@ -636,35 +648,6 @@ function renderSpells(level, subclass, state, derived, iStatsBound) {
     })).join("");
 }
 
-function renderModField(isSpellcaster) {
-    const html = `
-        <div class="mod-field-container">
-            <label>Next Roll Mod</label>
-            <input type="text" id="nextRollMod" class="mod-input" placeholder="+10, +1d6, etc." value="${state.nextRollMod || ""}" oninput="updateMod(this.value)">
-        </div>
-    `;
-    
-    // Clear any existing mod fields first
-    const existing = document.querySelectorAll('.mod-field-container');
-    existing.forEach(el => el.remove());
-
-    if (isSpellcaster) {
-        const spellsContainer = document.getElementById('spellsContainer');
-        if (spellsContainer) {
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = html;
-            spellsContainer.prepend(wrapper.firstElementChild);
-        }
-    } else {
-        const mechanicPanel = document.getElementById('classMechanicPanel');
-        if (mechanicPanel) {
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = html;
-            mechanicPanel.prepend(wrapper.firstElementChild);
-        }
-    }
-}
-
 /**
  * MAIN ORCHESTRATOR
  */
@@ -875,8 +858,6 @@ function render() {
         document.getElementById('featuresSpellsLayout').className = 'layout-1col'; 
         sWrapper.style.display = 'none'; 
     }
-
-    renderModField(isSpellcaster);
 }
 
 /**

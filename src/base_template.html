@@ -26,13 +26,8 @@
   }
 
   /* Hide scrollbars globally but keep functionality */
-  * {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  *::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
-  }
+  * { -ms-overflow-style: none; scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
 
   /* Animations for resource changes */
   @keyframes pulse-green {
@@ -53,83 +48,76 @@
     color: var(--save-dis) !important;
   }
 
-  /* Header Controls Row */
-  .header-controls-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding: 0 5px;
-    gap: 10px;
+  /* Save Status Group (Top Right) */
+  .save-status-container {
+    position: absolute; top: 8px; right: 12px;
+    display: flex; align-items: center; gap: 15px;
+    font-family: 'Cinzel', serif; font-size: 0.65em;
+    font-weight: bold; text-transform: uppercase;
   }
-  .header-controls-left, .header-controls-right { flex: 1; display: flex; }
-  .header-controls-left { justify-content: flex-start; }
-  .header-controls-right { justify-content: flex-end; }
-  .header-controls-center { flex: 0; }
+  #saveIndicator { color: var(--slate-lighter); opacity: 0.6; }
+  .subtle-link {
+    background: transparent; border: none; padding: 0;
+    color: var(--text-muted); cursor: pointer;
+    text-decoration: none; border-bottom: 1px solid transparent;
+    transition: all 0.2s; font-family: inherit; font-size: 1em; font-weight: inherit; text-transform: inherit;
+    opacity: 0.8;
+  }
+  .subtle-link:hover { color: var(--class-accent); border-bottom-color: var(--class-accent); opacity: 1; }
 
+  /* Combat Controls Group (Right Header Area) */
+  .combat-controls-group {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+    margin-bottom: 2px;
+  }
   .advantage-controls {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--class-border);
-    border-radius: 4px;
-    display: flex; align-items: center; gap: 10px;
-    padding: 4px 10px;
+    background: rgba(0,0,0,0.3); border: 1px solid var(--class-border);
+    border-radius: 4px; display: flex; align-items: center; gap: 6px; padding: 2px 6px;
   }
   .adv-btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--class-border);
-    color: var(--text-main);
-    width: 24px; height: 24px;
-    border-radius: 4px; cursor: pointer;
-    font-family: 'Cinzel', serif; font-weight: bold;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--class-border);
+    color: var(--text-main); width: 18px; height: 18px;
+    border-radius: 2px; cursor: pointer; font-family: 'Cinzel', serif;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-    font-size: 0.9em;
+    transition: all 0.2s; font-size: 0.7em;
   }
   .adv-btn:hover { background: var(--class-accent); color: #000; }
   .adv-val {
-    font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.85em;
-    min-width: 85px; text-align: center; letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    font-family: 'Cinzel', serif; font-weight: bold; font-size: 0.7em;
+    min-width: 75px; text-align: center; color: var(--text-muted); text-transform: uppercase;
   }
-  .adv-val.positive { color: var(--save-adv); text-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
-  .adv-val.negative { color: var(--save-dis); text-shadow: 0 0 5px rgba(239, 68, 68, 0.3); }
+  .adv-val.positive { color: var(--save-adv); text-shadow: 0 0 5px rgba(34, 197, 94, 0.4); }
+  .adv-val.negative { color: var(--save-dis); text-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
 
-  /* Action Pips */
-  .action-pips { display: flex; gap: 8px; justify-content: center; }
-  .action-pip {
-    appearance: none; width: 16px; height: 16px;
-    border: 2px solid var(--class-accent); border-radius: 50%;
-    cursor: pointer; background: rgba(0,0,0,0.4);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-    margin: 0;
-  }
-  .action-pip:checked {
-    background: var(--class-accent);
-    box-shadow: 0 0 10px var(--class-accent), inset 0 0 4px rgba(255,255,255,0.5);
-    transform: scale(1.1);
-  }
-
-  /* Mod Field */
   .mod-field-container {
-    margin-bottom: 10px;
-    background: rgba(0,0,0,0.2);
-    border: 1px dashed var(--class-border);
-    border-radius: 4px;
-    padding: 6px;
-    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.2); border: 1px dashed var(--class-border);
+    border-radius: 4px; padding: 2px 6px; display: flex; align-items: center; gap: 6px;
+    width: 150px; box-sizing: border-box;
   }
   .mod-field-container label {
-    font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: bold;
+    font-family: 'Cinzel', serif; font-size: 0.55em; font-weight: bold;
     color: var(--text-muted); text-transform: uppercase; white-space: nowrap;
   }
   .mod-input {
-    flex: 1; background: rgba(0,0,0,0.3); border: none;
+    flex: 1; background: transparent; border: none;
     border-bottom: 1px solid var(--class-accent);
     color: var(--class-accent); font-family: 'Cinzel', serif;
-    font-weight: bold; font-size: 0.9em; text-align: center;
-    padding: 2px;
+    font-weight: bold; font-size: 0.75em; text-align: center; padding: 0;
+  }
+
+  /* Action Pips next to Header */
+  .action-pips { display: flex; gap: 6px; align-items: center; }
+  .action-pip {
+    appearance: none; width: 12px; height: 12px;
+    border: 1px solid var(--class-accent); border-radius: 50%;
+    cursor: pointer; background: rgba(0,0,0,0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: inset 0 0 2px rgba(0,0,0,0.5); margin: 0;
+  }
+  .action-pip:checked {
+    background: var(--class-accent);
+    box-shadow: 0 0 8px var(--class-accent), inset 0 0 2px rgba(255,255,255,0.5);
+    transform: scale(1.1);
   }
 
   body {
@@ -156,14 +144,13 @@
   
   .header-left-stats, .header-right-stats { display: flex; gap: 12px; min-width: 90px; }
   .header-left-stats { justify-content: flex-start; }
-  .header-right-stats { justify-content: flex-end; }
+  .header-right-stats { justify-content: flex-end; align-items: flex-end; }
   .header-stat { display: flex; flex-direction: column; align-items: center; }
   .header-stat label { color: var(--text-muted); font-family: 'Cinzel', serif; font-size: 0.65em; letter-spacing: 1px; text-transform: uppercase; margin: 0; font-weight: 600; }
   .header-stat-val { font-family: 'Cinzel', serif; font-size: 1.5em; font-weight: bold; margin-top: 0px; color: #fff; line-height: 1.0; }
 
   h2.section-header { font-family: 'Cinzel Decorative', serif; border-bottom: 1px solid var(--class-border); padding-bottom: 3px; margin: 0 0 8px 0; color: var(--class-accent); font-size: 1.2em; }
-  #saveIndicator { position: absolute; top: 8px; right: 12px; font-family: 'Cinzel', serif; font-size: 0.65em; color: var(--slate-lighter); font-weight: bold; text-transform: uppercase; }
-
+  
   .top-bar { display: grid; grid-template-columns: 2fr 0.6fr 1fr 1fr 1.2fr; gap: 6px; margin-bottom: 8px; align-items: end; }
   .top-bar .panel { padding: 2px 6px; border: none; background: transparent; }
   .top-bar input, .top-bar select { font-size: 0.85em; }
@@ -182,9 +169,8 @@
     transition: all 0.2s ease !important;
   }
   .roll-link:hover {
-    color: var(--class-accent) !important;
-    text-shadow: 0 0 8px var(--class-accent-dim) !important;
-    text-decoration: underline !important;
+    color: #fff !important;
+    text-shadow: 0 0 10px var(--class-accent), 0 0 20px var(--class-accent-dim) !important;
   }
   .roll-link:active {
     transform: scale(0.95) !important;
@@ -193,16 +179,7 @@
     border-color: var(--class-accent) !important;
     box-shadow: 0 0 15px var(--class-accent-dim) !important;
   }
-  .mechanic-panel { 
-    padding: 10px 15px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-sizing: border-box;
-    border: none;
-    background: transparent;
-  }
+  .mechanic-panel { padding: 10px 15px; flex: 1; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; border: none; background: transparent; }
 
   .panel-title { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; display: block; border-bottom: 1px solid var(--class-border); padding-bottom: 1px; }
   
@@ -293,8 +270,6 @@
   .feature.minor-feature { display: none; }
   body.show-minor .feature.minor-feature { display: block; }
   .feature { background: var(--class-panel-bg); border: 1px solid var(--class-border); border-left: 4px solid var(--class-accent); padding: 10px; margin-bottom: 10px; border-radius: 0 4px 4px 0; width: 100%; box-sizing: border-box; }
-  .feature.subclass-feature { border-left-color: var(--subclass-accent, var(--class-accent)); background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, transparent 100%), var(--class-panel-bg); }
-  .feature.subclass-feature h3 { color: var(--subclass-accent, var(--class-accent)); }
   .feature h3 { font-family: 'Cinzel', serif; font-size: 1.05em; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px; color: var(--text-main); border-bottom: 1px solid var(--class-border); padding-bottom: 4px; }
   .feature h3 span.level-tag { font-size: 0.6em; background: var(--slate-light); color: var(--text-main); padding: 2px 6px; border-radius: 2px; letter-spacing: 1px; }
   .feature .feature-desc { margin: 4px 0 0 0; line-height: 1.4; font-size: 0.9em; color: var(--text-muted); }
@@ -303,16 +278,6 @@
 
   .spell-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; }
   .spell-card { background: var(--class-panel-bg); border: 1px solid var(--class-border); padding: 10px; display: flex; flex-direction: column; gap: 4px; position: relative; border-left: 4px solid var(--class-accent); border-radius: 0 4px 4px 0; transition: border-color 0.3s; width: 100%; box-sizing: border-box; }
-  .spell-card.subclass-spell { border-left-color: var(--subclass-accent, var(--class-accent)); background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.subclass-spell h4 { color: var(--subclass-accent, var(--class-accent)); }
-
-  /* Spell School Colors */
-  .spell-card.fire { border-left-color: #f87171; background: linear-gradient(90deg, rgba(248, 113, 113, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.ice { border-left-color: #60a5fa; background: linear-gradient(90deg, rgba(96, 165, 250, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.lightning { border-left-color: #fbbf24; background: linear-gradient(90deg, rgba(251, 191, 36, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.wind { border-left-color: #34d399; background: linear-gradient(90deg, rgba(52, 211, 153, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.radiant { border-left-color: #38bdf8; background: linear-gradient(90deg, rgba(56, 189, 248, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
-  .spell-card.necrotic { border-left-color: #a855f7; background: linear-gradient(90deg, rgba(168, 85, 247, 0.05) 0%, transparent 100%), var(--class-panel-bg); }
   .spell-card h4 { margin: 0; font-family: 'Cinzel', serif; font-size: 1.0em; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--class-border); padding-bottom: 4px; color: var(--text-main); }
   .spell-card h4 span.tier-tag { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: normal; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; letter-spacing: 1px; }
   
@@ -336,34 +301,27 @@
 <body>
 
 <div class="container">
-  <div id="saveIndicator">Auto-saved</div>
+  <div class="save-status-container">
+    <span id="saveIndicator">Auto-saved</span>
+    <button onclick="saveAsHTML()" class="subtle-link">Save as HTML</button>
+  </div>
   
   <div class="header">
     <div class="header-left-stats" id="headerLeftStats"></div>
     <div class="header-center">
-        <div class="header-controls-row">
-            <div class="header-controls-left">
-                <button onclick="saveAsHTML()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.75em; background: var(--class-accent); color: #000; width: auto; letter-spacing: 0.5px;">Save as HTML</button>
-            </div>
-            <div class="header-controls-center">
-                <div class="action-pips">
-                    <input type="checkbox" class="action-pip" id="action1" onclick="toggleAction(0)">
-                    <input type="checkbox" class="action-pip" id="action2" onclick="toggleAction(1)">
-                    <input type="checkbox" class="action-pip" id="action3" onclick="toggleAction(2)">
-                </div>
-            </div>
-            <div class="header-controls-right">
-                <div class="advantage-controls">
-                    <button class="adv-btn" onclick="adjAdv(-1)">-</button>
-                    <div id="advDisplay" class="adv-val">Normal</div>
-                    <button class="adv-btn" onclick="adjAdv(1)">+</button>
-                </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:2px;">
+            <h1 id="classNameDisplay">Class Name</h1>
+            <div class="action-pips">
+                <input type="checkbox" class="action-pip" id="action1" onclick="toggleAction(0)">
+                <input type="checkbox" class="action-pip" id="action2" onclick="toggleAction(1)">
+                <input type="checkbox" class="action-pip" id="action3" onclick="toggleAction(2)">
             </div>
         </div>
-        <h1 id="classNameDisplay">Class Name</h1>
         <div class="subtitle" id="classSubtitleDisplay">Subtitle</div>
     </div>
-    <div class="header-right-stats" id="headerRightStats"></div>
+    <div class="header-right-stats" id="headerRightStats">
+        <div id="combatControlsContainer" class="combat-controls-group"></div>
+    </div>
   </div>
 
   <div class="top-bar">
@@ -469,12 +427,8 @@
 
         <!-- Proficiency Info -->
         <div class="proficiency-row" style="margin-top: auto; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
-            <div style="text-align: left; flex: 1.5;">
-                WEAPONS: <span id="profWeapons" style="font-weight: bold; color: #fff;">--</span>
-            </div>
-            <div style="text-align: right; flex: 1;">
-                ARMOR: <span id="profArmor" style="font-weight: bold; color: #fff;">--</span>
-            </div>
+            <div style="text-align: left; flex: 1.5;"> WEAPONS: <span id="profWeapons" style="font-weight: bold; color: #fff;">--</span> </div>
+            <div style="text-align: right; flex: 1;"> ARMOR: <span id="profArmor" style="font-weight: bold; color: #fff;">--</span> </div>
         </div>
       </div>
     </div>
@@ -502,9 +456,7 @@
           </div>
         </div>
       </div>
-      
       <div id="inventoryContainer"></div>
-      
       <div style="display: flex; gap: 8px; margin-top: 10px;">
         <select class="add-item-btn" id="meleeSelect" style="padding: 8px;"></select>
         <select class="add-item-btn" id="rangedSelect" style="padding: 8px;"></select>
@@ -516,16 +468,14 @@
 
   <div class="layout-1col" id="featuresSpellsLayout">
     <div class="left-col">
-      <div>
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; min-height: 32px;">
-          <h2 class="section-header" style="border: none; margin: 0; padding: 0;">Features & Traits</h2>
-          <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--class-accent); cursor: pointer; user-select: none; font-family: 'Cinzel', serif; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--class-border);">
-            <input type="checkbox" id="toggleMinorFeatures" onchange="document.body.classList.toggle('show-minor', this.checked); saveState();" style="width: 16px; height: 16px; cursor: pointer; margin: 0;"> 
-            <span style="margin-top: 1px;">Show All</span>
-          </label>
-        </div>
-        <div id="featuresContainer"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; min-height: 32px;">
+        <h2 class="section-header" style="border: none; margin: 0; padding: 0;">Features & Traits</h2>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--class-accent); cursor: pointer; user-select: none; font-family: 'Cinzel', serif; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--class-border);">
+          <input type="checkbox" id="toggleMinorFeatures" onchange="document.body.classList.toggle('show-minor', this.checked); saveState();" style="width: 16px; height: 16px; cursor: pointer; margin: 0;"> 
+          <span style="margin-top: 1px;">Show All</span>
+        </label>
       </div>
+      <div id="featuresContainer"></div>
     </div>
     <div class="right-col" id="spellsColWrapper" style="display: none;">
       <div id="spellsSection" style="height: 100%;">
@@ -536,7 +486,6 @@
       </div>
     </div>
   </div>
-
 </div>
 
 <!-- INJECT_SCRIPTS -->
