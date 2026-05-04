@@ -99,7 +99,9 @@ function saveState(newState = null) {
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    const ind = document.getElementById('saveIndicator'); ind.textContent = 'Saved ✓'; setTimeout(() => { ind.textContent = 'Auto-saved'; }, 1500);
+    const ind = document.getElementById('saveIndicator'); 
+    ind.textContent = 'Saved ✓'; 
+    setTimeout(() => { ind.textContent = 'Auto-saved'; }, 1500);
 }
 
 function loadState() {
@@ -119,13 +121,11 @@ function loadState() {
     // Priority: 1. Embedded State (from Save as File), 2. LocalStorage, 3. Defaults
     if (EMBEDDED_STATE) {
         Object.assign(state, EMBEDDED_STATE);
-        // Clean up embedded state after load so subsequent refreshes use LocalStorage (the latest edits)
     } else if (raw) {
         const loaded = JSON.parse(raw);
         Object.assign(state, loaded);
     }
 
-    // Force update to new standardized arrays if character is fresh (Lvl 1, no name)
     if (state.level === 1 && !state.charName) {
         if (CLASS_CONFIG.initialStats) {
             Object.assign(state, CLASS_CONFIG.initialStats);
@@ -137,7 +137,6 @@ function loadState() {
     syncStateToDOM();
 }
 
-// Ensure UI reflects current state (used after load or import)
 function syncStateToDOM() {
     document.getElementById('classNameDisplay').innerText = CLASS_CONFIG.name;
     document.getElementById('classSubtitleDisplay').innerText = CLASS_CONFIG.subtitle;
@@ -213,14 +212,14 @@ function syncStateToDOM() {
 
 function renderModField() {
     const html = `
+        <div class="mod-field-container">
+            <label>Next Mod</label>
+            <input type="text" id="nextRollMod" class="mod-input" placeholder="+10, +1d6" value="${state.nextRollMod || ""}" oninput="updateMod(this.value)">
+        </div>
         <div class="advantage-controls">
             <button class="adv-btn" onclick="adjAdv(-1)">-</button>
             <div id="advDisplay" class="adv-val ${state.advantage > 0 ? 'positive' : (state.advantage < 0 ? 'negative' : '')}">${state.advantage === 0 ? 'Normal' : (state.advantage > 0 ? 'Adv +' + state.advantage : 'Dis ' + state.advantage)}</div>
             <button class="adv-btn" onclick="adjAdv(1)">+</button>
-        </div>
-        <div class="mod-field-container">
-            <label>Next Mod</label>
-            <input type="text" id="nextRollMod" class="mod-input" placeholder="+10, +1d6" value="${state.nextRollMod || ""}" oninput="updateMod(this.value)">
         </div>
     `;
     
@@ -237,8 +236,6 @@ function adjAdv(amt) {
 }
 
 function toggleAction(idx) {
-    // If clicking a checked pip, set actionsSpent to that index (unchecking it and those after)
-    // If clicking an unchecked pip, set actionsSpent to index + 1
     if (state.actionsSpent > idx) {
         state.actionsSpent = idx;
     } else {
@@ -274,6 +271,7 @@ function applyTheme(theme) {
  */
 
 function renderHeader(derived, armorVal, init) {
+    // Left: Armor + Custom
     let lStats = `<div class="header-stat"><label style="color:var(--gold-light)">Armor</label><div class="header-stat-val" style="color:var(--gold-light)">${armorVal}</div></div>`;
     CLASS_CONFIG.customHeaderStats?.filter(s=>s.position==='left').forEach(s => { 
         if(s.isVisible(state.level, state.subclass)) lStats += `<div class="header-stat"><label style="color:${s.color}">${s.label}</label><div class="header-stat-val" style="color:${s.color}">${s.getValue(derived)}</div></div>`; 
@@ -285,12 +283,13 @@ function renderHeader(derived, armorVal, init) {
     const initAdvIcon = hasInitAdv ? '<span style="font-size:0.5em; vertical-align:middle; color:var(--save-adv); margin-left:2px;">▲</span>' : '';
     const initNotation = `1d20${init >= 0 ? '+' : ''}${init}`;
     
+    // Right: Size, Speed, Initiative
     document.getElementById('headerRightStats').innerHTML = `
-        <div id="combatControlsContainer" class="combat-controls-group"></div>
-        <div style="display:flex; gap:12px; margin-top:5px;">
-            <div class="header-stat"><label>Size</label><div class="header-stat-val" style="font-size:1.2em;">${derived.size}</div></div>
-            <div class="header-stat"><label>Speed</label><div class="header-stat-val" style="font-size:1.2em;">${derived.speed}</div></div>
-            <div class="header-stat"><label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">Init</label><div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })" style="font-size:1.2em;">${init >= 0 ? "+" : ""}${init}${initAdvIcon}</div></div>
+        <div class="header-stat"><label>Size</label><div class="header-stat-val">${derived.size}</div></div>
+        <div class="header-stat"><label>Speed</label><div class="header-stat-val">${derived.speed}</div></div>
+        <div class="header-stat">
+            <label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">Init</label>
+            <div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">${init >= 0 ? "+" : ""}${init}${initAdvIcon}</div>
         </div>
     `;
     
@@ -314,7 +313,7 @@ function renderAttributes(level, statsMap) {
                 inherentAdv = -1;
             }
             
-            // Bridge: Make stat card clickable (Rolling a SAVE)
+            // Bridge: Rolling a SAVE
             card.setAttribute('onclick', `dispatchRoll('1d20+${statsMap[stat]}', '${stat.toUpperCase()} Save', { inherentAdv: ${inherentAdv} })`);
             card.style.cursor = 'pointer';
         }
@@ -357,10 +356,9 @@ function renderResources(level, derived, statsMap, hdFace) {
     const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
     let hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
     let maxHP = CLASS_CONFIG.baseHp + ((level - 1) * hpPerLevel);
-    let hdMax = derived.hdMax;
     
     if (state.hpCurrent === null) state.hpCurrent = maxHP;
-    if (state.hdCurrent === null) state.hdCurrent = hdMax;
+    if (state.hdCurrent === null) state.hdCurrent = derived.hdMax;
 
     const hpEl = document.getElementById('displayCurrentHP');
     const thpEl = document.getElementById('displayTempHP');
@@ -371,9 +369,8 @@ function renderResources(level, derived, statsMap, hdFace) {
     if (hdEl && document.activeElement !== hdEl) hdEl.value = state.hdCurrent; 
 
     document.getElementById('displayMaxHP').innerText = maxHP;
-    document.getElementById('maxHD').innerText = hdMax;
+    document.getElementById('maxHD').innerText = derived.hdMax;
     
-    // Bridge: Make Hit Dice clickable
     const hdNotation = `1d${hdFace}`;
     document.getElementById('hitDiceLabel').innerHTML = `<span class="roll-link" onclick="dispatchRoll('${hdNotation}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
     
@@ -382,7 +379,7 @@ function renderResources(level, derived, statsMap, hdFace) {
 
     let resHtml = "";
     (CLASS_CONFIG.resources || []).forEach(r => {
-        if (r.manual) return; // Skip rendering if class handles it in the mechanic panel
+        if (r.manual) return;
         let max = r.calcMax(level, statsMap, state, state.subclass); if (max <= 0) return;
         if (state.resourceValues[r.id] === undefined) state.resourceValues[r.id] = max;
         resHtml += `<div class="res-row"><label>${r.label}</label><div style="display: flex; align-items: center; gap: 8px;"><div class="res-val dark-incrementer"><button onclick="adjRes('${r.id}', -1)">-</button><input type="number" id="res_${r.id}" value="${state.resourceValues[r.id]}" onchange="adjRes('${r.id}', parseInt(this.value), ${max}, true)"><button onclick="adjRes('${r.id}', 1, ${max})">+</button></div><div class="max-text">/ <span style="color:var(--text-main);">${max}</span></div></div></div>`;
@@ -422,7 +419,6 @@ function renderInventory(statsMap, armorVal, str, iStats) {
             eH = `🛡️ +${item.armor} AC`;
         }
 
-        // UI Logic
         let typeHtml = `<div style="font-size:0.9em; color:var(--text-muted);">${item.type}</div>`;
         let statsHtml = `<div style="text-align:center; font-size:0.95em;">${sH}</div>`;
         let propsHtml = `<div style="font-size:0.9em; color:var(--text-muted);">${item.props||''}</div>`;
@@ -507,19 +503,14 @@ function dispatchRoll(notation, label, options = {}) {
     let cleanNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
     let finalNotation = cleanNotation;
 
-    // 1. Handle d66 / d88 conversion
     if (finalNotation.toLowerCase().includes('d66')) finalNotation = finalNotation.replace(/d66/gi, '2d6');
     if (finalNotation.toLowerCase().includes('d88')) finalNotation = finalNotation.replace(/d88/gi, '2d8');
 
-    // 2. Determine if this should explode (NIMBLE: Attacks and Damage explode, Checks/Saves do not)
     const isCheckOrSave = /check|save/i.test(label);
     const shouldExplode = !isCheckOrSave;
 
-    // 3. Calculate Advantage State
     let totalAdv = state.advantage + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
 
-    // 4. Primary Die Modification Logic
-    // We only modify the FIRST die in the string (the primary die)
     const dieMatch = finalNotation.match(/^(\d+)?d(\d+)(.*)$/i);
     if (dieMatch) {
         let count = parseInt(dieMatch[1] || "1");
@@ -528,14 +519,12 @@ function dispatchRoll(notation, label, options = {}) {
 
         let diePart = `${count}d${faces}`;
         
-        // Apply Advantage/Disadvantage
         if (totalAdv > 0) {
             diePart = `${count + totalAdv}d${faces}kh${count}`;
         } else if (totalAdv < 0) {
             diePart = `${count + Math.abs(totalAdv)}d${faces}kl${count}`;
         }
 
-        // Apply Explosion (!)
         if (shouldExplode) {
             diePart += '!';
         }
@@ -543,7 +532,6 @@ function dispatchRoll(notation, label, options = {}) {
         finalNotation = diePart + rest;
     }
 
-    // 5. Append Next Roll Mod (and clear it)
     if (state.nextRollMod) {
         let mod = state.nextRollMod.trim();
         if (!mod.startsWith('+') && !mod.startsWith('-')) mod = '+' + mod;
@@ -622,16 +610,11 @@ function renderSingleSpellCard(s, level, statsMap) {
 
 function renderSpells(level, subclass, state, derived, iStatsBound) {
     let spells = [];
-    
-    // 1. Gather Class Spells
     if (CLASS_CONFIG.getAvailableSpells) {
         spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived);
     }
-
     if (!spells || spells.length === 0) return "";
-
     const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 5": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
-    
     spells.sort((a, b) => {
         let aOrder = tierOrder[a.tier] ?? 99;
         let bOrder = tierOrder[b.tier] ?? 99;
@@ -639,7 +622,6 @@ function renderSpells(level, subclass, state, derived, iStatsBound) {
         if (a.school !== b.school) return (a.school || "").localeCompare(b.school || "");
         return (a.name || "").localeCompare(b.name || "");
     });
-
     return spells.map(s => renderSingleSpellCard(s, level, {
         str: state.baseStr + state.addStr,
         dex: state.baseDex + state.addDex,
@@ -686,7 +668,7 @@ function render() {
     });
 
     const derived = CLASS_CONFIG.getDerivedStats(level, subclass, state);
-    derived.size = "Med"; 
+    derived.size = derived.size || "Med"; 
     derived.hdMax = level;
 
     const subConfig = CLASS_CONFIG.subclasses.find(s => s.value === subclass);
@@ -704,7 +686,7 @@ function render() {
 
     let ancTxt = ""; let passMods = {}; SKILL_LIST.forEach(s => passMods[s.id] = 0);
     
-    const ancFeat = ANCESTRY_FEATURES[ancestry];
+    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
     if (ancFeat) {
         ancTxt = ancFeat.desc;
         if (ancFeat.modInit) init += ancFeat.modInit;
@@ -999,8 +981,8 @@ function importCharacter(input) {
     reader.onload = (e) => {
         try {
             const imported = JSON.parse(e.target.result);
-            saveState(imported); // Refactored saveState handles the state update and UI sync
-            loadState(); // Re-initialize UI from the newly saved state
+            saveState(imported);
+            loadState();
             render();
             alert("Character imported successfully!");
         } catch (err) {
@@ -1010,22 +992,15 @@ function importCharacter(input) {
     reader.readAsText(file);
 }
 
-// NEW: Save the entire HTML file with the state embedded
 function saveAsHTML() {
     const currentHtml = document.documentElement.outerHTML;
     const stateJson = JSON.stringify(state);
-    
-    // Find the placeholder and inject the state (handles both null and existing objects)
     const placeholderRegex = /const EMBEDDED_STATE = (null|{.*?});/;
     const injection = `const EMBEDDED_STATE = ${stateJson};`;
-    
     let newHtml = currentHtml.replace(placeholderRegex, injection);
-    
-    // Also update the title to include the character name for the filename default
     const titleRegex = /<title>(.*?)<\/title>/;
     const newTitle = `NIMBLE — ${state.charName || 'Hero'} (${CLASS_CONFIG.name})`;
     newHtml = newHtml.replace(titleRegex, `<title>${newTitle}</title>`);
-
     const blob = new Blob([newHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -53,24 +53,29 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 5px 6px 5px;
+    padding: 0 5px 10px 5px;
     font-family: 'Cinzel', serif;
     font-size: 0.65em;
     font-weight: bold;
     text-transform: uppercase;
+    min-height: 25px; /* Prevent jumping */
   }
-  .utility-group-left { display: flex; align-items: center; gap: 15px; }
-  .utility-group-right { display: flex; align-items: center; gap: 15px; }
+  .utility-group-left { display: flex; align-items: center; gap: 15px; flex: 1; }
+  .utility-group-right { display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end; }
 
-  #saveIndicator { color: var(--slate-lighter); opacity: 0.6; }
+  #saveIndicator { 
+    color: var(--slate-lighter); 
+    opacity: 0.6; 
+    min-width: 80px; 
+    display: inline-block;
+  }
   .subtle-link {
     background: transparent; border: none; padding: 0;
     color: var(--text-muted); cursor: pointer;
     text-decoration: none; border-bottom: 1px solid transparent;
-    transition: all 0.2s; font-family: inherit; font-size: 1em; font-weight: inherit; text-transform: inherit;
-    opacity: 0.8;
+    transition: all 0.2s; font-family: inherit; font-size: 1.1em; font-weight: inherit; text-transform: inherit;
   }
-  .subtle-link:hover { color: var(--class-accent); border-bottom-color: var(--class-accent); opacity: 1; }
+  .subtle-link:hover { color: var(--class-accent); border-bottom-color: var(--class-accent); }
 
   /* Combat Controls */
   .advantage-controls {
@@ -82,12 +87,12 @@
     color: var(--text-main); width: 18px; height: 18px;
     border-radius: 2px; cursor: pointer; font-family: 'Cinzel', serif;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; font-size: 0.7em;
+    transition: all 0.2s; font-size: 0.8em;
   }
   .adv-btn:hover { background: var(--class-accent); color: #000; }
   .adv-val {
-    font-family: 'Cinzel', serif; font-weight: bold; font-size: 0.9em;
-    min-width: 70px; text-align: center; color: var(--text-muted);
+    font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.0em;
+    min-width: 80px; text-align: center; color: var(--text-muted);
   }
   .adv-val.positive { color: var(--save-adv); }
   .adv-val.negative { color: var(--save-dis); }
@@ -95,23 +100,45 @@
   .mod-field-container {
     background: rgba(0,0,0,0.2); border: 1px dashed var(--class-border);
     border-radius: 4px; padding: 2px 8px; display: flex; align-items: center; gap: 6px;
-    box-sizing: border-box;
   }
   .mod-field-container label {
-    font-family: 'Cinzel', serif; font-size: 0.85em; font-weight: bold;
+    font-family: 'Cinzel', serif; font-size: 0.9em; font-weight: bold;
     color: var(--text-muted); text-transform: uppercase; white-space: nowrap;
   }
   .mod-input {
-    width: 60px; background: transparent; border: none;
+    width: 65px; background: transparent; border: none;
     border-bottom: 1px solid var(--class-accent);
     color: var(--class-accent); font-family: 'Cinzel', serif;
-    font-weight: bold; font-size: 1.1em; text-align: center; padding: 0;
+    font-weight: bold; font-size: 1.2em; text-align: center; padding: 0;
   }
 
+  /* Header (Hero Identity Row) */
+  .header { 
+    display: grid; 
+    grid-template-columns: 1fr 1.5fr 1fr; 
+    align-items: center; 
+    border-bottom: 2px solid var(--class-border); 
+    padding-bottom: 6px; 
+    margin-bottom: 10px; 
+    position: relative; 
+  }
+  .header::after { content: ''; position: absolute; bottom: -2px; left: 15%; width: 70%; height: 2px; background-color: var(--class-accent); }
+  
+  .header-left-stats { display: flex; gap: 15px; justify-content: flex-start; align-items: center; }
+  .header-center { text-align: center; }
+  .header-right-stats { display: flex; gap: 15px; justify-content: flex-end; align-items: center; }
+
+  h1 { font-family: 'Cinzel Decorative', serif; color: var(--text-main); margin: 0; font-size: 2.2em; letter-spacing: 1px; line-height: 1; }
+  .subtitle { font-family: 'Cinzel', serif; color: var(--text-muted); letter-spacing: 2px; font-weight: 600; text-transform: uppercase; font-size: 0.8em; margin-top: 2px; }
+  
+  .header-stat { display: flex; flex-direction: column; align-items: center; }
+  .header-stat label { color: var(--text-muted); font-family: 'Cinzel', serif; font-size: 0.7em; letter-spacing: 1px; text-transform: uppercase; margin: 0; font-weight: 600; }
+  .header-stat-val { font-family: 'Cinzel', serif; font-size: 1.6em; font-weight: bold; margin-top: -2px; color: #fff; line-height: 1.0; }
+
   /* Action Pips next to Header */
-  .action-pips { display: flex; gap: 6px; align-items: center; }
+  .action-pips { display: flex; gap: 6px; align-items: center; margin-left: 10px; }
   .action-pip {
-    appearance: none; width: 12px; height: 12px;
+    appearance: none; width: 14px; height: 14px;
     border: 1px solid var(--class-accent); border-radius: 50%;
     cursor: pointer; background: rgba(0,0,0,0.4);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -119,69 +146,11 @@
   }
   .action-pip:checked {
     background: var(--class-accent);
-    box-shadow: 0 0 8px var(--class-accent), inset 0 0 2px rgba(255,255,255,0.5);
+    box-shadow: 0 0 10px var(--class-accent), inset 0 0 2px rgba(255,255,255,0.5);
     transform: scale(1.1);
   }
 
   body {
-    background-color: var(--class-body-bg); color: var(--text-main);
-    font-family: 'Crimson Text', serif; margin: 0; padding: 5px;
-    display: flex; justify-content: center; font-size: 14px;
-    transition: background-color 0.5s ease;
-  }
-
-  .container {
-    max-width: 1200px; width: 100%; 
-    background: var(--class-container-bg);
-    border: 2px solid var(--class-border); 
-    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-    padding: 8px 10px; position: relative; box-sizing: border-box; border-radius: 6px;
-    transition: all 0.5s ease;
-  }
-
-  .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--class-border); padding-bottom: 4px; margin-bottom: 8px; position: relative; }
-  .header::after { content: ''; position: absolute; bottom: -2px; left: 15%; width: 70%; height: 2px; background-color: var(--class-accent); }
-  .header-center { text-align: center; flex: 1; padding: 0 15px; }
-  h1 { font-family: 'Cinzel Decorative', serif; color: var(--text-main); margin: 0; font-size: 2.0em; letter-spacing: 1px; }
-  .subtitle { font-family: 'Cinzel', serif; color: var(--text-muted); letter-spacing: 2px; font-weight: 600; text-transform: uppercase; font-size: 0.75em; }
-  
-  .header-left-stats, .header-right-stats { display: flex; gap: 12px; min-width: 90px; }
-  .header-left-stats { justify-content: flex-start; }
-  .header-right-stats { justify-content: flex-end; align-items: flex-end; }
-  .header-stat { display: flex; flex-direction: column; align-items: center; }
-  .header-stat label { color: var(--text-muted); font-family: 'Cinzel', serif; font-size: 0.65em; letter-spacing: 1px; text-transform: uppercase; margin: 0; font-weight: 600; }
-  .header-stat-val { font-family: 'Cinzel', serif; font-size: 1.5em; font-weight: bold; margin-top: 0px; color: #fff; line-height: 1.0; }
-
-  h2.section-header { font-family: 'Cinzel Decorative', serif; border-bottom: 1px solid var(--class-border); padding-bottom: 3px; margin: 0 0 8px 0; color: var(--class-accent); font-size: 1.2em; }
-  
-  .top-bar { display: grid; grid-template-columns: 2fr 0.6fr 1fr 1fr 1.2fr; gap: 6px; margin-bottom: 8px; align-items: end; }
-  .top-bar .panel { padding: 2px 6px; border: none; background: transparent; }
-  .top-bar input, .top-bar select { font-size: 0.85em; }
-
-  .layout-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; margin-bottom: 10px; width: 100%; }
-  .layout-1col { width: 100%; margin-bottom: 10px; }
-  .dashboard-row { height: 320px; }
-  
-  .left-col, .right-col { min-width: 0; width: 100%; }
-
-  .panel { background: var(--class-panel-bg); border: 1px solid var(--class-border); padding: 4px 8px; border-radius: 4px; }
-  
-  /* Bridge Styles */
-  .roll-link {
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-  }
-  .roll-link:hover {
-    color: #fff !important;
-    text-shadow: 0 0 10px var(--class-accent), 0 0 20px var(--class-accent-dim) !important;
-  }
-  .roll-link:active {
-    transform: scale(0.95) !important;
-  }
-  .core-stat[onclick]:hover {
-    border-color: var(--class-accent) !important;
-    box-shadow: 0 0 15px var(--class-accent-dim) !important;
-  }
   .mechanic-panel { padding: 10px 15px; flex: 1; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; border: none; background: transparent; }
 
   .panel-title { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; display: block; border-bottom: 1px solid var(--class-border); padding-bottom: 1px; }
@@ -304,15 +273,18 @@
 <body>
 
 <div class="container">
-  <div class="save-status-container">
-    <span id="saveIndicator">Auto-saved</span>
-    <button onclick="saveAsHTML()" class="subtle-link">Save as HTML</button>
+  <div class="top-utility-row">
+    <div class="utility-group-left">
+        <button onclick="saveAsHTML()" class="subtle-link">Save as HTML</button>
+        <span id="saveIndicator">Auto-saved</span>
+    </div>
+    <div id="combatControlsContainer" class="utility-group-right"></div>
   </div>
   
   <div class="header">
     <div class="header-left-stats" id="headerLeftStats"></div>
     <div class="header-center">
-        <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:2px;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
             <h1 id="classNameDisplay">Class Name</h1>
             <div class="action-pips">
                 <input type="checkbox" class="action-pip" id="action1" onclick="toggleAction(0)">
@@ -322,9 +294,7 @@
         </div>
         <div class="subtitle" id="classSubtitleDisplay">Subtitle</div>
     </div>
-    <div class="header-right-stats" id="headerRightStats">
-        <div id="combatControlsContainer" class="combat-controls-group"></div>
-    </div>
+    <div class="header-right-stats" id="headerRightStats"></div>
   </div>
 
   <div class="top-bar">
