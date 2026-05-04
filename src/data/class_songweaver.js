@@ -241,7 +241,7 @@ const CLASS_CONFIG = {
 
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Vicious Mockery</label>
-                    <div style="font-size: 2.2em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">${vmDisplay}</div>
+                    <div class="roll-link" onclick="dispatchRoll('${vmDisplay}', 'Vicious Mockery')" style="font-size: 2.2em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; cursor: pointer;">${vmDisplay}</div>
                     <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 4px; font-family: 'Crimson Text'; font-style: italic;">Reach 12</div>
                     <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.1; font-family: 'Crimson Text'; max-width: 120px;">On hit: the target is Taunted during their next turn.</div>
                 </div>

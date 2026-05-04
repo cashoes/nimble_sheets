@@ -221,11 +221,16 @@ function iStats(txt, level, statsMap) {
     if (!txt) return "";
     const kv = Math.max(...CLASS_CONFIG.keyStats.map(s => statsMap[s]));
     const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check')">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
-    return txt.replace(/\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill))/gi, (m, p1) => {
+    let processed = txt.replace(/<[^>]*>|\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill))/gi, (m, p1) => {
+        if (!p1) return m;
         const k = p1.toUpperCase(); if (k === 'LVL') return `<span class="stat-hl">${level}</span>`;
         if (k === 'STR') return wrap(statsMap.str, 'STR'); if (k === 'DEX') return wrap(statsMap.dex, 'DEX'); if (k === 'INT') return wrap(statsMap.int, 'INT'); if (k === 'WIL') return wrap(statsMap.wil, 'WIL'); if (k === 'KEY') return wrap(kv, 'KEY');
         return m;
-    }).replace(/\b(\d+d\d+)\b/gi, `<span class="dice-hl roll-link" onclick="dispatchRoll('$1', 'Roll')">$1</span>`);
+    });
+    return processed.replace(/<[^>]*>|\b(\d+d\d+)\b/gi, (m, p1) => {
+        if (!p1) return m;
+        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${p1}', 'Roll')">${p1}</span>`;
+    });
 }
 
 function bFeat(t, l, d, theme = "", skip = false, level, statsMap) { const desc = skip ? d : iStats(d, level, statsMap); return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; }

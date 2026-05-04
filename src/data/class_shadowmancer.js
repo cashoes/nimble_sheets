@@ -296,14 +296,14 @@ const CLASS_CONFIG = {
                 <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center;">
                     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Bonescythe</label>
-                        <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">${scytheDmg}</div>
+                        <div class="roll-link" onclick="dispatchRoll('${scytheDmg}', 'Bonescythe')" style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">${scytheDmg}</div>
                         <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH 2</div>
                     </div>
                     <div style="width: 1px; background: rgba(255,255,255,0.15);"></div>
                     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Shadow Minions</label>
                         <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">MAX ${minions}</div>
-                        <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH ${1 + Math.floor(level / 5)}</div>
+                        <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH ${1 + Math.floor(level / 5)} | <span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack')" style="cursor: pointer; color: var(--class-accent);">ATTACK 1d12</span></div>
                     </div>
                 </div>`;
         } else {
@@ -313,14 +313,14 @@ const CLASS_CONFIG = {
                 <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center; padding-bottom: ${level >= 2 ? '10px' : '0'}; ${level >= 2 ? 'border-bottom: 1px dashed rgba(255,255,255,0.15); margin-bottom: 10px;' : ''}">
                     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Shadow Blast</label>
-                        <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">${blastDmg}</div>
+                        <div class="roll-link" onclick="dispatchRoll('${blastDmg}', 'Shadow Blast')" style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">${blastDmg}</div>
                         <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">RANGE 8</div>
                     </div>
                     <div style="width: 1px; background: rgba(255,255,255,0.15);"></div>
                     <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
                         <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Shadow Minions</label>
                         <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">MAX ${minions}</div>
-                        <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH ${1 + Math.floor(level / 5)}</div>
+                        <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH ${1 + Math.floor(level / 5)} | <span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack')" style="cursor: pointer; color: var(--class-accent);">ATTACK 1d12</span></div>
                     </div>
                 </div>`;
         }
