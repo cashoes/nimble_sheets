@@ -48,13 +48,20 @@
     color: var(--save-dis) !important;
   }
 
-  /* Save Status Group (Top Right) */
-  .save-status-container {
-    position: absolute; top: 8px; right: 12px;
-    display: flex; align-items: center; gap: 15px;
-    font-family: 'Cinzel', serif; font-size: 0.65em;
-    font-weight: bold; text-transform: uppercase;
+  /* Top Utility Row */
+  .top-utility-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 5px 6px 5px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65em;
+    font-weight: bold;
+    text-transform: uppercase;
   }
+  .utility-group-left { display: flex; align-items: center; gap: 15px; }
+  .utility-group-right { display: flex; align-items: center; gap: 15px; }
+
   #saveIndicator { color: var(--slate-lighter); opacity: 0.6; }
   .subtle-link {
     background: transparent; border: none; padding: 0;
@@ -65,11 +72,7 @@
   }
   .subtle-link:hover { color: var(--class-accent); border-bottom-color: var(--class-accent); opacity: 1; }
 
-  /* Combat Controls Group (Right Header Area) */
-  .combat-controls-group {
-    display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
-    margin-bottom: 2px;
-  }
+  /* Combat Controls */
   .advantage-controls {
     background: rgba(0,0,0,0.3); border: 1px solid var(--class-border);
     border-radius: 4px; display: flex; align-items: center; gap: 6px; padding: 2px 6px;
@@ -83,26 +86,26 @@
   }
   .adv-btn:hover { background: var(--class-accent); color: #000; }
   .adv-val {
-    font-family: 'Cinzel', serif; font-weight: bold; font-size: 0.7em;
-    min-width: 75px; text-align: center; color: var(--text-muted); text-transform: uppercase;
+    font-family: 'Cinzel', serif; font-weight: bold; font-size: 0.9em;
+    min-width: 70px; text-align: center; color: var(--text-muted);
   }
-  .adv-val.positive { color: var(--save-adv); text-shadow: 0 0 5px rgba(34, 197, 94, 0.4); }
-  .adv-val.negative { color: var(--save-dis); text-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+  .adv-val.positive { color: var(--save-adv); }
+  .adv-val.negative { color: var(--save-dis); }
 
   .mod-field-container {
     background: rgba(0,0,0,0.2); border: 1px dashed var(--class-border);
-    border-radius: 4px; padding: 2px 6px; display: flex; align-items: center; gap: 6px;
-    width: 150px; box-sizing: border-box;
+    border-radius: 4px; padding: 2px 8px; display: flex; align-items: center; gap: 6px;
+    box-sizing: border-box;
   }
   .mod-field-container label {
-    font-family: 'Cinzel', serif; font-size: 0.55em; font-weight: bold;
+    font-family: 'Cinzel', serif; font-size: 0.85em; font-weight: bold;
     color: var(--text-muted); text-transform: uppercase; white-space: nowrap;
   }
   .mod-input {
-    flex: 1; background: transparent; border: none;
+    width: 60px; background: transparent; border: none;
     border-bottom: 1px solid var(--class-accent);
     color: var(--class-accent); font-family: 'Cinzel', serif;
-    font-weight: bold; font-size: 0.75em; text-align: center; padding: 0;
+    font-weight: bold; font-size: 1.1em; text-align: center; padding: 0;
   }
 
   /* Action Pips next to Header */
