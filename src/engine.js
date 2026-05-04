@@ -110,7 +110,8 @@ function loadState() {
         hpCurrent: null, tempHP: 0, hdCurrent: null, wounds: 0,
         skills: {}, activeConditions: [], inventory: [], gold: 0,
         resourceValues: {}, bgSpell: 'None', showMinor: false,
-        selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: []
+        selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: [],
+        advantage: 0, actionsSpent: 0, nextRollMod: ""
     };
 
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -199,10 +200,50 @@ function syncStateToDOM() {
         addEl.value = state[`add${s}`];
         addEl.max = Math.max(0, 5 - state[`base${s}`]);
     });
+
+    // Sync Action Pips
+    for (let i = 0; i < 3; i++) {
+        document.getElementById(`action${i+1}`).checked = (state.actionsSpent > i);
+    }
     
     mSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
     rSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
     aSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
+}
+
+function adjAdv(amt) {
+    state.advantage = Math.min(3, Math.max(-3, state.advantage + amt));
+    const el = document.getElementById('advDisplay');
+    if (state.advantage === 0) {
+        el.innerText = 'Normal';
+        el.className = 'adv-val';
+    } else if (state.advantage > 0) {
+        el.innerText = `Advantage +${state.advantage}`;
+        el.className = 'adv-val positive';
+    } else {
+        el.innerText = `Disadvantage ${state.advantage}`;
+        el.className = 'adv-val negative';
+    }
+    saveState();
+}
+
+function toggleAction(idx) {
+    // If clicking a checked pip, set actionsSpent to that index (unchecking it and those after)
+    // If clicking an unchecked pip, set actionsSpent to index + 1
+    if (state.actionsSpent > idx) {
+        state.actionsSpent = idx;
+    } else {
+        state.actionsSpent = idx + 1;
+    }
+    for (let i = 0; i < 3; i++) {
+        document.getElementById(`action${i+1}`).checked = (state.actionsSpent > i);
+    }
+    saveState();
+}
+
+function updateMod(val) {
+    state.nextRollMod = val;
+    saveState();
 }
 
 /**
@@ -231,12 +272,16 @@ function renderHeader(derived, armorVal, init) {
     document.getElementById('headerLeftStats').innerHTML = lStats;
     
     const ancFeat = ANCESTRY_FEATURES[state.ancestry];
-    const initAdv = ancFeat && ancFeat.modInitAdv ? '<span style="font-size:0.5em; vertical-align:middle; color:var(--save-adv); margin-left:2px;">▲</span>' : '';
+    const hasInitAdv = (ancFeat && ancFeat.modInitAdv);
+    const initAdvIcon = hasInitAdv ? '<span style="font-size:0.5em; vertical-align:middle; color:var(--save-adv); margin-left:2px;">▲</span>' : '';
+    
+    // Bridge: Make Initiative clickable
+    const initNotation = `1d20${init >= 0 ? '+' : ''}${init}`;
     
     document.getElementById('headerRightStats').innerHTML = `
         <div class="header-stat"><label>Size</label><div class="header-stat-val">${derived.size}</div></div>
         <div class="header-stat"><label>Speed</label><div class="header-stat-val">${derived.speed}</div></div>
-        <div class="header-stat"><label>Init</label><div class="header-stat-val">${init >= 0 ? "+" : ""}${init}${initAdv}</div></div>
+        <div class="header-stat"><label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">Init</label><div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">${init >= 0 ? "+" : ""}${init}${initAdvIcon}</div></div>
     `;
 }
 
@@ -246,11 +291,19 @@ function renderAttributes(level, statsMap) {
         if (card) {
             if (CLASS_CONFIG.keyStats.includes(stat)) card.classList.add('key-stat'); else card.classList.remove('key-stat');
             card.classList.remove('save-adv', 'save-dis');
-            if (CLASS_CONFIG.saves.adv === stat) card.classList.add('save-adv');
-            if (CLASS_CONFIG.saves.dis === stat) card.classList.add('save-dis');
             
-            // Bridge: Make stat card clickable
-            card.setAttribute('onclick', `dispatchRoll('1d20+${statsMap[stat]}', '${stat.toUpperCase()} Check')`);
+            let inherentAdv = 0;
+            if (CLASS_CONFIG.saves.adv === stat) {
+                card.classList.add('save-adv');
+                inherentAdv = 1;
+            }
+            if (CLASS_CONFIG.saves.dis === stat) {
+                card.classList.add('save-dis');
+                inherentAdv = -1;
+            }
+            
+            // Bridge: Make stat card clickable (Rolling a SAVE)
+            card.setAttribute('onclick', `dispatchRoll('1d20+${statsMap[stat]}', '${stat.toUpperCase()} Save', { inherentAdv: ${inherentAdv} })`);
             card.style.cursor = 'pointer';
         }
     });
@@ -307,7 +360,10 @@ function renderResources(level, derived, statsMap, hdFace) {
 
     document.getElementById('displayMaxHP').innerText = maxHP;
     document.getElementById('maxHD').innerText = hdMax;
-    document.getElementById('hitDiceLabel').innerText = `Hit Dice (d${hdFace})`;
+    
+    // Bridge: Make Hit Dice clickable
+    const hdNotation = `1d${hdFace}`;
+    document.getElementById('hitDiceLabel').innerHTML = `<span class="roll-link" onclick="dispatchRoll('${hdNotation}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
     
     let wHtml = ""; for(let i=0; i<derived.woundMax; i++) wHtml += `<input type="checkbox" class="pip wound" ${i<state.wounds?'checked':''} onclick="handleWoundClick(${i})">`;
     document.getElementById('woundsContainer').innerHTML = wHtml;
@@ -433,19 +489,67 @@ function renderConditions() {
 /**
  * UTILITIES
  */
-function dispatchRoll(notation, label) {
+function dispatchRoll(notation, label, options = {}) {
     if (!notation) return;
     
-    // Clean notation (strip icons and extra spaces)
     let cleanNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
+    let finalNotation = cleanNotation;
+
+    // 1. Handle d66 / d88 conversion
+    if (finalNotation.toLowerCase().includes('d66')) finalNotation = finalNotation.replace(/d66/gi, '2d6');
+    if (finalNotation.toLowerCase().includes('d88')) finalNotation = finalNotation.replace(/d88/gi, '2d8');
+
+    // 2. Determine if this should explode (NIMBLE: Attacks and Damage explode, Checks/Saves do not)
+    const isCheckOrSave = /check|save/i.test(label);
+    const shouldExplode = !isCheckOrSave;
+
+    // 3. Calculate Advantage State
+    let totalAdv = state.advantage + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
+
+    // 4. Primary Die Modification Logic
+    // We only modify the FIRST die in the string (the primary die)
+    const dieMatch = finalNotation.match(/^(\d+)?d(\d+)(.*)$/i);
+    if (dieMatch) {
+        let count = parseInt(dieMatch[1] || "1");
+        let faces = dieMatch[2];
+        let rest = dieMatch[3];
+
+        let diePart = `${count}d${faces}`;
+        
+        // Apply Advantage/Disadvantage
+        if (totalAdv > 0) {
+            diePart = `${count + totalAdv}d${faces}kh${count}`;
+        } else if (totalAdv < 0) {
+            diePart = `${count + Math.abs(totalAdv)}d${faces}kl${count}`;
+        }
+
+        // Apply Explosion (!)
+        if (shouldExplode) {
+            diePart += '!';
+        }
+
+        finalNotation = diePart + rest;
+    }
+
+    // 5. Append Next Roll Mod (and clear it)
+    if (state.nextRollMod) {
+        let mod = state.nextRollMod.trim();
+        if (!mod.startsWith('+') && !mod.startsWith('-')) mod = '+' + mod;
+        finalNotation += ` ${mod}`;
+        
+        state.nextRollMod = "";
+        const modInput = document.getElementById('nextRollMod');
+        if (modInput) modInput.value = "";
+        saveState();
+    }
     
     const event = new CustomEvent("NIMBLE_ROLL_EVENT", {
         detail: {
-            notation: cleanNotation,
+            notation: finalNotation,
             label: label,
             playerName: state.charName || "Adventurer",
             rollTarget: 'everyone',
-            timestamp: Date.now() // Add timestamp for bridge deduplication
+            timestamp: Date.now()
         }
     });
     window.dispatchEvent(event);
@@ -530,6 +634,35 @@ function renderSpells(level, subclass, state, derived, iStatsBound) {
         int: state.baseInt + state.addInt,
         wil: state.baseWil + state.addWil
     })).join("");
+}
+
+function renderModField(isSpellcaster) {
+    const html = `
+        <div class="mod-field-container">
+            <label>Next Roll Mod</label>
+            <input type="text" id="nextRollMod" class="mod-input" placeholder="+10, +1d6, etc." value="${state.nextRollMod || ""}" oninput="updateMod(this.value)">
+        </div>
+    `;
+    
+    // Clear any existing mod fields first
+    const existing = document.querySelectorAll('.mod-field-container');
+    existing.forEach(el => el.remove());
+
+    if (isSpellcaster) {
+        const spellsContainer = document.getElementById('spellsContainer');
+        if (spellsContainer) {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            spellsContainer.prepend(wrapper.firstElementChild);
+        }
+    } else {
+        const mechanicPanel = document.getElementById('classMechanicPanel');
+        if (mechanicPanel) {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            mechanicPanel.prepend(wrapper.firstElementChild);
+        }
+    }
 }
 
 /**
@@ -742,6 +875,8 @@ function render() {
         document.getElementById('featuresSpellsLayout').className = 'layout-1col'; 
         sWrapper.style.display = 'none'; 
     }
+
+    renderModField(isSpellcaster);
 }
 
 /**

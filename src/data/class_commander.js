@@ -223,7 +223,7 @@ const CLASS_CONFIG = {
             <div style="display: flex; align-items: stretch; gap: 12px;">
                ${subclass !== "Spellblade" ? `
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
-                   <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Combat Dice (${derived.cdType})</label>
+                   <label class="roll-link" onclick="dispatchRoll('1${derived.cdType}', 'Combat Die')" style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px; cursor:pointer;">Combat Dice (${derived.cdType})</label>
                    <div class="dark-incrementer" style="padding: 4px 10px;">
                        <button onclick="adjRes('combatDice', -1, ${maxCD})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
                        <input type="number" id="res_combatDice" value="${currentCD}" min="0" max="${maxCD}" onchange="adjRes('combatDice', parseInt(this.value), ${maxCD}, true)" style="width:30px; font-size: 1.3em;">

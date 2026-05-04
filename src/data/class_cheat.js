@@ -183,8 +183,8 @@ const CLASS_CONFIG = {
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
             <div style="display: flex; align-items: stretch; gap: 15px;">
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
-                   <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Sneak Attack</label>
+               <div class="roll-link" onclick="dispatchRoll('${derived.saDice}', 'Sneak Attack')" style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; cursor:pointer;">
+                   <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px; cursor:pointer;">Sneak Attack</label>
                    <div style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; margin: auto 0;">${derived.saDice}</div>
                    <div style="font-size: 0.75em; color: var(--text-muted); text-align: center; margin-top: auto; font-family:'Cinzel'; font-weight:bold;">On Critical Hit</div>
                </div>

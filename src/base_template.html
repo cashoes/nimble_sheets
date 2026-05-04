@@ -53,6 +53,85 @@
     color: var(--save-dis) !important;
   }
 
+  /* Header Controls Row */
+  .header-controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 5px;
+    gap: 10px;
+  }
+  .header-controls-left, .header-controls-right { flex: 1; display: flex; }
+  .header-controls-left { justify-content: flex-start; }
+  .header-controls-right { justify-content: flex-end; }
+  .header-controls-center { flex: 0; }
+
+  .advantage-controls {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--class-border);
+    border-radius: 4px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 10px;
+  }
+  .adv-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--class-border);
+    color: var(--text-main);
+    width: 24px; height: 24px;
+    border-radius: 4px; cursor: pointer;
+    font-family: 'Cinzel', serif; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    font-size: 0.9em;
+  }
+  .adv-btn:hover { background: var(--class-accent); color: #000; }
+  .adv-val {
+    font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.85em;
+    min-width: 85px; text-align: center; letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .adv-val.positive { color: var(--save-adv); text-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
+  .adv-val.negative { color: var(--save-dis); text-shadow: 0 0 5px rgba(239, 68, 68, 0.3); }
+
+  /* Action Pips */
+  .action-pips { display: flex; gap: 8px; justify-content: center; }
+  .action-pip {
+    appearance: none; width: 16px; height: 16px;
+    border: 2px solid var(--class-accent); border-radius: 50%;
+    cursor: pointer; background: rgba(0,0,0,0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    margin: 0;
+  }
+  .action-pip:checked {
+    background: var(--class-accent);
+    box-shadow: 0 0 10px var(--class-accent), inset 0 0 4px rgba(255,255,255,0.5);
+    transform: scale(1.1);
+  }
+
+  /* Mod Field */
+  .mod-field-container {
+    margin-bottom: 10px;
+    background: rgba(0,0,0,0.2);
+    border: 1px dashed var(--class-border);
+    border-radius: 4px;
+    padding: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .mod-field-container label {
+    font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: bold;
+    color: var(--text-muted); text-transform: uppercase; white-space: nowrap;
+  }
+  .mod-input {
+    flex: 1; background: rgba(0,0,0,0.3); border: none;
+    border-bottom: 1px solid var(--class-accent);
+    color: var(--class-accent); font-family: 'Cinzel', serif;
+    font-weight: bold; font-size: 0.9em; text-align: center;
+    padding: 2px;
+  }
+
   body {
     background-color: var(--class-body-bg); color: var(--text-main);
     font-family: 'Crimson Text', serif; margin: 0; padding: 5px;
@@ -262,16 +341,27 @@
   <div class="header">
     <div class="header-left-stats" id="headerLeftStats"></div>
     <div class="header-center">
+        <div class="header-controls-row">
+            <div class="header-controls-left">
+                <button onclick="saveAsHTML()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.75em; background: var(--class-accent); color: #000; width: auto; letter-spacing: 0.5px;">Save as HTML</button>
+            </div>
+            <div class="header-controls-center">
+                <div class="action-pips">
+                    <input type="checkbox" class="action-pip" id="action1" onclick="toggleAction(0)">
+                    <input type="checkbox" class="action-pip" id="action2" onclick="toggleAction(1)">
+                    <input type="checkbox" class="action-pip" id="action3" onclick="toggleAction(2)">
+                </div>
+            </div>
+            <div class="header-controls-right">
+                <div class="advantage-controls">
+                    <button class="adv-btn" onclick="adjAdv(-1)">-</button>
+                    <div id="advDisplay" class="adv-val">Normal</div>
+                    <button class="adv-btn" onclick="adjAdv(1)">+</button>
+                </div>
+            </div>
+        </div>
         <h1 id="classNameDisplay">Class Name</h1>
         <div class="subtitle" id="classSubtitleDisplay">Subtitle</div>
-        <div style="margin-top: 10px; display: flex; justify-content: center;">
-            <button onclick="saveAsHTML()" class="add-item-btn" style="margin:0; padding: 6px 15px; font-size: 0.8em; background: var(--class-accent); color: #000; width: auto;">Save as File (.html)</button>
-        </div>
-        <!-- Hidden for simplified UI
-        <button onclick="exportCharacter()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Export JSON</button>
-        <button onclick="document.getElementById('importFile').click()" class="add-item-btn" style="margin:0; padding: 4px 10px; font-size: 0.7em; background: rgba(255,255,255,0.05);">Import JSON</button>
-        <input type="file" id="importFile" style="display:none" onchange="importCharacter(this)">
-        -->
     </div>
     <div class="header-right-stats" id="headerRightStats"></div>
   </div>

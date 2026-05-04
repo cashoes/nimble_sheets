@@ -196,7 +196,7 @@ const CLASS_CONFIG = {
 
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; ${level >= 2 ? 'border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 10px;' : ''} justify-content: center; text-align: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Elemental Surge</label>
-                    <div style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">+${state.baseWil + state.addWil}</div>
+                    <div class="roll-link" onclick="dispatchRoll('${level >= 17 ? '2d4' : level >= 10 ? '1d4' : '0'}${state.baseWil + state.addWil >= 0 ? '+' : ''}${state.baseWil + state.addWil}', 'Elemental Surge Check')" style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; cursor:pointer;">+${state.baseWil + state.addWil}</div>
                     <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 8px; font-family: 'Crimson Text'; font-style: italic;">Regain on Initiative ${level >= 17 ? '(+2d4)' : level >= 10 ? '(+1d4)' : ''}</div>
                 </div>
 
@@ -206,7 +206,10 @@ const CLASS_CONFIG = {
                     <div style="font-size: 0.8em; color: var(--gold-light); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">BONUS</div>
                 </div>
             </div>
-            ${subclass === "Control" && level >= 3 ? `
+            ${subclass === "Chaos" ? `
+            <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 4px; text-align: center;">
+                <div class="roll-link" onclick="dispatchRoll('1d20', 'Invoke Chaos')" style="color: var(--class-accent); font-size: 0.9em; font-weight: bold; text-transform: uppercase; font-family: 'Cinzel'; letter-spacing: 1px; cursor:pointer;">Invoke Chaos (1d20)</div>
+            </div>` : subclass === "Control" && level >= 3 ? `
             <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 4px; text-align: center;">
                 <div style="color: var(--gold-light); font-size: 0.75em; font-weight: bold; text-transform: uppercase; font-family: 'Cinzel'; letter-spacing: 1px;">Control Table Reference</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; font-size: 0.7em; color: var(--text-muted); font-family: 'Crimson Text';">
