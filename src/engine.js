@@ -171,7 +171,7 @@ function renderResources(level, derived, statsMap, hdFace) {
     const hpEl = document.getElementById('displayCurrentHP'); const thpEl = document.getElementById('displayTempHP'); const hdEl = document.getElementById('displayHD');
     if (hpEl && document.activeElement !== hpEl) hpEl.value = state.hpCurrent; if (thpEl && document.activeElement !== thpEl) thpEl.value = state.tempHP || 0; if (hdEl && document.activeElement !== hdEl) hdEl.value = state.hdCurrent; 
     document.getElementById('displayMaxHP').innerText = maxHP; document.getElementById('maxHD').innerText = derived.hdMax;
-    document.getElementById('hitDiceLabel').innerHTML = `<span class="roll-link" onclick="dispatchRoll('1d${hdFace}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
+    document.getElementById('hitDiceLabel').innerHTML = `<span class="roll-link" onclick="dispatchRoll('1d${hdFace}${statsMap.str >= 0 ? '+' : ''}${statsMap.str}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
     let wHtml = ""; for(let i=0; i<derived.woundMax; i++) wHtml += `<input type="checkbox" class="pip wound" ${i<state.wounds?'checked':''} onclick="handleWoundClick(${i})">`;
     document.getElementById('woundsContainer').innerHTML = wHtml;
     let resHtml = "";
@@ -205,7 +205,7 @@ function dispatchRoll(notation, label, options = {}) {
     let finalNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
     if (finalNotation.toLowerCase().includes('d66')) finalNotation = finalNotation.replace(/d66/gi, '2d6');
     if (finalNotation.toLowerCase().includes('d88')) finalNotation = finalNotation.replace(/d88/gi, '2d8');
-    const isCheckOrSave = /check|save/i.test(label);
+    const isCheckOrSave = /check|save|rest|hit die/i.test(label);
     let totalAdv = state.advantage + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
     const dieMatch = finalNotation.match(/^(\d+)?d(\d+)(.*)$/i);
     if (dieMatch) {
