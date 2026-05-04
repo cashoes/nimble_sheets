@@ -266,7 +266,12 @@ function render() {
     const hpEl = document.getElementById('displayCurrentHP'); const thpEl = document.getElementById('displayTempHP'); const hdEl = document.getElementById('displayHD');
     if (hpEl && document.activeElement !== hpEl) hpEl.value = state.hpCurrent; if (thpEl && document.activeElement !== thpEl) thpEl.value = state.tempHP || 0; if (hdEl && document.activeElement !== hdEl) hdEl.value = state.hdCurrent; 
     document.getElementById('displayMaxHP').innerText = maxHP; document.getElementById('maxHD').innerText = derived.hdMax;
-    renderHeader(derived, armorVal, init); renderAttributes(level, statsMap); renderResources(level, derived, statsMap, hdFace); renderInventory(statsMap, armorVal, statsMap.str, iStatsBound); renderSkills(level, statsMap, {}); renderConditions();
+    
+    let passMods = {}; SKILL_LIST.forEach(s => passMods[s.id] = 0);
+    if (ancFeat) { if (ancFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += ancFeat.modAllSkills); if (ancFeat.modSkill) passMods[ancFeat.modSkill.id] += ancFeat.modSkill.val; }
+    if (bgFeat) { if (bgFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += bgFeat.modAllSkills); if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val; }
+
+    renderHeader(derived, armorVal, init); renderAttributes(level, statsMap); renderResources(level, derived, statsMap, hdFace); renderInventory(statsMap, armorVal, statsMap.str, iStatsBound); renderSkills(level, statsMap, passMods); renderConditions();
     if (document.getElementById('toggleMinorFeatures')) document.getElementById('toggleMinorFeatures').checked = state.showMinor || false; document.body.classList.toggle('show-minor', state.showMinor);
     let fHtml = CLASS_CONFIG.getFeaturesHTML(level, subclass, state, derived, bFeatBound, iStatsBound, formatPips, renderSingleSpellCard);
     if (bgFeat) {
