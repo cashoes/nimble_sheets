@@ -282,9 +282,7 @@ function dispatchRoll(notation, label, options = {}) {
             if (furySum > 0) autoMod += furySum;
         }
     } else if (CLASS_CONFIG.name === 'Mage') {
-        if (isCantrip && !/check|save/i.test(label)) {
-            autoMod += state.level;
-        }
+        // Class-wide Mage cantrip damage bonus removed in favor of automatic school-specific scaling.
     } else if (CLASS_CONFIG.name === 'Oathsworn') {
         if (isAttack) {
             if (state.judgmentValue > 0) {
@@ -330,18 +328,48 @@ function dispatchRoll(notation, label, options = {}) {
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", { detail: { notation: finalNotation, label: label, playerName: state.charName || "Adventurer", rollTarget: 'everyone', timestamp: Date.now() } }));
 }
 
+function applyCantripScaling(notation, name, school, level) {
+    const levelMod = Math.floor(level / 5);
+    if (levelMod === 0) return notation;
+
+    if (name === "Entice") {
+        const steps = ["d4", "d6", "d8", "d10", "d12"];
+        const step = Math.min(4, levelMod);
+        return notation.replace(/d4/i, steps[step]);
+    }
+
+    let bonus = 0;
+    if (school === "Fire") bonus = 5 * levelMod;
+    else if (school === "Ice") bonus = 3 * levelMod;
+    else if (school === "Lightning") {
+        if (name === "Zap") bonus = 6 * levelMod;
+        else if (name === "Overload") bonus = 4 * levelMod;
+        else bonus = 4 * levelMod;
+    }
+    else if (school === "Wind" || name === "Vicious Mockery") bonus = 2 * levelMod;
+    else if (school === "Radiant") bonus = 2 * levelMod;
+    else if (name === "Withering Touch") bonus = 6 * levelMod;
+
+    if (bonus === 0) return notation;
+    return notation + "+" + bonus;
+}
+
 function iStats(txt, level, statsMap, context = {}) {
     if (!txt) return "";
     const kv = Math.max(...CLASS_CONFIG.keyStats.map(s => statsMap[s]));
     
     // Helper to replace KEY/LVL with values in strings intended for the dice parser
     const resolveNotation = (not) => {
-        return not.replace(/\bKEY\b/gi, kv)
-                  .replace(/\bLVL\b/gi, level)
-                  .replace(/\bSTR\b/gi, statsMap.str)
-                  .replace(/\bDEX\b/gi, statsMap.dex)
-                  .replace(/\bINT\b/gi, statsMap.int)
-                  .replace(/\bWIL\b/gi, statsMap.wil);
+        let res = not.replace(/\bKEY\b/gi, kv)
+                     .replace(/\bLVL\b/gi, level)
+                     .replace(/\bSTR\b/gi, statsMap.str)
+                     .replace(/\bDEX\b/gi, statsMap.dex)
+                     .replace(/\bINT\b/gi, statsMap.int)
+                     .replace(/\bWIL\b/gi, statsMap.wil);
+        if (context.type === 'cantrip') {
+            res = applyCantripScaling(res, context.name, context.school, level);
+        }
+        return res;
     };
 
     // 1. Handle Dice/Table rolls first (including those with placeholders like KEY d20 or 1d6+KEY)
@@ -371,7 +399,7 @@ function formatPips(tier) { const tStr = String(tier); const tNum = parseInt(tSt
 function renderSingleSpellCard(s, level, statsMap) { 
     const schoolClass = (s.school || "").toLowerCase(); 
     const isCantrip = (s.tier || "").toLowerCase().includes("cantrip") || s.name === "Vicious Mockery";
-    const context = isCantrip ? { type: 'cantrip' } : {};
+    const context = isCantrip ? { type: 'cantrip', name: s.name, school: s.school } : {};
     const desc = s.customHtml ? s.customHtml : (s.desc ? iStats(s.desc, level, statsMap, context) : ""); 
     return `<div class="spell-card ${schoolClass}" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);"><h4>${s.name ? `${s.name} ` : ""}<span class="tier-tag">${formatPips(s.tier)}</span></h4><div class="spell-desc" style="font-size: 0.85em;">${desc}</div></div>`; 
 }
