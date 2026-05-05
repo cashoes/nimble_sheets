@@ -323,18 +323,36 @@ function dispatchRoll(notation, label, options = {}) {
 function iStats(txt, level, statsMap, context = {}) {
     if (!txt) return "";
     const kv = Math.max(...CLASS_CONFIG.keyStats.map(s => statsMap[s]));
-    const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check', ${JSON.stringify(context)})">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
-    let processed = txt.replace(/<[^>]*>|\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill))/gi, (m, p1) => {
-        if (!p1) return m;
-        const k = p1.toUpperCase(); if (k === 'LVL') return `<span class="stat-hl">${level}</span>`;
-        if (k === 'STR') return wrap(statsMap.str, 'STR'); if (k === 'DEX') return wrap(statsMap.dex, 'DEX'); if (k === 'INT') return wrap(statsMap.int, 'INT'); if (k === 'WIL') return wrap(statsMap.wil, 'WIL'); if (k === 'KEY') return wrap(kv, 'KEY');
-        return m;
-    });
-    return processed.replace(/<[^>]*>|\b(\d+d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b/gi, (m, p1) => {
-        if (!p1) return m;
-        // Clean up the match to be a valid notation for dispatchRoll
-        let notation = m.replace(/<[^>]*>/g, '').trim();
+    
+    // Helper to replace KEY/LVL with values in strings intended for the dice parser
+    const resolveNotation = (not) => {
+        return not.replace(/\bKEY\b/gi, kv)
+                  .replace(/\bLVL\b/gi, level)
+                  .replace(/\bSTR\b/gi, statsMap.str)
+                  .replace(/\bDEX\b/gi, statsMap.dex)
+                  .replace(/\bINT\b/gi, statsMap.int)
+                  .replace(/\bWIL\b/gi, statsMap.wil);
+    };
+
+    // 1. Handle Dice/Table rolls first (including those with placeholders like KEY d20 or 1d6+KEY)
+    let processed = txt.replace(/\b((\d+|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b/gi, (m) => {
+        const notation = resolveNotation(m).replace(/\s+/g, ''); // Remove spaces for the roll command
         return `<span class="dice-hl roll-link" onclick="dispatchRoll('${notation}', 'Roll', ${JSON.stringify(context)})">${notation}</span>`;
+    });
+
+    // 2. Handle remaining placeholders (outside of dice strings)
+    const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check', ${JSON.stringify(context)})">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
+    
+    return processed.replace(/<[^>]*>|\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill))/gi, (m, p1) => {
+        if (!p1) return m;
+        const k = p1.toUpperCase(); 
+        if (k === 'LVL') return `<span class="stat-hl">${level}</span>`;
+        if (k === 'STR') return wrap(statsMap.str, 'STR'); 
+        if (k === 'DEX') return wrap(statsMap.dex, 'DEX'); 
+        if (k === 'INT') return wrap(statsMap.int, 'INT'); 
+        if (k === 'WIL') return wrap(statsMap.wil, 'WIL'); 
+        if (k === 'KEY') return wrap(kv, 'KEY');
+        return m;
     });
 }
 
