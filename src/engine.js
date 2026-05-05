@@ -251,7 +251,17 @@ function renderInventory(statsMap, armorVal, str, iStats) {
             }
         }
 
-        invHtml += `<div class="inv-row ${item.equipped ? 'equipped' : ''}"><div style="text-align:center;"><input type="checkbox" ${item.equipped ? 'checked' : ''} onchange="updateItem(${item.id}, 'equipped', this.checked, true)"></div><div><input type="text" class="inv-input" value="${item.name}" style="text-align:left;" onchange="updateItem(${item.id}, 'name', this.value)"></div>${typeCell}<div><textarea class="inv-input" style="min-height:26px; height:auto; resize:none; overflow:hidden; font-size:0.85em; color:var(--text-muted); line-height:1.2; border:none; background:transparent; text-align:left;" oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';" onfocus="this.style.height='auto';this.style.height=this.scrollHeight+'px';" onchange="updateItem(${item.id}, 'props', this.value)">${item.props || ''}</textarea></div><div style="text-align:center;"><input type="number" class="inv-input" value="${item.cost || 0}" onchange="updateItem(${item.id}, 'cost', this.value)"></div><div style="text-align:center;"><input type="number" class="inv-input" value="${item.slots}" onchange="updateItem(${item.id}, 'slots', this.value)"></div>${statsCell}<div style="font-weight:bold; color:var(--class-accent); text-align:center;">${eH}</div><div style="text-align:center;"><button onclick="deleteItem(${item.id})" style="background:none; border:none; color:var(--save-dis); cursor:pointer;">×</button></div></div>`;
+        invHtml += `<div class="inv-row ${item.equipped ? 'equipped' : ''}">
+            <div style="display:flex; justify-content:center; align-items:center; min-height:26px;"><input type="checkbox" ${item.equipped ? 'checked' : ''} onchange="updateItem(${item.id}, 'equipped', this.checked, true)"></div>
+            <div style="display:flex; align-items:center; min-height:26px;"><input type="text" class="inv-input" value="${item.name}" style="text-align:left;" onchange="updateItem(${item.id}, 'name', this.value)"></div>
+            ${typeCell}
+            <div style="display:flex; align-items:center; min-height:26px;"><textarea class="inv-input" style="height:auto; resize:none; overflow:hidden; font-size:0.85em; color:var(--text-muted); line-height:1.2; border:none; background:transparent; text-align:left;" oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';" onfocus="this.style.height='auto';this.style.height=this.scrollHeight+'px';" onchange="updateItem(${item.id}, 'props', this.value)">${item.props || ''}</textarea></div>
+            <div style="display:flex; justify-content:center; align-items:center; min-height:26px;"><input type="number" class="inv-input" value="${item.cost || 0}" onchange="updateItem(${item.id}, 'cost', this.value)"></div>
+            <div style="display:flex; justify-content:center; align-items:center; min-height:26px;"><input type="number" class="inv-input" value="${item.slots}" onchange="updateItem(${item.id}, 'slots', this.value)"></div>
+            ${statsCell}
+            <div style="font-weight:bold; color:var(--class-accent); display:flex; justify-content:center; align-items:center; min-height:26px;">${eH}</div>
+            <div style="display:flex; justify-content:center; align-items:center; min-height:26px;"><button onclick="deleteItem(${item.id})" style="background:none; border:none; color:var(--save-dis); cursor:pointer;">×</button></div>
+        </div>`;
     });
     document.getElementById('inventoryContainer').innerHTML = invHtml; 
     document.querySelectorAll('#inventoryContainer textarea').forEach(ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
