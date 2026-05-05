@@ -37,6 +37,7 @@ function saveState(newState = null) {
         });
         let statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
         const ancFeat = ANCESTRY_FEATURES[state.ancestry];
+        const bgFeat = BACKGROUND_FEATURES[state.background];
         let hdFace = CLASS_CONFIG.hitDie;
         if (ancFeat && ancFeat.modHDStep) {
             const dieSteps = [6, 8, 10, 12, 20];
@@ -46,7 +47,11 @@ function saveState(newState = null) {
         const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
         let hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
         let maxHP = CLASS_CONFIG.baseHp + ((lvlInput - 1) * hpPerLevel);
-        let maxHD = lvlInput + (ancFeat?.modHD || 0);
+        let maxHD = lvlInput + (ancFeat?.modHD || 0) + (bgFeat?.modHD || 0);
+        if (bgFeat && bgFeat.options && state[bgFeat.stateKey]) {
+            const bgOpt = bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === state[bgFeat.stateKey]);
+            if (bgOpt && bgOpt.modHD) maxHD += bgOpt.modHD;
+        }
         if (oldLevel !== lvlInput || state.hpCurrent === null) { state.hpCurrent = maxHP; state.hdCurrent = maxHD; }
         (CLASS_CONFIG.resources || []).forEach(r => {
             let newMax = r.calcMax(lvlInput, statsMap, state, state.subclass);
@@ -392,10 +397,28 @@ function render() {
     const ancFeat = ANCESTRY_FEATURES[state.ancestry];
     if (ancFeat) { if (ancFeat.modInit) init += ancFeat.modInit; if (ancFeat.modSpeed) derived.speed += ancFeat.modSpeed; if (ancFeat.modWounds) derived.woundMax = Math.max(1, derived.woundMax + ancFeat.modWounds); if (ancFeat.modSize) derived.size = ancFeat.modSize; if (ancFeat.modHD) derived.hdMax += ancFeat.modHD; if (ancFeat.modHDStep) { const steps = [6, 8, 10, 12, 20]; let idx = steps.indexOf(hdFace); if (idx !== -1) { hdFace = steps[Math.min(steps.length - 1, idx + ancFeat.modHDStep)]; } } }
     const bgFeat = BACKGROUND_FEATURES[background];
-    if (bgFeat) { if (bgFeat.modInit) init += bgFeat.modInit; if (bgFeat.modSpeed) derived.speed += bgFeat.modSpeed; if (bgFeat.modWounds) derived.woundMax = Math.max(1, derived.woundMax + bgFeat.modWounds); if (bgFeat.modSize) derived.size = bgFeat.modSize; if (bgFeat.modHD) derived.hdMax += bgFeat.modHD; }
+    let bgSelectedOpt = null;
+    if (bgFeat && bgFeat.options && state[bgFeat.stateKey]) {
+        bgSelectedOpt = bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === state[bgFeat.stateKey]);
+    }
+
+    if (bgFeat) { 
+        if (bgFeat.modInit) init += bgFeat.modInit; 
+        if (bgFeat.modSpeed) derived.speed += bgFeat.modSpeed; 
+        if (bgFeat.modWounds) derived.woundMax = Math.max(1, derived.woundMax + bgFeat.modWounds); 
+        if (bgFeat.modSize) derived.size = bgFeat.modSize; 
+        if (bgFeat.modHD) derived.hdMax += bgFeat.modHD; 
+        if (bgSelectedOpt) {
+            if (bgSelectedOpt.modInit) init += bgSelectedOpt.modInit;
+            if (bgSelectedOpt.modSpeed) derived.speed += bgSelectedOpt.modSpeed;
+            if (bgSelectedOpt.modWounds) derived.woundMax = Math.max(1, derived.woundMax + bgSelectedOpt.modWounds);
+            if (bgSelectedOpt.modHD) derived.hdMax += bgSelectedOpt.modHD;
+        }
+    }
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : statsMap.dex; let bestArmorVal = -1; let shieldBonus = 0; let armorIsLight = true;
     state.inventory.forEach(item => { if (!item.equipped) return; if (item.type === 'armor') { const base = parseInt(item.armor) || 0; const dMax = item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0); const currentArmor = base + Math.min(statsMap.dex, dMax); if (currentArmor > bestArmorVal) bestArmorVal = currentArmor; if (item.armorType !== 'light') armorIsLight = false; } else if (item.type === 'shield') { shieldBonus += (parseInt(item.armor) || 0); } });
     if (bestArmorVal !== -1) armorVal = bestArmorVal; armorVal += shieldBonus + (CLASS_CONFIG.getShieldBonus ? CLASS_CONFIG.getShieldBonus(level, subclass, statsMap) : 0); if (classOverrides.armor) armorVal += classOverrides.armor; if (ancFeat && ancFeat.modArmor) armorVal += ancFeat.modArmor; if (bgFeat && bgFeat.modArmor) armorVal += bgFeat.modArmor;
+    if (bgSelectedOpt && bgSelectedOpt.modArmor) armorVal += bgSelectedOpt.modArmor;
     if ((ancFeat?.modFlySpeed || classOverrides.modFlySpeed) && armorIsLight) { derived.speed = `${derived.speed} (${derived.speed} Fly)`; }
     let hpPerLevel = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 }[hdFace] || CLASS_CONFIG.hpPerLevel; let maxHP = CLASS_CONFIG.baseHp + ((level - 1) * hpPerLevel);
     if (state.hpCurrent === null) state.hpCurrent = maxHP; if (state.hdCurrent === null) state.hdCurrent = derived.hdMax;
@@ -430,10 +453,31 @@ function render() {
                 choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
             } else if (bgFeat.options && bgFeat.stateKey) {
                 let opts = `<option value="None">-- Select Option --</option>`;
-                bgFeat.options.forEach(opt => { opts += `<option value="${opt}" ${state[bgFeat.stateKey] === opt ? 'selected' : ''}>${opt}</option>`; });
-                choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
+                bgFeat.options.forEach(opt => { 
+                    const label = typeof opt === 'string' ? opt : opt.label;
+                    opts += `<option value="${label}" ${state[bgFeat.stateKey] === label ? 'selected' : ''}>${label}</option>`; 
+                });
+                let optDesc = "";
+                if (bgSelectedOpt && bgSelectedOpt.desc) {
+                    optDesc = `<div style="margin-top:8px; font-size:0.9em; color:var(--text-main); border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">${iStatsBound(bgSelectedOpt.desc)}</div>`;
+                }
+                choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select>${optDesc}</div>`;
             }
             bgDesc += choiceHtml;
+        }
+        if (bgFeat.uses || (bgSelectedOpt && bgSelectedOpt.uses)) {
+            let usesHtml = '<div style="margin-top:10px; display:flex; flex-direction:column; gap:6px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">';
+            const allUses = [...(bgFeat.uses || []), ...(bgSelectedOpt?.uses || [])];
+            allUses.forEach(u => {
+                let pips = "";
+                for (let i = 0; i < u.max; i++) {
+                    const checked = (state[u.stateKey] || 0) > i;
+                    pips += `<input type="checkbox" class="pip" ${checked ? 'checked' : ''} onclick="toggleBgPip('${u.stateKey}', ${i})">`;
+                }
+                usesHtml += `<div style="display:flex; align-items:center; justify-content:space-between; font-size:0.85em; color:var(--text-muted);"><span style="color:var(--text-main); font-weight:bold;">• ${u.label}</span><div style="display:flex; gap:4px;">${pips}</div></div>`;
+            });
+            usesHtml += '</div>';
+            bgDesc += usesHtml;
         }
         fHtml = bFeatBound(`Background: ${background}`, "", bgDesc, "", true) + fHtml;
     }
@@ -448,6 +492,7 @@ function render() {
 
 function triggerAnimation(id, type) { const el = document.getElementById(id); if (!el) return; const cls = type === 'green' ? 'flash-green' : 'flash-red'; el.classList.remove('flash-green', 'flash-red'); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 1000); }
 function updateClassState(key, index, value) { if (!state[key]) state[key] = []; state[key][index] = value; saveState(); render(); }
+function toggleBgPip(key, idx) { const val = state[key] || 0; state[key] = (val === idx + 1) ? idx : idx + 1; saveState(); render(); }
 function updateBgChoice(key, val) { state[key] = val; saveState(); render(); }
 function updateBgSpell(val) { state.bgSpell = val; saveState(); render(); }
 function adjRes(id, amt, max, isAbsolute = false) { let oldVal = state.resourceValues[id] || 0; state.resourceValues[id] = Math.min(max||999, Math.max(0, isAbsolute ? amt : oldVal + amt)); saveState(); render(); }
@@ -474,7 +519,17 @@ function toggleCondition(id) { if (state.activeConditions.includes(id)) state.ac
 function updateSkill(id, val) { state.skills[id] = parseInt(val) || 0; saveState(); render(); }
 function adjHP(a, isAbsolute = false) { const max = CLASS_CONFIG.baseHp + ((state.level - 1) * CLASS_CONFIG.hpPerLevel); const oldHP = state.hpCurrent ?? max; if (isAbsolute) { state.hpCurrent = Math.min(max, Math.max(0, a)); } else if (a < 0) { let dmg = Math.abs(a); if ((state.tempHP || 0) > 0) { const absorbed = Math.min(state.tempHP, dmg); state.tempHP -= absorbed; dmg -= absorbed; triggerAnimation('displayTempHP', 'red'); } if (dmg > 0) state.hpCurrent = Math.max(0, oldHP - dmg); } else { state.hpCurrent = Math.min(max, oldHP + a); } if (state.hpCurrent > oldHP) triggerAnimation('displayCurrentHP', 'green'); else if (state.hpCurrent < oldHP) triggerAnimation('displayCurrentHP', 'red'); saveState(); render(); }
 function adjTempHP(a, isAbsolute = false) { state.tempHP = Math.max(0, isAbsolute ? a : (state.tempHP||0) + a); saveState(); render(); }
-function adjHD(a, isAbsolute = false) { const max = state.level + (ANCESTRY_FEATURES[state.ancestry]?.modHD || 0); state.hdCurrent = Math.min(max, Math.max(0, isAbsolute ? a : (state.hdCurrent===null?max:state.hdCurrent) + a)); saveState(); render(); }
+function adjHD(a, isAbsolute = false) { 
+    const bgFeat = BACKGROUND_FEATURES[state.background];
+    let bgOptHD = 0;
+    if (bgFeat && bgFeat.options && state[bgFeat.stateKey]) {
+        const bgOpt = bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === state[bgFeat.stateKey]);
+        if (bgOpt && bgOpt.modHD) bgOptHD = bgOpt.modHD;
+    }
+    const max = state.level + (ANCESTRY_FEATURES[state.ancestry]?.modHD || 0) + (bgFeat?.modHD || 0) + bgOptHD; 
+    state.hdCurrent = Math.min(max, Math.max(0, isAbsolute ? a : (state.hdCurrent===null?max:state.hdCurrent) + a)); 
+    saveState(); render(); 
+}
 function handleWoundClick(i) { state.wounds = (state.wounds === i + 1) ? i : i + 1; saveState(); render(); }
 window.addEventListener('wheel', (e) => { if (e.target.type === 'number') { e.preventDefault(); let d = e.deltaY < 0 ? 1 : -1; if (e.target.id === 'displayCurrentHP') adjHP(d, false); else if (e.target.id === 'displayTempHP') adjTempHP(d, false); else if (e.target.id === 'displayHD') adjHD(d, false); else { let val = parseInt(e.target.value || 0) + d; let newVal = Math.min(e.target.hasAttribute('max')?parseInt(e.target.getAttribute('max')):Infinity, Math.max(e.target.hasAttribute('min')?parseInt(e.target.getAttribute('min')):-Infinity, val)); e.target.value = newVal; e.target.dispatchEvent(new Event('change')); } } }, { passive: false });
 function importCharacter(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const imported = JSON.parse(e.target.result); saveState(imported); loadState(); render(); alert("Character imported successfully!"); } catch (err) { alert("Error importing character: Invalid file format."); } }; reader.readAsText(file); }
