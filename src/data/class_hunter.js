@@ -212,13 +212,15 @@ const CLASS_CONFIG = {
 
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">TotH Charges</label>
-                   <div class="dark-incrementer" style="padding: 4px 10px;">
-                       <button onclick="adjRes('tothCharges', -1, ${maxCharges})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                       <input type="number" id="res_tothCharges" value="${currentCharges}" min="0" max="${maxCharges}" 
-                              onchange="adjRes('tothCharges', parseInt(this.value), ${maxCharges}, true)" style="width:30px; font-size: 1.3em;">
-                       <button onclick="adjRes('tothCharges', 1, ${maxCharges})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                   <div style="display: flex; align-items: center; gap: 8px;">
+                       <div class="dark-incrementer" style="padding: 4px 10px;">
+                           <button onclick="adjRes('tothCharges', -1, ${maxCharges})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                           <input type="number" id="res_tothCharges" value="${currentCharges}" min="0" max="${maxCharges}" 
+                                  onchange="adjRes('tothCharges', parseInt(this.value), ${maxCharges}, true)" style="width:30px; font-size: 1.3em;">
+                           <button onclick="adjRes('tothCharges', 1, ${maxCharges})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                       </div>
+                       <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.1em;">/ <span style="color: var(--text-main);">${maxCharges}</span></div>
                    </div>
-                   <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">MAX ${maxCharges}</div>
                </div>
 
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
@@ -278,6 +280,9 @@ const CLASS_CONFIG = {
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
 
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
+        let context = { type: 'attack', stat: 'dex' };
+
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
             let selection = state[feat.stateKey] || [];
@@ -293,12 +298,12 @@ const CLASS_CONFIG = {
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     }
 };

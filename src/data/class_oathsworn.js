@@ -212,63 +212,67 @@ const CLASS_CONFIG = {
         // Top Row: Active Indicators (Advantage, Boom)
         let topRowItems = [];
         if (isAdv) {
-            topRowItems.push(`<div style="display: flex; align-items: center; gap: 4px; color: var(--save-adv);">
-                <div style="width: 8px; height: 8px; background: var(--save-adv); border-radius: 50%; box-shadow: 0 0 5px var(--save-adv);"></div>
-                <span>Advantage</span>
+            topRowItems.push(`<div style="display: flex; align-items: center; gap: 3px; color: var(--save-adv);">
+                <div style="width: 7px; height: 7px; background: var(--save-adv); border-radius: 50%; box-shadow: 0 0 4px var(--save-adv);"></div>
+                <span style="font-size: 0.7em;">Advantage</span>
             </div>`);
         }
         
         // Boom Toggle as a Radial/Pip
         topRowItems.push(`
             <div onclick="updateClassState('explodingDice', 0, ${!isExploding}); event.stopPropagation();" 
-                 style="display: flex; align-items: center; gap: 6px; color: ${isExploding ? 'var(--class-accent)' : 'var(--text-muted)'}; cursor: pointer; user-select: none; transition: all 0.2s;">
-                <div style="width: 10px; height: 10px; border: 2px solid ${isExploding ? 'var(--class-accent)' : 'var(--class-border)'}; border-radius: 50%; background: ${isExploding ? 'var(--class-accent)' : 'rgba(0,0,0,0.3)'}; box-shadow: ${isExploding ? '0 0 8px var(--class-accent)' : 'none'}; transition: all 0.2s;"></div>
-                <span style="font-size: 0.9em; letter-spacing: 1px;">BOOM</span>
+                 style="display: flex; align-items: center; gap: 5px; color: ${isExploding ? 'var(--class-accent)' : 'var(--text-muted)'}; cursor: pointer; user-select: none; transition: all 0.2s;">
+                <div style="width: 9px; height: 9px; border: 2px solid ${isExploding ? 'var(--class-accent)' : 'var(--class-border)'}; border-radius: 50%; background: ${isExploding ? 'var(--class-accent)' : 'rgba(0,0,0,0.3)'}; box-shadow: ${isExploding ? '0 0 6px var(--class-accent)' : 'none'}; transition: all 0.2s;"></div>
+                <span style="font-size: 0.75em; letter-spacing: 1px;">BOOM</span>
             </div>
         `);
 
-        tagRows.push(`<div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 4px; align-items: center;">${topRowItems.join('')}</div>`);
+        tagRows.push(`<div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 2px; align-items: center;">${topRowItems.join('')}</div>`);
 
         // Bottom Row: Explanatory Text
-        tagRows.push(`<div style="display: flex; justify-content: center; color: var(--text-muted); opacity: 0.5; font-size: 0.85em; font-style: italic;">Expended on hit/miss</div>`);
+        tagRows.push(`<div style="display: flex; justify-content: center; color: var(--text-muted); opacity: 0.5; font-size: 0.75em; font-style: italic;">Next Attack Only</div>`);
 
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 15px;">
-                <div style="flex: 1.8; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 5px;">
-                        <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Judgment (${derived.jdFaces ? 'd' + derived.jdFaces : ''})</label>
-                        <div style="display: flex; gap: 6px;">
-                            <button onclick="CLASS_CONFIG.actions.rollJudgmentDice()" style="background: rgba(56,189,248,0.15); border: 1px solid var(--class-accent); color: #fff; font-size: 0.7em; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Roll ${derived.jdCount}</button>
-                            <button onclick="CLASS_CONFIG.actions.spendJudgmentDice()" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-muted); font-size: 0.7em; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Clear</button>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 15px; margin: 5px 0;">
-                        <span style="font-size: 2.8em; font-family: 'Cinzel', serif; font-weight: bold; color: ${valColor}; line-height: 1;">${valText}</span>
-                        <span style="font-size: 0.9em; color: var(--text-muted); font-style: italic; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${state.judgmentRolls}">${detailText}</span>
-                    </div>
-                    <div style="width: 100%; margin-top: auto; font-family:'Cinzel'; font-weight:bold;">${tagRows.join('')}</div>
-                </div>
-
+            <div style="display: flex; align-items: stretch; gap: 8px;">
                 ${level >= 2 ? `
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px;">
-                        <button onclick="adjRes('manaCurrent', -1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_manaCurrent" value="${state.resourceValues.manaCurrent || 0}" onchange="adjRes('manaCurrent', parseInt(this.value), ${manaMax}, true)" style="width:35px; font-size: 1.4em;">
-                        <button onclick="adjRes('manaCurrent', 1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px;">
+                            <button onclick="adjRes('manaCurrent', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_manaCurrent" value="${state.resourceValues.manaCurrent || 0}" onchange="adjRes('manaCurrent', parseInt(this.value), ${manaMax}, true)" style="width:32px; font-size: 1.3em;">
+                            <button onclick="adjRes('manaCurrent', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${manaMax}</div>
                 </div>` : ''}
 
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Lay on Hands</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--gold-dim);">
-                        <button onclick="adjRes('lohCurrent', -1, ${lohMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_lohCurrent" value="${state.resourceValues.lohCurrent || 0}" onchange="adjRes('lohCurrent', parseInt(this.value), ${lohMax}, true)" style="width:45px; font-size: 1.4em;">
-                        <button onclick="adjRes('lohCurrent', 1, ${lohMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Lay on Hands</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--gold-dim);">
+                            <button onclick="adjRes('lohCurrent', -1, ${lohMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_lohCurrent" value="${state.resourceValues.lohCurrent || 0}" onchange="adjRes('lohCurrent', parseInt(this.value), ${lohMax}, true)" style="width:40px; font-size: 1.3em;">
+                            <button onclick="adjRes('lohCurrent', 1, ${lohMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${lohMax}</span></div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${lohMax}</div>
+                </div>
+
+                <div style="flex: 1.5; display: flex; flex-direction: column; align-items: center; padding-left: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 4px;">
+                        <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Judgment (${derived.jdFaces ? 'd' + derived.jdFaces : ''})</label>
+                        <div style="display: flex; gap: 4px;">
+                            <button onclick="CLASS_CONFIG.actions.rollJudgmentDice()" style="background: rgba(56,189,248,0.15); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Roll</button>
+                            <button onclick="CLASS_CONFIG.actions.spendJudgmentDice()" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-muted); font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">X</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin: 2px 0;">
+                        <span style="font-size: 2.0em; font-family: 'Cinzel', serif; font-weight: bold; color: ${valColor}; line-height: 1;">${valText}</span>
+                        <span style="font-size: 0.75em; color: var(--text-muted); font-style: italic; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${state.judgmentRolls}">${detailText}</span>
+                    </div>
+                    <div style="width: 100%; margin-top: auto; font-family:'Cinzel'; font-weight:bold;">${tagRows.join('')}</div>
                 </div>
             </div>
         </div>`;
@@ -363,6 +367,7 @@ const CLASS_CONFIG = {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
+        let context = (feat.id === "zealot" || feat.id === "torment") ? { type: 'attack' } : {};
         let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
@@ -383,13 +388,13 @@ const CLASS_CONFIG = {
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil }, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil }, context);
     },
 
     getAvailableSpells: function (level, subclass, state, derived) {

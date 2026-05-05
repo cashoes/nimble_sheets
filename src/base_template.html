@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NIMBLE — Character Tracker v1.1.0</title>
+<title>NIMBLE — Character Tracker v1.2.0</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
 <style>
@@ -73,7 +73,7 @@
   .header-right-stats { display: flex; gap: 15px; justify-content: flex-end; align-items: center; }
 
   h1 { font-family: 'Cinzel Decorative', serif; color: var(--text-main); margin: 0; font-size: 2.2em; letter-spacing: 1px; line-height: 1; }
-  .subtitle { font-family: 'Cinzel', serif; color: var(--text-muted); letter-spacing: 2px; font-weight: 600; text-transform: uppercase; font-size: 0.85em; margin-top: 2px; }
+  .subtitle { font-family: 'Cinzel', serif; color: var(--text-muted); letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase; font-size: 0.75em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-stat { display: flex; flex-direction: column; align-items: center; }
   .header-stat label { color: var(--text-muted); font-family: 'Cinzel', serif; font-size: 0.75em; letter-spacing: 1px; text-transform: uppercase; margin: 0; font-weight: 600; }
   .header-stat-val { font-family: 'Cinzel', serif; font-size: 1.6em; font-weight: bold; margin-top: -2px; color: #fff; line-height: 1.0; }
@@ -142,8 +142,7 @@
   .skills-box { background: var(--class-panel-bg); padding: 8px 12px; box-sizing: border-box; height: 150px; margin-top: auto; display: flex; flex-direction: column; }
   .skill-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.7em; color: var(--text-muted); margin-bottom: 2px; border-bottom: 1px solid var(--class-border); padding-bottom: 1px; font-weight: bold; font-family: 'Cinzel', serif; }
   .skills-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 15px; width: 100%; flex: 1; align-content: start; }
-  .skill-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; padding: 1px 0; border-bottom: 1px dotted var(--class-border); font-family: 'Cinzel', serif; }
-  .skill-row:last-child { border-bottom: none; }
+  .skill-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; padding: 1px 0; font-family: 'Cinzel', serif; }
   .skill-name { flex-grow: 1; font-weight: 600; color: var(--text-main); font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .skill-stat { font-size: 0.65em; color: var(--text-muted); text-transform: uppercase; margin-left: 3px; }
   .skill-pts { width: 35px; margin: 0 4px; }
@@ -158,7 +157,7 @@
 
   .inv-header { display: grid; grid-template-columns: 20px 2fr 1fr 1.6fr 1.6fr 1.8fr 0.8fr 30px 20px; gap: 6px; padding: 0 4px 4px 4px; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--text-muted); text-transform: uppercase; font-weight: bold; border-bottom: 1px solid var(--class-border); margin-bottom: 6px; }
   .inv-row { display: grid; grid-template-columns: 20px 2fr 1fr 1.6fr 1.6fr 1.8fr 0.8fr 30px 20px; gap: 4px; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--class-border); border-radius: 4px; padding: 4px; margin-bottom: 4px; }
-  .inv-input { min-width: 0; background: var(--slate-dark); color: var(--text-main); border: 1px solid var(--class-border); border-radius: 2px; padding: 2px 4px; font-family: 'Crimson Text', serif; font-size: 0.95em; width: 100%; height: 26px; }
+  .inv-input { min-width: 0; background: var(--slate-dark); color: var(--text-main); border: 1px solid var(--class-border); border-radius: 2px; padding: 2px 4px; font-family: 'Crimson Text', serif; font-size: 0.95em; width: 100%; min-height: 26px; resize: vertical; }
   .add-item-btn { background: var(--slate-light); color: var(--text-main); border: 1px solid var(--class-border); padding: 6px 10px; font-family: 'Cinzel', serif; font-weight: bold; letter-spacing: 1px; border-radius: 4px; cursor: pointer; transition: 0.2s; flex: 1; margin-top: 4px; font-size: 0.85em; }
   .add-item-btn:hover { background: var(--class-accent); color: #000; border-color: var(--class-accent); }
 
@@ -169,8 +168,21 @@
   .feature ul { margin: 8px 0 0 0; padding-left: 20px; list-style-type: circle; color: var(--text-muted); }
   .feature li { margin-bottom: 4px; font-size: 0.9em; line-height: 1.4; }
 
-  .spell-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-  .spell-card { background: var(--class-panel-bg); border: 1px solid var(--class-border); padding: 10px; display: flex; flex-direction: column; gap: 4px; position: relative; border-left: 4px solid var(--class-accent); border-radius: 0 4px 4px 0; transition: border-color 0.3s; width: 100%; box-sizing: border-box; }
+  .minor-feature { display: none; }
+  body.show-minor .minor-feature { display: block; }
+  .subclass-feature { 
+    border-left-color: var(--subclass-accent) !important; 
+    background: linear-gradient(90deg, color-mix(in srgb, var(--subclass-accent), transparent 88%), rgba(0,0,0,0.2)) !important;
+  }
+
+  .spell-grid { display: flex; flex-direction: column; width: 100%; }
+  .spell-card { background: var(--class-panel-bg); border: 1px solid var(--class-border); padding: 10px; display: flex; flex-direction: column; gap: 4px; position: relative; border-left: 4px solid var(--class-accent); border-radius: 0 4px 4px 0; transition: border-color 0.3s; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+  .spell-card.fire { border-left-color: #ef4444; }
+  .spell-card.ice { border-left-color: #38bdf8; }
+  .spell-card.lightning { border-left-color: #eab308; }
+  .spell-card.wind { border-left-color: #a7f3d0; }
+  .spell-card.radiant { border-left-color: #fde047; }
+  .spell-card.necrotic { border-left-color: #a855f7; }
   .spell-card h4 { margin: 0; font-family: 'Cinzel', serif; font-size: 1.0em; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--class-border); padding-bottom: 4px; color: var(--text-main); }
   .spell-card h4 span.tier-tag { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: normal; color: var(--text-muted); text-transform: uppercase; display: center; letter-spacing: 1px; }
   .stat-hl { color: var(--gold-light); font-weight: bold; background: rgba(232, 184, 75, 0.1); border-radius: 3px; }
@@ -244,7 +256,7 @@
     </div>
   </div>
   <div class="layout-1col"><div class="conditions-box"><h2 class="section-header" style="font-size: 1.1em; margin-bottom: 10px; border: none;">Conditions & Status Effects</h2><div class="conditions-flex" id="conditionsContainer"></div></div>
-    <div class="skills-box" style="padding: 15px; height: auto;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom: 2px solid var(--slate-lighter); padding-bottom: 5px;"><span style="font-family:'Cinzel', serif; font-weight:bold; color:var(--text-main); font-size:1.1em;">INVENTORY & EQUIPMENT</span><div style="display:flex; align-items:center; gap: 15px;"><span id="inventorySlots" style="color:var(--class-accent); font-weight:bold; letter-spacing:1px; font-size: 0.9em;">SLOTS: 0 / 10</span><div style="display:flex; align-items:center; border: 1px solid var(--gold-dim); background: linear-gradient(145deg, var(--slate-mid), var(--slate-dark)); border-radius: 4px; padding: 2px 8px; gap: 6px;"><label style="color: var(--gold-light); font-family: 'Cinzel', serif; font-size: 0.8em; font-weight: bold; margin: 0; text-transform: uppercase;">Gold</label><input type="number" id="gold" class="gold-input" value="0" min="0" style="width: 55px; font-size: 1.1em; padding: 0; border: none; border-bottom: 1px solid var(--gold-dim); background: transparent; color: #fff; font-family: 'Crimson Text', serif; font-weight: bold; text-align: center;"></div></div></div><div id="inventoryContainer"></div><div style="display: flex; gap: 8px; margin-top: 10px;"><select class="add-item-btn" id="meleeSelect"></select><select class="add-item-btn" id="rangedSelect"></select><select class="add-item-btn" id="armorSelect"></select><button class="add-item-btn" onclick="addItem()">+ Custom</button></div></div>
+    <div class="skills-box" style="padding: 15px; height: auto;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom: 2px solid var(--slate-lighter); padding-bottom: 5px;"><span style="font-family:'Cinzel', serif; font-weight:bold; color:var(--text-main); font-size:1.1em;">INVENTORY & EQUIPMENT</span><div style="display:flex; align-items:center; gap: 15px;"><span id="inventorySlots" style="color:var(--class-accent); font-weight:bold; letter-spacing:1px; font-size: 0.9em;">SLOTS: 0 / 10</span><div style="display:flex; align-items:center; border: 1px solid var(--gold-dim); background: linear-gradient(145deg, var(--slate-mid), var(--slate-dark)); border-radius: 4px; padding: 2px 8px; gap: 6px;"><label style="color: var(--gold-light); font-family: 'Cinzel', serif; font-size: 0.8em; font-weight: bold; margin: 0; text-transform: uppercase;">Gold</label><input type="number" id="gold" class="gold-input" value="0" style="width: 55px; font-size: 1.1em; padding: 0; border: none; border-bottom: 1px solid var(--gold-dim); background: transparent; color: #fff; font-family: 'Crimson Text', serif; font-weight: bold; text-align: center;"></div></div></div><div id="inventoryContainer"></div><div style="display: flex; gap: 8px; margin-top: 10px;"><select class="add-item-btn" id="meleeSelect"></select><select class="add-item-btn" id="rangedSelect"></select><select class="add-item-btn" id="armorSelect"></select><button class="add-item-btn" onclick="addItem()">+ Custom</button></div></div>
   </div>
   <div class="layout-1col" id="featuresSpellsLayout"><div class="left-col"><div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; height: 35px; box-sizing: border-box;"><h2 class="section-header" style="border: none; margin: 0; padding: 0;">Features & Traits</h2><label style="display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--class-accent); cursor: pointer; user-select: none; font-family: 'Cinzel', serif; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--class-border);"><input type="checkbox" id="toggleMinorFeatures" onchange="document.body.classList.toggle('show-minor', this.checked); saveState();"> <span style="margin-top: 1px;">Show All</span></label></div><div id="featuresContainer"></div></div><div class="right-col" id="spellsColWrapper" style="display: none;"><div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; height: 35px; box-sizing: border-box;"><h2 class="section-header" style="border: none; margin: 0; padding: 0;">Spells</h2><span id="maxTierDisplay" style="font-size:0.6em; opacity:0.7; font-weight:normal; color:var(--gold-light); font-family: 'Cinzel', serif; text-transform: uppercase; margin-bottom: 4px;"></span></div><div id="spellsContainer" class="spell-grid"></div></div></div>
 </div>

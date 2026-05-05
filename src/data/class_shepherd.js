@@ -202,26 +202,30 @@ const CLASS_CONFIG = {
 
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 12px; justify-content: center;">
+            <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center;">
                 ${level >= 2 ? `
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px;">
-                        <button onclick="adjRes('mana', -1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:35px; font-size: 1.4em;">
-                        <button onclick="adjRes('mana', 1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px;">
+                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:32px; font-size: 1.3em;">
+                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${manaMax}</div>
                 </div>` : ''}
 
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Searing Light</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--gold-dim);">
-                        <button onclick="adjRes('searingLight', -1, ${searingMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_searingLight" value="${state.resourceValues.searingLight||0}" onchange="adjRes('searingLight', parseInt(this.value), ${searingMax}, true)" style="width:35px; font-size: 1.4em;">
-                        <button onclick="adjRes('searingLight', 1, ${searingMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
+                    <label class="roll-link" onclick="dispatchRoll('${totalWil}d8', 'Searing Light')" style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px; cursor:pointer;">Searing Light</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--gold-dim);">
+                            <button onclick="adjRes('searingLight', -1, ${searingMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_searingLight" value="${state.resourceValues.searingLight||0}" onchange="adjRes('searingLight', parseInt(this.value), ${searingMax}, true)" style="width:32px; font-size: 1.3em;">
+                            <button onclick="adjRes('searingLight', 1, ${searingMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${searingMax}</span></div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${searingMax}</div>
                 </div>
 
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
@@ -281,6 +285,9 @@ const CLASS_CONFIG = {
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
 
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
+        let context = (feat.id === "searing") ? { type: 'attack', stat: 'wil' } : {};
+
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
             let selection = state[feat.stateKey] || [];
@@ -296,13 +303,13 @@ const CLASS_CONFIG = {
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     },
 
     getAvailableSpells: function(level, subclass, state, derived) {

@@ -132,7 +132,7 @@ const COMMANDER_FEATURES = {
 
 const CLASS_CONFIG = {
     name: "Commander",
-    subtitle: "Fearless leader, battlefield tactician, and weapon master",
+    subtitle: "Fearless leader, tactician, & weapon master",
     keyStats: ['str', 'int'],
     saves: { adv: 'str', dis: 'dex' },
     proficiencies: {
@@ -220,35 +220,41 @@ const CLASS_CONFIG = {
 
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 12px;">
+            <div style="display: flex; align-items: stretch; gap: 8px;">
                ${subclass !== "Spellblade" ? `
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
                    <label class="roll-link" onclick="dispatchRoll('1${derived.cdType}', 'Combat Die')" style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px; cursor:pointer;">Combat Dice (${derived.cdType})</label>
-                   <div class="dark-incrementer" style="padding: 4px 10px;">
-                       <button onclick="adjRes('combatDice', -1, ${maxCD})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                       <input type="number" id="res_combatDice" value="${currentCD}" min="0" max="${maxCD}" onchange="adjRes('combatDice', parseInt(this.value), ${maxCD}, true)" style="width:30px; font-size: 1.3em;">
-                       <button onclick="adjRes('combatDice', 1, ${maxCD})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                   <div style="display: flex; align-items: center; gap: 4px;">
+                       <div class="dark-incrementer" style="padding: 4px 6px;">
+                           <button onclick="adjRes('combatDice', -1, ${maxCD})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                           <input type="number" id="res_combatDice" value="${currentCD}" min="0" max="${maxCD}" onchange="adjRes('combatDice', parseInt(this.value), ${maxCD}, true)" style="width:30px; font-size: 1.3em;">
+                           <button onclick="adjRes('combatDice', 1, ${maxCD})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                       </div>
+                       <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${maxCD}</div>
                    </div>
-                   <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">MAX ${maxCD}</div>
                </div>` : `
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">INT Mana</label>
-                   <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--class-accent);">
-                       <button onclick="adjRes('mana', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                       <input type="number" id="res_mana" value="${manaCur}" min="0" max="${manaMax}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:30px; font-size: 1.3em;">
-                       <button onclick="adjRes('mana', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                   <div style="display: flex; align-items: center; gap: 4px;">
+                       <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--class-accent);">
+                           <button onclick="adjRes('mana', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                           <input type="number" id="res_mana" value="${manaCur}" min="0" max="${manaMax}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:32px; font-size: 1.3em;">
+                           <button onclick="adjRes('mana', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                       </div>
+                       <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${manaMax}</div>
                    </div>
-                   <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">INIT REGAIN: ${manaMax}</div>
                </div>`}
 
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Coord. Strike</label>
-                   <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--gold-dim);">
-                       <button onclick="adjRes('coordStrike', -1, ${strikeMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                       <input type="number" id="res_coordStrike" value="${strikeCur}" min="0" max="${strikeMax}" onchange="adjRes('coordStrike', parseInt(this.value), ${strikeMax}, true)" style="width:30px; font-size: 1.3em;">
-                       <button onclick="adjRes('coordStrike', 1, ${strikeMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                   <div style="display: flex; align-items: center; gap: 4px;">
+                       <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--gold-dim);">
+                           <button onclick="adjRes('coordStrike', -1, ${strikeMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                           <input type="number" id="res_coordStrike" value="${strikeCur}" min="0" max="${strikeMax}" onchange="adjRes('coordStrike', parseInt(this.value), ${strikeMax}, true)" style="width:30px; font-size: 1.3em;">
+                           <button onclick="adjRes('coordStrike', 1, ${strikeMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                       </div>
+                       <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${strikeMax}</div>
                    </div>
-                   <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">USES: ${strikeMax}</div>
                </div>
 
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
@@ -311,6 +317,9 @@ const CLASS_CONFIG = {
             finalCssClass += " minor-feature";
         }
 
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
+        let context = (feat.id === "tactics" || feat.collection === "tactics") ? { type: 'attack', stat: 'str' } : {};
+
         // Dynamic renaming and transformation of the Orders card into Arcane Command for Spellblade
         if (feat.id === "orders" && subclass === "Spellblade") {
             name = "Arcane Command";
@@ -370,7 +379,7 @@ const CLASS_CONFIG = {
                             <span style="color:var(--text-muted); font-size:0.8em; align-self:center; font-family:'Cinzel'; font-weight:bold;">OR</span>
                             <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="flex:1; border-bottom-color: var(--class-accent);">${spellOpts.replace(`value="${val}"`, `value="${val}" selected`)}</select>
                         </div>
-                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3; margin-top:4px;">${iStats(d)}</div>
+                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3; margin-top:4px;">${iStats(d, level, statsMap, context)}</div>
                     </div>`;
                 } else {
                     let options = [];
@@ -388,7 +397,7 @@ const CLASS_CONFIG = {
                     }
                     choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                         <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                     </div>`;
                 }
             }
@@ -442,6 +451,6 @@ const CLASS_CONFIG = {
             desc += sHtml + `</div>`;
         }
 
-        return bFeat(name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     }
 };

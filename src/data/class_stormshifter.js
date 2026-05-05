@@ -233,34 +233,56 @@ const CLASS_CONFIG = {
         });
 
         return `
-        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 12px; justify-content: center; flex: 1;">
+        <div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 15px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center; flex: 1;">
                 ${level >= 2 ? `
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
-                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px;">
-                        <button onclick="adjRes('mana', -1, ${manaMax})" style="width:22px; height:22px; line-height:1; font-size:1.0em;">-</button>
-                        <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:35px; font-size: 1.4em;">
-                        <button onclick="adjRes('mana', 1, ${manaMax})" style="width:22px; height:22px; line-height:1; font-size:1.0em;">+</button>
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 6px; justify-content: center;">
+                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px;">
+                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:32px; font-size: 1.3em;">
+                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.95em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
                     </div>
-                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${manaMax}</div>
                 </div>` : ''}
 
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 10px; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Beastshift</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--gold-dim);">
-                        <button onclick="adjRes('shiftUses', -1, ${shiftMax})" style="width:22px; height:22px; line-height:1; font-size:1.0em;">-</button>
-                        <input type="number" id="res_shiftUses" value="${state.resourceValues.shiftUses||0}" onchange="adjRes('shiftUses', parseInt(this.value), ${shiftMax}, true)" style="width:32px; font-size: 1.4em;">
-                        <button onclick="adjRes('shiftUses', 1, ${shiftMax})" style="width:22px; height:22px; line-height:1; font-size:1.0em;">+</button>
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 6px; justify-content: center; text-align: center;">
+                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Beastshift</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--gold-dim);">
+                            <button onclick="adjRes('shiftUses', -1, ${shiftMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_shiftUses" value="${state.resourceValues.shiftUses||0}" onchange="adjRes('shiftUses', parseInt(this.value), ${shiftMax}, true)" style="width:30px; font-size: 1.3em;">
+                            <button onclick="adjRes('shiftUses', 1, ${shiftMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.95em;">/ <span style="color: var(--text-main);">${shiftMax}</span></div>
                     </div>
-                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${shiftMax}</div>
                 </div>
 
-                <div style="flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Current Form</label>
-                    <select onchange="updateClassState('currentForm', 0, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${opts}</select>
-                    <div style="height: 38px; display: flex; align-items: center; justify-content: center;">
-                        <div style="font-size: 0.75em; color: var(--text-muted); line-height: 1.1; font-family:'Crimson Text'; font-style:italic; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${STORMSHIFTER_OPTIONS.forms[activeForm]?.desc || ""}</div>
+                <div style="flex: 1.6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Current Form</label>
+                    <select onchange="updateClassState('currentForm', 0, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 3px; font-size: 0.85em;">${opts}</select>
+                    
+                    <div style="min-height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;">
+                        ${(function() {
+                            const totalStr = (state.baseStr || 0) + (state.addStr || 0);
+                            const totalWil = (state.baseWil || 0) + (state.addWil || 0);
+                            const totalDex = (state.baseDex || 0) + (state.addDex || 0);
+                            if (activeForm === "Fearsome") return `
+                                <span class="roll-link" onclick="dispatchRoll('1d6+${level}', 'Gore Attack', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">GORE 1d6+${level}</span>
+                                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">+${totalDex+level} THP | 1 Mana Reroll</div>`;
+                            if (activeForm === "Beast of the Pack") return `
+                                <span class="roll-link" onclick="dispatchRoll('1d4+${level}', 'Thunderfang', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">THUNDERFANG 1d4+${level}</span>
+                                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">+${totalDex} SPD | +1d4 Dmg on Kill</div>`;
+                            if (activeForm === "Beast of Nightmares") return `
+                                <span class="roll-link" onclick="dispatchRoll('1d4+${3*level}', 'Sting', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">STING 1d4+${3*level}</span>
+                                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">SPD 2 | Unseen until Attack</div>`;
+                            if (activeForm === "Normal") return `
+                                <span class="roll-link" onclick="dispatchRoll('1d4+${totalStr}', 'Unarmed Strike', { type: 'attack', stat: 'str' })" style="color: var(--text-muted); font-family: 'Cinzel'; font-weight: bold; font-size: 0.85em;">UNARMED 1d4+${totalStr}</span>
+                                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">Standard Humanoid Form</div>`;
+                            return `<div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.0; font-family:'Crimson Text'; font-style:italic;">${STORMSHIFTER_OPTIONS.forms[activeForm]?.desc || ""}</div>`;
+                        })()}
                     </div>
                 </div>
             </div>
@@ -269,7 +291,7 @@ const CLASS_CONFIG = {
 
     actions: {},
 
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips) {
+    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
         let fHtml = "";
         const sCls = "subclass-feature";
         const subData = STORMSHIFTER_FEATURES.subclasses[subclass] || {};
@@ -288,13 +310,13 @@ const CLASS_CONFIG = {
             if (STORMSHIFTER_FEATURES.core[l]) {
                 STORMSHIFTER_FEATURES.core[l].forEach(feat => {
                     if (!replacedIds.has(feat.id)) {
-                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips);
+                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC);
                     }
                 });
             }
             if (subData[l]) {
                 subData[l].forEach(feat => {
-                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, sCls);
+                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, sCls);
                 });
             }
         }
@@ -302,14 +324,17 @@ const CLASS_CONFIG = {
         return fHtml;
     },
 
-    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, cssClass) {
+    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "stormcaller_choice";
         let count = (typeof feat.getCount === "function") ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state)) : (feat.desc || "");
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
+
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
+        let context = (feat.id === "shift" || (feat.id && feat.id.startsWith("dire"))) ? { type: 'attack', stat: 'wil' } : {};
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
@@ -326,7 +351,7 @@ const CLASS_CONFIG = {
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
@@ -352,14 +377,14 @@ const CLASS_CONFIG = {
                     choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                         <div style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; margin-bottom: 4px; font-family:'Cinzel'; font-weight:bold;">${sch} Utility ${i+1}</div>
                         <select onchange="updateClassState('${stateKey}', ${i}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                     </div>`;
                 }
             });
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     },
 
     getAvailableSpells: function(level, subclass, state, derived) {

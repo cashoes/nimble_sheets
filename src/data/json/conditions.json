@@ -1,0 +1,19 @@
+[
+    { "id": "blinded", "name": "Blinded", "type": "debuff", "desc": "Can't see. Attacks against you have advantage, and your attacks have disadvantage." },
+    { "id": "bloodied", "name": "Bloodied", "type": "debuff", "desc": "At half HP or less." },
+    { "id": "charmed", "name": "Charmed", "type": "debuff", "desc": "Sees the charmer as an ally. Charmer has advantage on social interactions with you." },
+    { "id": "dazed", "name": "Dazed", "type": "debuff", "desc": "Heroes: lose 1 action; monsters: can perform one less action on their next turn." },
+    { "id": "dying", "name": "Dying", "type": "debuff", "desc": "At 0 HP. Taking damage while dying causes 2 Wounds, a crit causes 3 instead." },
+    { "id": "frightened", "name": "Frightened", "type": "debuff", "desc": "Disadvantage on rolls when source of fear is nearby; speed halved when moving closer to it." },
+    { "id": "grappled", "name": "Grappled / Restrained", "type": "debuff", "desc": "Cannot move. Attacks against you have advantage." },
+    { "id": "hampered", "name": "Hampered", "type": "debuff", "desc": "Any creature with their actions or movement reduced (e.g., Dazed, Grappled, Prone, Difficult Terrain)." },
+    { "id": "incapacitated", "name": "Incapacitated", "type": "debuff", "desc": "Can't do anything. Attacks against you have advantage, and melee attacks that hit, crit." },
+    { "id": "invisible", "name": "Invisible", "type": "buff", "desc": "Cannot be seen. Your attacks have advantage, and attacks against you have disadvantage." },
+    { "id": "petrified", "name": "Petrified", "type": "debuff", "desc": "Incapacitated. You have all the benefits and drawbacks of being a rock! Immune to most damage except from large explosions, picks, or similar tools." },
+    { "id": "poisoned", "name": "Poisoned", "type": "debuff", "desc": "Disadvantage on rolls." },
+    { "id": "prone", "name": "Prone", "type": "debuff", "desc": "Movement costs twice as much, and disadvantage on attacks. Melee attacks against you have advantage; Ranged have disadvantage. Spend 3 spaces of your Speed to stand up." },
+    { "id": "riding", "name": "Riding", "type": "buff", "desc": "You move with the creature you are riding. Any attacks that miss you, strike them." },
+    { "id": "slowed", "name": "Slowed", "type": "debuff", "desc": "Speed halved during your next turn." },
+    { "id": "taunted", "name": "Taunted", "type": "debuff", "desc": "Disadvantage on attacks except against the most recent taunter." },
+    { "id": "wounded", "name": "Wounded", "type": "debuff", "desc": "Has any Wounds (typically 6 Wounds and a hero is dead)." }
+]

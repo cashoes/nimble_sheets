@@ -43,7 +43,7 @@
     </div>
 
     <script>
-        const VERSION = '1.1.0';
+        const VERSION = '1.2.0';
 
         async function fetchFile(path) {
             const response = await fetch(`${path}?t=${Date.now()}`);
@@ -61,16 +61,47 @@
                 statusEl.innerText = `Fetching files for ${className}...`;
                 statusEl.style.color = '#94a3b8';
 
-                // 1. Fetch all necessary files
-                const template = await fetchFile('src/base_template.html');
-                const coreData = await fetchFile('src/data/core_data.js');
-                const classData = await fetchFile(`src/data/class_${className}.js`);
-                const engine = await fetchFile('src/engine.js');
+                // 1. Fetch all necessary files in parallel
+                const [
+                    template,
+                    itemsJson,
+                    skillsJson,
+                    conditionsJson,
+                    ancestriesJson,
+                    backgroundsJson,
+                    spellsJson,
+                    classData,
+                    engine
+                ] = await Promise.all([
+                    fetchFile('src/base_template.html'),
+                    fetchFile('src/data/json/items.json'),
+                    fetchFile('src/data/json/skills.json'),
+                    fetchFile('src/data/json/conditions.json'),
+                    fetchFile('src/data/json/ancestries.json'),
+                    fetchFile('src/data/json/backgrounds.json'),
+                    fetchFile('src/data/json/spells.json'),
+                    fetchFile(`src/data/class_${className}.js`),
+                    fetchFile('src/engine.js')
+                ]);
 
                 statusEl.innerText = 'Stitching files together...';
 
-                // 2. Combine JS files
-                let jsContent = `// --- Source: src/data/core_data.js ---\n${coreData}\n\n`;
+                // 2. Combine JS content
+                const ancestries = JSON.parse(ancestriesJson);
+                const backgrounds = JSON.parse(backgroundsJson);
+                const spells = JSON.parse(spellsJson);
+
+                let jsContent = `// --- Generated Core Data ---\n`;
+                jsContent += `const ITEM_TEMPLATES = ${itemsJson};\n`;
+                jsContent += `const SKILL_LIST = ${skillsJson};\n`;
+                jsContent += `const CONDITIONS_LIST = ${conditionsJson};\n`;
+                jsContent += `const ANCESTRIES = ${JSON.stringify(ancestries.categories)};\n`;
+                jsContent += `const ANCESTRY_FEATURES = ${JSON.stringify(ancestries.features)};\n`;
+                jsContent += `const BACKGROUNDS = ${JSON.stringify(backgrounds.categories)};\n`;
+                jsContent += `const BACKGROUND_FEATURES = ${JSON.stringify(backgrounds.features)};\n`;
+                jsContent += `const UTILITY_SPELLS = ${JSON.stringify(spells.utility)};\n`;
+                jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
+
                 jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
                 jsContent += `// --- Source: src/engine.js ---\n${engine}\n\n`;
 

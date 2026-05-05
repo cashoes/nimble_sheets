@@ -124,7 +124,7 @@ const CLASS_CONFIG = {
         accent: "#ef4444",
         accentDim: "#991b1b",
         bodyBg: "#0c0606",
-        containerBg: "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0f0f 0%, #0c0606 100%)",
+        containerBg: "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0f1f 0%, #0c0606 100%)",
         panelBg: "rgba(26, 15, 15, 0.8)",
         border: "rgba(239, 68, 68, 0.25)"
     },
@@ -186,28 +186,28 @@ const CLASS_CONFIG = {
         }
 
         return `
-        <div class="panel mechanic-panel" style="padding: 12px 15px; height: 165px; display: flex; flex-direction: column; justify-content: space-between;">
-            <div style="display: flex; align-items: stretch; justify-content: space-around; flex: 1;">
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 15px; justify-content: center;">
-                   <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Fury Bonus</label>
-                   <div style="font-size: 3.2em; font-family: 'Cinzel', serif; font-weight: 900; color: var(--save-dis); line-height: 1; text-shadow: 0 0 15px rgba(239, 68, 68, 0.3);">+${totalFury}</div>
-                   <div style="font-size: 0.7em; color: var(--text-muted); text-align: center; margin-top: 8px; font-weight: bold; font-family: 'Cinzel';">STR Dmg Bonus</div>
+        <div class="panel mechanic-panel" style="padding: 5px 15px; min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: flex; align-items: stretch; gap: 10px; flex: 1;">
+               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
+                   <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Fury Bonus</label>
+                   <div style="font-size: 2.2em; font-family: 'Cinzel', serif; font-weight: 900; color: var(--save-dis); line-height: 1;">+${totalFury}</div>
+                   <div style="font-size: 0.65em; color: var(--text-muted); text-align: center; margin-top: 2px; font-weight: bold; font-family: 'Cinzel';">STR DMG</div>
                </div>
 
-               <div style="flex: 2.8; display: flex; flex-direction: column; align-items: center; padding: 0 15px; justify-content: center;">
-                   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
-                       <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Dice Pool (${fdType})</label>
-                       <div style="display: flex; gap: 8px; align-items: center;">
-                           <span style="font-size: 0.75em; color: var(--text-muted); font-family: 'Cinzel'; font-weight: bold;">${state.furyDice.length} / ${maxFD}</span>
-                           <button onclick="CLASS_CONFIG.actions.rollOneDie()" style="background: rgba(239, 68, 68, 0.2); border: 2px solid var(--save-dis); color: #fff; font-size: 0.7em; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;" ${state.furyDice.length >= maxFD ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>ROLL +1</button>
-                           <button onclick="CLASS_CONFIG.actions.resetFury()" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: var(--text-muted); font-size: 0.7em; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">CLEAR</button>
+               <div style="flex: 2.5; display: flex; flex-direction: column; align-items: center; padding-left: 10px; justify-content: center;">
+                   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 4px;">
+                       <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Pool (${fdType})</label>
+                       <div style="display: flex; gap: 6px; align-items: center;">
+                           <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">${state.furyDice.length} / <span style="color: var(--text-main);">${maxFD}</span></div>
+                           <button onclick="CLASS_CONFIG.actions.rollOneDie()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--save-dis); color: #fff; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;" ${state.furyDice.length >= maxFD ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>ROLL</button>
+                           <button onclick="CLASS_CONFIG.actions.resetFury()" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: var(--text-muted); font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">X</button>
                        </div>
                    </div>
-                   <div style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 8px; width: 100%; justify-content: center; align-items: center; scrollbar-width: none; padding-bottom: 5px; flex: 1;">
+                   <div style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; width: 100%; justify-content: center; align-items: center; scrollbar-width: none; min-height: 32px; flex: 1;">
                        ${diceHtml}
                    </div>
-                   <div style="font-size: 0.7em; color: var(--text-muted); margin-top: auto; font-family: 'Crimson Text'; font-style: italic; text-align: center;">
-                        Spend 1 die to: Move <strong>DEX</strong> spaces OR Reduce damage by <strong>STR+DEX</strong>
+                   <div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; text-align: center; margin-top: 2px;">
+                        Spend 1: Move DEX or Reduce STR+DEX
                    </div>
                </div>
             </div>
@@ -276,10 +276,13 @@ const CLASS_CONFIG = {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
+        let context = (feat.id === "rage" || feat.id === "death_blow" || feat.id === "whirlwind" || feat.id === "into_the_fray") ? { stat: 'str', type: 'attack' } : {};
         let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
+
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
@@ -296,12 +299,12 @@ const CLASS_CONFIG = {
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     }
 };

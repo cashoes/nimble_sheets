@@ -109,7 +109,7 @@ const CHEAT_FEATURES = {
 
 const CLASS_CONFIG = {
     name: "Cheat",
-    subtitle: "Master of stealth, dirty fighting, and breaking rules",
+    subtitle: "Master of stealth, dirty fighting, & rules",
     keyStats: ['dex', 'int'],
     saves: { adv: 'dex', dis: 'wil' },
     proficiencies: {
@@ -244,6 +244,9 @@ ${cunningHtml}
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
 
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
+        let context = (feat.id && feat.id.startsWith("sneak_attack")) ? { type: 'attack', stat: 'dex' } : {};
+
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
             let selection = state[feat.stateKey] || [];
@@ -259,12 +262,12 @@ ${cunningHtml}
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     }
 };

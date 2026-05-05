@@ -1,0 +1,12 @@
+[
+    { "id": "arcana", "name": "Arcana", "stat": "int" },
+    { "id": "examination", "name": "Examination", "stat": "int" },
+    { "id": "finesse", "name": "Finesse", "stat": "dex" },
+    { "id": "influence", "name": "Influence", "stat": "wil" },
+    { "id": "insight", "name": "Insight", "stat": "wil" },
+    { "id": "lore", "name": "Lore", "stat": "int" },
+    { "id": "might", "name": "Might", "stat": "str" },
+    { "id": "naturecraft", "name": "Naturecraft", "stat": "wil" },
+    { "id": "perception", "name": "Perception", "stat": "wil" },
+    { "id": "stealth", "name": "Stealth", "stat": "dex" }
+]

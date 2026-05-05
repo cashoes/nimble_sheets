@@ -216,32 +216,36 @@ const CLASS_CONFIG = {
         let vmDisplay = `${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}`;
 
         return `
-        <div class="panel mechanic-panel" style="min-height: 100px;">
-            <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center;">
+        <div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center;">
                 ${level >= 2 ? `
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px;">
-                        <button onclick="adjRes('mana', -1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:35px; font-size: 1.4em;">
-                        <button onclick="adjRes('mana', 1, ${manaMax})" style="width:22px; height:22px; line-height:1; font-size:1.1em;">+</button>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px;">
+                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:22px; height:22px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:32px; font-size: 1.3em;">
+                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:22px; height:22px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${manaMax}</div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${manaMax}</div>
                 </div>` : ''}
 
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Inspiration</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--class-accent);">
-                        <button onclick="adjRes('inspiration', -1, ${inspMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_inspiration" value="${inspCur}" onchange="adjRes('inspiration', parseInt(this.value), ${inspMax}, true)" style="width:30px; font-size: 1.4em;">
-                        <button onclick="adjRes('inspiration', 1, ${inspMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--class-accent);">
+                            <button onclick="adjRes('inspiration', -1, ${inspMax})" style="width:22px; height:22px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_inspiration" value="${inspCur}" onchange="adjRes('inspiration', parseInt(this.value), ${inspMax}, true)" style="width:30px; font-size: 1.4em;">
+                            <button onclick="adjRes('inspiration', 1, ${inspMax})" style="width:22px; height:22px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${inspMax}</div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${inspMax}</div>
                 </div>
 
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Vicious Mockery</label>
-                    <div class="roll-link" onclick="dispatchRoll('${vmDisplay}', 'Vicious Mockery')" style="font-size: 2.2em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; cursor: pointer;">${vmDisplay}</div>
+                    <div class="roll-link" onclick="dispatchRoll('${vmDisplay}', 'Vicious Mockery', { type: 'cantrip' })" style="font-size: 2.2em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; cursor: pointer;">${vmDisplay}</div>
                     <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 4px; font-family: 'Crimson Text'; font-style: italic;">Reach 12</div>
                     <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.1; font-family: 'Crimson Text'; max-width: 120px;">On hit: the target is Taunted during their next turn.</div>
                 </div>
@@ -288,10 +292,13 @@ const CLASS_CONFIG = {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "windbag_choice";
         let count = (typeof feat.getCount === "function") ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
+        let context = (feat.id === "vicious_mockery") ? { type: 'cantrip' } : {};
         let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
+
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
@@ -308,7 +315,7 @@ const CLASS_CONFIG = {
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
@@ -334,14 +341,14 @@ const CLASS_CONFIG = {
                     choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                         <div style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; margin-bottom: 4px; font-family:'Cinzel'; font-weight:bold;">${sch} Utility ${i+1}</div>
                         <select onchange="updateClassState('${stateKey}', ${i}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                     </div>`;
                 }
             });
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     },
 
     getAvailableSpells: function(level, subclass, state, derived) {

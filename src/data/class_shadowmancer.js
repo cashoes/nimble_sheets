@@ -1,229 +1,117 @@
 const SHADOWMANCER_OPTIONS = {
     lesserInvocations: {
-        "Abhorrent Speech": { desc: "You can communicate with horrible creatures (aberrations, undead, etc.)." },
-        "Beguiling Influence": { desc: "(1/day) You may reroll an Influence check." },
-        "Blood Sight": { desc: "(1/day) You may reroll an Examination check. Detect traces of blood even after cleaning." },
-        "Devoted Acolyte": { desc: "Learn 2 languages (Celestial, Draconic, etc.). ADV on Lore checks for those languages." },
-        "Eldritch Sense": { desc: "Sense shapechangers or magic-concealed creatures within 6 spaces." },
-        "Gaze of Two Minds": { desc: "Touch a willing creature and perceive through its senses while you hold concentration." },
-        "Knowledge from Beyond": { desc: "Fail Insight or Arcana: suffer 1 Wound to succeed instead." },
-        "My Favored Pet": { desc: "One shadow minion can tolerate you outside combat and perform menial tasks." },
-        "Voice of the Dark": { desc: "Communicate telepathically with a humanoid within 6 spaces." },
-        "Whispers of the Grave": { desc: "(1/day) Ask a dead creature 3 yes/no questions." }
+        "Abhorrent Speech": { desc: "(1/encounter) Target makes WIL save (DC 10+INT). Fail: they are Taunted to only attack you until end of their turn." },
+        "Fiendish Boon": { desc: "+1 DEX or INT. You have 1 fewer maximum Hit Dice." },
+        "Grim Reaper": { desc: "Bonescythe: deal INT necrotic damage to all enemies within Reach 2 on a hit." },
+        "Shadow Rush": { desc: "Minion attack: instead of rolling, deal max damage and die." },
+        "Unseen Servant": { desc: "Minions gain Blindsight 6 and have Advantage on Stealth checks." }
     },
     greaterInvocations: {
-        "Armor of Shadows": { desc: "Reduce all incoming damage by the number of minions you have." },
-        "Fiendish Boon": { desc: "+1 DEX or INT. You have 1 fewer maximum Hit Dice." },
-        "Hungering Shadows": { desc: "Shadow crits: next tiered spell this encounter costs 0 Pilfered Power." },
-        "One with Shadows": { desc: "Action (dim light/darkness): Become Invisible until you move or attack." },
-        "Repelling Blast": { desc: "Shadow Blast hit (Med/Smaller): Push them up to 2 spaces away." },
-        "Shadow Magus": { desc: "Your minions gain +4 Reach and deal d10 damage instead." },
-        "Shadow Spear": { desc: "Shadow Blast: 2x range, ignore cover, ADV on Prone targets." },
-        "Shadow Rush": { desc: "Minion attack: instead of rolling, deal max damage and die." },
-        "Shadow Warp": { desc: "Action: Switch places with creature in 12 reach dealt necrotic damage this turn." },
-        "Swarming Shadows": { desc: "Shadow crits: summon another shadow minion adjacent to target." },
-        "Vengeful Blast": { desc: "Reaction (minion dies): Cast Shadow Blast (even if already cast this turn)." }
-    },
-    masterySchools: {
-        "Necrotic": { desc: "Gain access to all Necrotic utility spells." }
+        "Army of Darkness": { desc: "+2 max shadow minions. Summon 2 minions with 1 action." },
+        "Deadly Reach": { desc: "Shadow Blast range +4. Bonescythe reach +2." },
+        "Lingering Shadows": { desc: "Minions survive 1 round after you leave combat or drop to 0 HP." },
+        "Shadow Armor": { desc: "While you have at least 1 minion, you gain +2 Armor." },
+        "Soul Steal": { desc: "Whenever a minion kills an enemy, you regain 1 mana." }
     }
 };
 
 const SHADOWMANCER_FEATURES = {
     core: {
         1: [
-            { id: "conduit", name: "Conduit of Shadow", desc: (level, subclass, state, derived, rSSC) => {
+            { id: "scythe", name: "Bonescythe", desc: "You can summon a scythe of pure shadow (1d12+INT, Reach 2)." },
+            { id: "minions", name: "Shadow Minions", desc: (level, subclass, state) => {
                 const totalInt = (state.baseInt || 0) + (state.addInt || 0);
                 const minions = Math.max(1, Math.min(totalInt, level));
-                let blastDice = 1 + Math.floor(level / 5);
-                let bonusReach = Math.floor(level / 5);
-                let blastDmg = `<strong>${blastDice}d12${totalInt >= 0 ? "+" : ""}${totalInt}</strong>`;
-                
-                let intro = `Your Patron grants you knowledge of two unique Necrotic cantrips:`;
-                let cards = "";
-
-                if (subclass !== "Reaver") {
-                    cards += rSSC({
-                        name: "Shadow Blast",
-                        tier: "Cantrip",
-                        school: "Necrotic",
-                        desc: `(1/round) 1 Action. Range: 8. Damage: ${blastDmg} necrotic. <div style="margin-top:5px; font-size:0.85em; opacity:0.8;">High Levels: +1d12 every 5 levels.</div>`
-                    }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: totalInt, wil: state.baseWil+state.addWil });
-                } else {
-                    const totalDex = (state.baseDex || 0) + (state.addDex || 0);
-                    let scytheDice = 2 + Math.floor(level / 5);
-                    let scytheDmg = `<strong>${scytheDice}d12${totalDex >= 0 ? "+" : ""}${totalDex}</strong>`;
-                    cards += rSSC({
-                        name: "Bonescythe",
-                        tier: "Cantrip",
-                        school: "Necrotic",
-                        desc: `1 Action. Reach: 2. Summon a magical Bonescythe: ${scytheDmg} slashing + necrotic damage. It shatters after a hit or when combat ends. Any Invocations affecting Shadow Blast affect your Bonescythe instead.`
-                    }, level, { str: state.baseStr+state.addStr, dex: totalDex, int: totalInt, wil: state.baseWil+state.addWil });
-                }
-
-                cards += rSSC({
-                    name: "Summon Shadows",
-                    tier: "Cantrip",
-                    school: "Necrotic",
-                    desc: `1 Action. Reach: 1. Summon a shadow minion (max <strong>${minions}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
-                    <div style="margin-top:5px;">● <strong>Command:</strong> (1/turn) Action: Command ALL minions to move 6 then attack (Reach <strong>${1 + bonusReach}</strong>, 1d12 each).</div>`
-                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: totalInt, wil: state.baseWil+state.addWil });
-
-                return intro + cards;
-            } }
-        ],
-        2: [
-            { id: "master_darkness", name: "Master of Darkness", desc: "You know all Necrotic cantrips and Tier 1 spells." },
-            { id: "pilfered_power", name: "Pilfered Power", desc: (level, subclass, state) => {
-                const totalDex = (state.baseDex || 0) + (state.addDex || 0);
-                return `Steal power to cast spells at max tier. <strong>${totalDex}</strong> uses/Safe Rest. Exceed limit: suffer half max HP damage.`;
+                return `1 Action. Reach: 1. Summon a shadow minion (max <strong>${minions}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
+                <strong>Minion Attack:</strong> 1 Action. Range: 1. Damage: 1d12 psychic.`;
             }}
         ],
+        2: [
+            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>INTx3+LVL</strong>) to cast tiered spells." },
+            { id: "pilfer", name: "Pilfer Power", desc: (level, subclass, state) => {
+                const totalDex = (state.baseDex || 0) + (state.addDex || 0);
+                return `Steal power to cast spells at max tier. <strong>${totalDex}</strong> uses/Safe Rest. Exceed limit: suffer half max HP damage.`;
+            }},
+            { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true }
+        ],
         3: [
-            { id: "subclass", name: "The Pact is Sealed", desc: "Choose a Shadowmancer subclass.", minor: true },
-            { id: "lesser_invocations", name: "Lesser Invocations", type: "dynamic_choice", collection: "lesserInvocations", stateKey: "selectedLesser", desc: "Choose modular shadow powers.", getCount: (level) => level >= 11 ? 3 : level >= 8 ? 2 : 1 }
+            { id: "subclass", name: "Subclass", desc: "Choose a Shadowmancer subclass.", minor: true },
+            { id: "lesser_1", name: "Lesser Invocation", type: "choice", collection: "lesserInvocations", stateKey: "selectedLesser", count: 1, desc: "Choose a minor shadow power." }
         ],
         4: [
-            { id: "greater_invocations", name: "A Gift from the Master", type: "dynamic_choice", collection: "greaterInvocations", stateKey: "selectedGreater", desc: "Choose powerful modular shadow powers.", getCount: (level) => level >= 18 ? 5 : level >= 14 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 },
-            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 INT or DEX.", minor: true }
+            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 INT or DEX.", minor: true },
+            { id: "tier_2", name: "Tier 2 Spells", desc: "You gain access to Tier 2 spells.", minor: true },
+            { id: "greater_1", name: "Greater Invocation", type: "dynamic_choice", collection: "greaterInvocations", stateKey: "selectedGreater", desc: "Choose modular shadow powers.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 }
         ],
         5: [
-            { id: "tier_2", name: "Tier 2 Spells", desc: "You cast all spells at Tier 2.", minor: true },
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or WIL.", minor: true },
-            { id: "cantrips_1", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
+            { id: "upgraded_minions", name: "Upgraded Minions", desc: "Minions reach +1, Shadow Blast damage +5.", minor: true }
         ],
         6: [
-            { id: "mastery_1", name: "Shadowmastery", desc: "Choose 1 Necrotic Utility Spell.", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1 }
-        ],
-        7: [
-            { id: "tier_3", name: "Tier 3 Spells", desc: "You cast all spells at Tier 3.", minor: true }
+            { id: "lesser_2", name: "Lesser Invocation (2)", type: "choice", collection: "lesserInvocations", stateKey: "selectedLesser", count: 1, startIndex: 1, desc: "Choose a 2nd shadow power." },
+            { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }
         ],
         8: [
-            { id: "mastery_2", name: "Shadowmastery (2)", desc: "Choose a 2nd Necrotic Utility Spell.", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1, startIndex: 1 },
-            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 INT or DEX.", minor: true }
-        ],
-        9: [
-            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 STR or WIL.", minor: true }
+            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 INT or DEX.", minor: true },
+            { id: "tier_4", name: "Tier 4 Spells", desc: "You gain access to Tier 4 spells.", minor: true }
         ],
         10: [
-            { id: "tier_4", name: "Tier 4 Spells", desc: "You cast all spells at Tier 4.", minor: true },
-            { id: "cantrips_2", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
-        ],
-        11: [
-            { id: "lesser_invocations_2", name: "Lesser Invocations (2)", desc: "Choose a 3rd Lesser Shadow Invocation.", minor: true }
+            { id: "upgraded_minions_2", name: "Upgraded Minions (2)", desc: "Minions reach +1, Shadow Blast damage +5.", minor: true },
+            { id: "tier_5", name: "Tier 5 Spells", desc: "You gain access to Tier 5 spells.", minor: true }
         ],
         12: [
-            { id: "greedy_pact", name: "Greedy Pact", desc: "When taking Pilfer damage, STR save (DC 10): 10-19 (Suffer 10), 20+ (No dmg, +1 Tier)." },
-            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 INT or DEX.", minor: true }
-        ],
-        13: [
-            { id: "tier_5", name: "Tier 5 Spells", desc: "You cast all spells at Tier 5.", minor: true },
-            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 STR or WIL.", minor: true }
+            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 INT or DEX.", minor: true },
+            { id: "tier_6", name: "Tier 6 Spells", desc: "You gain access to Tier 6 spells.", minor: true }
         ],
         14: [
-            { id: "mastery_3", name: "Shadowmastery (3)", desc: "You know all Necrotic Utility Spells." }
+            { id: "lesser_3", name: "Lesser Invocation (3)", type: "choice", collection: "lesserInvocations", stateKey: "selectedLesser", count: 1, startIndex: 2, desc: "Choose a 3rd shadow power." },
+            { id: "tier_7", name: "Tier 7 Spells", desc: "You gain access to Tier 7 spells.", minor: true }
         ],
         15: [
-            { id: "cantrips_3", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
+            { id: "upgraded_minions_3", name: "Upgraded Minions (3)", desc: "Minions reach +1, Shadow Blast damage +5.", minor: true }
         ],
         16: [
-            { id: "tier_6", name: "Tier 6 Spells", desc: "You cast all spells at Tier 6.", minor: true },
-            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 INT or DEX.", minor: true }
-        ],
-        17: [
-            { id: "dire_shadows", name: "Dire Shadows", desc: "Attacks against your minions have DIS. They take no damage from successful saves." },
-            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 STR or WIL.", minor: true }
+            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 INT or DEX.", minor: true },
+            { id: "tier_8", name: "Tier 8 Spells", desc: "You gain access to Tier 8 spells.", minor: true }
         ],
         18: [
-            { id: "greater_invocations_5", name: "A Gift from the Master (5)", desc: "Choose a 5th Greater Shadow Invocation." }
+            { id: "tier_9", name: "Tier 9 Spells", desc: "You gain access to Tier 9 spells.", minor: true }
         ],
         19: [
-            { id: "tier_7", name: "Tier 7 Spells", desc: "You cast all spells at Tier 7.", minor: true },
             { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
         ],
         20: [
-            { id: "eldritch_usurper", name: "Eldritch Usurper", desc: "+1 to any 2 of your stats. Summoning 1 minion summons 2 instead. They die only if they receive 12+ damage at once." },
-            { id: "cantrips_4", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
+            { id: "overlord", name: "Shadow Overlord", desc: "+1 to any 2 of your stats. You may have twice as many minions. Minions ignore Reach limit." },
+            { id: "upgraded_minions_4", name: "Upgraded Minions (4)", desc: "Minions reach +1, Shadow Blast damage +5.", minor: true }
         ]
     },
     subclasses: {
-        "RedDragon": {
-            3: [
-                { id: "crimson_rite", name: "Draconic Crimson Rite", desc: "Minions become Flaming Dragon Wyrmlings. Deal fire/necrotic dmg and Smolder on crit." }
-            ],
-            7: [
-                { id: "burn", name: "We'll ALL Burn!", desc: "Cast Pyroclasm without Pilfering by including yourself in damage. ADV on the save. Choose 1 Fire Utility Spell." }
-            ],
-            11: [
-                { id: "heart_fire", name: "Heart of Burning Fire", desc: "Regain 1 use of Pilfered Power each time you roll Initiative." }
-            ],
-            15: [
-                { id: "enveloped", name: "Enveloped by the Master", desc: "Gain 1d4 Wounds to cast Dragonform." }
-            ]
-        },
-        "AbyssalDepths": {
-            3: [
-                { id: "nightfrost", name: "Master of Nightfrost", desc: "Minions become beings of nightfrost. Deal cold/necrotic dmg and gain INT+LVL temp HP on crit." }
-            ],
-            7: [
-                { id: "shadowfrost", name: "Shadowfrost", desc: "Shadow Blast Slows. Cast Cryosleep/Rimeblades without Pilfering for 10 temp HP. Choose 1 Ice Utility Spell." }
-            ],
-            11: [
-                { id: "glacial", name: "Glacial Resilience", desc: "(1/Safe Rest) Reaction (attack/condition): gain 10xLVL temp HP and end negative conditions." }
-            ],
-            15: [
-                { id: "reprisal", name: "Cryomancer's Reprisal", desc: "Pay half max HP to cast ANY Ice spell. Gains aura dealing half spent HP as cold damage on melee hit." }
-            ]
-        },
         "Reaver": {
-            1: [
-                { id: "hollow_one", replaces: "conduit", name: "Hollow One & Bonescythe", desc: (level, subclass, state, derived, rSSC) => {
-                    const totalInt = (state.baseInt || 0) + (state.addInt || 0);
-                    const totalDex = (state.baseDex || 0) + (state.addDex || 0);
-                    const minions = Math.max(1, Math.min(totalInt, level));
-                    let bonusReach = Math.floor(level / 5);
-                    let scytheDice = 2 + Math.floor(level / 5);
-                    let scytheDmg = `<strong>${scytheDice}d12${totalDex >= 0 ? "+" : ""}${totalDex}</strong>`;
-                    
-                    let intro = `You can no longer cast Shadow Blast. Instead:`;
-                    let cards = rSSC({
-                        name: "Bonescythe",
-                        tier: "Cantrip",
-                        school: "Necrotic",
-                        desc: `1 Action. Reach: 2. Summon a magical Bonescythe: ${scytheDmg} slashing + necrotic damage. It shatters after a hit or when combat ends. Any Invocations affecting Shadow Blast affect your Bonescythe instead.`
-                    }, level, { str: state.baseStr+state.addStr, dex: totalDex, int: totalInt, wil: state.baseWil+state.addWil });
-
-                    cards += rSSC({
-                        name: "Summon Shadows",
-                        tier: "Cantrip",
-                        school: "Necrotic",
-                        desc: `1 Action. Reach: 1. Summon a shadow minion (max <strong>${minions}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
-                        <div style="margin-top:5px;">● <strong>Command:</strong> (1/turn) Action: Command ALL minions to move 6 then attack (Reach <strong>${1 + bonusReach}</strong>, 1d12 each).</div>`
-                    }, level, { str: state.baseStr+state.addStr, dex: totalDex, int: totalInt, wil: state.baseWil+state.addWil });
-
-                    return intro + cards;
-                }}
-            ],
-            2: [
-                { id: "cut_off", replaces: "pilfered_power", name: "Cut Off", desc: "You can no longer cast tiered spells using Pilfered Power." }
-            ],
             3: [
-                { id: "shadow_exploit", name: "Shadow Exploit", desc: "Sacrifice a shadow minion to cast a spell at the highest tier you have unlocked. Each subsequent spell you cast in this encounter costs 1 additional minion." },
-                { id: "martyr_spawn", name: "Martyr Spawn", desc: "Whenever you Defend, you can sacrifice a shadow minion to take no damage." }
+                { id: "conduit", name: "Shadow Conduit", desc: "Shadow Blast: deal damage with your Bonescythe instead (using INT). Add DEX bludgeoning damage to scythe hits." }
             ],
             7: [
-                { id: "grim_harrow", name: "Grim Harrow", desc: "When you strike with your Bonescythe, you may divide the dice as you choose amongst any number of adjacent targets within Reach." },
-                { id: "reap", name: "Reap", desc: "When your Bonescythe crits, or kills a creature, summon a shadow minion for free." }
+                { id: "reap", name: "Soul Reaper", desc: "Whenever you kill an enemy with your Bonescythe, summon a minion for free." }
             ],
             11: [
-                { id: "my_blood", name: "My Blood, My Power", desc: "You may take 1 Wound to cast a tiered spell you know at the highest tier you have unlocked." },
-                { id: "otherworldly", name: "Otherworldly Might", desc: "Advantage on concentration checks if you have any shadow minions." }
-            ],
-            12: [
-                { id: "no_greedy", replaces: "greedy_pact", name: "Greedy Pact (Lost)", desc: "As a Reaver, you no longer Pilfer Power from a Patron.", minor: true }
+                { id: "dance", name: "Blade Dance", desc: "(1/encounter) Action: Teleport up to 12 reach, making a Bonescythe attack against every enemy you pass." }
             ],
             15: [
-                { id: "patron_now", name: "I'm the Patron Now!", desc: "Summon 2 shadow minions for free when you roll Initiative." }
+                { id: "ghastly", name: "Ghastly Strike", desc: "Bonescythe crits on 19-20. On crit: target is stunned until end of next turn." }
+            ]
+        },
+        "Shadowbinder": {
+            3: [
+                { id: "shackles", name: "Shadow Shackles", desc: "Whenever a minion hits, the target's speed is halved until end of next turn." }
+            ],
+            7: [
+                { id: "meld", name: "Meld with Shadows", desc: "As long as you are adjacent to a minion, you are Unseen." }
+            ],
+            11: [
+                { id: "sacrifice", name: "Shadow Sacrifice", desc: "Reaction: Suffer 1 Wound to prevent a minion from dying. It regains all HP." }
+            ],
+            15: [
+                { id: "master", name: "Master Binder", desc: "You can cast spells through your minions as if you were in their space." }
             ]
         }
     }
@@ -231,12 +119,12 @@ const SHADOWMANCER_FEATURES = {
 
 const CLASS_CONFIG = {
     name: "Shadowmancer",
-    subtitle: "Summoner of shadows and stealer of eldritch power",
+    subtitle: "Dark mystic who commands spirits & shadows",
     keyStats: ['int', 'dex'], 
-    saves: { adv: 'int', dis: 'wil' }, 
+    saves: { adv: 'int', dis: 'str' }, 
     proficiencies: {
         armor: "Cloth",
-        weapons: "Blades, Wands"
+        weapons: "Blades, Staves, Scythes"
     },
     baseHp: 13,
     hpPerLevel: 6,
@@ -245,24 +133,21 @@ const CLASS_CONFIG = {
     theme: {
         accent: "#a855f7",
         accentDim: "#7e22ce",
-        bodyBg: "#05020a",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.08) 0%, transparent 100%), linear-gradient(180deg, #0f0a1a 0%, #05020a 100%)",
-        panelBg: "rgba(20, 10, 35, 0.7)",
+        bodyBg: "#050308",
+        containerBg: "radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.08) 0%, transparent 100%), linear-gradient(180deg, #120a1a 0%, #050308 100%)",
+        panelBg: "rgba(25, 15, 35, 0.7)",
         border: "rgba(168, 85, 247, 0.3)"
     },
 
     initialStats: {
-        baseStr: -1, baseDex: 1, baseInt: 3, baseWil: -1
+        baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0
     },
 
     subclasses: [
         { value: "None", label: "None (Lvl 3)" },
-        { value: "RedDragon", label: "Pact of the Red Dragon", accent: "#ef4444" },
-        { value: "AbyssalDepths", label: "Pact of the Abyssal Depths", accent: "#38bdf8" },
-        { value: "Reaver", label: "Reaver (Story-Based)", accent: "#9ca3af" }
+        { value: "Reaver", label: "Path of the Reaver", accent: "#ef4444" },
+        { value: "Shadowbinder", label: "Path of the Binder", accent: "#a855f7" }
     ],
-
-    spellProgression: [0, 2, 5, 7, 10, 13, 16, 19],
 
     resources: [
         { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.int * 3) + level : 0 },
@@ -276,76 +161,84 @@ const CLASS_CONFIG = {
         return { speed, woundMax };
     },
 
+    getStatOverrides: function(level, subclass, state, statsMap) {
+        let overrides = {};
+        return overrides;
+    },
+
     getShieldBonus: function(level, subclass, stats) { return 0; },
 
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
+    getMechanicPanelHTML: function (level, subclass, state, derived) {
         const totalInt = (state.baseInt || 0) + (state.addInt || 0);
         const totalDex = (state.baseDex || 0) + (state.addDex || 0);
-        let pilferMax = totalDex;
-        let manaMax = level >= 2 ? (totalInt * 3) + level : 0;
+        const manaMax = (totalInt * 3) + level;
+        const pilferMax = totalDex;
         const currentPilfer = state.resourceValues.pilfer !== undefined ? state.resourceValues.pilfer : pilferMax;
-
         const minions = Math.max(1, Math.min(totalInt, level));
-        let html = `<div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">`;
+
+        let html = `<div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;">`;
         
-        // Spells/Weapon Box
+        // Row 1: Attack + Minions
         if (subclass === "Reaver") {
             let scytheDice = 2 + Math.floor(level / 5);
             let scytheDmg = `${scytheDice}d12${totalDex >= 0 ? "+" : ""}${totalDex}`;
             html += `
-                <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center;">
-                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Bonescythe</label>
-                        <div class="roll-link" onclick="dispatchRoll('${scytheDmg}', 'Bonescythe')" style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">${scytheDmg}</div>
-                        <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH 2</div>
+                <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center; ${level >= 2 ? 'padding-bottom: 4px; border-bottom: 1px dashed rgba(255,255,255,0.15); margin-bottom: 4px;' : ''}">
+                    <div style="flex: 1.2; display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
+                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Bonescythe</label>
+                        <div class="roll-link" onclick="dispatchRoll('${scytheDmg}', 'Bonescythe')" style="font-size: 1.3em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.1;">${scytheDmg}</div>
+                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH 2</div>
                     </div>
-                    <div style="width: 1px; background: rgba(255,255,255,0.15);"></div>
-                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Shadow Minions</label>
-                        <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">MAX ${minions}</div>
-                        <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH ${1 + Math.floor(level / 5)} | <span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack')" style="cursor: pointer; color: var(--class-accent);">ATTACK 1d12</span></div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Minions</label>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: #fff; font-size: 1.3em; line-height: 1.1;">/ <span style="color: var(--text-main);">${minions}</span></div>
+                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;"><span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack')" style="color: var(--class-accent);">ATK 1d12</span></div>
                     </div>
                 </div>`;
         } else {
             let blastDice = 1 + Math.floor(level / 5);
             let blastDmg = `${blastDice}d12${totalInt >= 0 ? "+" : ""}${totalInt}`;
             html += `
-                <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center; padding-bottom: ${level >= 2 ? '10px' : '0'}; ${level >= 2 ? 'border-bottom: 1px dashed rgba(255,255,255,0.15); margin-bottom: 10px;' : ''}">
-                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Shadow Blast</label>
-                        <div class="roll-link" onclick="dispatchRoll('${blastDmg}', 'Shadow Blast')" style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">${blastDmg}</div>
-                        <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">RANGE 8</div>
+                <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center; ${level >= 2 ? 'padding-bottom: 4px; border-bottom: 1px dashed rgba(255,255,255,0.15); margin-bottom: 4px;' : ''}">
+                    <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
+                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Shadow Blast</label>
+                        <div class="roll-link" onclick="dispatchRoll('${blastDmg}', 'Shadow Blast')" style="font-size: 1.3em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.1;">${blastDmg}</div>
+                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">RANGE 8</div>
                     </div>
-                    <div style="width: 1px; background: rgba(255,255,255,0.15);"></div>
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                        <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Shadow Minions</label>
-                        <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2;">MAX ${minions}</div>
-                        <div style="font-size: 0.75em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH ${1 + Math.floor(level / 5)} | <span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack')" style="cursor: pointer; color: var(--class-accent);">ATTACK 1d12</span></div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Minions</label>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: #fff; font-size: 1.3em; line-height: 1.1;">/ <span style="color: var(--text-main);">${minions}</span></div>
+                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;"><span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack')" style="color: var(--class-accent);">ATK 1d12</span></div>
                     </div>
                 </div>`;
         }
 
+        // Row 2: Resources
         if (level >= 2 && subclass !== "Reaver") {
             html += `
-            <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center;">
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px;">
-                        <button onclick="adjRes('mana', -1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:35px; font-size: 1.4em;">
-                        <button onclick="adjRes('mana', 1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+            <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center;">
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
+                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 3px 5px;">
+                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:18px; height:18px; line-height:1; font-size:1.0em;">-</button>
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:30px; font-size: 1.2em;">
+                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:18px; height:18px; line-height:1; font-size:1.0em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${manaMax}</div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${manaMax}</div>
                 </div>
 
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding-right: 10px;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Pilfer Power</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px; border-color: var(--save-dis);">
-                        <button onclick="adjRes('pilfer', -1, ${pilferMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_pilfer" value="${currentPilfer}" onchange="adjRes('pilfer', parseInt(this.value), ${pilferMax}, true)" style="width:30px; font-size: 1.4em;">
-                        <button onclick="adjRes('pilfer', 1, ${pilferMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; padding-left: 4px;">
+                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Pilfer</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 3px 5px; border-color: var(--save-dis);">
+                            <button onclick="adjRes('pilfer', -1, ${pilferMax})" style="width:18px; height:18px; line-height:1; font-size:1.0em;">-</button>
+                            <input type="number" id="res_pilfer" value="${currentPilfer}" onchange="adjRes('pilfer', parseInt(this.value), ${pilferMax}, true)" style="width:28px; font-size: 1.2em;">
+                            <button onclick="adjRes('pilfer', 1, ${pilferMax})" style="width:18px; height:18px; line-height:1; font-size:1.0em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${pilferMax}</div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">USES: ${pilferMax}</div>
                 </div>
             </div>`;
         }
@@ -393,10 +286,13 @@ const CLASS_CONFIG = {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
+        let context = (feat.id === "conduit") ? { stat: 'int', type: 'attack' } : {};
         let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
+
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
@@ -413,13 +309,13 @@ const CLASS_CONFIG = {
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     },
 
     getAvailableSpells: function(level, subclass, state, derived) {
@@ -429,42 +325,29 @@ const CLASS_CONFIG = {
 
         // 1. Gather tiered spells from known schools (Necrotic + Subclass)
         const schools = [school];
-        if (subclass === "RedDragon" && level >= 3) schools.push("Fire");
-        if (subclass === "AbyssalDepths" && level >= 3) schools.push("Ice");
+        if (subclass === "Shadowbinder") schools.push("Ice");
 
         schools.forEach(sch => {
             if (!SPELL_REGISTRY[sch]) return;
             Object.entries(SPELL_REGISTRY[sch]).forEach(([name, data]) => {
                 let tNum = parseInt(data.tier.replace(/\D/g, '')) || 0;
-                let requiredLevel = data.tier.includes("Cantrip") ? 1 : (sch === school ? progress[tNum] : tNum * 2);
+                let requiredLevel = data.tier.includes("Cantrip") ? 1 : progress[tNum] || (tNum * 2);
                 if (level >= requiredLevel) {
                     spells.push({ name, ...data, school: sch });
                 }
             });
         });
 
-        // 2. Shadowmastery (Utility Spells)
-        if (level >= 14) {
-            if (UTILITY_SPELLS[school]) {
-                Object.entries(UTILITY_SPELLS[school]).forEach(([name, desc]) => {
-                    spells.push({ name, desc, tier: "Utility", school });
-                });
-            }
-        } else {
-            if (level >= 6 && UTILITY_SPELLS[school]) {
-                Object.entries(UTILITY_SPELLS[school]).forEach(([name, desc]) => {
-                    spells.push({ name, desc, tier: "Utility", school });
-                });
-            }
+        // 2. Utility Spells (Necrotic only by default)
+        if (UTILITY_SPELLS[school]) {
+            Object.entries(UTILITY_SPELLS[school]).forEach(([name, desc]) => {
+                spells.push({ name, desc, tier: "Utility", school: school });
+            });
         }
-
-        // 3. Subclass Utility (Lvl 7)
-        if (level >= 7) {
-            if (subclass === "RedDragon" && UTILITY_SPELLS["Fire"]) {
-                Object.entries(UTILITY_SPELLS["Fire"]).forEach(([name, desc]) => {
-                    spells.push({ name, desc, tier: "Utility", school: "Fire" });
-                });
-            } else if (subclass === "AbyssalDepths" && UTILITY_SPELLS["Ice"]) {
+        
+        // 3. Shadowbinder extra school
+        if (subclass === "Shadowbinder" && level >= 7) {
+            if (UTILITY_SPELLS["Ice"]) {
                 Object.entries(UTILITY_SPELLS["Ice"]).forEach(([name, desc]) => {
                     spells.push({ name, desc, tier: "Utility", school: "Ice" });
                 });

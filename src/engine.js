@@ -61,7 +61,7 @@ function saveState(newState = null) {
 
 function loadState() {
     state = {
-        version: "1.1.0", charName: '', level: 1, ancestry: 'None', background: 'None', subclass: 'None',
+        version: "1.2.0", charName: '', level: 1, ancestry: 'None', background: 'None', subclass: 'None',
         baseStr: 0, addStr: 0, baseDex: 0, addDex: 0, baseInt: 0, addInt: 0, baseWil: 0, addWil: 0,
         hpCurrent: null, tempHP: 0, hdCurrent: null, wounds: 0,
         skills: {}, activeConditions: [], inventory: [], gold: 0,
@@ -181,14 +181,75 @@ function renderResources(level, derived, statsMap, hdFace) {
 
 function renderInventory(statsMap, armorVal, str, iStats) {
     let maxSlots = 10 + str; let slotsUsed = 0; state.inventory.forEach(item => { slotsUsed += (parseFloat(item.slots) || 0); });
-    let invHtml = `<div class="inv-header"><div></div><div>Item</div><div>Type</div><div style="text-align:center;">Stats</div><div style="text-align:center;">Effect</div><div>Props</div><div style="text-align:center;">GP</div><div style="text-align:center;">Wt</div><div></div></div>`;
+    let invHtml = `<div class="inv-header"><div></div><div>Item</div><div style="text-align:center;">Type</div><div style="text-align:center;">Stats</div><div style="text-align:center;">Effect</div><div style="text-align:center;">Description</div><div style="text-align:center;">GP</div><div style="text-align:center;">Wt</div><div></div></div>`;
     state.inventory.forEach(item => {
-        let eH = '-'; if (item.type === 'weapon' && item.equipped) { const tMod = statsMap[item.stat]; const notation = `${item.dmgDice}${tMod >= 0 ? '+' : ''}${tMod}`; eH = `<span class="roll-link" onclick="dispatchRoll('${notation}', '${item.name}')">⚔️ ${notation}</span>`; }
-        else if (item.type === 'armor' && item.equipped) { eH = `🛡️ ${iStats(`${item.armor} + DEX`, state.level, statsMap)} AC`; }
+        let eH = '-';
+        if (item.type === 'weapon' && item.equipped) {
+            const tMod = statsMap[item.stat];
+            const notation = `${item.dmgDice}${tMod >= 0 ? '+' : ''}${tMod}`;
+            eH = `<span class="roll-link" onclick="dispatchRoll('${notation}', '${item.name}', { stat: '${item.stat}', type: 'attack' })">⚔️ ${notation}</span>`;
+        }
+        else if (item.type === 'armor' && item.equipped) {
+            const dMax = item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0);
+            const finalAC = (parseInt(item.armor) || 0) + Math.min(statsMap.dex, dMax);
+            eH = `🛡️ ${finalAC} AC`;
+        }
         else if (item.type === 'shield' && item.equipped) { eH = `🛡️ +${item.armor} AC`; }
-        invHtml += `<div class="inv-row"><div style="text-align:center;"><input type="checkbox" ${item.equipped?'checked':''} onchange="updateItem(${item.id}, 'equipped', this.checked, true)"></div><div><input type="text" class="inv-input" value="${item.name}" onchange="updateItem(${item.id}, 'name', this.value)"></div><div style="font-size:0.9em; color:var(--text-muted);">${item.type}</div><div style="text-align:center; font-size:0.95em;">${item.type==='weapon'?`${item.dmgDice} (${item.stat.toUpperCase()})`:'-'}</div><div style="font-weight:bold; color:var(--class-accent); text-align:center;">${eH}</div><div><input type="text" class="inv-input" value="${item.props||''}" onchange="updateItem(${item.id}, 'props', this.value)"></div><div style="text-align:center;"><input type="number" class="inv-input" value="${item.cost||0}" onchange="updateItem(${item.id}, 'cost', this.value)"></div><div style="text-align:center;"><input type="number" class="inv-input" value="${item.slots}" onchange="updateItem(${item.id}, 'slots', this.value)"></div><div style="text-align:center;"><button onclick="deleteItem(${item.id})" style="background:none; border:none; color:var(--save-dis); cursor:pointer;">×</button></div></div>`;
+
+        let typeCell = `<div style="font-size:0.9em; color:var(--text-muted); text-transform:capitalize; text-align:center;">${item.armorType || ''} ${item.type}</div>`;
+        
+        let dexDisplay = `<span class="stat-hl">${statsMap.dex >= 0 ? '+' : ''}${statsMap.dex}</span> DEX`;
+        let statsContent = '-';
+        if (item.type === 'weapon') {
+            const sVal = statsMap[item.stat];
+            statsContent = `${item.dmgDice} (<span class="stat-hl">${sVal >= 0 ? '+' : ''}${sVal}</span> ${item.stat.toUpperCase()})`;
+        } else if (item.type === 'armor') {
+            if (item.armorType === 'light') statsContent = `+${item.armor} (${dexDisplay})`;
+            else if (item.armorType === 'medium') statsContent = `+${item.armor} max(${dexDisplay}, 2)`;
+            else statsContent = `+${item.armor}`;
+        }
+        let statsCell = `<div style="text-align:center; font-size:0.95em;">${statsContent}</div>`;
+
+        if (item.isCustom) {
+            typeCell = `<div style="display:flex; flex-direction:column; gap:2px;">
+                <select class="inv-input" style="font-size:0.85em; text-align:center;" onchange="updateItem(${item.id}, 'type', this.value, true)">
+                    <option value="misc" ${item.type === 'misc' ? 'selected' : ''}>Misc</option>
+                    <option value="weapon" ${item.type === 'weapon' ? 'selected' : ''}>Weapon</option>
+                    <option value="armor" ${item.type === 'armor' ? 'selected' : ''}>Armor</option>
+                    <option value="shield" ${item.type === 'shield' ? 'selected' : ''}>Shield</option>
+                </select>
+                ${item.type === 'armor' ? `
+                <select class="inv-input" style="font-size:0.75em; text-align:center;" onchange="updateItem(${item.id}, 'armorType', this.value, true)">
+                    <option value="light" ${item.armorType === 'light' ? 'selected' : ''}>Light</option>
+                    <option value="medium" ${item.armorType === 'medium' ? 'selected' : ''}>Medium</option>
+                    <option value="heavy" ${item.armorType === 'heavy' ? 'selected' : ''}>Heavy</option>
+                </select>` : ''}
+            </div>`;
+
+            if (item.type === 'weapon') {
+                statsCell = `<div style="display:flex; gap:2px; justify-content:center;">
+                    <input type="text" class="inv-input" value="${item.dmgDice}" style="width:35px;" onchange="updateItem(${item.id}, 'dmgDice', this.value, true)">
+                    <select class="inv-input" style="width:40px; font-size:0.75em;" onchange="updateItem(${item.id}, 'stat', this.value, true)">
+                        <option value="str" ${item.stat === 'str' ? 'selected' : ''}>STR</option>
+                        <option value="dex" ${item.stat === 'dex' ? 'selected' : ''}>DEX</option>
+                        <option value="int" ${item.stat === 'int' ? 'selected' : ''}>INT</option>
+                        <option value="wil" ${item.stat === 'wil' ? 'selected' : ''}>WIL</option>
+                    </select>
+                </div>`;
+            } else if (item.type === 'armor') {
+                statsCell = `<div style="display:flex; gap:2px; justify-content:center; align-items:center;">
+                    <span>+</span><input type="number" class="inv-input" value="${item.armor}" style="width:25px;" title="Base Armor" onchange="updateItem(${item.id}, 'armor', parseInt(this.value), true)">
+                </div>`;
+            } else if (item.type === 'shield') {
+                statsCell = `<input type="number" class="inv-input" value="${item.armor}" style="width:30px;" onchange="updateItem(${item.id}, 'armor', parseInt(this.value), true)">`;
+            }
+        }
+
+        invHtml += `<div class="inv-row"><div style="text-align:center;"><input type="checkbox" ${item.equipped ? 'checked' : ''} onchange="updateItem(${item.id}, 'equipped', this.checked, true)"></div><div><input type="text" class="inv-input" value="${item.name}" onchange="updateItem(${item.id}, 'name', this.value)"></div>${typeCell}${statsCell}<div style="font-weight:bold; color:var(--class-accent); text-align:center;">${eH}</div><div><textarea class="inv-input" style="min-height:26px; height:auto; resize:none; overflow:hidden; font-size:0.85em; color:var(--text-muted); line-height:1.2; border:none; background:transparent;" oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';" onfocus="this.style.height='auto';this.style.height=this.scrollHeight+'px';" onchange="updateItem(${item.id}, 'props', this.value)">${item.props || ''}</textarea></div><div style="text-align:center;"><input type="number" class="inv-input" value="${item.cost || 0}" onchange="updateItem(${item.id}, 'cost', this.value)"></div><div style="text-align:center;"><input type="number" class="inv-input" value="${item.slots}" onchange="updateItem(${item.id}, 'slots', this.value)"></div><div style="text-align:center;"><button onclick="deleteItem(${item.id})" style="background:none; border:none; color:var(--save-dis); cursor:pointer;">×</button></div></div>`;
     });
-    document.getElementById('inventoryContainer').innerHTML = invHtml; document.getElementById('inventorySlots').innerHTML = `SLOTS: <span style="color:${slotsUsed > maxSlots?'var(--save-dis)':'var(--class-accent)'}">${slotsUsed} / ${maxSlots}</span>`;
+    document.getElementById('inventoryContainer').innerHTML = invHtml; 
+    document.querySelectorAll('#inventoryContainer textarea').forEach(ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
+    document.getElementById('inventorySlots').innerHTML = `SLOTS: <span style="color:${slotsUsed > maxSlots ? 'var(--save-dis)' : 'var(--class-accent)'}">${slotsUsed} / ${maxSlots}</span>`;
 }
 
 function renderSkills(level, statsMap, passMods) {
@@ -203,6 +264,42 @@ function renderConditions() { let cHtml = ""; CONDITIONS_LIST.forEach(c => cHtml
 function dispatchRoll(notation, label, options = {}) {
     if (!notation) return;
     let finalNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
+
+    // --- AUTOMATED CLASS MODIFIERS ---
+    let autoMod = 0;
+    const isAttack = /attack|⚔️/i.test(label) || options.type === 'attack';
+    const isCantrip = /cantrip/i.test(label) || options.type === 'cantrip' || /vicious mockery/i.test(label);
+
+    if (CLASS_CONFIG.name === 'Berserker') {
+        if (isAttack && options.stat === 'str') {
+            const furySum = (state.furyDice || []).reduce((a, b) => a + b.total, 0);
+            if (furySum > 0) autoMod += furySum;
+        }
+    } else if (CLASS_CONFIG.name === 'Mage') {
+        if (isCantrip && !/check|save/i.test(label)) {
+            autoMod += state.level;
+        }
+    } else if (CLASS_CONFIG.name === 'Oathsworn') {
+        if (isAttack && state.judgmentValue > 0) {
+            autoMod += state.judgmentValue;
+            // Clear Judgment after it's applied to an attack
+            state.judgmentValue = null;
+            state.judgmentRolls = "";
+            saveState();
+            render();
+        }
+    } else if (CLASS_CONFIG.name === 'Zephyr') {
+        if (label === 'Swift Fists' && state.level >= 5) {
+            autoMod += state.level;
+        }
+    }
+
+    if (autoMod !== 0) {
+        // Append modifier. If notation already has a mod, this just adds another +val which parsers handle.
+        finalNotation += (autoMod >= 0 ? '+' : '') + autoMod;
+    }
+    // ---------------------------------
+
     if (finalNotation.toLowerCase().includes('d66')) finalNotation = finalNotation.replace(/d66/gi, '2d6');
     if (finalNotation.toLowerCase().includes('d88')) finalNotation = finalNotation.replace(/d88/gi, '2d8');
     const isCheckOrSave = /check|save|rest|hit die/i.test(label);
@@ -217,10 +314,10 @@ function dispatchRoll(notation, label, options = {}) {
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", { detail: { notation: finalNotation, label: label, playerName: state.charName || "Adventurer", rollTarget: 'everyone', timestamp: Date.now() } }));
 }
 
-function iStats(txt, level, statsMap) {
+function iStats(txt, level, statsMap, context = {}) {
     if (!txt) return "";
     const kv = Math.max(...CLASS_CONFIG.keyStats.map(s => statsMap[s]));
-    const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check')">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
+    const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check', ${JSON.stringify(context)})">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
     let processed = txt.replace(/<[^>]*>|\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill))/gi, (m, p1) => {
         if (!p1) return m;
         const k = p1.toUpperCase(); if (k === 'LVL') return `<span class="stat-hl">${level}</span>`;
@@ -229,17 +326,23 @@ function iStats(txt, level, statsMap) {
     });
     return processed.replace(/<[^>]*>|\b(\d+d\d+)\b/gi, (m, p1) => {
         if (!p1) return m;
-        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${p1}', 'Roll')">${p1}</span>`;
+        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${p1}', 'Roll', ${JSON.stringify(context)})">${p1}</span>`;
     });
 }
 
-function bFeat(t, l, d, theme = "", skip = false, level, statsMap) { const desc = skip ? d : iStats(d, level, statsMap); return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; }
-function formatPips(tier) { const tStr = String(tier); const tNum = parseInt(tStr.replace(/\D/g, '')) || 0; let pips = ""; if (tNum > 0) { for (let i = 0; i < tNum; i++) pips += "●"; } else if (tStr.toLowerCase().includes("cantrip")) { pips = "○"; } if (!pips) return tStr; return `<span style="letter-spacing:2px; color:var(--subclass-accent, var(--class-accent)); margin-right:8px;">${pips}</span> ${tStr}`; }
-function renderSingleSpellCard(s, level, statsMap) { const schoolClass = (s.school || "").toLowerCase(); const desc = s.customHtml ? s.customHtml : (s.desc ? iStats(s.desc, level, statsMap) : ""); return `<div class="spell-card ${schoolClass}" style="margin-top: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"><h4>${s.name ? `${s.name} ` : ""}<span class="tier-tag">${formatPips(s.tier)}</span></h4><div class="spell-desc" style="font-size: 0.85em;">${desc}</div></div>`; }
+function bFeat(t, l, d, theme = "", skip = false, level, statsMap, context = {}) { const desc = skip ? d : iStats(d, level, statsMap, context); return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; }
+function formatPips(tier) { const tStr = String(tier); const tNum = parseInt(tStr.replace(/\D/g, '')) || 0; let pips = ""; if (tNum > 0) { for (let i = 0; i < tNum; i++) pips += "●"; } else if (tStr.toLowerCase().includes("cantrip")) { pips = "○"; } if (!pips) return tStr; return `${tStr} <span style="letter-spacing:2px; color:var(--subclass-accent, var(--class-accent)); margin-left:8px;">${pips}</span>`; }
+function renderSingleSpellCard(s, level, statsMap) { 
+    const schoolClass = (s.school || "").toLowerCase(); 
+    const isCantrip = (s.tier || "").toLowerCase().includes("cantrip") || s.name === "Vicious Mockery";
+    const context = isCantrip ? { type: 'cantrip' } : {};
+    const desc = s.customHtml ? s.customHtml : (s.desc ? iStats(s.desc, level, statsMap, context) : ""); 
+    return `<div class="spell-card ${schoolClass}" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);"><h4>${s.name ? `${s.name} ` : ""}<span class="tier-tag">${formatPips(s.tier)}</span></h4><div class="spell-desc" style="font-size: 0.85em;">${desc}</div></div>`; 
+}
 function renderSpells(level, subclass, state, derived, iStatsBound) {
     let spells = []; if (CLASS_CONFIG.getAvailableSpells) { spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived); }
     if (!spells || spells.length === 0) return "";
-    const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 5": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
+    const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 6": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
     spells.sort((a, b) => { let aOrder = tierOrder[a.tier] ?? 99; let bOrder = tierOrder[b.tier] ?? 99; if (aOrder !== bOrder) return aOrder - bOrder; if (a.school !== b.school) return (a.school || "").localeCompare(b.school || ""); return (a.name || "").localeCompare(b.name || ""); });
     return spells.map(s => renderSingleSpellCard(s, level, { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil })).join("");
 }
@@ -247,8 +350,8 @@ function renderSpells(level, subclass, state, derived, iStatsBound) {
 function render() {
     const { level, ancestry, background, subclass } = state;
     const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
-    const iStatsBound = (txt) => iStats(txt, level, statsMap);
-    const bFeatBound = (t, l, d, theme = "", skip = false) => bFeat(t, l, d, theme, skip, level, statsMap);
+    const iStatsBound = (txt, l, sm, ctx) => iStats(txt, l || level, sm || statsMap, ctx || {});
+    const bFeatBound = (t, l, d, theme = "", skip = false, l2, sm, ctx) => bFeat(t, l, d, theme, skip, l2 || level, sm || statsMap, ctx || {});
     const subclassSelect = document.getElementById('subclass'); if (level < 3) { if (subclassSelect.value !== "None") { subclassSelect.value = "None"; state.subclass = "None"; } subclassSelect.disabled = true; } else { subclassSelect.disabled = false; }
     ['baseStr', 'baseDex', 'baseInt', 'baseWil'].forEach(id => { let el = document.getElementById(id); if (el) { el.readOnly = true; el.style.opacity = '0.5'; el.style.cursor = 'not-allowed'; el.style.borderBottom = 'none'; } });
     const derived = CLASS_CONFIG.getDerivedStats(level, subclass, state); derived.size = derived.size || "Med"; derived.hdMax = level;
@@ -261,7 +364,7 @@ function render() {
     const bgFeat = BACKGROUND_FEATURES[background];
     if (bgFeat) { if (bgFeat.modInit) init += bgFeat.modInit; if (bgFeat.modSpeed) derived.speed += bgFeat.modSpeed; if (bgFeat.modWounds) derived.woundMax = Math.max(1, derived.woundMax + bgFeat.modWounds); if (bgFeat.modSize) derived.size = bgFeat.modSize; if (bgFeat.modHD) derived.hdMax += bgFeat.modHD; }
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : statsMap.dex; let bestArmorVal = -1; let shieldBonus = 0; let armorIsLight = true;
-    state.inventory.forEach(item => { if (!item.equipped) return; if (item.type === 'armor') { const base = parseInt(item.armor) || 0; const dMax = item.dexMax !== undefined ? item.dexMax : (item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0)); const currentArmor = base + Math.min(statsMap.dex, dMax); if (currentArmor > bestArmorVal) bestArmorVal = currentArmor; if (item.armorType !== 'light') armorIsLight = false; } else if (item.type === 'shield') { shieldBonus += (parseInt(item.armor) || 0); } });
+    state.inventory.forEach(item => { if (!item.equipped) return; if (item.type === 'armor') { const base = parseInt(item.armor) || 0; const dMax = item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0); const currentArmor = base + Math.min(statsMap.dex, dMax); if (currentArmor > bestArmorVal) bestArmorVal = currentArmor; if (item.armorType !== 'light') armorIsLight = false; } else if (item.type === 'shield') { shieldBonus += (parseInt(item.armor) || 0); } });
     if (bestArmorVal !== -1) armorVal = bestArmorVal; armorVal += shieldBonus + (CLASS_CONFIG.getShieldBonus ? CLASS_CONFIG.getShieldBonus(level, subclass, statsMap) : 0); if (classOverrides.armor) armorVal += classOverrides.armor; if (ancFeat && ancFeat.modArmor) armorVal += ancFeat.modArmor; if (bgFeat && bgFeat.modArmor) armorVal += bgFeat.modArmor;
     if ((ancFeat?.modFlySpeed || classOverrides.modFlySpeed) && armorIsLight) { derived.speed = `${derived.speed} (${derived.speed} Fly)`; }
     let hpPerLevel = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 }[hdFace] || CLASS_CONFIG.hpPerLevel; let maxHP = CLASS_CONFIG.baseHp + ((level - 1) * hpPerLevel);
@@ -300,9 +403,24 @@ function triggerAnimation(id, type) { const el = document.getElementById(id); if
 function updateClassState(key, index, value) { if (!state[key]) state[key] = []; state[key][index] = value; saveState(); render(); }
 function updateBgSpell(val) { state.bgSpell = val; saveState(); render(); }
 function adjRes(id, amt, max, isAbsolute = false) { let oldVal = state.resourceValues[id] || 0; state.resourceValues[id] = Math.min(max||999, Math.max(0, isAbsolute ? amt : oldVal + amt)); saveState(); render(); }
-function addQuickItem(cat, key) { let t = ITEM_TEMPLATES.data[key]; if (!t) return; state.gold -= (t.cost || 0); state.inventory.push({ id: Date.now(), name: t.name, type: t.type, slots: t.slots, equipped: t.equipped, dmgDice: t.dmgDice||'1d6', stat: t.stat||'str', props: t.props||'', armor: t.armor||0, armorType: t.armorType||'light', dexMax: t.dexMax, cost: t.cost || 0 }); saveState(); render(); }
+function addQuickItem(cat, key) { 
+    let t = ITEM_TEMPLATES.data[key]; 
+    if (!t) return; 
+    state.gold -= (t.cost || 0); 
+    document.getElementById('gold').value = state.gold; // Sync to DOM before saveState reads it
+    state.inventory.push({ id: Date.now(), name: t.name, type: t.type, slots: t.slots, equipped: t.equipped, dmgDice: t.dmgDice||'1d6', stat: t.stat||'str', props: t.props||'', armor: t.armor||0, armorType: t.armorType||'light', cost: t.cost || 0 }); 
+    saveState(); render(); 
+}
 function addItem() { state.inventory.push({ id: Date.now(), name: 'New Item', type: 'misc', slots: 1, equipped: false, dmgDice: '1d6', stat: 'str', props: '', armor: 1, armorType: 'light', cost: 0, isCustom: true }); saveState(); render(); }
-function deleteItem(id) { let item = state.inventory.find(i => i.id === id); if(item) state.gold += (item.cost || 0); state.inventory = state.inventory.filter(i => i.id !== id); saveState(); render(); }
+function deleteItem(id) { 
+    let item = state.inventory.find(i => i.id === id); 
+    if(item) {
+        state.gold += (item.cost || 0); 
+        document.getElementById('gold').value = state.gold; // Sync to DOM before saveState reads it
+    }
+    state.inventory = state.inventory.filter(i => i.id !== id); 
+    saveState(); render(); 
+}
 function updateItem(id, field, val, check = false) { let item = state.inventory.find(i => i.id === id); if(item) { item[field] = check ? val : (field==='slots'||field==='armor'||field==='cost'?parseFloat(val):val); saveState(); render(); } }
 function toggleCondition(id) { if (state.activeConditions.includes(id)) state.activeConditions = state.activeConditions.filter(c => c !== id); else state.activeConditions.push(id); saveState(); render(); }
 function updateSkill(id, val) { state.skills[id] = parseInt(val) || 0; saveState(); render(); }

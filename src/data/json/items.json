@@ -1,0 +1,61 @@
+{
+    "melee": {
+        "Light & Precise": ["dagger", "sickle", "shortsword", "rapier"],
+        "One-Handed": ["clubmace", "handaxe"],
+        "Heavy & Two-Handed": ["staff", "longsword", "battleaxe", "polehammer", "glaive", "spear", "greatmaul", "greataxe", "greatsword"]
+    },
+    "ranged": {
+        "Bows & Ballistae": ["shortbow", "longbow", "crossbow", "handheldballista"],
+        "Thrown & Slings": ["sling", "javelins", "throwinghammers"]
+    },
+    "armor": {
+        "Light Armor": ["adventurersgarb", "minorenchant", "majorenchant", "epicenchant", "cheaphides", "oxhide", "hardleather", "wyrmhide"],
+        "Medium Armor": ["rustymail", "chainshirt", "scalemail", "dragonscale"],
+        "Heavy Armor": ["rustyplate", "halfplate", "fullplate", "mithrilplate"],
+        "Shields": ["woodenbuckler", "ironshield", "towershield", "dragonshield"]
+    },
+    "data": {
+        "dagger": { "name": "Dagger", "type": "weapon", "dmgDice": "1d4", "stat": "dex", "props": "Light, Thrown 4", "slots": 1, "equipped": true, "cost": 3 },
+        "sickle": { "name": "Sickle", "type": "weapon", "dmgDice": "1d4", "stat": "dex", "props": "Vicious", "slots": 1, "equipped": true, "cost": 10 },
+        "clubmace": { "name": "Club/Mace", "type": "weapon", "dmgDice": "1d6", "stat": "str", "props": "", "slots": 1, "equipped": true, "cost": 2 },
+        "handaxe": { "name": "Hand Axe", "type": "weapon", "dmgDice": "1d6", "stat": "str", "props": "Thrown 4", "slots": 1, "equipped": true, "cost": 8 },
+        "shortsword": { "name": "Short Sword", "type": "weapon", "dmgDice": "1d6", "stat": "dex", "props": "Light", "slots": 1, "equipped": true, "cost": 10 },
+        "rapier": { "name": "Rapier", "type": "weapon", "dmgDice": "2d4", "stat": "dex", "props": "", "slots": 1, "equipped": true, "cost": 60 },
+        "staff": { "name": "Staff", "type": "weapon", "dmgDice": "1d8", "stat": "str", "props": "2-handed", "slots": 2, "equipped": true, "cost": 8 },
+        "longsword": { "name": "Longsword", "type": "weapon", "dmgDice": "1d8", "stat": "str", "props": "2-handed (1-handed: Req. 2 STR)", "slots": 2, "equipped": true, "cost": 60 },
+        "battleaxe": { "name": "Battleaxe", "type": "weapon", "dmgDice": "1d10", "stat": "str", "props": "2-handed", "slots": 2, "equipped": true, "cost": 30 },
+        "polehammer": { "name": "Pole Hammer", "type": "weapon", "dmgDice": "1d10", "stat": "str", "props": "2-handed, Reach 2", "slots": 2, "equipped": true, "cost": 60 },
+        "glaive": { "name": "Glaive", "type": "weapon", "dmgDice": "1d10", "stat": "str", "props": "2-handed, Reach 2", "slots": 2, "equipped": true, "cost": 60 },
+        "spear": { "name": "Spear", "type": "weapon", "dmgDice": "1d10", "stat": "str", "props": "2-handed, Reach 2", "slots": 2, "equipped": true, "cost": 20 },
+        "greatmaul": { "name": "Greatmaul", "type": "weapon", "dmgDice": "1d12", "stat": "str", "props": "2-handed (Req. 2 STR)", "slots": 2, "equipped": true, "cost": 80 },
+        "greataxe": { "name": "Greataxe", "type": "weapon", "dmgDice": "2d6", "stat": "str", "props": "2-handed", "slots": 2, "equipped": true, "cost": 100 },
+        "greatsword": { "name": "Greatsword", "type": "weapon", "dmgDice": "3d4", "stat": "str", "props": "2-handed (Req. 2 STR)", "slots": 2, "equipped": true, "cost": 120 },
+        "sling": { "name": "Sling", "type": "weapon", "dmgDice": "1d4", "stat": "dex", "props": "2-handed, Range 12, Vicious", "slots": 2, "equipped": true, "cost": 4 },
+        "javelins": { "name": "Javelins", "type": "weapon", "dmgDice": "1d6", "stat": "str", "props": "Range 8, Stack of 4", "slots": 1, "equipped": true, "cost": 20 },
+        "throwinghammers": { "name": "Throwing Hammers", "type": "weapon", "dmgDice": "1d8", "stat": "str", "props": "Range 4, Stack of 3", "slots": 1, "equipped": true, "cost": 25 },
+        "shortbow": { "name": "Shortbow", "type": "weapon", "dmgDice": "1d6", "stat": "dex", "props": "2-handed, Range 12", "slots": 2, "equipped": true, "cost": 25 },
+        "longbow": { "name": "Longbow", "type": "weapon", "dmgDice": "1d8", "stat": "dex", "props": "2-handed, Range 16 (Req. 1 STR)", "slots": 2, "equipped": true, "cost": 30 },
+        "crossbow": { "name": "Crossbow", "type": "weapon", "dmgDice": "4d4", "stat": "dex", "props": "2-handed, Load: 1 action, Range 8", "slots": 2, "equipped": true, "cost": 60 },
+        "handheldballista": { "name": "Handheld Ballista", "type": "weapon", "dmgDice": "1d20", "stat": "dex", "props": "2-handed, Load: 2 actions, Range 8 (Req. 2 STR)", "slots": 2, "equipped": true, "cost": 120 },
+        "adventurersgarb": { "name": "Adventurer's Garb", "type": "armor", "armor": 2, "armorType": "light", "dexMax": 99, "slots": 1, "equipped": true, "cost": 10 },
+        "minorenchant": { "name": "Minor Enchantment", "type": "armor", "armor": 3, "armorType": "light", "dexMax": 99, "slots": 1, "equipped": true, "cost": 100 },
+        "majorenchant": { "name": "Major Enchantment", "type": "armor", "armor": 4, "armorType": "light", "dexMax": 99, "slots": 1, "equipped": true, "cost": 1000 },
+        "epicenchant": { "name": "Epic Enchantment", "type": "armor", "armor": 5, "armorType": "light", "dexMax": 99, "slots": 1, "equipped": true, "cost": 10000 },
+        "cheaphides": { "name": "Cheap Hides", "type": "armor", "armor": 3, "armorType": "light", "dexMax": 99, "slots": 1, "equipped": true, "cost": 5 },
+        "oxhide": { "name": "Ox Hide", "type": "armor", "armor": 4, "armorType": "light", "dexMax": 99, "slots": 1, "equipped": true, "cost": 45 },
+        "hardleather": { "name": "Hard Leather", "type": "armor", "armor": 5, "armorType": "light", "dexMax": 99, "props": "Req. 1 STR", "slots": 1, "equipped": true, "cost": 300 },
+        "wyrmhide": { "name": "Wyrmhide", "type": "armor", "armor": 6, "armorType": "light", "dexMax": 99, "props": "Req. 1 STR", "slots": 1, "equipped": true, "cost": 2000 },
+        "rustymail": { "name": "Rusty Mail", "type": "armor", "armor": 6, "armorType": "medium", "dexMax": 2, "slots": 1, "equipped": true, "cost": 15 },
+        "chainshirt": { "name": "Chain Shirt", "type": "armor", "armor": 9, "armorType": "medium", "dexMax": 2, "props": "Req. 2 STR", "slots": 1, "equipped": true, "cost": 60 },
+        "scalemail": { "name": "Scale Mail", "type": "armor", "armor": 12, "armorType": "medium", "dexMax": 2, "props": "Req. 3 STR", "slots": 1, "equipped": true, "cost": 700 },
+        "dragonscale": { "name": "Dragonscale", "type": "armor", "armor": 15, "armorType": "medium", "dexMax": 2, "props": "Req. 4 STR", "slots": 1, "equipped": true, "cost": 3000 },
+        "rustyplate": { "name": "Rusty Plate", "type": "armor", "armor": 10, "armorType": "heavy", "dexMax": 0, "props": "Req. 2 STR", "slots": 1, "equipped": true, "cost": 25 },
+        "halfplate": { "name": "Half Plate", "type": "armor", "armor": 14, "armorType": "heavy", "dexMax": 0, "props": "Req. 3 STR", "slots": 1, "equipped": true, "cost": 200 },
+        "fullplate": { "name": "Full Plate", "type": "armor", "armor": 18, "armorType": "heavy", "dexMax": 0, "props": "Req. 4 STR", "slots": 1, "equipped": true, "cost": 2000 },
+        "mithrilplate": { "name": "Mithril Plate", "type": "armor", "armor": 22, "armorType": "heavy", "dexMax": 0, "props": "Req. 5 STR", "slots": 1, "equipped": true, "cost": 5000 },
+        "woodenbuckler": { "name": "Wooden Buckler", "type": "shield", "armor": 2, "slots": 1, "equipped": true, "cost": 5 },
+        "ironshield": { "name": "Iron Shield", "type": "shield", "armor": 4, "props": "Req. 2 STR", "slots": 1, "equipped": true, "cost": 80 },
+        "towershield": { "name": "Tower Shield", "type": "shield", "armor": 6, "props": "Req. 3 STR", "slots": 1, "equipped": true, "cost": 1500 },
+        "dragonshield": { "name": "Dragon Shield", "type": "shield", "armor": 8, "props": "Req. 3 STR", "slots": 1, "equipped": true, "cost": 9000 }
+    }
+}

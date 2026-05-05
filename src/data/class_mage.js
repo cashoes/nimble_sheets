@@ -31,7 +31,7 @@ const MAGE_FEATURES = {
         4: [
             { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 INT or WIL.", minor: true },
             { id: "tier_2", name: "Tier 2 Spells", desc: "You gain access to Tier 2 spells.", minor: true },
-            { id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", desc: "Choose modular spell upgrades.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 }
+            { id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", desc: "Choose modular shadow powers.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 }
         ],
         5: [
             { id: "surge", name: "Elemental Surge", desc: (level) => {
@@ -117,7 +117,7 @@ const MAGE_FEATURES = {
                 { id: "chaos_lash", name: "Chaos Lash", desc: "(1/encounter) Reaction (when an enemy moves adjacent to you): They are pushed back 2 spaces, and on a failed WIL save, knocked Prone as well. Invoke Chaos." }
             ],
             11: [
-                { id: "thrive", name: "Thrive in Chaos", desc: "Whenever you Invoke Chaos, roll twice and cause BOTH effects. (1/Safe Rest) You may choose which roll to use instead." }
+                { id: "thrive", name: "Thrive in Chaos", desc: "Whenever you Invoke Chaos, you may roll twice and cause BOTH effects. (1/Safe Rest) You may choose which roll to use instead." }
             ],
             15: [
                 { id: "master_chaos", name: "Master of Chaos", desc: "Whenever you Invoke Chaos, roll with advantage." }
@@ -128,7 +128,7 @@ const MAGE_FEATURES = {
 
 const CLASS_CONFIG = {
     name: "Mage",
-    subtitle: "Master of elemental forces and spellshaping",
+    subtitle: "Master of elemental forces & spellshaping",
     keyStats: ['int', 'wil'], 
     saves: { adv: 'int', dis: 'str' }, 
     proficiencies: {
@@ -178,45 +178,49 @@ const CLASS_CONFIG = {
     getShieldBonus: function(level, subclass, stats) { return 0; },
 
     getMechanicPanelHTML: function(level, subclass, state, derived) {
-        const manaMax = (state.baseInt + state.addInt) * 3 + level;
+        const totalInt = (state.baseInt || 0) + (state.addInt || 0);
+        const totalWil = (state.baseWil || 0) + (state.addWil || 0);
+        const manaMax = totalInt * 3 + level;
 
         return `
-        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center;">
+        <div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: flex; align-items: stretch; gap: 10px; justify-content: center;">
                 ${level >= 2 ? `
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
-                    <div class="dark-incrementer" style="padding: 4px 10px;">
-                        <button onclick="adjRes('mana', -1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">-</button>
-                        <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:35px; font-size: 1.4em;">
-                        <button onclick="adjRes('mana', 1, ${manaMax})" style="width:24px; height:24px; line-height:1; font-size:1.1em;">+</button>
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center; text-align: center;">
+                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div class="dark-incrementer" style="padding: 4px 6px;">
+                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:32px; font-size: 1.3em;">
+                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.95em;">/ ${manaMax}</div>
                     </div>
-                    <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">MAX ${manaMax}</div>
                 </div>` : ''}
 
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; ${level >= 2 ? 'border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 10px;' : ''} justify-content: center; text-align: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Elemental Surge</label>
-                    <div class="roll-link" onclick="dispatchRoll('${level >= 17 ? '2d4' : level >= 10 ? '1d4' : '0'}${state.baseWil + state.addWil >= 0 ? '+' : ''}${state.baseWil + state.addWil}', 'Elemental Surge Check')" style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; cursor:pointer;">+${state.baseWil + state.addWil}</div>
-                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 8px; font-family: 'Crimson Text'; font-style: italic;">Regain on Initiative ${level >= 17 ? '(+2d4)' : level >= 10 ? '(+1d4)' : ''}</div>
-                </div>
+                ${level >= 5 ? `
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 10px; justify-content: center; text-align: center;">
+                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Surge</label>
+                    <div style="font-size: 2.0em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">+${totalWil}</div>
+                    <div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic;">Regain on Init</div>
+                </div>` : ''}
 
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Cantrips</label>
-                    <div style="font-size: 2.2em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">+${derived.cDmg}</div>
-                    <div style="font-size: 0.8em; color: var(--gold-light); margin-top: 5px; font-family:'Cinzel'; font-weight:bold;">BONUS</div>
+                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Cantrips</label>
+                    <div style="font-size: 2.0em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">+${derived.cDmg}</div>
+                    <div style="font-size: 0.7em; color: var(--gold-light); font-weight:bold; font-family:'Cinzel';">DMG</div>
                 </div>
             </div>
             ${subclass === "Chaos" ? `
-            <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 4px; text-align: center;">
-                <div class="roll-link" onclick="dispatchRoll('1d20', 'Invoke Chaos')" style="color: var(--class-accent); font-size: 0.9em; font-weight: bold; text-transform: uppercase; font-family: 'Cinzel'; letter-spacing: 1px; cursor:pointer;">Invoke Chaos (1d20)</div>
+            <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; text-align: center;">
+                <div class="roll-link" onclick="dispatchRoll('1d20', 'Invoke Chaos')" style="color: var(--class-accent); font-size: 0.85em; font-weight: bold; text-transform: uppercase; font-family: 'Cinzel'; letter-spacing: 1px; cursor:pointer;">Invoke Chaos (1d20)</div>
             </div>` : subclass === "Control" && level >= 3 ? `
-            <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 4px; text-align: center;">
-                <div style="color: var(--gold-light); font-size: 0.75em; font-weight: bold; text-transform: uppercase; font-family: 'Cinzel'; letter-spacing: 1px;">Control Table Reference</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; font-size: 0.7em; color: var(--text-muted); font-family: 'Crimson Text';">
-                    <div style="text-align: right;"><strong>I INSIST:</strong> Free Cantrip (No DIS)</div>
-                    <div style="text-align: left;"><strong>AFFLICTION:</strong> Condition (12 reach)</div>
-                    <div style="text-align: right;"><strong>NO:</strong> Target cannot harm chosen</div>
-                    <div style="text-align: left;"><strong>LOSE CONTROL:</strong> ALL (GM chooses)</div>
+            <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 2px; text-align: center;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text';">
+                    <div style="text-align: right;"><strong>I INSIST:</strong> Cantrip Hit</div>
+                    <div style="text-align: left;"><strong>AFFLICTION:</strong> Condition</div>
+                    <div style="text-align: right;"><strong>NO:</strong> Disarm Harm</div>
+                    <div style="text-align: left;"><strong>LOSE:</strong> ALL (GM)</div>
                 </div>
             </div>` : ''}
         </div>`;
@@ -261,10 +265,13 @@ const CLASS_CONFIG = {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
+        let context = (feat.id === "spellcasting" || feat.id === "tempest") ? { type: 'cantrip' } : {};
         let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
+
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
@@ -281,13 +288,13 @@ const CLASS_CONFIG = {
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
     },
 
     getAvailableSpells: function(level, subclass, state, derived) {
