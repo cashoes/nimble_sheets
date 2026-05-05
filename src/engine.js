@@ -202,7 +202,7 @@ function renderInventory(statsMap, armorVal, str, iStats) {
         }
         else if (item.type === 'shield' && item.equipped) { eH = `🛡️ +${item.armor} AC`; }
 
-        let typeCell = `<div style="font-size:0.9em; color:var(--text-muted); text-transform:capitalize; text-align:left;">${item.type === 'armor' ? (item.armorType || '') + ' ' : ''}${item.type}</div>`;
+        let typeCell = `<div style="font-size:0.9em; color:var(--text-muted); text-transform:capitalize; text-align:left; min-height:26px; display:flex; align-items:center; padding:2px 0; line-height:1.2;">${item.type === 'armor' ? (item.armorType || '') + ' ' : ''}${item.type}</div>`;
         
         let dexDisplay = `<span class="stat-hl">${statsMap.dex >= 0 ? '+' : ''}${statsMap.dex}</span> DEX`;
         let statsContent = '-';
@@ -214,7 +214,7 @@ function renderInventory(statsMap, armorVal, str, iStats) {
             else if (item.armorType === 'medium') statsContent = `+${item.armor} max(${dexDisplay}, 2)`;
             else statsContent = `+${item.armor}`;
         }
-        let statsCell = `<div style="text-align:center; font-size:0.95em;">${statsContent}</div>`;
+        let statsCell = `<div style="text-align:center; font-size:0.9em; min-height:26px; display:flex; align-items:center; justify-content:center; padding:2px 0; line-height:1.2;">${statsContent}</div>`;
 
         if (item.isCustom) {
             typeCell = `<div style="display:flex; flex-direction:column; gap:2px;">
