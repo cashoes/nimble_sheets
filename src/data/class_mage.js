@@ -41,7 +41,7 @@ const MAGE_FEATURES = {
                 return `Roll Init: Regain <strong>${surge}</strong> mana (expires end of combat).`;
             }},
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true },
-            { id: "cantrips_1", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (+5 damage).", minor: true }
+            { id: "cantrips_1", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (scaling varies by cantrip).", minor: true }
         ],
         6: [
             { id: "mastery_2", name: "Elemental Mastery (2)", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1, startIndex: 1, desc: "Learn all Utility spells from a 2nd elemental school of your choice." },
@@ -55,7 +55,7 @@ const MAGE_FEATURES = {
             { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true }
         ],
         10: [
-            { id: "cantrips_2", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (+5 damage).", minor: true },
+            { id: "cantrips_2", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (scaling varies by cantrip).", minor: true },
             { id: "tier_5", name: "Tier 5 Spells", desc: "You gain access to Tier 5 spells.", minor: true }
         ],
         12: [
@@ -70,7 +70,7 @@ const MAGE_FEATURES = {
             { id: "tier_7", name: "Tier 7 Spells", desc: "You gain access to Tier 7 spells.", minor: true }
         ],
         15: [
-            { id: "cantrips_3", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (+5 damage).", minor: true }
+            { id: "cantrips_3", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (scaling varies by cantrip).", minor: true }
         ],
         16: [
             { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 INT or WIL.", minor: true },
@@ -84,7 +84,7 @@ const MAGE_FEATURES = {
         ],
         20: [
             { id: "archmage", name: "Archmage", desc: "+1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana." },
-            { id: "cantrips_4", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (+5 damage).", minor: true }
+            { id: "cantrips_4", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (scaling varies by cantrip).", minor: true }
         ]
     },
     subclasses: {
@@ -166,13 +166,7 @@ const CLASS_CONFIG = {
 
     getDerivedStats: function(level, subclass, state) {
         let speed = 6; let woundMax = 6;
-        let cDmg = 0;
-        if (level >= 5) cDmg += 5;
-        if (level >= 10) cDmg += 5;
-        if (level >= 15) cDmg += 5;
-        if (level >= 20) cDmg += 5;
-
-        return { speed, woundMax, cDmg };
+        return { speed, woundMax };
     },
 
     getShieldBonus: function(level, subclass, stats) { return 0; },
@@ -181,6 +175,16 @@ const CLASS_CONFIG = {
         const totalInt = (state.baseInt || 0) + (state.addInt || 0);
         const totalWil = (state.baseWil || 0) + (state.addWil || 0);
         const manaMax = totalInt * 3 + level;
+
+        let surgeNotation = `1d1+${totalWil}-1`; // Default to just totalWil if no dice added
+        let surgeDisplay = `+${totalWil}`;
+        if (level >= 17) {
+            surgeNotation = `2d4+${totalWil}`;
+            surgeDisplay = `+${totalWil}+2d4`;
+        } else if (level >= 10) {
+            surgeNotation = `1d4+${totalWil}`;
+            surgeDisplay = `+${totalWil}+1d4`;
+        }
 
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;">
@@ -199,17 +203,11 @@ const CLASS_CONFIG = {
                 </div>` : ''}
 
                 ${level >= 5 ? `
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 10px; justify-content: center; text-align: center;">
+                <div style="flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                     <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Surge</label>
-                    <div style="font-size: 2.0em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">+${totalWil}</div>
+                    <div class="roll-link" onclick="dispatchRoll('${surgeNotation}', 'Elemental Surge')" style="font-size: 1.8em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">${surgeDisplay}</div>
                     <div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic;">Regain on Init</div>
                 </div>` : ''}
-
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Cantrips</label>
-                    <div style="font-size: 2.0em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">+${derived.cDmg}</div>
-                    <div style="font-size: 0.7em; color: var(--gold-light); font-weight:bold; font-family:'Cinzel';">DMG</div>
-                </div>
             </div>
             ${subclass === "Chaos" ? `
             <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; text-align: center;">
