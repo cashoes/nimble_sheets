@@ -6,7 +6,7 @@
   "author": "NIMBLE Tracker",
   "action": {
     "title": "NIMBLE Bridge",
-    "icon": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.svg",
+    "icon": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.png",
     "popover": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/index.html",
     "height": 100,
     "width": 200
