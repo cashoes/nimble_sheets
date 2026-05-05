@@ -268,7 +268,9 @@ const CLASS_CONFIG = {
                             <button onclick="CLASS_CONFIG.actions.spendJudgmentDice()" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-muted); font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">X</button>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; margin: 2px 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin: 2px 0; cursor: pointer;" 
+                         oncontextmenu="event.preventDefault(); CLASS_CONFIG.actions.maximizeJudgment()"
+                         title="Right-click to Maximize Judgment Dice">
                         <span style="font-size: 2.0em; font-family: 'Cinzel', serif; font-weight: bold; color: ${valColor}; line-height: 1;">${valText}</span>
                         <span style="font-size: 0.75em; color: var(--text-muted); font-style: italic; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${state.judgmentRolls}">${detailText}</span>
                     </div>
@@ -279,6 +281,14 @@ const CLASS_CONFIG = {
     },
 
     actions: {
+        maximizeJudgment: function () {
+            const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
+            const jdCount = derived.jdCount;
+            const faces = derived.jdFaces;
+            state.judgmentValue = jdCount * faces;
+            state.judgmentRolls = Array(jdCount).fill(faces).join(' + ') + " (Maximized)";
+            saveState(); render();
+        },
         rollJudgmentDice: function () {
             let level = state.level; let subclass = state.subclass; let decrees = state.selectedDecrees || [];
             let jdCount = 2; let faces = 6;
