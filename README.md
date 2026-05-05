@@ -2,8 +2,6 @@
 
 The NIMBLE Tracker is a modular, data-driven suite of digital character trackers for the NIMBLE TTRPG. It produces lightweight, self-contained HTML sheets that are highly portable and Lore-accurate.
 
-## 🚀 [Build your Character Tracker](https://cashoes.github.io/nimble_sheets/)
-
 ---
 
 ## 🎮 Player Setup Guide
