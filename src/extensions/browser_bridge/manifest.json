@@ -4,15 +4,15 @@
   "version": "1.0.0",
   "description": "Bridges the NIMBLE Character Tracker to Owlbear Rodeo Dice+.",
   "icons": {
-    "16": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.svg",
-    "48": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.svg",
-    "128": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.svg"
+    "16": "icon.svg",
+    "48": "icon.svg",
+    "128": "icon.svg"
   },
   "action": {
     "default_icon": {
-      "16": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.svg",
-      "48": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.svg",
-      "128": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.svg"
+      "16": "icon.svg",
+      "48": "icon.svg",
+      "128": "icon.svg"
     },
     "default_title": "NIMBLE Dice+ Bridge"
   },
