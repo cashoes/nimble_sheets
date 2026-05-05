@@ -175,7 +175,9 @@ const CLASS_CONFIG = {
         state.furyDice.forEach((die, idx) => {
             totalFury += die.total;
             diceHtml += `
-            <div onclick="CLASS_CONFIG.actions.spendDie(${idx})" title="Click to spend this die" 
+            <div onclick="CLASS_CONFIG.actions.spendDie(${idx})" 
+                 oncontextmenu="event.preventDefault(); CLASS_CONFIG.actions.maximizeDie(${idx})"
+                 title="Left-click to spend, Right-click to Maximize" 
                  style="cursor:pointer; background: rgba(239, 68, 68, 0.25); border: 2px solid var(--save-dis); border-radius: 6px; padding: 6px; min-width: 42px; text-align: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
                 <span style="font-family: 'Cinzel', serif; font-weight: 900; color: #fff; font-size: 1.4em;">${die.total}</span>
             </div>`;
@@ -231,6 +233,11 @@ const CLASS_CONFIG = {
         },
         spendDie: function(idx) {
             state.furyDice.splice(idx, 1);
+            saveState(); render();
+        },
+        maximizeDie: function(idx) {
+            let faces = parseInt(CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state).fdType.replace('d', ''));
+            state.furyDice[idx].total = faces;
             saveState(); render();
         },
         resetFury: function() { 
