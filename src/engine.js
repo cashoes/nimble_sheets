@@ -508,9 +508,9 @@ function render() {
             usesHtml += '</div>';
             bgDesc += usesHtml;
         }
-        fHtml = bFeatBound(`Background: ${background}`, "", bgDesc, "", true) + fHtml;
+        fHtml = bFeatBound(`Background: ${background}`, "", bgDesc, "", false) + fHtml;
     }
-    if (ancFeat) fHtml = bFeatBound(`Ancestry: ${ancestry}`, "", ancFeat.desc, "", true) + fHtml;
+    if (ancFeat) fHtml = bFeatBound(`Ancestry: ${ancestry}`, "", ancFeat.desc, "", false) + fHtml;
     document.getElementById('featuresContainer').innerHTML = fHtml;
     let maxTier = 0; if (CLASS_CONFIG.getAvailableSpells || CLASS_CONFIG.spellProgression || (subclass === "Spellblade")) { const progress = (subclass === "Spellblade") ? [0, 3, 7, 11, 15] : (CLASS_CONFIG.spellProgression || [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]); maxTier = progress.findLastIndex(l => level >= l); }
     const mtEl = document.getElementById('maxTierDisplay'); if (mtEl) mtEl.innerText = maxTier > 0 ? `(Max Tier: ${maxTier})` : "";
