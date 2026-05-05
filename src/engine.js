@@ -202,7 +202,7 @@ function renderInventory(statsMap, armorVal, str, iStats) {
         }
         else if (item.type === 'shield' && item.equipped) { eH = `🛡️ +${item.armor} AC`; }
 
-        let typeCell = `<div style="font-size:0.9em; color:var(--text-muted); text-transform:capitalize; text-align:center;">${item.armorType || ''} ${item.type}</div>`;
+        let typeCell = `<div style="font-size:0.9em; color:var(--text-muted); text-transform:capitalize; text-align:center;">${item.type === 'armor' ? (item.armorType || '') + ' ' : ''}${item.type}</div>`;
         
         let dexDisplay = `<span class="stat-hl">${statsMap.dex >= 0 ? '+' : ''}${statsMap.dex}</span> DEX`;
         let statsContent = '-';
@@ -530,10 +530,10 @@ function addQuickItem(cat, key) {
     if (!t) return; 
     state.gold -= (t.cost || 0); 
     document.getElementById('gold').value = state.gold; // Sync to DOM before saveState reads it
-    state.inventory.push({ id: Date.now(), name: t.name, type: t.type, slots: t.slots, equipped: t.equipped, dmgDice: t.dmgDice||'1d6', stat: t.stat||'str', props: t.props||'', armor: t.armor||0, armorType: t.armorType||'light', cost: t.cost || 0 }); 
+    state.inventory.push({ id: Date.now(), name: t.name, type: t.type, slots: t.slots, equipped: t.equipped, dmgDice: t.dmgDice||'1d6', stat: t.stat||'str', props: t.props||'', armor: t.armor||0, armorType: t.armorType || (t.type === 'armor' ? 'light' : ''), cost: t.cost || 0 }); 
     saveState(); render(); 
 }
-function addItem() { state.inventory.push({ id: Date.now(), name: 'New Item', type: 'misc', slots: 1, equipped: false, dmgDice: '1d6', stat: 'str', props: '', armor: 1, armorType: 'light', cost: 0, isCustom: true }); saveState(); render(); }
+function addItem() { state.inventory.push({ id: Date.now(), name: 'New Item', type: 'misc', slots: 1, equipped: false, dmgDice: '1d6', stat: 'str', props: '', armor: 1, armorType: '', cost: 0, isCustom: true }); saveState(); render(); }
 function deleteItem(id) { 
     let item = state.inventory.find(i => i.id === id); 
     if(item) {
