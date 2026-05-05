@@ -330,9 +330,11 @@ function iStats(txt, level, statsMap, context = {}) {
         if (k === 'STR') return wrap(statsMap.str, 'STR'); if (k === 'DEX') return wrap(statsMap.dex, 'DEX'); if (k === 'INT') return wrap(statsMap.int, 'INT'); if (k === 'WIL') return wrap(statsMap.wil, 'WIL'); if (k === 'KEY') return wrap(kv, 'KEY');
         return m;
     });
-    return processed.replace(/<[^>]*>|\b(\d+d\d+|t\d+)\b/gi, (m, p1) => {
+    return processed.replace(/<[^>]*>|\b(\d+d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b/gi, (m, p1) => {
         if (!p1) return m;
-        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${p1}', 'Roll', ${JSON.stringify(context)})">${p1}</span>`;
+        // Clean up the match to be a valid notation for dispatchRoll
+        let notation = m.replace(/<[^>]*>/g, '').trim();
+        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${notation}', 'Roll', ${JSON.stringify(context)})">${notation}</span>`;
     });
 }
 
@@ -348,7 +350,7 @@ function renderSingleSpellCard(s, level, statsMap) {
 function renderSpells(level, subclass, state, derived, iStatsBound) {
     let spells = []; if (CLASS_CONFIG.getAvailableSpells) { spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived); }
     if (!spells || spells.length === 0) return "";
-    const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 6": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
+    const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 5": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
     spells.sort((a, b) => { let aOrder = tierOrder[a.tier] ?? 99; let bOrder = tierOrder[b.tier] ?? 99; if (aOrder !== bOrder) return aOrder - bOrder; if (a.school !== b.school) return (a.school || "").localeCompare(b.school || ""); return (a.name || "").localeCompare(b.name || ""); });
     return spells.map(s => renderSingleSpellCard(s, level, { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil })).join("");
 }
