@@ -404,19 +404,36 @@ function render() {
     document.getElementById('displayMaxHP').innerText = maxHP; document.getElementById('maxHD').innerText = derived.hdMax;
     
     let passMods = {}; SKILL_LIST.forEach(s => passMods[s.id] = 0);
+    let skillAdvs = [];
     if (ancFeat) { if (ancFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += ancFeat.modAllSkills); if (ancFeat.modSkill) passMods[ancFeat.modSkill.id] += ancFeat.modSkill.val; }
-    if (bgFeat) { if (bgFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += bgFeat.modAllSkills); if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val; }
+    if (bgFeat) { 
+        if (bgFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += bgFeat.modAllSkills); 
+        if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val; 
+        if (bgFeat.modSkillAdv) skillAdvs.push(bgFeat.modSkillAdv);
+    }
 
-    renderHeader(derived, armorVal, init); renderAttributes(level, statsMap); renderResources(level, derived, statsMap, hdFace); renderInventory(statsMap, armorVal, statsMap.str, iStatsBound); renderSkills(level, statsMap, passMods); renderConditions();
+    renderHeader(derived, armorVal, init); renderAttributes(level, statsMap); renderResources(level, derived, statsMap, hdFace); renderInventory(statsMap, armorVal, statsMap.str, iStatsBound); renderSkills(level, statsMap, passMods, skillAdvs); renderConditions();
     if (document.getElementById('toggleMinorFeatures')) document.getElementById('toggleMinorFeatures').checked = state.showMinor || false; document.body.classList.toggle('show-minor', state.showMinor);
     let fHtml = CLASS_CONFIG.getFeaturesHTML(level, subclass, state, derived, bFeatBound, iStatsBound, formatPips, renderSingleSpellCard);
     if (bgFeat) {
         let bgDesc = bgFeat.desc;
-        if (state.background === "Academy Dropout") {
-            let opts = `<option value="None">-- Select Spell --</option>`;
-            Object.keys(UTILITY_SPELLS).forEach(school => { opts += `<optgroup label="${school}">`; Object.keys(UTILITY_SPELLS[school]).forEach(sName => { opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`; }); opts += `</optgroup>`; });
-            let school = "Radiant"; if (state.bgSpell && state.bgSpell !== "None") { for (const [sch, spells] of Object.entries(UTILITY_SPELLS)) { if (spells[state.bgSpell]) { school = sch; break; } } }
-            bgDesc += renderSingleSpellCard({ name: state.bgSpell !== "None" ? state.bgSpell : "Academy Dropout", tier: "Utility", school: school, customHtml: `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)">${opts}</select></div><div style="font-weight:bold; color:var(--text-muted); font-size:0.85em; margin-bottom:4px;">1 Action</div><div>${state.bgSpell!=="None"?iStatsBound(UTILITY_SPELLS[school][state.bgSpell]):''}</div>` }, level, statsMap);
+        if (bgFeat.type === "choice") {
+            let choiceHtml = "";
+            if (bgFeat.collection === "utility") {
+                let opts = `<option value="None">-- Select Spell --</option>`;
+                Object.keys(UTILITY_SPELLS).forEach(school => { opts += `<optgroup label="${school}">`; Object.keys(UTILITY_SPELLS[school]).forEach(sName => { opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`; }); opts += `</optgroup>`; });
+                let school = "Radiant"; if (state.bgSpell && state.bgSpell !== "None") { for (const [sch, spells] of Object.entries(UTILITY_SPELLS)) { if (spells[state.bgSpell]) { school = sch; break; } } }
+                choiceHtml = renderSingleSpellCard({ name: state.bgSpell !== "None" ? state.bgSpell : state.background, tier: "Utility", school: school, customHtml: `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)">${opts}</select></div><div style="font-weight:bold; color:var(--text-muted); font-size:0.85em; margin-bottom:4px;">1 Action</div><div>${state.bgSpell!=="None"?iStatsBound(UTILITY_SPELLS[school][state.bgSpell]):''}</div>` }, level, statsMap);
+            } else if (bgFeat.collection === "ancestry") {
+                let opts = `<option value="None">-- Select Ancestry --</option>`;
+                Object.keys(ANCESTRIES).forEach(group => { opts += `<optgroup label="${group}">`; ANCESTRIES[group].forEach(a => opts += `<option value="${a}" ${state[bgFeat.stateKey] === a ? 'selected' : ''}>${a}</option>`); opts += `</optgroup>`; });
+                choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
+            } else if (bgFeat.options && bgFeat.stateKey) {
+                let opts = `<option value="None">-- Select Option --</option>`;
+                bgFeat.options.forEach(opt => { opts += `<option value="${opt}" ${state[bgFeat.stateKey] === opt ? 'selected' : ''}>${opt}</option>`; });
+                choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
+            }
+            bgDesc += choiceHtml;
         }
         fHtml = bFeatBound(`Background: ${background}`, "", bgDesc, "", true) + fHtml;
     }
@@ -431,6 +448,7 @@ function render() {
 
 function triggerAnimation(id, type) { const el = document.getElementById(id); if (!el) return; const cls = type === 'green' ? 'flash-green' : 'flash-red'; el.classList.remove('flash-green', 'flash-red'); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 1000); }
 function updateClassState(key, index, value) { if (!state[key]) state[key] = []; state[key][index] = value; saveState(); render(); }
+function updateBgChoice(key, val) { state[key] = val; saveState(); render(); }
 function updateBgSpell(val) { state.bgSpell = val; saveState(); render(); }
 function adjRes(id, amt, max, isAbsolute = false) { let oldVal = state.resourceValues[id] || 0; state.resourceValues[id] = Math.min(max||999, Math.max(0, isAbsolute ? amt : oldVal + amt)); saveState(); render(); }
 function addQuickItem(cat, key) { 

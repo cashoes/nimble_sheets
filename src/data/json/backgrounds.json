@@ -1,17 +1,21 @@
 {
     "categories": {
-        "Academic & Professional": ["Academy Dropout", "History Buff", "Tradesman/Artisan"],
+        "Academic & Professional": ["Academy Dropout", "History Buff", "Taste for the Finer Things", "Tradesman/Artisan"],
         "Athletic & Wild": ["Accidental Acrobat", "Acrobat", "At Home Underground", "Home at Sea", "Survivalist", "Wild One"],
-        "Mystical & Strange": ["Fey Touched", "Haunted Past", "Raised by Another Ancestry", "(Secretly) Undead"],
-        "Special & Criminal": ["Back Out of Retirement (Old Bones)", "Back Out of Retirement (Remember)", "Bumblewise", "Devoted Protector", "Ear to the Ground", "(Former) Con Artist", "Made a BAD Choice", "So Dumb I'm Smart Sometimes", "What? I've Been Around", "Wily Underdog"]
+        "Mystical & Strange": ["Fey Touched", "Haunted Past", "Raised by...", "(Secretly) Undead"],
+        "Special & Criminal": ["Back Out of Retirement", "Bumblewise", "Devoted Protector", "Ear to the Ground", "Fearless", "(Former) Con Artist", "Made a BAD Choice", "So Dumb I'm Smart Sometimes", "What? I've Been Around", "Wily Underdog"]
     },
     "features": {
-        "Academy Dropout": { "desc": "School just isn’t for everyone! You learn by experience in the real world (or at least that’s what you tell yourself). Learn any 1 Utility Spell.", "customUI": "academyDropout" },
+        "Academy Dropout": { "desc": "School just isn’t for everyone! You learn by experience in the real world (or at least that’s what you tell yourself). Learn any 1 Utility Spell.", "type": "choice", "collection": "utility", "stateKey": "bgSpell" },
         "Accidental Acrobat": { "desc": "(Req. 0 or negative DEX at character creation.) Whenever you fail a DEX-related roll (e.g., DEX attack, DEX save, Stealth check, Finesse check), you may roll again. If you still fail, the consequences are BAD." },
         "Acrobat": { "desc": "Can be thrown by a larger ally, REALLY far. Half damage from falling and forced movement." },
         "At Home Underground": { "desc": "You can dig twice as fast as others. Safe resting locations underground always count as Lavish lodging for you. You struggle to rest (INT save) while it’s raining. “Water… from the SKY?!“" },
-        "Back Out of Retirement (Old Bones)": { "desc": "Your age has long since started to show. –1 max Wounds.", "modWounds": -1 },
-        "Back Out of Retirement (Remember)": { "desc": "Gain 1 Wound to use an ability or cast a spell as if you were 1 level higher." },
+        "Back Out of Retirement": { 
+            "desc": "You’ve forgotten more than most adventurers these days know! Talk with your GM, what made you come out of retirement?",
+            "type": "choice",
+            "options": ["Let’s see if I remember how to do this...", "These old bones."],
+            "stateKey": "bgRetirementChoice"
+        },
         "Bumblewise": { "desc": "(Req. 0 or negative WIL at character creation.) A result of 1 or less on any WIL-related roll counts as a natural 20 (WIL save, Naturecraft, Perception, Influence, or Insight check)." },
         "Devoted Protector": { "desc": "Choose 1 ally in your party. You can survive +3 max Wounds as long as they are nearby. Whenever they take a Wound, you do too.", "modWounds": 3 },
         "Ear to the Ground": { "desc": "Advantage on checks to know or obtain gossip for events that will soon happen or have happened less than 1 year ago." },
@@ -19,10 +23,16 @@
         "Fey Touched": { "desc": "You take half damage from all magical effects, double from weapons made of metal (before armor is applied)." },
         "(Former) Con Artist": { "desc": "You can forge most documents or mimic voices flawlessly. You have a criminal contact in most major cities. However, your reputation often precedes you—until you prove yourself to be trustworthy." },
         "Haunted Past": { "desc": "You are haunted by voices that occasionally give you cryptic advice. The voices are sometimes VERY helpful. Other times they only want to see you suffer. Advantage against fear." },
-        "History Buff": { "desc": "Advantage on all Lore checks related to knowledge about items, facts, or events that happened more than 100 years ago.", "modSkill": { "id": "lore", "val": 1 } },
+        "History Buff": { "desc": "Advantage on all Lore checks related to knowledge about items, facts, or events that happened more than 100 years ago.", "modSkillAdv": "lore" },
         "Home at Sea": { "desc": "Recover twice as many Wounds and HP while resting on a ship or near water. You can fill in for a first mate or captain in a pinch. Advantage on water-related skill checks." },
         "Made a BAD Choice": { "desc": "Start with 500 or 1000 extra gold, or an uncommon/rare magical item (that your GM allows). Gain an equally powerful curse or enemy who wants it back. If you choose this background, your GM may allow you to choose another." },
-        "Raised by Another Ancestry": { "desc": "You speak their language, understand their customs, and have advantage on Influence checks when dealing with members of the ancestry that raised you." },
+        "Raised by...": { 
+            "desc": "You speak their language, understand their customs, and have advantage on Influence checks when dealing with members of the ancestry that raised you. If you were raised by Goblins, you also automatically notice and can avoid crudely-made traps and have advantage to notice and disarm more sophisticated traps.",
+            "type": "choice",
+            "collection": "ancestry",
+            "stateKey": "bgRaisedBy",
+            "modSkillAdv": "influence"
+        },
         "(Secretly) Undead": { "desc": "Unnatural Resilience: You are immune to disease and do not need to eat, drink, or breathe. Children, animals, and Celestials are uneasy in your presence; many will be horrified to discover your true nature." },
         "So Dumb I’m Smart Sometimes": { "desc": "(Req. 0 or negative INT at character creation.) Reroll an INT-related skill check, 1/day. Reroll a failed INT save with advantage, 1/Safe Rest." },
         "Survivalist": { "desc": "+1 max Hit Die. Advantage against poison saves. You never run out of your own personal rations. Anything can be food if you try hard enough!", "modHD": 1 },
