@@ -3,6 +3,14 @@
   "name": "NIMBLE Dice+ Bridge",
   "version": "1.0.0",
   "description": "Bridges the NIMBLE Character Tracker to Owlbear Rodeo Dice+.",
+  "icons": {
+    "16": "icon.svg",
+    "48": "icon.svg",
+    "128": "icon.svg"
+  },
+  "action": {
+    "default_icon": "icon.svg"
+  },
   "permissions": ["tabs"],
   "background": {
     "service_worker": "background.js"
