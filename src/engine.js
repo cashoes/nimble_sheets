@@ -164,7 +164,7 @@ function renderAttributes(level, statsMap) {
     let flexSpent = Math.max(0, keySpent - keyAllowed) + Math.max(0, secSpent - secAllowed);
     document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.remove('error-glow'));
     if (flexSpent > flexAllowed) { document.getElementById('unspentStats').innerHTML = `<span style='color:var(--save-dis)'>OVERSPENT: ${flexAllowed - flexSpent} Pts</span>`; document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.add('error-glow')); } 
-    else { document.getElementById('unspentStats').innerHTML = `<span style='color:var(--class-accent)'>UNSPENT: ${keyAllowed - keySpent} Key, ${secAllowed - secSpent} Sec${level >= 20 ? `, ${flexAllowed - flexSpent} Flex` : ''}</span>`; }
+    else { document.getElementById('unspentStats').innerHTML = `<span style='color:var(--class-accent)'>UNSPENT: ${Math.max(0, keyAllowed - keySpent)} Key, ${Math.max(0, secAllowed - secSpent)} Sec${level >= 20 ? `, ${flexAllowed - flexSpent} Flex` : ''}</span>`; }
 }
 
 function renderResources(level, derived, statsMap, hdFace) {
