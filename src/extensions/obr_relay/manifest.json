@@ -6,8 +6,8 @@
   "author": "NIMBLE Tracker",
   "action": {
     "title": "NIMBLE Bridge",
-    "icon": "icon.svg",
-    "popover": "index.html",
+    "icon": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/icon.svg",
+    "popover": "https://cashoes.github.io/nimble_sheets/src/extensions/obr_relay/index.html",
     "height": 100,
     "width": 200
   }
