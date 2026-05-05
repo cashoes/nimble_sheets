@@ -180,10 +180,10 @@ const CLASS_CONFIG = {
         let surgeDisplay = `+${totalWil}`;
         if (level >= 17) {
             surgeNotation = `2d4+${totalWil}`;
-            surgeDisplay = `+${totalWil}+2d4`;
+            surgeDisplay = `2d4+${totalWil}`;
         } else if (level >= 10) {
             surgeNotation = `1d4+${totalWil}`;
-            surgeDisplay = `+${totalWil}+1d4`;
+            surgeDisplay = `1d4+${totalWil}`;
         }
 
         return `
