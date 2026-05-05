@@ -319,7 +319,21 @@ function dispatchRoll(notation, label, options = {}) {
     // ---------------------------------
 
     const isCheckOrSave = /check|save|rest|hit die/i.test(label);
-    let totalAdv = state.advantage + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
+
+    let condAdv = 0;
+    state.activeConditions.forEach(cId => {
+        const c = CONDITIONS_LIST.find(cl => cl.id === cId);
+        if (c && c.modRolls) {
+            if (c.modRolls.adv) {
+                if (c.modRolls.adv.includes('all') || (isAttack && c.modRolls.adv.includes('attack'))) condAdv++;
+            }
+            if (c.modRolls.dis) {
+                if (c.modRolls.dis.includes('all') || (isAttack && c.modRolls.dis.includes('attack'))) condAdv--;
+            }
+        }
+    });
+
+    let totalAdv = state.advantage + condAdv + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
     
     const dieMatch = finalNotation.match(/^(\d+)?d(\d+)(.*)$/i);
     if (dieMatch) {
@@ -385,7 +399,8 @@ function iStats(txt, level, statsMap, context = {}) {
     // 1. Handle Dice/Table rolls first (including those with placeholders like KEY d20 or 1d6+KEY)
     let processed = txt.replace(/\b((\d+|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b/gi, (m) => {
         const notation = resolveNotation(m).replace(/\s+/g, ''); // Remove spaces for the roll command
-        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${notation}', 'Roll', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${notation}</span>`;
+        const label = context.name || 'Roll';
+        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${notation}', '${label}', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${notation}</span>`;
     });
 
     // 2. Handle remaining placeholders (outside of dice strings)
@@ -404,7 +419,11 @@ function iStats(txt, level, statsMap, context = {}) {
     });
 }
 
-function bFeat(t, l, d, theme = "", skip = false, level, statsMap, context = {}) { const desc = skip ? d : iStats(d, level, statsMap, context); return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; }
+function bFeat(t, l, d, theme = "", skip = false, level, statsMap, context = {}) { 
+    const featContext = { ...context, name: t };
+    const desc = skip ? d : iStats(d, level, statsMap, featContext); 
+    return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; 
+}
 function formatPips(tier) { const tStr = String(tier); const tNum = parseInt(tStr.replace(/\D/g, '')) || 0; let pips = ""; if (tNum > 0) { for (let i = 0; i < tNum; i++) pips += "●"; } else if (tStr.toLowerCase().includes("cantrip")) { pips = "○"; } if (!pips) return tStr; return `${tStr} <span style="letter-spacing:2px; color:var(--subclass-accent, var(--class-accent)); margin-left:8px;">${pips}</span>`; }
 function renderSingleSpellCard(s, level, statsMap) { 
     const schoolClass = (s.school || "").toLowerCase(); 
@@ -454,6 +473,28 @@ function render() {
             if (bgSelectedOpt.modHD) derived.hdMax += bgSelectedOpt.modHD;
         }
     }
+
+    // --- Apply Active Conditions ---
+    let maxActions = 3;
+    state.activeConditions.forEach(cId => {
+        const c = CONDITIONS_LIST.find(cl => cl.id === cId);
+        if (c) {
+            if (c.modSpeedMult !== undefined) derived.speed = Math.floor(derived.speed * c.modSpeedMult);
+            if (c.modMaxActions) maxActions += c.modMaxActions;
+        }
+    });
+    maxActions = Math.max(0, maxActions);
+    for (let i = 0; i < 3; i++) { 
+        const pip = document.getElementById(`action${i+1}`);
+        if (pip) {
+            pip.disabled = (i >= maxActions);
+            pip.style.opacity = (i >= maxActions) ? '0.2' : '1';
+            pip.style.cursor = (i >= maxActions) ? 'not-allowed' : 'pointer';
+            if (i >= maxActions && pip.checked) { pip.checked = false; if (state.actionsSpent > i) state.actionsSpent = i; }
+        }
+    }
+    // -------------------------------
+
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : statsMap.dex; let bestArmorVal = -1; let shieldBonus = 0; let armorIsLight = true;
     state.inventory.forEach(item => { if (!item.equipped) return; if (item.type === 'armor') { const base = parseInt(item.armor) || 0; const dMax = item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0); const currentArmor = base + Math.min(statsMap.dex, dMax); if (currentArmor > bestArmorVal) bestArmorVal = currentArmor; if (item.armorType !== 'light') armorIsLight = false; } else if (item.type === 'shield') { shieldBonus += (parseInt(item.armor) || 0); } });
     if (bestArmorVal !== -1) armorVal = bestArmorVal; armorVal += shieldBonus + (CLASS_CONFIG.getShieldBonus ? CLASS_CONFIG.getShieldBonus(level, subclass, statsMap) : 0); if (classOverrides.armor) armorVal += classOverrides.armor; if (ancFeat && ancFeat.modArmor) armorVal += ancFeat.modArmor; if (bgFeat && bgFeat.modArmor) armorVal += bgFeat.modArmor;
