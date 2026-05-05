@@ -6,23 +6,23 @@
         "Special & Criminal": ["Back Out of Retirement", "Bumblewise", "Devoted Protector", "Ear to the Ground", "Fearless", "(Former) Con Artist", "Made a BAD Choice", "So Dumb I'm Smart Sometimes", "What? I've Been Around", "Wily Underdog"]
     },
     "features": {
-        "Academy Dropout": { "desc": "School just isn’t for everyone! You learn by experience in the real world (or at least that’s what you tell yourself). Learn any 1 Utility Spell.", "type": "choice", "collection": "utility", "stateKey": "bgSpell" },
+        "Academy Dropout": { "desc": "School just isn't for everyone! You learn by experience in the real world (or at least that's what you tell yourself). Learn any 1 Utility Spell.", "type": "choice", "collection": "utility", "stateKey": "bgSpell" },
         "Accidental Acrobat": { "desc": "(Req. 0 or negative DEX at character creation.) Whenever you fail a DEX-related roll (e.g., DEX attack, DEX save, Stealth check, Finesse check), you may roll again. If you still fail, the consequences are BAD." },
         "Acrobat": { "desc": "Can be thrown by a larger ally, REALLY far. Half damage from falling and forced movement." },
-        "At Home Underground": { "desc": "You can dig twice as fast as others. Safe resting locations underground always count as Lavish lodging for you. You struggle to rest (INT save) while it’s raining. “Water… from the SKY?!“" },
+        "At Home Underground": { "desc": "You can dig twice as fast as others. Safe resting locations underground always count as Lavish lodging for you. You struggle to rest (INT save) while it's raining. 'Water... from the SKY?!'" },
         "Back Out of Retirement": { 
-            "desc": "You’ve forgotten more than most adventurers these days know! Talk with your GM, what made you come out of retirement?",
+            "desc": "You've forgotten more than most adventurers these days know! Talk with your GM, what made you come out of retirement?",
             "type": "choice",
             "options": [
-                { "label": "Let’s see if I remember how to do this...", "desc": "Gain 1 Wound to use an ability or cast a spell as if you were 1 level higher." },
-                { "label": "These old bones.", "desc": "Your age has long since started to show. –1 max Wounds.", "modWounds": -1 }
+                { "label": "Let's see if I remember how to do this...", "desc": "Gain 1 Wound to use an ability or cast a spell as if you were 1 level higher." },
+                { "label": "These old bones.", "desc": "Your age has long since started to show. -1 max Wounds.", "modWounds": -1 }
             ],
             "stateKey": "bgRetirementChoice"
         },
         "Bumblewise": { "desc": "(Req. 0 or negative WIL at character creation.) A result of 1 or less on any WIL-related roll counts as a natural 20 (WIL save, Naturecraft, Perception, Influence, or Insight check)." },
         "Devoted Protector": { "desc": "Choose 1 ally in your party. You can survive +3 max Wounds as long as they are nearby. Whenever they take a Wound, you do too.", "modWounds": 3 },
         "Ear to the Ground": { "desc": "Advantage on checks to know or obtain gossip for events that will soon happen or have happened less than 1 year ago." },
-        "Fearless": { "desc": "You are immune to the Frightened condition. +1 Initiative. –1 Armor.", "modInit": 1, "modArmor": -1 },
+        "Fearless": { "desc": "You are immune to the Frightened condition. +1 Initiative. -1 Armor.", "modInit": 1, "modArmor": -1 },
         "Fey Touched": { "desc": "You take half damage from all magical effects, double from weapons made of metal (before armor is applied)." },
         "(Former) Con Artist": { "desc": "You can forge most documents or mimic voices flawlessly. You have a criminal contact in most major cities. However, your reputation often precedes you—until you prove yourself to be trustworthy." },
         "Haunted Past": { "desc": "You are haunted by voices that occasionally give you cryptic advice. The voices are sometimes VERY helpful. Other times they only want to see you suffer. Advantage against fear." },
@@ -37,7 +37,7 @@
             "modSkillAdv": "influence"
         },
         "(Secretly) Undead": { "desc": "Unnatural Resilience: You are immune to disease and do not need to eat, drink, or breathe. Children, animals, and Celestials are uneasy in your presence; many will be horrified to discover your true nature." },
-        "So Dumb I’m Smart Sometimes": { 
+        "So Dumb I'm Smart Sometimes": { 
             "desc": "(Req. 0 or negative INT at character creation.) Reroll an INT-related skill check, 1/day. Reroll a failed INT save with advantage, 1/Safe Rest.",
             "uses": [
                 { "label": "Reroll INT skill (1/day)", "max": 1, "stateKey": "bgSoDumbSkill" },
@@ -47,7 +47,7 @@
         "Survivalist": { "desc": "+1 max Hit Die. Advantage against poison saves. You never run out of your own personal rations. Anything can be food if you try hard enough!", "modHD": 1 },
         "Taste for the Finer Things": { "desc": "You always have up-to-date knowledge of the customs and dress of the upper classes and may even know many of their secrets. Advantage on Influence checks with the upper class." },
         "Tradesman/Artisan": { "desc": "Choose a profession (Baker/Cook, Smith, Stonemason, Weaver, Leatherworker, etc.). Checks you make related to that profession are made with advantage. You also retain special knowledge related to your profession." },
-        "What? I’ve Been Around": { "desc": "1/per location (or at the GM’s discretion). You happen to know JUST the person who has the information you’re looking for, or could get you out of a jam, and… Roll 1d20:\n• 1–5. They want you DEAD.\n• 6–12. You owe them money.\n• 13–19. They can be convinced to help you..\n• 20. They are your biggest fan/are madly in love with you." },
+        "What? I've Been Around": { "desc": "1/per location (or at the GM's discretion). You happen to know JUST the person who has the information you're looking for, or could get you out of a jam, and... Roll 1d20:\n• 1–5. They want you DEAD.\n• 6–12. You owe them money.\n• 13–19. They can be convinced to help you..\n• 20. They are your biggest fan/are madly in love with you." },
         "Wild One": { "desc": "Whether it is the sticks or flowers in your hair, your smell, or the way you carry yourself, wild creatures are less frightened of you and more willing to aid you. +1 Naturecraft. While Field Resting, roll your Hit Dice with advantage while in the wild.", "modSkill": { "id": "naturecraft", "val": 1 } },
         "Wily Underdog": { 
             "desc": "(Req. 0 or negative STR at character creation.) Reroll a failed STR-related roll (e.g., STR attack, STR save, Might check) and use another stat instead, 1/day.",

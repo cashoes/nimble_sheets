@@ -131,6 +131,7 @@
   .res-val { font-family: 'Cinzel', serif; font-size: 1.3em; font-weight: bold; display: flex; align-items: center; gap: 6px; }
   .pips { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
   .pip { appearance: none; width: 14px; height: 14px; border: 2px solid var(--class-border); border-radius: 50%; cursor: pointer; background: rgba(0,0,0,0.6); margin: 0; transition: all 0.2s; }
+  .pip:checked { background: var(--class-accent); border-color: var(--class-accent); box-shadow: 0 0 8px var(--class-accent); }
   .pip.wound:checked { background: var(--save-dis); border-color: var(--save-dis); box-shadow: 0 0 8px var(--save-dis); }
   .dark-incrementer { display: flex; align-items: center; background: rgba(0,0,0,0.5); border-radius: 4px; padding: 1px; border: 1px solid var(--slate-light); }
   .dark-incrementer button { background: var(--class-border); color: var(--text-main); border: none; width: 22px; height: 22px; cursor: pointer; font-weight: bold; font-family: monospace; border-radius: 2px; transition: 0.2s; }
