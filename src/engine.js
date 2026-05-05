@@ -300,16 +300,22 @@ function dispatchRoll(notation, label, options = {}) {
     }
     // ---------------------------------
 
-    if (finalNotation.toLowerCase().includes('d66')) finalNotation = finalNotation.replace(/d66/gi, '2d6');
-    if (finalNotation.toLowerCase().includes('d88')) finalNotation = finalNotation.replace(/d88/gi, '2d8');
     const isCheckOrSave = /check|save|rest|hit die/i.test(label);
     let totalAdv = state.advantage + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
+    
     const dieMatch = finalNotation.match(/^(\d+)?d(\d+)(.*)$/i);
     if (dieMatch) {
         let count = parseInt(dieMatch[1] || "1"); let faces = dieMatch[2]; let rest = dieMatch[3];
         let diePart = (totalAdv > 0) ? `${count + totalAdv}d${faces}kh${count}` : (totalAdv < 0) ? `${count + Math.abs(totalAdv)}d${faces}kl${count}` : `${count}d${faces}`;
         if (!isCheckOrSave) diePart += '!';
         finalNotation = diePart + rest;
+    }
+
+    const tableMatch = finalNotation.match(/^t(\d+)(.*)$/i);
+    if (tableMatch) {
+        let faces = tableMatch[1]; let rest = tableMatch[2];
+        let tablePart = (totalAdv > 0) ? `2t${faces}kh1` : (totalAdv < 0) ? `2t${faces}kl1` : `t${faces}`;
+        finalNotation = tablePart + rest;
     }
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", { detail: { notation: finalNotation, label: label, playerName: state.charName || "Adventurer", rollTarget: 'everyone', timestamp: Date.now() } }));
 }
@@ -324,7 +330,7 @@ function iStats(txt, level, statsMap, context = {}) {
         if (k === 'STR') return wrap(statsMap.str, 'STR'); if (k === 'DEX') return wrap(statsMap.dex, 'DEX'); if (k === 'INT') return wrap(statsMap.int, 'INT'); if (k === 'WIL') return wrap(statsMap.wil, 'WIL'); if (k === 'KEY') return wrap(kv, 'KEY');
         return m;
     });
-    return processed.replace(/<[^>]*>|\b(\d+d\d+)\b/gi, (m, p1) => {
+    return processed.replace(/<[^>]*>|\b(\d+d\d+|t\d+)\b/gi, (m, p1) => {
         if (!p1) return m;
         return `<span class="dice-hl roll-link" onclick="dispatchRoll('${p1}', 'Roll', ${JSON.stringify(context)})">${p1}</span>`;
     });
