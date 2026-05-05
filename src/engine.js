@@ -280,13 +280,17 @@ function dispatchRoll(notation, label, options = {}) {
             autoMod += state.level;
         }
     } else if (CLASS_CONFIG.name === 'Oathsworn') {
-        if (isAttack && state.judgmentValue > 0) {
-            autoMod += state.judgmentValue;
-            // Clear Judgment after it's applied to an attack
-            state.judgmentValue = null;
-            state.judgmentRolls = "";
-            saveState();
-            render();
+        if (isAttack) {
+            if (state.judgmentValue > 0) {
+                autoMod += state.judgmentValue;
+                // Clear Judgment after it's applied to an attack
+                state.judgmentValue = null;
+                state.judgmentRolls = "";
+                saveState();
+                render();
+            } else if (state.level >= 18 && options.stat === 'str') {
+                autoMod += 5;
+            }
         }
     } else if (CLASS_CONFIG.name === 'Zephyr') {
         if (label === 'Swift Fists' && state.level >= 5) {

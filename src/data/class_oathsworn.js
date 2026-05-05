@@ -64,7 +64,7 @@ const OATHSWORN_FEATURES = {
             { id: "tier_7", name: "Tier 7 Spells", desc: "You gain access to Tier 7 spells.", minor: true }
         ],
         18: [
-            { id: "unending", name: "Unending Judgment", desc: "While you have no Judgment Dice, gain +5 damage to melee attacks." }
+            { id: "unending", name: "Unending Judgment", desc: (level, subclass, state) => `While you have no Judgment Dice, gain +5 damage to melee attacks.${(level >= 18 && (state.judgmentValue === null || state.judgmentValue === undefined)) ? ' <strong>(Active)</strong>' : ''}` }
         ],
         19: [
             { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
@@ -290,14 +290,10 @@ const CLASS_CONFIG = {
             saveState(); render();
         },
         rollJudgmentDice: function () {
-            let level = state.level; let subclass = state.subclass; let decrees = state.selectedDecrees || [];
-            let jdCount = 2; let faces = 6;
-            if (level >= 3) { faces = 8; }
-            if (level >= 5) { faces = 10; }
-            if (level >= 8) { faces = 12; }
-            if (level >= 10) { faces = 20; }
-            if (level >= 14) { jdCount += 1; }
-            if (subclass === "Vengeance" && level >= 3) jdCount += 1;
+            const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
+            const jdCount = derived.jdCount;
+            const faces = derived.jdFaces;
+            const decrees = state.selectedDecrees || [];
 
             let hasAdv = decrees.includes("Reliable Justice");
             let isExploding = !!(state.explodingDice?.[0]);
