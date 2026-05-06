@@ -408,12 +408,12 @@ function iStats(txt, level, statsMap, context = {}) {
         else if (s === 'WIL') val = statsMap.wil;
         else if (s === 'LVL') val = level;
         else if (s === 'KEY') val = kv;
-        return `<span class="stat-hl">${parseInt(multiplier) * val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${match})</span>`;
+        return `<span class="stat-hl">${parseInt(multiplier) * val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${match})</span>`;
     });
 
     // 1. Handle Dice/Table rolls first (including those with placeholders like KEY d20 or 1d6+KEY)
     // Use alternation to skip existing spans or other HTML tags
-    processed = processed.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b((\d+|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b)/gi, (m, p1, p2, p3) => {
+    processed = processed.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl|formula-label)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b((\d+|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b)/gi, (m, p1, p2, p3) => {
         if (p1 || !p3) return m; // It's an existing span or another HTML tag
         const notation = resolveNotation(p3).replace(/\s+/g, ''); // Remove spaces for the roll command
         const label = context.name || 'Roll';
@@ -421,9 +421,9 @@ function iStats(txt, level, statsMap, context = {}) {
     });
 
     // 2. Handle remaining placeholders (outside of dice strings)
-    const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
+    const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
     
-    return processed.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill)))/gi, (m, p1, p2, p3, p4) => {
+    return processed.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl|formula-label)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill)))/gi, (m, p1, p2, p3, p4) => {
         if (p1 || !p3) return m;
         const k = p4.toUpperCase(); 
         if (k === 'LVL') return `<span class="stat-hl">${level}</span>`;
