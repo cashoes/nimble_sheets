@@ -417,7 +417,7 @@ function iStats(txt, level, statsMap, context = {}) {
     processed = processed.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl|formula-label)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b((\d+|STR|DEX|INT|WIL|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(STR|DEX|INT|WIL|KEY|LVL|\d+))*\b)/gi, (m, p1, p2, p3) => {
         if (p1 || !p3) return m; // It's an existing span or another HTML tag
         const notation = resolveNotation(p3).replace(/\s+/g, ''); // Remove spaces for the roll command
-        const label = context.name || 'Roll';
+        const label = (context.name || 'Roll').replace(/'/g, "\\'");
         const display = resolveNotation(p3);
         const hasStat = /STR|DEX|INT|WIL|KEY|LVL/i.test(p3);
         const formula = (hasStat) ? `<span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p3})</span>` : "";
@@ -425,7 +425,10 @@ function iStats(txt, level, statsMap, context = {}) {
     });
 
     // 2. Handle remaining placeholders (outside of dice strings)
-    const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
+    const wrap = (val, label) => {
+        const escapedLabel = (context.name || 'Roll').replace(/'/g, "\\'");
+        return `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${escapedLabel} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
+    };
     
     return processed.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl|formula-label)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b(STR|DEX|INT|WIL|KEY|LVL)\b)/gi, (m, p1, p2, p3, p4) => {
         if (p1 || !p3) return m;

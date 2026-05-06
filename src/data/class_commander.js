@@ -306,6 +306,7 @@ const CLASS_CONFIG = {
     },
 
     renderFeature: function(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "spell_choice" || feat.type === "dynamic_spell_choice";
         let name = feat.name;
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
@@ -317,7 +318,6 @@ const CLASS_CONFIG = {
             finalCssClass += " minor-feature";
         }
 
-        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
         let context = (feat.id === "tactics" || feat.collection === "tactics") ? { type: 'attack', stat: 'str' } : {};
 
         // Dynamic renaming and transformation of the Orders card into Arcane Command for Spellblade
@@ -449,8 +449,8 @@ const CLASS_CONFIG = {
             }
 
             desc += choiceHtml + `</div>`;
-            }
+        }
 
-            return bFeat(name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
-            }
-            };
+        return bFeat(name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+    }
+};

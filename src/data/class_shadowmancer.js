@@ -306,10 +306,9 @@ const CLASS_CONFIG = {
             desc += choiceHtml + `</div>`;
             }
 
-            return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
-            }
-            };
-    getAvailableSpells: function(level, subclass, state, derived) {
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+    },
+    getAvailableSpells: function (level, subclass, state, derived) {
         let spells = [];
         const school = "Necrotic";
         const progress = [0, 2, 5, 7, 10, 13, 16, 19];

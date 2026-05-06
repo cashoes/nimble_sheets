@@ -346,12 +346,11 @@ const CLASS_CONFIG = {
                 }
             });
             desc += choiceHtml + `</div>`;
-            }
+        }
 
-            return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
-            }
-            };
-    getAvailableSpells: function(level, subclass, state, derived) {
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+    },
+    getAvailableSpells: function (level, subclass, state, derived) {
         let spells = [];
         const masteredSchools = ["Wind"];
         if (state.secondarySchool && state.secondarySchool[0] !== "None") {

@@ -260,6 +260,7 @@ const CLASS_CONFIG = {
     },
 
     renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
+        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
@@ -268,8 +269,6 @@ const CLASS_CONFIG = {
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
-
-        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
@@ -293,9 +292,8 @@ const CLASS_CONFIG = {
             }
 
             return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
-            }
-            };
-    getAvailableSpells: function(level, subclass, state, derived) {
+        },
+        getAvailableSpells: function(level, subclass, state, derived) {
         let spells = [];
         const baseSchools = ["Fire", "Ice", "Lightning"];
         
