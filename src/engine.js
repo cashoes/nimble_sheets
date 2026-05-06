@@ -399,8 +399,9 @@ function iStats(txt, level, statsMap, context = {}) {
     };
 
     // 0. Handle mathematical multipliers (e.g., 3x LVL)
-    let processed = txt.replace(/\b(\d+)\s*[xX×]\s*(STR|DEX|INT|WIL|KEY|LVL)\b/gi, (match, multiplier, stat) => {
-        const s = stat.toUpperCase();
+    let processed = txt.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl|formula-label)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b(\d+)\s*[xX×]\s*(STR|DEX|INT|WIL|KEY|LVL)\b)/gi, (m, p1, p2, p3, p4, p5) => {
+        if (p1 || !p3) return m;
+        const s = p5.toUpperCase();
         let val = 0;
         if (s === 'STR') val = statsMap.str;
         else if (s === 'DEX') val = statsMap.dex;
@@ -408,7 +409,7 @@ function iStats(txt, level, statsMap, context = {}) {
         else if (s === 'WIL') val = statsMap.wil;
         else if (s === 'LVL') val = level;
         else if (s === 'KEY') val = kv;
-        return `<span class="stat-hl">${parseInt(multiplier) * val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${match})</span>`;
+        return `<span class="stat-hl">${parseInt(p4) * val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p3})</span>`;
     });
 
     // 1. Handle Dice/Table rolls first (including those with placeholders like KEY d20 or 1d6+KEY)
