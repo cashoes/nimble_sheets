@@ -448,9 +448,9 @@ const CLASS_CONFIG = {
                 }
             }
 
-            desc += sHtml + `</div>`;
-        }
+            desc += choiceHtml + `</div>`;
+            }
 
-        return bFeat(name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
-    }
-};
+            return bFeat(name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+            }
+            };

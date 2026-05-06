@@ -290,11 +290,11 @@ const CLASS_CONFIG = {
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
-        }
+            }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
-    },
-
+            return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+            }
+            };
     getAvailableSpells: function(level, subclass, state, derived) {
         let spells = [];
         const baseSchools = ["Fire", "Ice", "Lightning"];

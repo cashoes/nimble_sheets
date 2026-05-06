@@ -276,6 +276,6 @@ const CLASS_CONFIG = {
             desc += choiceHtml + `</div>`;
         }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil }, context);
+        return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil }, context);
     }
 };

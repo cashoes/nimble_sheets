@@ -307,11 +307,11 @@ const CLASS_CONFIG = {
                 </div>`;
             }
             desc += choiceHtml + `</div>`;
-        }
+            }
 
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, isChoice, level, statsMap, context);
-    },
-
+            return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+            }
+            };
     getAvailableSpells: function(level, subclass, state, derived) {
         let spells = [];
         const progress = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]; // Default progression
