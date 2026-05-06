@@ -192,7 +192,7 @@ const CLASS_CONFIG = {
                     <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                         <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Minions</label>
                         <div style="font-family: 'Cinzel'; font-weight: bold; color: #fff; font-size: 1.3em; line-height: 1.1;">/ <span style="color: var(--text-main);">${minions}</span></div>
-                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;"><span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack')" style="color: var(--class-accent);">ATK 1d12</span></div>
+                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;"><span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack', { isMinion: true })" style="color: var(--class-accent);">ATK 1d12</span></div>
                     </div>
                 </div>`;
         } else {
@@ -208,7 +208,7 @@ const CLASS_CONFIG = {
                     <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                         <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Minions</label>
                         <div style="font-family: 'Cinzel'; font-weight: bold; color: #fff; font-size: 1.3em; line-height: 1.1;">/ <span style="color: var(--text-main);">${minions}</span></div>
-                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;"><span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack')" style="color: var(--class-accent);">ATK 1d12</span></div>
+                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;"><span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack', { isMinion: true })" style="color: var(--class-accent);">ATK 1d12</span></div>
                     </div>
                 </div>`;
         }
@@ -293,6 +293,7 @@ const CLASS_CONFIG = {
         if (feat.minor) finalCssClass += " minor-feature";
 
         const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
+        let context = (feat.id === "conduit") ? { stat: 'int', type: 'attack' } : (feat.id === "minions" ? { isMinion: true } : {});
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
