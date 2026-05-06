@@ -71,7 +71,22 @@ function computeDerived(s) {
     });
     maxActions = Math.max(0, maxActions);
 
-    // 9. Armor
+    // 9. Skill Passives
+    let passMods = {}; SKILL_LIST.forEach(sk => passMods[sk.id] = 0);
+    if (ancFeat) {
+        if (ancFeat.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += ancFeat.modAllSkills);
+        if (ancFeat.modSkill) passMods[ancFeat.modSkill.id] += ancFeat.modSkill.val;
+    }
+    if (bgFeat) {
+        if (bgFeat.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += bgFeat.modAllSkills);
+        if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val;
+        if (bgSelectedOpt) {
+            if (bgSelectedOpt.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += bgSelectedOpt.modAllSkills);
+            if (bgSelectedOpt.modSkill) passMods[bgSelectedOpt.modSkill.id] += bgSelectedOpt.modSkill.val;
+        }
+    }
+
+    // 10. Armor
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : statsMap.dex;
     let bestArmorVal = -1;
     let shieldBonus = 0;
@@ -101,13 +116,13 @@ function computeDerived(s) {
         speed = `${speed} (${speed} Fly)`;
     }
 
-    // 10. Resource Maxes
+    // 11. Resource Maxes
     const resourceMaxes = {};
     (CLASS_CONFIG.resources || []).forEach(r => {
         resourceMaxes[r.id] = r.calcMax(level, statsMap, s, s.subclass);
     });
 
-    // 11. Spell Tier
+    // 12. Spell Tier
     let maxTier = 0;
     if (CLASS_CONFIG.getAvailableSpells || CLASS_CONFIG.spellProgression || (s.subclass === "Spellblade")) {
         const progress = (s.subclass === "Spellblade") ? [0, 3, 7, 11, 15] : (CLASS_CONFIG.spellProgression || [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
@@ -116,7 +131,7 @@ function computeDerived(s) {
 
     return {
         ...classDerived,
-        level, statsMap, hdFace, maxHP, hdMax: maxHD, armor: armorVal, speed, initiative, woundMax, maxActions, resourceMaxes, maxTier, 
+        level, statsMap, hdFace, maxHP, hdMax: maxHD, armor: armorVal, speed, initiative, woundMax, maxActions, resourceMaxes, maxTier, passMods,
         size: bgFeat?.modSize || ancFeat?.modSize || classDerived.size || "Med"
     };
 }
@@ -148,12 +163,14 @@ function saveState(newState = null) {
         ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
             const baseEl = document.getElementById(`base${s}`);
             const addEl = document.getElementById(`add${s}`);
-            let b = parseInt(baseEl.value) || 0;
-            let a = parseInt(addEl.value) || 0;
-            if (b + a > 5) { a = Math.max(0, 5 - b); addEl.value = a; }
-            addEl.max = Math.max(0, 5 - b);
-            state[`base${s}`] = b;
-            state[`add${s}`] = a;
+            if (baseEl && addEl) {
+                let b = parseInt(baseEl.value) || 0;
+                let a = parseInt(addEl.value) || 0;
+                if (b + a > 5) { a = Math.max(0, 5 - b); addEl.value = a; }
+                addEl.max = Math.max(0, 5 - b);
+                state[`base${s}`] = b;
+                state[`add${s}`] = a;
+            }
         });
 
         const derived = computeDerived(state);
@@ -191,48 +208,51 @@ function loadState() {
     };
     const raw = localStorage.getItem(STORAGE_KEY);
     if (EMBEDDED_STATE) { Object.assign(state, EMBEDDED_STATE); } 
-    else if (raw) { const loaded = JSON.parse(raw); Object.assign(state, loaded); }
+    else if (raw) { try { const loaded = JSON.parse(raw); Object.assign(state, loaded); } catch(e) {} }
     if (state.level === 1 && !state.charName) { if (CLASS_CONFIG.initialStats) { Object.assign(state, CLASS_CONFIG.initialStats); state.version = "1.0.0"; } }
     applyTheme(CLASS_CONFIG.theme); syncStateToDOM();
 }
 
 function syncStateToDOM() {
-    document.getElementById('classNameDisplay').innerText = CLASS_CONFIG.name;
-    document.getElementById('classSubtitleDisplay').innerText = CLASS_CONFIG.subtitle;
+    if(document.getElementById('classNameDisplay')) document.getElementById('classNameDisplay').innerText = CLASS_CONFIG.name;
+    if(document.getElementById('classSubtitleDisplay')) document.getElementById('classSubtitleDisplay').innerText = CLASS_CONFIG.subtitle;
     if (CLASS_CONFIG.proficiencies) { 
-        document.getElementById('profArmor').innerText = CLASS_CONFIG.proficiencies.armor || "--"; 
-        document.getElementById('profWeapons').innerText = CLASS_CONFIG.proficiencies.weapons || "--"; 
+        if(document.getElementById('profArmor')) document.getElementById('profArmor').innerText = CLASS_CONFIG.proficiencies.armor || "--"; 
+        if(document.getElementById('profWeapons')) document.getElementById('profWeapons').innerText = CLASS_CONFIG.proficiencies.weapons || "--"; 
     }
     let subHtml = ""; CLASS_CONFIG.subclasses.forEach(s => subHtml += `<option value="${s.value}">${s.label}</option>`);
-    document.getElementById('subclass').innerHTML = subHtml;
+    const sc = document.getElementById('subclass'); if(sc) sc.innerHTML = subHtml;
     let ancHtml = `<option value="None">None</option>`;
     Object.keys(ANCESTRIES).forEach(group => { ancHtml += `<optgroup label="${group}">`; ANCESTRIES[group].forEach(a => ancHtml += `<option value="${a}">${a}</option>`); ancHtml += `</optgroup>`; });
-    document.getElementById('ancestry').innerHTML = ancHtml;
+    const ac = document.getElementById('ancestry'); if(ac) ac.innerHTML = ancHtml;
     let bgHtml = `<option value="None">None</option>`;
     Object.keys(BACKGROUNDS).forEach(group => { bgHtml += `<optgroup label="${group}">`; BACKGROUNDS[group].forEach(b => bgHtml += `<option value="${b}">${b}</option>`); bgHtml += `</optgroup>`; });
-    document.getElementById('background').innerHTML = bgHtml;
-    const mSel = document.getElementById('meleeSelect'); mSel.innerHTML = '<option value="">+ Melee Item</option>';
-    Object.keys(ITEM_TEMPLATES.melee).forEach(group => { mSel.innerHTML += `<optgroup label="${group}">`; ITEM_TEMPLATES.melee[group].forEach(k => mSel.innerHTML += `<option value="${k}">${ITEM_TEMPLATES.data[k].name}</option>`); mSel.innerHTML += `</optgroup>`; });
-    const rSel = document.getElementById('rangedSelect'); rSel.innerHTML = '<option value="">+ Ranged Item</option>';
-    Object.keys(ITEM_TEMPLATES.ranged).forEach(group => { rSel.innerHTML += `<optgroup label="${group}">`; ITEM_TEMPLATES.ranged[group].forEach(k => rSel.innerHTML += `<option value="${k}">${ITEM_TEMPLATES.data[k].name}</option>`); rSel.innerHTML += `</optgroup>`; });
-    const aSel = document.getElementById('armorSelect'); aSel.innerHTML = '<option value="">+ Armor/Shield</option>';
-    Object.keys(ITEM_TEMPLATES.armor).forEach(group => { aSel.innerHTML += `<optgroup label="${group}">`; ITEM_TEMPLATES.armor[group].forEach(k => aSel.innerHTML += `<option value="${k}">${ITEM_TEMPLATES.data[k].name}</option>`); aSel.innerHTML += `</optgroup>`; });
-    document.getElementById('charName').value = state.charName || ''; 
-    document.getElementById('level').value = state.level || 1;
-    document.getElementById('ancestry').value = state.ancestry || 'None'; 
-    document.getElementById('background').value = state.background || 'None';
-    document.getElementById('subclass').value = state.subclass || 'None'; 
-    document.getElementById('gold').value = state.gold || 0;
+    const bc = document.getElementById('background'); if(bc) bc.innerHTML = bgHtml;
+    
+    const mSel = document.getElementById('meleeSelect'); if(mSel) mSel.innerHTML = '<option value="">+ Melee Item</option>';
+    if(mSel) Object.keys(ITEM_TEMPLATES.melee).forEach(group => { mSel.innerHTML += `<optgroup label="${group}">`; ITEM_TEMPLATES.melee[group].forEach(k => mSel.innerHTML += `<option value="${k}">${ITEM_TEMPLATES.data[k].name}</option>`); mSel.innerHTML += `</optgroup>`; });
+    const rSel = document.getElementById('rangedSelect'); if(rSel) rSel.innerHTML = '<option value="">+ Ranged Item</option>';
+    if(rSel) Object.keys(ITEM_TEMPLATES.ranged).forEach(group => { rSel.innerHTML += `<optgroup label="${group}">`; ITEM_TEMPLATES.ranged[group].forEach(k => rSel.innerHTML += `<option value="${k}">${ITEM_TEMPLATES.data[k].name}</option>`); rSel.innerHTML += `</optgroup>`; });
+    const aSel = document.getElementById('armorSelect'); if(aSel) aSel.innerHTML = '<option value="">+ Armor/Shield</option>';
+    if(aSel) Object.keys(ITEM_TEMPLATES.armor).forEach(group => { aSel.innerHTML += `<optgroup label="${group}">`; ITEM_TEMPLATES.armor[group].forEach(k => aSel.innerHTML += `<option value="${k}">${ITEM_TEMPLATES.data[k].name}</option>`); aSel.innerHTML += `</optgroup>`; });
+    
+    if(document.getElementById('charName')) document.getElementById('charName').value = state.charName || ''; 
+    if(document.getElementById('level')) document.getElementById('level').value = state.level || 1;
+    if(document.getElementById('ancestry')) document.getElementById('ancestry').value = state.ancestry || 'None'; 
+    if(document.getElementById('background')) document.getElementById('background').value = state.background || 'None';
+    if(document.getElementById('subclass')) document.getElementById('subclass').value = state.subclass || 'None'; 
+    if(document.getElementById('gold')) document.getElementById('gold').value = state.gold || 0;
+    
     ['Str', 'Dex', 'Int', 'Wil'].forEach(s => { 
-        document.getElementById(`base${s}`).value = state[`base${s}`]; 
-        const addEl = document.getElementById(`add${s}`); 
-        addEl.value = state[`add${s}`]; 
-        addEl.max = Math.max(0, 5 - state[`base${s}`]); 
+        const bEl = document.getElementById(`base${s}`);
+        const aEl = document.getElementById(`add${s}`);
+        if(bEl) bEl.value = state[`base${s}`]; 
+        if(aEl) { aEl.value = state[`add${s}`]; aEl.max = Math.max(0, 5 - state[`base${s}`]); }
     });
-    for (let i = 0; i < 3; i++) { document.getElementById(`action${i+1}`).checked = (state.actionsSpent > i); }
-    mSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
-    rSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
-    aSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
+    for (let i = 0; i < 3; i++) { const ap = document.getElementById(`action${i+1}`); if(ap) ap.checked = (state.actionsSpent > i); }
+    if(mSel) mSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
+    if(rSel) rSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
+    if(aSel) aSel.onchange = (e) => { if(e.target.value) { addQuickItem('data', e.target.value); e.target.value = ""; } };
 }
 
 function renderModField() {
@@ -242,7 +262,7 @@ function renderModField() {
 }
 
 function adjAdv(amt) { state.advantage = Math.min(3, Math.max(-3, state.advantage + amt)); renderModField(); saveState(); }
-function toggleAction(idx) { state.actionsSpent = (state.actionsSpent > idx) ? idx : idx + 1; for (let i = 0; i < 3; i++) { document.getElementById(`action${i+1}`).checked = (state.actionsSpent > i); } saveState(); }
+function toggleAction(idx) { state.actionsSpent = (state.actionsSpent > idx) ? idx : idx + 1; for (let i = 0; i < 3; i++) { const ap = document.getElementById(`action${i+1}`); if(ap) ap.checked = (state.actionsSpent > i); } saveState(); }
 
 function applyTheme(theme) {
     if (!theme) return;
@@ -260,12 +280,13 @@ function renderHeader(derived, armorVal, init) {
     CLASS_CONFIG.customHeaderStats?.filter(s=>s.position==='left').forEach(s => { 
         if(s.isVisible(state.level, state.subclass)) lStats += `<div class="header-stat"><label style="color:${s.color}">${s.label}</label><div class="header-stat-val" style="color:${s.color}">${s.getValue(derived)}</div></div>`; 
     });
-    document.getElementById('headerLeftStats').innerHTML = lStats;
+    const hl = document.getElementById('headerLeftStats'); if(hl) hl.innerHTML = lStats;
     const ancFeat = ANCESTRY_FEATURES[state.ancestry];
     const hasInitAdv = (ancFeat && ancFeat.modInitAdv);
     const initAdvIcon = hasInitAdv ? '<span style="font-size:0.5em; vertical-align:middle; color:var(--save-adv); margin-left:2px;">▲</span>' : '';
     const initNotation = `1d20${init >= 0 ? '+' : ''}${init}`;
-    document.getElementById('headerRightStats').innerHTML = `<div class="header-stat"><label>Size</label><div class="header-stat-val">${derived.size}</div></div><div class="header-stat"><label>Speed</label><div class="header-stat-val">${derived.speed}</div></div><div class="header-stat"><label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">Init</label><div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">${init >= 0 ? "+" : ""}${init}${initAdvIcon}</div></div>`;
+    const hr = document.getElementById('headerRightStats');
+    if(hr) hr.innerHTML = `<div class="header-stat"><label>Size</label><div class="header-stat-val">${derived.size}</div></div><div class="header-stat"><label>Speed</label><div class="header-stat-val">${derived.speed}</div></div><div class="header-stat"><label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">Init</label><div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">${init >= 0 ? "+" : ""}${init}${initAdvIcon}</div></div>`;
     renderModField();
 }
 
@@ -282,24 +303,32 @@ function renderAttributes(level, statsMap) {
             card.style.cursor = 'pointer';
         }
     });
-    document.getElementById('displayStr').innerText = statsMap.str; document.getElementById('displayDex').innerText = statsMap.dex; document.getElementById('displayInt').innerText = statsMap.int; document.getElementById('displayWil').innerText = statsMap.wil;
+    if(document.getElementById('displayStr')) document.getElementById('displayStr').innerText = statsMap.str; 
+    if(document.getElementById('displayDex')) document.getElementById('displayDex').innerText = statsMap.dex; 
+    if(document.getElementById('displayInt')) document.getElementById('displayInt').innerText = statsMap.int; 
+    if(document.getElementById('displayWil')) document.getElementById('displayWil').innerText = statsMap.wil;
+    
     let keyAllowed = Math.min(4, Math.floor(level/4)); let secAllowed = Math.min(4, Math.floor((level-1)/4)); let flexAllowed = (level >= 20) ? 2 : 0; let keySpent = 0; let secSpent = 0;
     CLASS_CONFIG.keyStats.forEach(s => keySpent += state[`add${s.charAt(0).toUpperCase()+s.slice(1)}`]);
     ['str', 'dex', 'int', 'wil'].filter(s => !CLASS_CONFIG.keyStats.includes(s)).forEach(s => secSpent += state[`add${s.charAt(0).toUpperCase()+s.slice(1)}`]);
     let flexSpent = Math.max(0, keySpent - keyAllowed) + Math.max(0, secSpent - secAllowed);
     document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.remove('error-glow'));
-    if (flexSpent > flexAllowed) { 
-        document.getElementById('unspentStats').innerHTML = `<span style='color:var(--save-dis)'>OVERSPENT: ${flexAllowed - flexSpent} Pts</span>`; 
-        document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.add('error-glow')); 
-    } else { 
-        document.getElementById('unspentStats').innerHTML = `<span style='color:var(--class-accent)'>UNSPENT: ${Math.max(0, keyAllowed - keySpent)} Key, ${Math.max(0, secAllowed - secSpent)} Sec${level >= 20 ? `, ${flexAllowed - flexSpent} Flex` : ''}</span>`; 
+    const us = document.getElementById('unspentStats');
+    if(us) {
+        if (flexSpent > flexAllowed) { 
+            us.innerHTML = `<span style='color:var(--save-dis)'>OVERSPENT: ${flexAllowed - flexSpent} Pts</span>`; 
+            document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.add('error-glow')); 
+        } else { 
+            us.innerHTML = `<span style='color:var(--class-accent)'>UNSPENT: ${Math.max(0, keyAllowed - keySpent)} Key, ${Math.max(0, secAllowed - secSpent)} Sec${level >= 20 ? `, ${flexAllowed - flexSpent} Flex` : ''}</span>`; 
+        }
     }
 }
 
 function renderResources(level, derived, statsMap, hdFace) {
-    document.getElementById('hitDiceLabel').innerHTML = `<span class="roll-link" onclick="dispatchRoll('1d${hdFace}${statsMap.str >= 0 ? '+' : ''}${statsMap.str}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
+    const hl = document.getElementById('hitDiceLabel');
+    if(hl) hl.innerHTML = `<span class="roll-link" onclick="dispatchRoll('1d${hdFace}${statsMap.str >= 0 ? '+' : ''}${statsMap.str}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
     let wHtml = ""; for(let i=0; i<derived.woundMax; i++) wHtml += `<input type="checkbox" class="pip wound" ${i<state.wounds?'checked':''} onclick="handleWoundClick(${i})">`;
-    document.getElementById('woundsContainer').innerHTML = wHtml;
+    const wc = document.getElementById('woundsContainer'); if(wc) wc.innerHTML = wHtml;
     let resHtml = "";
     (CLASS_CONFIG.resources || []).forEach(r => { 
         if (r.manual) return; 
@@ -307,7 +336,7 @@ function renderResources(level, derived, statsMap, hdFace) {
         if (max <= 0) return; 
         resHtml += `<div class="res-row"><label>${r.label}</label><div style="display: flex; align-items: center; gap: 8px;"><div class="res-val dark-incrementer"><button onclick="adjRes('${r.id}', -1)">-</button><input type="number" id="res_${r.id}" value="${state.resourceValues[r.id]}" onchange="adjRes('${r.id}', parseInt(this.value), ${max}, true)"><button onclick="adjRes('${r.id}', 1, ${max})">+</button></div><div class="max-text">/ <span style="color:var(--text-main);">${max}</span></div></div></div>`; 
     });
-    document.getElementById('dynamicResourcesContainer').innerHTML = resHtml;
+    const drc = document.getElementById('dynamicResourcesContainer'); if(drc) drc.innerHTML = resHtml;
 }
 
 function renderInventoryRow(item, statsMap, iStatsBound) {
@@ -395,19 +424,19 @@ function renderInventory(statsMap, armorVal, str, iStats) {
     let html = `<div class="inv-header"><div></div><div>Item</div><div>Type</div><div>Description</div><div style="text-align:center;">GP</div><div style="text-align:center;">Wt</div><div style="text-align:center;">Stats</div><div style="text-align:center;">Effect</div><div></div></div>`;
     html += state.inventory.map(item => renderInventoryRow(item, statsMap, iStats)).join('');
 
-    document.getElementById('inventoryContainer').innerHTML = html;
+    const ic = document.getElementById('inventoryContainer'); if(ic) ic.innerHTML = html;
     document.querySelectorAll('#inventoryContainer textarea').forEach(ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
-    document.getElementById('inventorySlots').innerHTML = `SLOTS: <span style="color:${slotsUsed > maxSlots ? 'var(--save-dis)' : 'var(--class-accent)'}">${slotsUsed} / ${maxSlots}</span>`;
+    const is = document.getElementById('inventorySlots'); if(is) is.innerHTML = `SLOTS: <span style="color:${slotsUsed > maxSlots ? 'var(--save-dis)' : 'var(--class-accent)'}">${slotsUsed} / ${maxSlots}</span>`;
 }
 
 function renderSkills(level, statsMap, passMods) {
     let totalPts = 3 + level; let spent = 0; SKILL_LIST.forEach(s => { let pts = state.skills[s.id] || 0; let base = statsMap[s.stat] + passMods[s.id]; pts = Math.min(12 - base, Math.max(Math.min(0, -base), pts)); state.skills[s.id] = pts; spent += pts; });
     let sHtml = `<div class="skill-header"><span>SKILLS</span><span style="color:${(totalPts - spent) < 0 ? 'var(--save-dis)' : 'var(--class-accent)'}">UNSPENT: ${totalPts - spent}</span></div><div class="skills-grid">`;
     SKILL_LIST.forEach(s => { let t = statsMap[s.stat] + (state.skills[s.id]||0) + passMods[s.id]; sHtml += `<div class="skill-row"><div class="skill-name">${s.name} <span class="skill-stat">${s.stat.toUpperCase()}</span></div><div class="skill-pts"><input type="number" value="${state.skills[s.id]||0}" onchange="updateSkill('${s.id}', this.value)"></div><div class="skill-total roll-link" onclick="dispatchRoll('1d20${t >= 0 ? '+' : ''}${t}', '${s.name} Skill Check')">${t >= 0 ? '+' : ''}${t}</div></div>`; });
-    document.getElementById('skillsContainer').innerHTML = sHtml + `</div>`;
+    const sc = document.getElementById('skillsContainer'); if(sc) sc.innerHTML = sHtml + `</div>`;
 }
 
-function renderConditions() { let cHtml = ""; CONDITIONS_LIST.forEach(c => cHtml += `<div class="condition-btn ${c.type} ${state.activeConditions.includes(c.id)?'active':''}" title="${c.desc}" onclick="toggleCondition('${c.id}')">${c.name}</div>`); document.getElementById('conditionsContainer').innerHTML = cHtml; }
+function renderConditions() { let cHtml = ""; CONDITIONS_LIST.forEach(c => cHtml += `<div class="condition-btn ${c.type} ${state.activeConditions.includes(c.id)?'active':''}" title="${c.desc}" onclick="toggleCondition('${c.id}')">${c.name}</div>`); const cc = document.getElementById('conditionsContainer'); if(cc) cc.innerHTML = cHtml; }
 
 function dispatchRoll(notation, label, options = {}) {
     if (!notation) return;
@@ -593,25 +622,26 @@ function renderSpells(level, subclass, state, derived, iStatsBound) {
     if (!spells || spells.length === 0) return "";
     const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 5": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
     spells.sort((a, b) => { let aOrder = tierOrder[a.tier] ?? 99; let bOrder = tierOrder[b.tier] ?? 99; if (aOrder !== bOrder) return aOrder - bOrder; if (a.school !== b.school) return (a.school || "").localeCompare(b.school || ""); return (a.name || "").localeCompare(b.name || ""); });
-    return spells.map(s => renderSingleSpellCard(s, level, { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil })).join("");
+    return spells.map(s => renderSingleSpellCard(s, level, derived.statsMap)).join("");
 }
 
 function render() {
     const derived = computeDerived(state);
-    const { level, statsMap, armor, initiative, speed, hdFace, maxHP, hdMax, woundMax, maxActions, maxTier } = derived;
+    const { level, statsMap, armor, initiative, speed, hdFace, maxHP, hdMax, woundMax, maxActions, maxTier, passMods } = derived;
 
     const subclassSelect = document.getElementById('subclass');
     if (level < 3) {
-        if (subclassSelect.value !== "None") { subclassSelect.value = "None"; state.subclass = "None"; }
-        subclassSelect.disabled = true;
+        if (subclassSelect && subclassSelect.value !== "None") { subclassSelect.value = "None"; state.subclass = "None"; }
+        if (subclassSelect) subclassSelect.disabled = true;
     } else {
-        subclassSelect.disabled = false;
+        if (subclassSelect) subclassSelect.disabled = false;
     }
 
     const subConfig = CLASS_CONFIG.subclasses.find(s => s.value === state.subclass);
     document.documentElement.style.setProperty('--subclass-accent', (subConfig && subConfig.accent) ? subConfig.accent : 'var(--class-accent)');
-    if (CLASS_CONFIG.getMechanicPanelHTML) {
-        document.getElementById('classMechanicPanel').innerHTML = CLASS_CONFIG.getMechanicPanelHTML(level, state.subclass, state, derived);
+    const cmp = document.getElementById('classMechanicPanel');
+    if (CLASS_CONFIG.getMechanicPanelHTML && cmp) {
+        cmp.innerHTML = CLASS_CONFIG.getMechanicPanelHTML(level, state.subclass, state, derived);
     }
 
     for (let i = 0; i < 3; i++) {
@@ -633,20 +663,8 @@ function render() {
     if (hpEl && document.activeElement !== hpEl) hpEl.value = state.hpCurrent;
     if (thpEl && document.activeElement !== thpEl) thpEl.value = state.tempHP || 0;
     if (hdEl && document.activeElement !== hdEl) hdEl.value = state.hdCurrent;
-    document.getElementById('displayMaxHP').innerText = maxHP;
-    document.getElementById('maxHD').innerText = hdMax;
-
-    let passMods = {}; SKILL_LIST.forEach(s => passMods[s.id] = 0);
-    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
-    const bgFeat = BACKGROUND_FEATURES[state.background];
-    if (ancFeat) {
-        if (ancFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += ancFeat.modAllSkills);
-        if (ancFeat.modSkill) passMods[ancFeat.modSkill.id] += ancFeat.modSkill.val;
-    }
-    if (bgFeat) {
-        if (bgFeat.modAllSkills) SKILL_LIST.forEach(s => passMods[s.id] += bgFeat.modAllSkills);
-        if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val;
-    }
+    const dmh = document.getElementById('displayMaxHP'); if(dmh) dmh.innerText = maxHP;
+    const mhd = document.getElementById('maxHD'); if(mhd) mhd.innerText = hdMax;
 
     const iStatsBound = (txt, l, sm, ctx) => iStats(txt, l || level, sm || statsMap, ctx || {});
     const bFeatBound = (t, l, d, theme = "", skip = false, l2, sm, ctx) => bFeat(t, l, d, theme, skip, l2 || level, sm || statsMap, ctx || {});
@@ -658,10 +676,13 @@ function render() {
     renderSkills(level, statsMap, passMods);
     renderConditions();
 
-    if (document.getElementById('toggleMinorFeatures')) document.getElementById('toggleMinorFeatures').checked = state.showMinor || false;
+    const tmf = document.getElementById('toggleMinorFeatures');
+    if (tmf) tmf.checked = state.showMinor || false;
     document.body.classList.toggle('show-minor', state.showMinor);
 
     let fHtml = CLASS_CONFIG.getFeaturesHTML(level, state.subclass, state, derived, bFeatBound, iStatsBound, formatPips, renderSingleSpellCard);
+    const bgFeat = BACKGROUND_FEATURES[state.background];
+    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
 
     if (bgFeat) {
         let bgDesc = bgFeat.desc;
@@ -728,7 +749,7 @@ function render() {
     }
 
     if (ancFeat) fHtml = bFeatBound(`Ancestry: ${state.ancestry}`, "", ancFeat.desc, "", false) + fHtml;
-    document.getElementById('featuresContainer').innerHTML = fHtml;
+    const fc = document.getElementById('featuresContainer'); if(fc) fc.innerHTML = fHtml;
 
     const mtEl = document.getElementById('maxTierDisplay');
     if (mtEl) mtEl.innerText = maxTier > 0 ? `(Max Tier: ${maxTier})` : "";
@@ -736,12 +757,12 @@ function render() {
     let sHtml = renderSpells(level, state.subclass, state, derived, iStatsBound);
     const sWrapper = document.getElementById('spellsColWrapper');
     if (sHtml && sHtml.trim().length > 0) {
-        document.getElementById('featuresSpellsLayout').className = 'layout-2col';
-        sWrapper.style.display = 'block';
-        document.getElementById('spellsContainer').innerHTML = sHtml;
+        if(document.getElementById('featuresSpellsLayout')) document.getElementById('featuresSpellsLayout').className = 'layout-2col';
+        if(sWrapper) sWrapper.style.display = 'block';
+        const sc = document.getElementById('spellsContainer'); if(sc) sc.innerHTML = sHtml;
     } else {
-        document.getElementById('featuresSpellsLayout').className = 'layout-1col';
-        sWrapper.style.display = 'none';
+        if(document.getElementById('featuresSpellsLayout')) document.getElementById('featuresSpellsLayout').className = 'layout-1col';
+        if(sWrapper) sWrapper.style.display = 'none';
     }
 }
 
