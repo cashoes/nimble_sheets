@@ -34,7 +34,7 @@ const OATHSWORN_FEATURES = {
         ],
         5: [
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 DEX or INT.", minor: true },
-            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your Radiant/Necrotic cantrips grow stronger." }
+            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your Radiant/Necrotic cantrips grow stronger.", minor: true }
         ],
         6: [
             { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }

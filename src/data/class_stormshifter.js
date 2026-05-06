@@ -45,7 +45,7 @@ const STORMSHIFTER_FEATURES = {
         5: [
             { id: "dire_3", name: "Direbeast Form (3)", desc: "You can now Beastshift into a <strong>Beast of Nightmares</strong> (Tiny)." },
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true },
-            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your lightning/wind cantrips grow stronger." }
+            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your lightning/wind cantrips grow stronger.", minor: true }
         ],
         6: [
             { id: "boons", name: "Chimeric Boons", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", desc: "Choose form mutations.", getCount: (level) => level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2 },

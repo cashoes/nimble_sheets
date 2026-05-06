@@ -42,7 +42,7 @@ const SHEPHERD_FEATURES = {
         5: [
             { id: "graces", name: "Sacred Graces", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", desc: "Choose modular graces.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 },
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 INT or DEX.", minor: true },
-            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your shadow/radiant cantrips grow stronger." }
+            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your shadow/radiant cantrips grow stronger.", minor: true }
         ],
         6: [
             { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }
