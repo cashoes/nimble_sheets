@@ -321,17 +321,19 @@ function dispatchRoll(notation, label, options = {}) {
     const isCheckOrSave = /check|save|rest|hit die/i.test(label);
 
     let condAdv = 0;
-    state.activeConditions.forEach(cId => {
-        const c = CONDITIONS_LIST.find(cl => cl.id === cId);
-        if (c && c.modRolls) {
-            if (c.modRolls.adv) {
-                if (c.modRolls.adv.includes('all') || (isAttack && c.modRolls.adv.includes('attack'))) condAdv++;
+    if (!options.isMinion) {
+        state.activeConditions.forEach(cId => {
+            const c = CONDITIONS_LIST.find(cl => cl.id === cId);
+            if (c && c.modRolls) {
+                if (c.modRolls.adv) {
+                    if (c.modRolls.adv.includes('all') || (isAttack && c.modRolls.adv.includes('attack'))) condAdv++;
+                }
+                if (c.modRolls.dis) {
+                    if (c.modRolls.dis.includes('all') || (isAttack && c.modRolls.dis.includes('attack'))) condAdv--;
+                }
             }
-            if (c.modRolls.dis) {
-                if (c.modRolls.dis.includes('all') || (isAttack && c.modRolls.dis.includes('attack'))) condAdv--;
-            }
-        }
-    });
+        });
+    }
 
     let totalAdv = state.advantage + condAdv + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
     
@@ -425,10 +427,10 @@ function bFeat(t, l, d, theme = "", skip = false, level, statsMap, context = {})
     return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; 
 }
 function formatPips(tier) { const tStr = String(tier); const tNum = parseInt(tStr.replace(/\D/g, '')) || 0; let pips = ""; if (tNum > 0) { for (let i = 0; i < tNum; i++) pips += "●"; } else if (tStr.toLowerCase().includes("cantrip")) { pips = "○"; } if (!pips) return tStr; return `${tStr} <span style="letter-spacing:2px; color:var(--subclass-accent, var(--class-accent)); margin-left:8px;">${pips}</span>`; }
-function renderSingleSpellCard(s, level, statsMap) { 
+function renderSingleSpellCard(s, level, statsMap, contextOverride = null) { 
     const schoolClass = (s.school || "").toLowerCase(); 
     const isCantrip = (s.tier || "").toLowerCase().includes("cantrip") || s.name === "Vicious Mockery";
-    const context = isCantrip ? { type: 'cantrip', name: s.name, school: s.school } : {};
+    const context = contextOverride || (isCantrip ? { type: 'cantrip', name: s.name, school: s.school } : { name: s.name });
     const desc = s.customHtml ? s.customHtml : (s.desc ? iStats(s.desc, level, statsMap, context) : ""); 
     return `<div class="spell-card ${schoolClass}" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);"><h4>${s.name ? `${s.name} ` : ""}<span class="tier-tag">${formatPips(s.tier)}</span></h4><div class="spell-desc" style="font-size: 0.85em;">${desc}</div></div>`; 
 }

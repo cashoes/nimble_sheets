@@ -296,9 +296,12 @@ const CLASS_CONFIG = {
                 let val = selection[idx] || "None";
                 let d = (val !== "None" && HUNTER_OPTIONS[collection][val]) ? HUNTER_OPTIONS[collection][val].desc : "";
 
+                let abilityContext = { ...context };
+                if (val === "Go for the Throat!" || val === "Protect Me!") abilityContext.isMinion = true;
+
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, abilityContext)}</div>
                 </div>`;
             }
             desc += choiceHtml + `</div>`;

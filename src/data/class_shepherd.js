@@ -29,7 +29,7 @@ const SHEPHERD_FEATURES = {
                     desc: `1 Action. Reach: 4. Summon a spirit companion that follows you. It lasts until you cast this spell again, take a Safe Rest, or it heals a number of times equal to the mana spent summoning it.<br>
                     <div style="margin-top:5px;">● It attacks or heals for <strong>1d6${wilDisplay}</strong> radiant damage (ignoring armor), or heals for the same amount.</div>
                     <div style="margin-top:5px;">● <strong>Upcast:</strong> +1 die size (max d12), +1 healing use per tier. <em>(Current max upcast dmg: <strong>${derived.spiritDmg}${wilDisplay}</strong>)</em></div>`
-                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: state.baseInt+state.addInt, wil: totalWil });
+                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: state.baseInt+state.addInt, wil: totalWil }, { isMinion: true });
                 
                 return intro + card;
             } },
@@ -231,7 +231,7 @@ const CLASS_CONFIG = {
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">${spiritType} Spirit ${level < 2 ? '(Lvl 2)' : ''}</label>
                     ${level >= 2 ? `
-                        <div class="roll-link" onclick="dispatchRoll('${derived.spiritDmg}${totalWil >= 0 ? '+' : ''}${totalWil}', 'Spirit Command')" style="font-size: 2.2em; color: ${spiritColor}; font-weight: bold; font-family: 'Cinzel', serif; line-height: 1; cursor:pointer;">${derived.spiritDmg}${totalWil >= 0 ? '+' : ''}${totalWil}</div>
+                        <div class="roll-link" onclick="dispatchRoll('${derived.spiritDmg}${totalWil >= 0 ? '+' : ''}${totalWil}', 'Spirit Command', { isMinion: true })" style="font-size: 2.2em; color: ${spiritColor}; font-weight: bold; font-family: 'Cinzel', serif; line-height: 1; cursor:pointer;">${derived.spiritDmg}${totalWil >= 0 ? '+' : ''}${totalWil}</div>
                         <div style="font-size: 0.65em; color: var(--text-muted); margin-top: 2px; font-family: 'Crimson Text'; font-style: italic;">(At max tier)</div>
                         <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 4px; font-family: 'Crimson Text'; font-style: italic;">Reach 4</div>
                         <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.1; font-family: 'Crimson Text'; max-width: 130px;">Upcast: +1 die size (max ${state.selectedGraces?.includes("Empowered Companion") ? "d20" : "d12"}), +1 heal use.</div>
