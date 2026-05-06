@@ -408,7 +408,7 @@ function iStats(txt, level, statsMap, context = {}) {
         else if (s === 'WIL') val = statsMap.wil;
         else if (s === 'LVL') val = level;
         else if (s === 'KEY') val = kv;
-        return `<span class="stat-hl">${parseInt(multiplier) * val}</span>`;
+        return `<span class="stat-hl">${parseInt(multiplier) * val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${match})</span>`;
     });
 
     // 1. Handle Dice/Table rolls first (including those with placeholders like KEY d20 or 1d6+KEY)
