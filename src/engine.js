@@ -116,7 +116,7 @@ function computeDerived(s) {
 
     return {
         ...classDerived,
-        statsMap, hdFace, maxHP, hdMax: maxHD, armor: armorVal, speed, initiative, woundMax, maxActions, resourceMaxes, maxTier, 
+        level, statsMap, hdFace, maxHP, hdMax: maxHD, armor: armorVal, speed, initiative, woundMax, maxActions, resourceMaxes, maxTier, 
         size: bgFeat?.modSize || ancFeat?.modSize || classDerived.size || "Med"
     };
 }
