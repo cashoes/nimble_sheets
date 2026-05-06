@@ -47,7 +47,7 @@ const SONGWEAVER_FEATURES = {
             }}
         ],
         2: [
-            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>WILx3+LVL</strong>) to cast tiered spells." },
+            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x WIL+LVL</strong>) to cast tiered spells." },
             { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true },
             { id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." },
             { id: "song_rest", name: "Song of Rest", desc: "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your <strong>WIL</strong>." }

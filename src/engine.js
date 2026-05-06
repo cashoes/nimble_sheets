@@ -398,9 +398,22 @@ function iStats(txt, level, statsMap, context = {}) {
         return res;
     };
 
+    // 0. Handle mathematical multipliers (e.g., 3x LVL)
+    let processed = txt.replace(/\b(\d+)\s*[xX×]\s*(STR|DEX|INT|WIL|KEY|LVL)\b/gi, (match, multiplier, stat) => {
+        const s = stat.toUpperCase();
+        let val = 0;
+        if (s === 'STR') val = statsMap.str;
+        else if (s === 'DEX') val = statsMap.dex;
+        else if (s === 'INT') val = statsMap.int;
+        else if (s === 'WIL') val = statsMap.wil;
+        else if (s === 'LVL') val = level;
+        else if (s === 'KEY') val = kv;
+        return `<span class="stat-hl">${parseInt(multiplier) * val}</span>`;
+    });
+
     // 1. Handle Dice/Table rolls first (including those with placeholders like KEY d20 or 1d6+KEY)
     // Use alternation to skip existing spans or other HTML tags
-    let processed = txt.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b((\d+|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b)/gi, (m, p1, p2, p3) => {
+    processed = processed.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b((\d+|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b)/gi, (m, p1, p2, p3) => {
         if (p1 || !p3) return m; // It's an existing span or another HTML tag
         const notation = resolveNotation(p3).replace(/\s+/g, ''); // Remove spaces for the roll command
         const label = context.name || 'Roll';

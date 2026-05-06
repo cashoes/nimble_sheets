@@ -9,8 +9,8 @@ const COMMANDER_OPTIONS = {
             empowered: "<strong>(Glimmering Decree)</strong> Target takes STR d8 radiant damage, is pulled up to 4 spaces toward you, and is Taunted until you drop to 0 HP."
         },
         "Hold the Line!": {
-            desc: "(1/encounter) Reaction (ally drops to 0 HP): Command them to continue; set their HP to 3 x LVL.",
-            empowered: "<strong>(Crystalline Armor)</strong> Target set to 3 x LVL HP and gains that much Temp HP. Enemies who reduce this Temp HP in melee have speed halved for next turn."
+            desc: "(1/encounter) Reaction (ally drops to 0 HP): Command them to continue; set their HP to 3x LVL.",
+            empowered: "<strong>(Crystalline Armor)</strong> Target set to 3x LVL HP and gains that much Temp HP. Enemies who reduce this Temp HP in melee have speed halved for next turn."
         },
         "I Can Do This ALL DAY!": {
             desc: "(1/encounter) Reaction (you drop to 0 HP): Expend Hit Dice and set HP to the sum rolled (no STR bonus).",

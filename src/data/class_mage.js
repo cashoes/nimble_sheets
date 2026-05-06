@@ -22,7 +22,7 @@ const MAGE_FEATURES = {
             { id: "spellcasting", name: "Elemental Spellcasting", desc: "You know all cantrips from the Fire, Ice, and Lightning schools." }
         ],
         2: [
-            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>INTx3+LVL</strong>) to cast tiered spells." },
+            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x INT+LVL</strong>) to cast tiered spells." },
             { id: "researcher", name: "Talented Researcher", desc: "Advantage on Arcana/Lore checks when you have access to books/study time." }
         ],
         3: [

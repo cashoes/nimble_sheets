@@ -14,13 +14,13 @@ const HUNTER_OPTIONS = {
         "Sharpshooter": { desc: "Action: If you have not moved this turn and your quarry is 4 or more spaces away, attack them for double damage." },
         "Vital Shot": { desc: "(Half range) Action: Attack your Hampered quarry with a ranged weapon, ignoring armor or doubling Hunter's Mark damage." },
         "Wild Instinct": { desc: "(1/round, costs 0 TotH) If you have none, Assess for free, with advantage." },
-        "Go for the Throat!": { desc: "Command companion to attack your quarry. Small: 1 TotH (1d4+LVL), Med: 1 TotH (1d8+3xLVL), Large: 2 TotH/2 Actions (1d12+4xLVL)." },
+        "Go for the Throat!": { desc: "Command companion to attack your quarry. Small: 1 TotH (1d4+LVL), Med: 1 TotH (1d8+3x LVL), Large: 2 TotH/2 Actions (1d12+4xLVL)." },
         "Protect Me!": { desc: "Command companion to defend you. Small: Miss on Defend, Med: Free counter-attack (1d4+LVL), Large: Half damage from first attack each round." }
     },
     companionSizes: {
         "None": { desc: "No companion selected." },
         "Small": { desc: "Keen Eyes: Mark a target for free (1/encounter). Protect Me!: Attacks against you miss when you Defend. Go for the Throat! (1/round): 1 TotH charge, 1d4+LVL dmg." },
-        "Medium": { desc: "Ferocious: When you or companion crit, companion attacks again for LVL dmg. Protect Me!: When you Defend, first attack that creature (1d4+LVL). Go for the Throat!: 1 TotH charge, 1d8+3xLVL dmg." },
+        "Medium": { desc: "Ferocious: When you or companion crit, companion attacks again for LVL dmg. Protect Me!: When you Defend, first attack that creature (1d4+LVL). Go for the Throat!: 1 TotH charge, 1d8+3x LVL dmg." },
         "Large": { desc: "Alpha Protector: Damage from first attack against you each round is halved. Protect Me!: After a Wound, whisked up to 12 spaces away. Go for the Throat!: 2 TotH charges, 2 actions, 1d12+4xLVL dmg." }
     }
 };

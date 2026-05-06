@@ -67,7 +67,7 @@
             },
             "Dragonform": {
                 "tier": "Tier 9",
-                "desc": "5 Actions, Self. Transform into a Huge dragon. Gain 3 actions, a fly speed of 12, LVL Armor, 10×LVL temp HP, and:<ul><li>Tooth & Claw. Action: (Reach 2) 1d20+LVL damage (ignoring armor). Inflicts Smoldering.</li><li>Immolating Breath. 2 Actions: (Reach: Cone 8). DC 20 DEX save, KEY d20 damage, half on save. Smoldering targets fail.</li></ul>You can maintain this form for as long as the temp HP granted by this spell remain (max. 10 minutes). When it ends, you drop to 0 HP."
+                "desc": "5 Actions, Self. Transform into a Huge dragon. Gain 3 actions, a fly speed of 12, LVL Armor, 10x LVL temp HP, and:<ul><li>Tooth & Claw. Action: (Reach 2) 1d20+LVL damage (ignoring armor). Inflicts Smoldering.</li><li>Immolating Breath. 2 Actions: (Reach: Cone 8). DC 20 DEX save, KEY d20 damage, half on save. Smoldering targets fail.</li></ul>You can maintain this form for as long as the temp HP granted by this spell remain (max. 10 minutes). When it ends, you drop to 0 HP."
             }
         },
         "Ice": {
@@ -81,7 +81,7 @@
             },
             "Frost Shield": {
                 "tier": "Tier 1",
-                "desc": "1 Action, Self. Reaction: When attacked, Gain 2×KEY temp HP and Defend for free. The ice melts and these temp HP are lost at the start of your next turn. Upcast: +2×KEY temp HP."
+                "desc": "1 Action, Self. Reaction: When attacked, Gain 2xKEY temp HP and Defend for free. The ice melts and these temp HP are lost at the start of your next turn. Upcast: +2xKEY temp HP."
             },
             "Shatter": {
                 "tier": "Tier 2",
@@ -89,7 +89,7 @@
             },
             "Cryosleep": {
                 "tier": "Tier 3",
-                "desc": "2 Actions, AoE. Reach: 12. Creatures in a 2×2 area within Reach are Dazed. On a failed STR save, they fall asleep instead, becoming Incapacitated until their next two turns have passed, until damaged, or until an ally uses an action to wake them. Upcast: +1 area, +1 turn asleep."
+                "desc": "2 Actions, AoE. Reach: 12. Creatures in a 2x2 area within Reach are Dazed. On a failed STR save, they fall asleep instead, becoming Incapacitated until their next two turns have passed, until damaged, or until an ally uses an action to wake them. Upcast: +1 area, +1 turn asleep."
             },
             "Rimeblades": {
                 "tier": "Tier 4",
@@ -101,7 +101,7 @@
             },
             "Glacier Strike": {
                 "tier": "Tier 8",
-                "desc": "3 Actions, AoE. Range: 12. Damage: t66 bludgeoning to creatures in a 3×3 area. Creatures adjacent to that area take half as much. The entire area permanently becomes difficult terrain. Upcast: +1 initial area."
+                "desc": "3 Actions, AoE. Range: 12. Damage: t66 bludgeoning to creatures in a 3x3 area. Creatures adjacent to that area take half as much. The entire area permanently becomes difficult terrain. Upcast: +1 initial area."
             },
             "Arctic Annihilation": {
                 "tier": "Tier 9",
@@ -173,7 +173,7 @@
             },
             "Updraft": {
                 "tier": "Tier 5",
-                "desc": "3 Actions, AoE. Reach: 12. Enemies within a 5×5 area must repeat a DEX save until they succeed. For each time they failed they suffer 1d6 falling damage and land prone. Upcast: +2 Range, +1 area."
+                "desc": "3 Actions, AoE. Reach: 12. Enemies within a 5x5 area must repeat a DEX save until they succeed. For each time they failed they suffer 1d6 falling damage and land prone. Upcast: +2 Range, +1 area."
             },
             "Thousand Cuts": {
                 "tier": "Tier 6",
@@ -187,7 +187,7 @@
         "Radiant": {
             "Rebuke": {
                 "tier": "Cantrip",
-                "desc": "1 Action, Single Target. Reach: 4. Damage: 1d6 (ignoring armor), does not miss. 2× damage against undead or cowardly (those Frightened or behind cover). High Levels: +2 damage every 5 levels."
+                "desc": "1 Action, Single Target. Reach: 4. Damage: 1d6 (ignoring armor), does not miss. 2x damage against undead or cowardly (those Frightened or behind cover). High Levels: +2 damage every 5 levels."
             },
             "True Strike": {
                 "tier": "Cantrip",

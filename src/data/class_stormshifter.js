@@ -4,7 +4,7 @@ const STORMSHIFTER_OPTIONS = {
         "Harmless": { desc: "Tiny beast (Squirrel, Bird). Speed: 6. Speak with animals. Ending ends form." },
         "Fearsome": { desc: "Large beast. Gain DEX+LVL temp HP. Attack: Gore (1d6+LVL). Reroll Defend/Interpose for 1 mana." },
         "Beast of the Pack": { desc: "Medium beast. Gain +DEX Speed. Attack: Thunderfang (1d4+LVL). Kill: +1d4 lightning (cumulative). Spend WIL mana for +1d8/pt dmg." },
-        "Beast of Nightmares": { desc: "Tiny beast. Speed: 2. Attack: Sting (1d4+3xLVL acid). Silent But Deadly: Cannot be targeted until you attack." }
+        "Beast of Nightmares": { desc: "Tiny beast. Speed: 2. Attack: Sting (1d4+3x LVL acid). Silent But Deadly: Cannot be targeted until you attack." }
     },
     chimericBoons: {
         "Beast of the Sea (Swim/Breath)": { desc: "Swim speed equal to normal speed. Can breathe underwater." },
@@ -30,7 +30,7 @@ const STORMSHIFTER_FEATURES = {
             { id: "shift", name: "Beastshift", desc: "Action: Transform into a harmless beast. Speek with animals. DEX charges/Safe Rest. Form ends if you drop to 0 HP or cast spell." }
         ],
         2: [
-            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>WILx3+LVL</strong>) to cast Tempest spells." },
+            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x WIL+LVL</strong>) to cast Tempest spells." },
             { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true },
             { id: "dire_1", name: "Direbeast Form", desc: "You can now Beastshift into a <strong>Fearsome Beast</strong> (Large)." }
         ],
@@ -121,7 +121,7 @@ const STORMSHIFTER_FEATURES = {
             ],
             11: [
                 { id: "forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." },
-                { id: "gaze", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into Beast of Nightmares, pull enemy within 12 by 2xWIL spaces, and free Sting on contact." }
+                { id: "gaze", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into Beast of Nightmares, pull enemy within 12 by 2x WIL spaces, and free Sting on contact." }
             ],
             15: [
                 { id: "forms_2", name: "Master of Forms (2)", desc: "Beastshift 2 additional times per Safe Rest. Your Direbeast forms can have 3 Boons at a time." }

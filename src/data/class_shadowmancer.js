@@ -25,7 +25,7 @@ const SHADOWMANCER_FEATURES = {
             }}
         ],
         2: [
-            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>INTx3+LVL</strong>) to cast tiered spells." },
+            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x INT+LVL</strong>) to cast tiered spells." },
             { id: "pilfer", name: "Pilfer Power", desc: (level, subclass, state) => {
                 const totalDex = (state.baseDex || 0) + (state.addDex || 0);
                 return `Steal power to cast spells at max tier. <strong>${totalDex}</strong> uses/Safe Rest. Exceed limit: suffer half max HP damage.`;

@@ -2,8 +2,8 @@ const BERSERKER_OPTIONS = {
     arsenal: {
         "Death Blow": { desc: "After you deal damage from a crit, you may expend any number of Fury Dice. Sum the dice and deal double that amount of damage." },
         "Deathless Rage": { desc: "(1/turn) While Dying, you may suffer 1 Wound to gain 1 action." },
-        "Eager for Battle": { desc: "Gain advantage on Initiative. Move 2× DEX spaces for free on your first turn each encounter." },
-        "Into the Fray": { desc: "Action: Leap up to 2× DEX spaces toward an enemy. If you land adjacent to at least 2 enemies, make an attack against 1 of them for free." },
+        "Eager for Battle": { desc: "Gain advantage on Initiative. Move 2x DEX spaces for free on your first turn each encounter." },
+        "Into the Fray": { desc: "Action: Leap up to 2x DEX spaces toward an enemy. If you land adjacent to at least 2 enemies, make an attack against 1 of them for free." },
         "Mighty Endurance": { desc: "You can now survive an additional 4 Wounds before death." },
         "MORE BLOOD!": { desc: "Whenever an enemy crits you, gain 1 Fury Die." },
         "Rampage": { desc: "(1/turn) After you land a hit, you may treat your next attack this turn as if you rolled that same amount instead of rolling again." },
