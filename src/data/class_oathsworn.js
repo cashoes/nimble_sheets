@@ -255,10 +255,10 @@ const CLASS_CONFIG = {
                     <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                         <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <div class="dark-incrementer" style="padding: 2px 4px;">
-                                <button onclick="adjRes('manaCurrent', -1, ${manaMax})" style="width:16px; height:16px; line-height:1; font-size:1.0em;">-</button>
-                                <input type="number" id="res_manaCurrent" value="${state.resourceValues.manaCurrent || 0}" onchange="adjRes('manaCurrent', parseInt(this.value), ${manaMax}, true)" style="width:34px; font-size: 1.1em;">
-                                <button onclick="adjRes('manaCurrent', 1, ${manaMax})" style="width:16px; height:16px; line-height:1; font-size:1.0em;">+</button>
+                            <div class="dark-incrementer">
+                                <button onclick="adjRes('manaCurrent', -1, ${manaMax})">-</button>
+                                <input type="number" id="res_manaCurrent" value="${state.resourceValues.manaCurrent || 0}" onchange="adjRes('manaCurrent', parseInt(this.value), ${manaMax}, true)">
+                                <button onclick="adjRes('manaCurrent', 1, ${manaMax})">+</button>
                             </div>
                             <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.85em; width: 35px;">/ ${manaMax}</div>
                         </div>
@@ -267,10 +267,10 @@ const CLASS_CONFIG = {
                     <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                         <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Lay on Hands</label>
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <div class="dark-incrementer" style="padding: 2px 4px;">
-                                <button onclick="adjRes('lohCurrent', -1, ${lohMax})" style="width:16px; height:16px; line-height:1; font-size:1.0em;">-</button>
-                                <input type="number" id="res_lohCurrent" value="${state.resourceValues.lohCurrent || 0}" onchange="adjRes('lohCurrent', parseInt(this.value), ${lohMax}, true)" style="width:34px; font-size: 1.1em;">
-                                <button onclick="adjRes('lohCurrent', 1, ${lohMax})" style="width:16px; height:16px; line-height:1; font-size:1.0em;">+</button>
+                            <div class="dark-incrementer">
+                                <button onclick="adjRes('lohCurrent', -1, ${lohMax})">-</button>
+                                <input type="number" id="res_lohCurrent" value="${state.resourceValues.lohCurrent || 0}" onchange="adjRes('lohCurrent', parseInt(this.value), ${lohMax}, true)">
+                                <button onclick="adjRes('lohCurrent', 1, ${lohMax})">+</button>
                             </div>
                             <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.85em; width: 35px;">/ ${lohMax}</div>
                         </div>

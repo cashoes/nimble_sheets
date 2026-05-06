@@ -225,10 +225,10 @@ const CLASS_CONFIG = {
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
                    <label class="roll-link" onclick="dispatchRoll('1${derived.cdType}', 'Combat Die')" style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px; cursor:pointer;">Combat Dice (${derived.cdType})</label>
                    <div style="display: flex; align-items: center; gap: 4px;">
-                       <div class="dark-incrementer" style="padding: 4px 6px;">
-                           <button onclick="adjRes('combatDice', -1, ${maxCD})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                           <input type="number" id="res_combatDice" value="${currentCD}" min="0" max="${maxCD}" onchange="adjRes('combatDice', parseInt(this.value), ${maxCD}, true)" style="width:30px; font-size: 1.3em;">
-                           <button onclick="adjRes('combatDice', 1, ${maxCD})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                       <div class="dark-incrementer">
+                           <button onclick="adjRes('combatDice', -1, ${maxCD})">-</button>
+                           <input type="number" id="res_combatDice" value="${currentCD}" min="0" max="${maxCD}" onchange="adjRes('combatDice', parseInt(this.value), ${maxCD}, true)">
+                           <button onclick="adjRes('combatDice', 1, ${maxCD})">+</button>
                        </div>
                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${maxCD}</div>
                    </div>
@@ -236,10 +236,10 @@ const CLASS_CONFIG = {
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">INT Mana</label>
                    <div style="display: flex; align-items: center; gap: 4px;">
-                       <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--class-accent);">
-                           <button onclick="adjRes('mana', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                           <input type="number" id="res_mana" value="${manaCur}" min="0" max="${manaMax}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:32px; font-size: 1.3em;">
-                           <button onclick="adjRes('mana', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                       <div class="dark-incrementer">
+                           <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
+                           <input type="number" id="res_mana" value="${manaCur}" min="0" max="${manaMax}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
+                           <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
                        </div>
                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${manaMax}</div>
                    </div>
@@ -248,10 +248,10 @@ const CLASS_CONFIG = {
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Coord. Strike</label>
                    <div style="display: flex; align-items: center; gap: 4px;">
-                       <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--gold-dim);">
-                           <button onclick="adjRes('coordStrike', -1, ${strikeMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                           <input type="number" id="res_coordStrike" value="${strikeCur}" min="0" max="${strikeMax}" onchange="adjRes('coordStrike', parseInt(this.value), ${strikeMax}, true)" style="width:30px; font-size: 1.3em;">
-                           <button onclick="adjRes('coordStrike', 1, ${strikeMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                       <div class="dark-incrementer">
+                           <button onclick="adjRes('coordStrike', -1, ${strikeMax})">-</button>
+                           <input type="number" id="res_coordStrike" value="${strikeCur}" min="0" max="${strikeMax}" onchange="adjRes('coordStrike', parseInt(this.value), ${strikeMax}, true)">
+                           <button onclick="adjRes('coordStrike', 1, ${strikeMax})">+</button>
                        </div>
                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${strikeMax}</div>
                    </div>

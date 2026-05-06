@@ -187,10 +187,10 @@ const CLASS_CONFIG = {
                <div style="flex: 1.5; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 10px; justify-content: center;">
                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Bursts of Speed</label>
                    <div style="display: flex; align-items: center; gap: 8px;">
-                       <div class="dark-incrementer" style="padding: 4px 10px;">
-                           <button onclick="adjRes('burstSpeed', -1, ${burstMax})" style="width:22px; height:22px; line-height:1; font-size:1.0em;">-</button>
-                           <input type="number" id="res_burstSpeed" value="${burstCur}" min="0" max="${burstMax}" onchange="adjRes('burstSpeed', parseInt(this.value), ${burstMax}, true)" style="width:35px; font-size: 1.4em;">
-                           <button onclick="adjRes('burstSpeed', 1, ${burstMax})" style="width:22px; height:22px; line-height:1; font-size:1.0em;">+</button>
+                       <div class="dark-incrementer">
+                           <button onclick="adjRes('burstSpeed', -1, ${burstMax})">-</button>
+                           <input type="number" id="res_burstSpeed" value="${burstCur}" min="0" max="${burstMax}" onchange="adjRes('burstSpeed', parseInt(this.value), ${burstMax}, true)">
+                           <button onclick="adjRes('burstSpeed', 1, ${burstMax})">+</button>
                        </div>
                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.1em;">/ <span style="color: var(--text-main);">${burstMax}</span></div>
                    </div>

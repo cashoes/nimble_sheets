@@ -207,10 +207,10 @@ const CLASS_CONFIG = {
                 <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
                     <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
                     <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer" style="padding: 4px 6px;">
-                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:32px; font-size: 1.3em;">
-                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        <div class="dark-incrementer">
+                            <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
+                            <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
                         </div>
                         <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
                     </div>
@@ -219,10 +219,10 @@ const CLASS_CONFIG = {
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
                     <label class="roll-link" onclick="dispatchRoll('${totalWil}d8', 'Searing Light')" style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px; cursor:pointer;">Searing Light</label>
                     <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer" style="padding: 4px 6px; border-color: var(--gold-dim);">
-                            <button onclick="adjRes('searingLight', -1, ${searingMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
-                            <input type="number" id="res_searingLight" value="${state.resourceValues.searingLight||0}" onchange="adjRes('searingLight', parseInt(this.value), ${searingMax}, true)" style="width:32px; font-size: 1.3em;">
-                            <button onclick="adjRes('searingLight', 1, ${searingMax})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                        <div class="dark-incrementer">
+                            <button onclick="adjRes('searingLight', -1, ${searingMax})">-</button>
+                            <input type="number" id="res_searingLight" value="${state.resourceValues.searingLight||0}" onchange="adjRes('searingLight', parseInt(this.value), ${searingMax}, true)">
+                            <button onclick="adjRes('searingLight', 1, ${searingMax})">+</button>
                         </div>
                         <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${searingMax}</span></div>
                     </div>

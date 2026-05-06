@@ -213,11 +213,11 @@ const CLASS_CONFIG = {
                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">TotH Charges</label>
                    <div style="display: flex; align-items: center; gap: 8px;">
-                       <div class="dark-incrementer" style="padding: 4px 10px;">
-                           <button onclick="adjRes('tothCharges', -1, ${maxCharges})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">-</button>
+                       <div class="dark-incrementer">
+                           <button onclick="adjRes('tothCharges', -1, ${maxCharges})">-</button>
                            <input type="number" id="res_tothCharges" value="${currentCharges}" min="0" max="${maxCharges}" 
-                                  onchange="adjRes('tothCharges', parseInt(this.value), ${maxCharges}, true)" style="width:30px; font-size: 1.3em;">
-                           <button onclick="adjRes('tothCharges', 1, ${maxCharges})" style="width:20px; height:20px; line-height:1; font-size:1.1em;">+</button>
+                                  onchange="adjRes('tothCharges', parseInt(this.value), ${maxCharges}, true)">
+                           <button onclick="adjRes('tothCharges', 1, ${maxCharges})">+</button>
                        </div>
                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.1em;">/ <span style="color: var(--text-main);">${maxCharges}</span></div>
                    </div>

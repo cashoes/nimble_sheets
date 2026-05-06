@@ -207,10 +207,10 @@ const CLASS_CONFIG = {
                 <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
                     <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
                     <div style="display: flex; align-items: center; gap: 4px; margin-bottom: ${level >= 2 ? '4px' : '0'};">
-                        <div class="dark-incrementer" style="padding: 2px 4px;">
-                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:18px; height:18px; line-height:1;">-</button>
-                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:28px; font-size: 1.1em;">
-                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:18px; height:18px; line-height:1;">+</button>
+                        <div class="dark-incrementer">
+                            <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
+                            <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
                         </div>
                         <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${manaMax}</div>
                     </div>
