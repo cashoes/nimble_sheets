@@ -399,8 +399,10 @@ function iStats(txt, level, statsMap, context = {}) {
     };
 
     // 1. Handle Dice/Table rolls first (including those with placeholders like KEY d20 or 1d6+KEY)
-    let processed = txt.replace(/\b((\d+|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b/gi, (m) => {
-        const notation = resolveNotation(m).replace(/\s+/g, ''); // Remove spaces for the roll command
+    // Use alternation to skip existing spans or other HTML tags
+    let processed = txt.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b((\d+|KEY|LVL)\s*d\d+|t\d+)([\s\+-]+(KEY|LVL|\d+))*\b)/gi, (m, p1, p2, p3) => {
+        if (p1 || !p3) return m; // It's an existing span or another HTML tag
+        const notation = resolveNotation(p3).replace(/\s+/g, ''); // Remove spaces for the roll command
         const label = context.name || 'Roll';
         return `<span class="dice-hl roll-link" onclick="dispatchRoll('${notation}', '${label}', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${notation}</span>`;
     });
@@ -408,9 +410,9 @@ function iStats(txt, level, statsMap, context = {}) {
     // 2. Handle remaining placeholders (outside of dice strings)
     const wrap = (val, label) => `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${label} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
     
-    return processed.replace(/<[^>]*>|\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill))/gi, (m, p1) => {
-        if (!p1) return m;
-        const k = p1.toUpperCase(); 
+    return processed.replace(/(<span[^>]*class="[^"]*(dice-hl|stat-hl)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>|(\b(STR|DEX|INT|WIL|KEY|LVL)\b(?!\s+(save|check|skill)))/gi, (m, p1, p2, p3, p4) => {
+        if (p1 || !p3) return m;
+        const k = p4.toUpperCase(); 
         if (k === 'LVL') return `<span class="stat-hl">${level}</span>`;
         if (k === 'STR') return wrap(statsMap.str, 'STR'); 
         if (k === 'DEX') return wrap(statsMap.dex, 'DEX'); 

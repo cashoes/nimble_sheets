@@ -27,7 +27,7 @@ const SONGWEAVER_FEATURES = {
                 const totalInt = (state.baseInt || 0) + (state.addInt || 0);
                 const totalWil = (state.baseWil || 0) + (state.addWil || 0);
                 let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
-                let vmBonus = totalInt + Math.floor(level / 5) * 2;
+                let vmBonus = totalInt;
                 if (level >= 15 && subclass === "HeraldSnark") vmBonus += totalWil;
                 let vmDisplay = `<strong>${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}</strong>`;
                 
@@ -211,7 +211,7 @@ const CLASS_CONFIG = {
         const totalInt = (state.baseInt || 0) + (state.addInt || 0);
         const totalWil = (state.baseWil || 0) + (state.addWil || 0);
         let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
-        let vmBonus = totalInt + Math.floor(level / 5) * 2;
+        let vmBonus = totalInt;
         if (level >= 15 && subclass === "HeraldSnark") vmBonus += totalWil;
         let vmDisplay = `${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}`;
 
