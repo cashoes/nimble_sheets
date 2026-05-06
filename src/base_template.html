@@ -20,6 +20,14 @@
     --class-container-bg: #0f141a;
     --class-panel-bg: #1b222c;
     --class-border: var(--slate-lighter);
+
+    /* Spell School Colors */
+    --fire-school: #ef4444;
+    --ice-school: #38bdf8;
+    --lightning-school: #eab308;
+    --wind-school: #a7f3d0;
+    --radiant-school: #fde047;
+    --necrotic-school: #a855f7;
   }
 
   * { -ms-overflow-style: none; scrollbar-width: none; }
@@ -182,12 +190,12 @@
 
   .spell-grid { display: flex; flex-direction: column; width: 100%; }
   .spell-card { background: var(--class-panel-bg); border: 1px solid var(--class-border); padding: 10px; display: flex; flex-direction: column; gap: 4px; position: relative; border-left: 4px solid var(--class-accent); border-radius: 0 4px 4px 0; transition: border-color 0.3s; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-  .spell-card.fire { border-left-color: #ef4444; }
-  .spell-card.ice { border-left-color: #38bdf8; }
-  .spell-card.lightning { border-left-color: #eab308; }
-  .spell-card.wind { border-left-color: #a7f3d0; }
-  .spell-card.radiant { border-left-color: #fde047; }
-  .spell-card.necrotic { border-left-color: #a855f7; }
+  .spell-card.fire { border-left-color: var(--fire-school); }
+  .spell-card.ice { border-left-color: var(--ice-school); }
+  .spell-card.lightning { border-left-color: var(--lightning-school); }
+  .spell-card.wind { border-left-color: var(--wind-school); }
+  .spell-card.radiant { border-left-color: var(--radiant-school); }
+  .spell-card.necrotic { border-left-color: var(--necrotic-school); }
   .spell-card h4 { margin: 0; font-family: 'Cinzel', serif; font-size: 1.0em; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--class-border); padding-bottom: 4px; color: var(--text-main); }
   .spell-card h4 span.tier-tag { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: normal; color: var(--text-muted); text-transform: uppercase; display: center; letter-spacing: 1px; }
   .stat-hl { color: var(--gold-light); font-weight: bold; background: rgba(232, 184, 75, 0.1); border-radius: 3px; }

@@ -599,14 +599,23 @@ function bFeat(t, l, d, theme = "", skip = false, level, statsMap, context = {})
     const desc = skip ? d : iStats(d, level, statsMap, featContext); 
     return `<div class="feature ${theme}"><h3>${t} ${l ? `<span class="level-tag">Lvl ${l}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; 
 }
-function formatPips(tier) { 
+function formatPips(tier, school = null) { 
     const tStr = String(tier); 
     const tNum = parseInt(tStr.replace(/\D/g, '')) || 0; 
     let pips = ""; 
     if (tNum > 0) { for (let i = 0; i < tNum; i++) pips += "●"; } 
     else if (tStr.toLowerCase().includes("cantrip")) { pips = "○"; } 
     if (!pips) return tStr; 
-    return `${tStr} <span style="letter-spacing:2px; color:var(--subclass-accent, var(--class-accent)); margin-left:8px;">${pips}</span>`; 
+    
+    let color = 'var(--subclass-accent, var(--class-accent))';
+    if (school) {
+        const s = school.toLowerCase();
+        if (['fire', 'ice', 'lightning', 'wind', 'radiant', 'necrotic'].includes(s)) {
+            color = `var(--${s}-school)`;
+        }
+    }
+
+    return `${tStr} <span style="letter-spacing:2px; color:${color}; margin-left:8px;">${pips}</span>`; 
 }
 
 function renderSingleSpellCard(s, level, statsMap, contextOverride = null) { 
@@ -614,7 +623,7 @@ function renderSingleSpellCard(s, level, statsMap, contextOverride = null) {
     const isCantrip = (s.tier || "").toLowerCase().includes("cantrip") || s.name === "Vicious Mockery";
     const context = contextOverride || (isCantrip ? { type: 'cantrip', name: s.name, school: s.school } : { name: s.name });
     const desc = s.customHtml ? s.customHtml : (s.desc ? iStats(s.desc, level, statsMap, context) : ""); 
-    return `<div class="spell-card ${schoolClass}" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);"><h4>${s.name ? `${s.name} ` : ""}<span class="tier-tag">${formatPips(s.tier)}</span></h4><div class="spell-desc" style="font-size: 0.85em;">${desc}</div></div>`; 
+    return `<div class="spell-card ${schoolClass}" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);"><h4>${s.name ? `${s.name} ` : ""}<span class="tier-tag">${formatPips(s.tier, s.school)}</span></h4><div class="spell-desc" style="font-size: 0.85em;">${desc}</div></div>`; 
 }
 
 function renderSpells(level, subclass, state, derived, iStatsBound) {
