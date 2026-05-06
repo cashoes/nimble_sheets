@@ -15,7 +15,13 @@
         "desc": "Heroes: lose 1 action; monsters: can perform one less action on their next turn.",
         "modMaxActions": -1
     },
-    { "id": "dying", "name": "Dying", "type": "debuff", "desc": "At 0 HP. Taking damage while dying causes 2 Wounds, a crit causes 3 instead." },
+    { 
+        "id": "dying", 
+        "name": "Dying", 
+        "type": "debuff", 
+        "desc": "At 0 HP. You only have 1 action per turn. Taking damage while dying causes 2 Wounds, a crit causes 3 instead.",
+        "modMaxActions": -2
+    },
     { 
         "id": "frightened", 
         "name": "Frightened", 
