@@ -19,11 +19,9 @@ const SHADOWMANCER_FEATURES = {
     core: {
         1: [
             { id: "scythe", name: "Bonescythe", desc: "You can summon a scythe of pure shadow (1d12+INT, Reach 2)." },
-            { id: "minions", name: "Shadow Minions", desc: (level, subclass, state) => {
-                const totalInt = (state.baseInt || 0) + (state.addInt || 0);
-                const minions = Math.max(1, Math.min(totalInt, level));
-                return `1 Action. Reach: 1. Summon a shadow minion (max <strong>${minions}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
-                <strong>Minion Attack:</strong> 1 Action. Range: 1. Damage: 1d12 psychic.`;
+            { id: "minions", name: "Shadow Minions", desc: (level, subclass, state, derived) => {
+                return `1 Action. Reach: 1. Summon a shadow minion (max <strong>${derived.minionMax}</strong>). They have 1 HP, no damage bonus, and do not crit. They abandon you outside of combat.<br>
+                <strong>Minion Attack:</strong> 1 Action. Range: 1. Damage: <strong>${derived.minionDmg}</strong> psychic.`;
             }}
         ],
         2: [
@@ -158,7 +156,15 @@ const CLASS_CONFIG = {
 
     getDerivedStats: function(level, subclass, state) {
         let speed = 6; let woundMax = 6;
-        return { speed, woundMax };
+        const totalInt = (state.baseInt || 0) + (state.addInt || 0);
+        let minionMax = Math.max(1, Math.min(totalInt, level));
+        
+        const greater = state.selectedGreater || [];
+        if (greater.includes("Army of Darkness")) minionMax += 2;
+        if (level >= 20) minionMax *= 2;
+        
+        let minionDmg = `${minionMax}d12`;
+        return { speed, woundMax, minionMax, minionDmg };
     },
 
     getStatOverrides: function(level, subclass, state, statsMap) {
@@ -173,78 +179,63 @@ const CLASS_CONFIG = {
         const totalDex = (state.baseDex || 0) + (state.addDex || 0);
         const manaMax = (totalInt * 3) + level;
         const pilferMax = totalDex;
-        const currentPilfer = state.resourceValues.pilfer !== undefined ? state.resourceValues.pilfer : pilferMax;
-        const minions = Math.max(1, Math.min(totalInt, level));
-
-        let html = `<div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;">`;
+        const currentPilfer = state.resourceValues.pilfer !== undefined ? state.resourceValues.pilfer : 0;
         
-        // Row 1: Attack + Minions
-        if (subclass === "Reaver") {
-            let scytheDice = 2 + Math.floor(level / 5);
-            let scytheDmg = `${scytheDice}d12${totalDex >= 0 ? "+" : ""}${totalDex}`;
-            html += `
-                <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center; ${level >= 2 ? 'padding-bottom: 4px; border-bottom: 1px dashed rgba(255,255,255,0.15); margin-bottom: 4px;' : ''}">
-                    <div style="flex: 1.2; display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
-                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Bonescythe</label>
-                        <div class="roll-link" onclick="dispatchRoll('${scytheDmg}', 'Bonescythe')" style="font-size: 1.3em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.1;">${scytheDmg}</div>
-                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">REACH 2</div>
-                    </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Minions</label>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: #fff; font-size: 1.3em; line-height: 1.1;">/ <span style="color: var(--text-main);">${minions}</span></div>
-                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;"><span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack', { isMinion: true })" style="color: var(--class-accent);">ATK 1d12</span></div>
-                    </div>
-                </div>`;
-        } else {
-            let blastDice = 1 + Math.floor(level / 5);
-            let blastDmg = `${blastDice}d12${totalInt >= 0 ? "+" : ""}${totalInt}`;
-            html += `
-                <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center; ${level >= 2 ? 'padding-bottom: 4px; border-bottom: 1px dashed rgba(255,255,255,0.15); margin-bottom: 4px;' : ''}">
-                    <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
-                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Shadow Blast</label>
-                        <div class="roll-link" onclick="dispatchRoll('${blastDmg}', 'Shadow Blast')" style="font-size: 1.3em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.1;">${blastDmg}</div>
-                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">RANGE 8</div>
-                    </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Minions</label>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: #fff; font-size: 1.3em; line-height: 1.1;">/ <span style="color: var(--text-main);">${minions}</span></div>
-                        <div style="font-size: 0.6em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;"><span class="roll-link" onclick="dispatchRoll('1d12', 'Minion Attack', { isMinion: true })" style="color: var(--class-accent);">ATK 1d12</span></div>
-                    </div>
-                </div>`;
+        const lesser = state.selectedLesser || [];
+
+        // Primary Attack Logic
+        let primaryName = subclass === 'Reaver' ? 'Bonescythe' : 'Shadow Blast';
+        let primaryDice = (subclass === 'Reaver' ? 2 : 1) + Math.floor(level / 5);
+        let primaryStat = subclass === 'Reaver' ? 'dex' : 'int';
+        let primaryMod = subclass === 'Reaver' ? totalDex : totalInt;
+        let primaryDmg = `${primaryDice}d12${primaryMod >= 0 ? "+" : ""}${primaryMod}`;
+        let primarySub = subclass === 'Reaver' ? 'REACH 2' : 'RANGE 8';
+
+        // Pilfer Pips
+        let pilferPips = "";
+        if (level >= 2) {
+            for (let i = 0; i < pilferMax; i++) {
+                const checked = currentPilfer > i;
+                pilferPips += `<input type="checkbox" class="pip" ${checked ? 'checked' : ''} onclick="handleResPipClick('pilfer', ${i}, ${pilferMax})" style="width:10px; height:10px; border-color:var(--save-dis);">`;
+            }
         }
 
-        // Row 2: Resources
-        if (level >= 2 && subclass !== "Reaver") {
-            html += `
-            <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center;">
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer" style="padding: 3px 5px;">
-                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:18px; height:18px; line-height:1; font-size:1.0em;">-</button>
-                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:30px; font-size: 1.2em;">
-                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:18px; height:18px; line-height:1; font-size:1.0em;">+</button>
+        return `
+        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: flex; align-items: stretch; gap: 8px;">
+                <!-- Section 1: Mana & Pilfer -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
+                    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: ${level >= 2 ? '4px' : '0'};">
+                        <div class="dark-incrementer" style="padding: 2px 4px;">
+                            <button onclick="adjRes('mana', -1, ${manaMax})" style="width:18px; height:18px; line-height:1;">-</button>
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)" style="width:28px; font-size: 1.1em;">
+                            <button onclick="adjRes('mana', 1, ${manaMax})" style="width:18px; height:18px; line-height:1;">+</button>
                         </div>
                         <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${manaMax}</div>
                     </div>
+                    ${level >= 2 ? `
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                        <label style="font-size: 0.6em; color: var(--text-muted); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Pilfer</label>
+                        <div style="display: flex; gap: 2px;">${pilferPips}</div>
+                    </div>` : ''}
                 </div>
 
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; padding-left: 4px;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Pilfer</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer" style="padding: 3px 5px; border-color: var(--save-dis);">
-                            <button onclick="adjRes('pilfer', -1, ${pilferMax})" style="width:18px; height:18px; line-height:1; font-size:1.0em;">-</button>
-                            <input type="number" id="res_pilfer" value="${currentPilfer}" onchange="adjRes('pilfer', parseInt(this.value), ${pilferMax}, true)" style="width:28px; font-size: 1.2em;">
-                            <button onclick="adjRes('pilfer', 1, ${pilferMax})" style="width:18px; height:18px; line-height:1; font-size:1.0em;">+</button>
-                        </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${pilferMax}</div>
-                    </div>
+                <!-- Section 2: Primary Attack -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${primaryName}</label>
+                    <div class="roll-link" onclick="dispatchRoll('${primaryDmg}', '${primaryName}', { stat: '${primaryStat}', type: 'attack' })" style="font-size: 1.8em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; cursor:pointer;">${primaryDmg}</div>
+                    <div style="font-size: 0.65em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">${primarySub}</div>
                 </div>
-            </div>`;
-        }
 
-        html += `</div>`;
-        return html;
+                <!-- Section 3: Minion Attack -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Minion Attack</label>
+                    <div class="roll-link" onclick="dispatchRoll('${derived.minionDmg}', 'Minion Attack', { isMinion: true })" style="font-size: 1.8em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; cursor:pointer;">${derived.minionDmg}</div>
+                    <div style="font-size: 0.65em; color: var(--text-muted); font-family:'Cinzel'; font-weight:bold;">${lesser.includes('Shadow Rush') ? 'MAX DMG' : `MAX ${derived.minionMax}`}</div>
+                </div>
+            </div>
+        </div>`;
     },
 
     actions: {},
@@ -286,7 +277,6 @@ const CLASS_CONFIG = {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let context = (feat.id === "conduit") ? { stat: 'int', type: 'attack' } : {};
         let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";

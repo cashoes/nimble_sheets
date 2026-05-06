@@ -612,6 +612,11 @@ function adjHD(a, isAbsolute = false) {
     state.hdCurrent = Math.min(max, Math.max(0, isAbsolute ? a : (state.hdCurrent===null?max:state.hdCurrent) + a)); 
     saveState(); render(); 
 }
+function handleResPipClick(id, i, max) { 
+    const current = state.resourceValues[id] || 0;
+    state.resourceValues[id] = (current === i + 1) ? i : i + 1;
+    saveState(); render(); 
+}
 function handleWoundClick(i) { state.wounds = (state.wounds === i + 1) ? i : i + 1; saveState(); render(); }
 window.addEventListener('wheel', (e) => { if (e.target.type === 'number') { e.preventDefault(); let d = e.deltaY < 0 ? 1 : -1; if (e.target.id === 'displayCurrentHP') adjHP(d, false); else if (e.target.id === 'displayTempHP') adjTempHP(d, false); else if (e.target.id === 'displayHD') adjHD(d, false); else { let val = parseInt(e.target.value || 0) + d; let newVal = Math.min(e.target.hasAttribute('max')?parseInt(e.target.getAttribute('max')):Infinity, Math.max(e.target.hasAttribute('min')?parseInt(e.target.getAttribute('min')):-Infinity, val)); e.target.value = newVal; e.target.dispatchEvent(new Event('change')); } } }, { passive: false });
 function importCharacter(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const imported = JSON.parse(e.target.result); saveState(imported); loadState(); render(); alert("Character imported successfully!"); } catch (err) { alert("Error importing character: Invalid file format."); } }; reader.readAsText(file); }
