@@ -453,13 +453,13 @@ function dispatchRoll(notation, label, options = {}) {
         }
     } else if (CLASS_CONFIG.name === 'Oathsworn') {
         if (isAttack) {
-            if (state.judgmentValue > 0) {
-                autoMod += state.judgmentValue;
-                state.judgmentValue = null;
-                state.judgmentRolls = "";
+            const jdSum = (state.judgmentDice || []).reduce((a, b) => a + b.total, 0);
+            if (jdSum > 0) {
+                autoMod += jdSum;
+                state.judgmentDice = null;
                 saveState();
                 render();
-            } else if (state.level >= 18 && options.stat === 'str') {
+            } else if (state.level >= 18 && (options.stat === 'str' || options.stat === 'dex' || options.stat === 'wil')) {
                 autoMod += 5;
             }
         }
