@@ -262,49 +262,16 @@ const CLASS_CONFIG = {
     actions: {},
 
     getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        let fHtml = "";
-        const sCls = "subclass-feature";
-        const subData = COMMANDER_FEATURES.subclasses[subclass] || {};
-        const replacedIds = new Set();
-
-        // 1. Identify Replaced Features (scan ALL subclass features to see what they replace)
-        Object.values(subData).forEach(lvlFeats => {
-            lvlFeats.forEach(f => {
-                if (f.replaces) {
-                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
-                    else replacedIds.add(f.replaces);
-                }
-            });
-        });
-
-        // 2. Render level by level
-        for (let l = 1; l <= level; l++) {
-            // Core
-            if (COMMANDER_FEATURES.core[l]) {
-                COMMANDER_FEATURES.core[l].forEach(feat => {
-                    if (!replacedIds.has(feat.id)) {
-                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC);
-                    }
-                });
-            }
-            // Subclass
-            if (subData[l]) {
-                subData[l].forEach(feat => {
-                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, sCls);
-                });
-            }
-        }
-
-        return fHtml;
+        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, COMMANDER_FEATURES, COMMANDER_OPTIONS, this);
     },
 
-    renderFeature: function(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
-        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
+    renderFeature: function(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
+        const statsMap = derived.statsMap;
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "spell_choice" || feat.type === "dynamic_spell_choice";
         let name = feat.name;
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) {
@@ -385,7 +352,7 @@ const CLASS_CONFIG = {
 
                     if (val !== "None") {
                         if (COMMANDER_OPTIONS[collection] && COMMANDER_OPTIONS[collection][val]) {
-                            d = COMMANDER_OPTIONS[collection][val].desc;
+                            d = (subclass === "Spellblade" && collection === "orders" && COMMANDER_OPTIONS.orders[val].empowered) ? COMMANDER_OPTIONS.orders[val].empowered : COMMANDER_OPTIONS[collection][val].desc;
                         }
                     }
                     choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">

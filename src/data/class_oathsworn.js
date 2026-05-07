@@ -365,72 +365,7 @@ const CLASS_CONFIG = {
     },
 
     getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        let fHtml = "";
-        const sCls = "subclass-feature";
-        const subData = OATHSWORN_FEATURES.subclasses[subclass] || {};
-        const replacedIds = new Set();
-
-        Object.values(subData).forEach(lvlFeats => {
-            lvlFeats.forEach(f => {
-                if (f.replaces) {
-                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
-                    else replacedIds.add(f.replaces);
-                }
-            });
-        });
-
-        for (let l = 1; l <= level; l++) {
-            if (OATHSWORN_FEATURES.core[l]) {
-                OATHSWORN_FEATURES.core[l].forEach(feat => {
-                    if (!replacedIds.has(feat.id)) {
-                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC);
-                    }
-                });
-            }
-            if (subData[l]) {
-                subData[l].forEach(feat => {
-                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, sCls);
-                });
-            }
-        }
-
-        return fHtml;
-    },
-
-    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
-        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
-        let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
-        let collection = feat.collection;
-        let context = (feat.id === "zealot" || feat.id === "torment") ? { type: 'attack' } : {};
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
-
-        let finalCssClass = cssClass || "";
-        if (feat.minor) finalCssClass += " minor-feature";
-
-        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
-
-        if (feat.type === "choice" || feat.type === "dynamic_choice") {
-            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            let selection = state[feat.stateKey] || [];
-            let options = Object.keys(OATHSWORN_OPTIONS[collection] || {});
-
-            let optsHtml = `<option value="None">-- Select Option --</option>`;
-            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
-
-            for (let i = 0; i < count; i++) {
-                let idx = (feat.startIndex || 0) + i;
-                let val = selection[idx] || "None";
-                let d = (val !== "None" && OATHSWORN_OPTIONS[collection][val]) ? OATHSWORN_OPTIONS[collection][val].desc : "";
-
-                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
-                </div>`;
-            }
-            desc += choiceHtml + `</div>`;
-        }
-
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, OATHSWORN_FEATURES, OATHSWORN_OPTIONS, this);
     },
     getAvailableSpells: function (level, subclass, state, derived) {
         let spells = [];

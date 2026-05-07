@@ -287,36 +287,7 @@ const CLASS_CONFIG = {
     actions: {},
 
     getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        let fHtml = "";
-        const sCls = "subclass-feature";
-        const subData = STORMSHIFTER_FEATURES.subclasses[subclass] || {};
-        const replacedIds = new Set();
-
-        Object.values(subData).forEach(lvlFeats => {
-            lvlFeats.forEach(f => {
-                if (f.replaces) {
-                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
-                    else replacedIds.add(f.replaces);
-                }
-            });
-        });
-
-        for (let l = 1; l <= level; l++) {
-            if (STORMSHIFTER_FEATURES.core[l]) {
-                STORMSHIFTER_FEATURES.core[l].forEach(feat => {
-                    if (!replacedIds.has(feat.id)) {
-                        fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC);
-                    }
-                });
-            }
-            if (subData[l]) {
-                subData[l].forEach(feat => {
-                    fHtml += this.renderFeature(feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, sCls);
-                });
-            }
-        }
-
-        return fHtml;
+        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, STORMSHIFTER_FEATURES, STORMSHIFTER_OPTIONS, this);
     },
 
     renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
