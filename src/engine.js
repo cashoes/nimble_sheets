@@ -204,6 +204,11 @@ function loadState() {
         skills: {}, activeConditions: [], inventory: [], gold: 0,
         resourceValues: {}, bgSpell: 'None', showMinor: false,
         selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: [],
+        selectedMastery: [], selectedGreater: [], selectedLesser: [], selectedGraces: [],
+        selectedLyrical: [], selectedBoons: [], selectedMartial: [], selectedUnderhanded: [],
+        spiritSpellsRadiant: [], spiritSpellsNecrotic: [], 
+        stormcallerSpells_Radiant: [], stormcallerSpells_Lightning: [],
+        explodingDice: [], currentForm: [],
         advantage: 0, actionsSpent: 0
     };
     const raw = localStorage.getItem(STORAGE_KEY);

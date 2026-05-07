@@ -172,9 +172,8 @@ const CLASS_CONFIG = {
     getShieldBonus: function(level, subclass, stats) { return 0; },
 
     getMechanicPanelHTML: function(level, subclass, state, derived) {
-        const totalInt = (state.baseInt || 0) + (state.addInt || 0);
         const totalWil = (state.baseWil || 0) + (state.addWil || 0);
-        const manaMax = totalInt * 3 + level;
+        const manaMax = derived.resourceMaxes.mana;
 
         let surgeNotation = `1d1+${totalWil}-1`; // Default to just totalWil if no dice added
         let surgeDisplay = `+${totalWil}`;

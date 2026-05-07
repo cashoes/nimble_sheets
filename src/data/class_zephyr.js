@@ -162,9 +162,9 @@ const CLASS_CONFIG = {
 
     getShieldBonus: function(level, subclass, stats) { return 0; },
 
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
-        let burstMax = state.baseDex + state.addDex;
-        let burstCur = state.resourceValues.burstSpeed || 0;
+    getMechanicPanelHTML: function (level, subclass, state, derived) {
+        const burstMax = derived.resourceMaxes.burstSpeed;
+        const burstCur = state.resourceValues.burstSpeed || 0;
         let acVal = (state.baseDex + state.addDex) + (state.baseStr + state.addStr);
         if (level >= 13) acVal *= 2;
         

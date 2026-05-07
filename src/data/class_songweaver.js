@@ -199,13 +199,10 @@ const CLASS_CONFIG = {
     getShieldBonus: function(level, subclass, stats) { return 0; },
 
     getMechanicPanelHTML: function(level, subclass, state, derived) {
-        const manaMax = (state.baseWil + state.addWil) * 3 + level;
+        const manaMax = derived.resourceMaxes.mana;
+        const inspMax = derived.resourceMaxes.inspiration;
         
-        let inspMax = (state.baseWil + state.addWil) * 2;
-        let lyrical = state.selectedLyrical || [];
-        if (lyrical.includes("Heroic Ballad")) inspMax += 2;
-        
-        const inspCur = state.resourceValues.inspiration !== undefined ? state.resourceValues.inspiration : inspMax;
+        const inspCur = state.resourceValues.inspiration || 0;
 
         // Vicious Mockery Calculation
         const totalInt = (state.baseInt || 0) + (state.addInt || 0);

@@ -177,9 +177,9 @@ const CLASS_CONFIG = {
     getMechanicPanelHTML: function (level, subclass, state, derived) {
         const totalInt = (state.baseInt || 0) + (state.addInt || 0);
         const totalDex = (state.baseDex || 0) + (state.addDex || 0);
-        const manaMax = (totalInt * 3) + level;
-        const pilferMax = totalDex;
-        const currentPilfer = state.resourceValues.pilfer !== undefined ? state.resourceValues.pilfer : 0;
+        const manaMax = derived.resourceMaxes.mana;
+        const pilferMax = derived.resourceMaxes.pilfer;
+        const currentPilfer = state.resourceValues.pilfer || 0;
         
         const lesser = state.selectedLesser || [];
 

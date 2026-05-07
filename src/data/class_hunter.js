@@ -198,8 +198,8 @@ const CLASS_CONFIG = {
     getShieldBonus: function(level, subclass, stats) { return 0; },
 
     getMechanicPanelHTML: function(level, subclass, state, derived) {
-        let maxCharges = Math.max(state.baseDex + state.addDex, state.baseWil + state.addWil);
-        let currentCharges = state.resourceValues.tothCharges || 0;
+        const maxCharges = derived.resourceMaxes.tothCharges;
+        const currentCharges = state.resourceValues.tothCharges || 0;
 
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">

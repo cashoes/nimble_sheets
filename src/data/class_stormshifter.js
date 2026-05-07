@@ -215,13 +215,8 @@ const CLASS_CONFIG = {
     getShieldBonus: function(level, subclass, stats) { return 0; },
 
     getMechanicPanelHTML: function(level, subclass, state, derived) {
-        const manaMax = (state.baseWil + state.addWil) * 3 + level;
-        let shiftMax = (state.baseDex + state.addDex);
-        if (level >= 6) shiftMax += 1;
-        if (level >= 9) shiftMax += 1;
-        if (level >= 12) shiftMax += 1;
-        if (level >= 15) shiftMax += 2;
-        shiftMax = Math.max(1, shiftMax);
+        const manaMax = derived.resourceMaxes.mana;
+        const shiftMax = derived.resourceMaxes.shiftUses;
 
         let activeForm = (state.currentForm && state.currentForm[0]) || "Normal";
         let opts = ""; Object.keys(STORMSHIFTER_OPTIONS.forms).forEach(k => {

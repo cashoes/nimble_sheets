@@ -203,20 +203,13 @@ const CLASS_CONFIG = {
     getShieldBonus: function (level, subclass, stats) { return 0; },
 
     getMechanicPanelHTML: function (level, subclass, state, derived) {
-        let maxCD = state.baseStr + state.addStr;
-        if (level >= 11 && subclass === "Vanguard") maxCD += 1;
+        const maxCD = derived.resourceMaxes.combatDice;
+        const strikeMax = derived.resourceMaxes.coordStrike;
+        const manaMax = derived.resourceMaxes.mana;
 
-        let strikeMax = state.baseInt + state.addInt;
-        if (level >= 7 && subclass === "Vanguard") strikeMax += 1;
-        if (level >= 9) strikeMax += 1;
-        if (level >= 13) strikeMax += 1;
-        if (level >= 17) strikeMax += 1;
-
-        let manaMax = state.baseInt + state.addInt;
-
-        let currentCD = state.resourceValues.combatDice !== undefined ? state.resourceValues.combatDice : maxCD;
-        let strikeCur = state.resourceValues.coordStrike !== undefined ? state.resourceValues.coordStrike : strikeMax;
-        let manaCur = state.resourceValues.mana !== undefined ? state.resourceValues.mana : 0;
+        const currentCD = state.resourceValues.combatDice || 0;
+        const strikeCur = state.resourceValues.coordStrike || 0;
+        const manaCur = state.resourceValues.mana || 0;
 
         return `
         <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
@@ -448,7 +441,7 @@ const CLASS_CONFIG = {
                 }
             }
 
-            desc += choiceHtml + `</div>`;
+            desc += sHtml + `</div>`;
         }
 
         return bFeat(name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);

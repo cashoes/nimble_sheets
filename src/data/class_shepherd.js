@@ -194,8 +194,8 @@ const CLASS_CONFIG = {
 
     getMechanicPanelHTML: function(level, subclass, state, derived) {
         const totalWil = (state.baseWil || 0) + (state.addWil || 0);
-        const manaMax = (totalWil * 3) + level;
-        const searingMax = totalWil;
+        const manaMax = derived.resourceMaxes.mana;
+        const searingMax = derived.resourceMaxes.searingLight;
         
         let spiritType = subclass === "Malice" ? "Deadly" : "Lifebinding";
         let spiritColor = subclass === "Malice" ? "var(--save-adv)" : "var(--class-accent)";

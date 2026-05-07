@@ -163,8 +163,8 @@ const CLASS_CONFIG = {
     spellProgression: [0, 2, 4, 6, 8, 10, 13, 17],
 
     resources: [
-        { id: 'manaCurrent', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? Math.max(0, stats.wil + level) : 0 },
-        { id: 'lohCurrent', label: 'Lay on Hands', manual: true, calcMax: (level, stats) => level * 5 }
+        { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? Math.max(0, stats.wil + level) : 0 },
+        { id: 'loh', label: 'Lay on Hands', manual: true, calcMax: (level, stats) => level * 5 }
     ],
 
     customHeaderStats: [
@@ -197,8 +197,8 @@ const CLASS_CONFIG = {
     },
 
     getMechanicPanelHTML: function (level, subclass, state, derived) {
-        const manaMax = (state.baseWil + state.addWil) + level;
-        const lohMax = level * 5;
+        const manaMax = derived.resourceMaxes.mana;
+        const lohMax = derived.resourceMaxes.loh;
 
         let decrees = state.selectedDecrees || [];
         let isAdv = decrees.includes("Reliable Justice");
@@ -256,9 +256,9 @@ const CLASS_CONFIG = {
                         <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <div class="dark-incrementer">
-                                <button onclick="adjRes('manaCurrent', -1, ${manaMax})">-</button>
-                                <input type="number" id="res_manaCurrent" value="${state.resourceValues.manaCurrent || 0}" onchange="adjRes('manaCurrent', parseInt(this.value), ${manaMax}, true)">
-                                <button onclick="adjRes('manaCurrent', 1, ${manaMax})">+</button>
+                                <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
+                                <input type="number" id="res_mana" value="${state.resourceValues.mana || 0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
+                                <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
                             </div>
                             <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.85em; width: 35px;">/ ${manaMax}</div>
                         </div>
@@ -268,9 +268,9 @@ const CLASS_CONFIG = {
                         <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Lay on Hands</label>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <div class="dark-incrementer">
-                                <button onclick="adjRes('lohCurrent', -1, ${lohMax})">-</button>
-                                <input type="number" id="res_lohCurrent" value="${state.resourceValues.lohCurrent || 0}" onchange="adjRes('lohCurrent', parseInt(this.value), ${lohMax}, true)">
-                                <button onclick="adjRes('lohCurrent', 1, ${lohMax})">+</button>
+                                <button onclick="adjRes('loh', -1, ${lohMax})">-</button>
+                                <input type="number" id="res_loh" value="${state.resourceValues.loh || 0}" onchange="adjRes('loh', parseInt(this.value), ${lohMax}, true)">
+                                <button onclick="adjRes('loh', 1, ${lohMax})">+</button>
                             </div>
                             <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.85em; width: 35px;">/ ${lohMax}</div>
                         </div>
