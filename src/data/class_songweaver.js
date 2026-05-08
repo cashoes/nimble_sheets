@@ -30,15 +30,15 @@ const SONGWEAVER_FEATURES = {
                 let vmBonus = totalInt;
                 if (level >= 15 && subclass === "HeraldSnark") vmBonus += totalWil;
                 let vmDisplay = `<strong>${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}</strong>`;
-                
+
                 let intro = `You know the unique Wind cantrip <strong>Vicious Mockery</strong>:`;
-                let card = rSSC({ 
-                    name: "Vicious Mockery", 
-                    tier: "Cantrip", 
-                    school: "Wind", 
-                    desc: `1 Action. Range: 12. Damage: ${vmDisplay} psychic (ignoring armor). On hit: target is Taunted during their next turn.` 
-                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: totalInt, wil: totalWil });
-                
+                let card = rSSC({
+                    name: "Vicious Mockery",
+                    tier: "Cantrip",
+                    school: "Wind",
+                    desc: `1 Action. Range: 12. Damage: ${vmDisplay} psychic (ignoring armor). On hit: target is Taunted during their next turn.`
+                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: totalInt, wil: totalWil });     
+
                 return intro + card;
             } },
             { id: "inspiration", name: "Songweaver’s Inspiration", desc: (level, subclass, state) => {
@@ -47,14 +47,14 @@ const SONGWEAVER_FEATURES = {
             }}
         ],
         2: [
-            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x WIL+LVL</strong>) to cast tiered spells." },
+            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x WIL+LVL</strong>) to cast tiered spells." },  
             { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true },
             { id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." },
             { id: "song_rest", name: "Song of Rest", desc: "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your <strong>WIL</strong>." }
         ],
         3: [
             { id: "subclass", name: "Subclass", desc: "Choose a Songweaver subclass.", minor: true },
-            { id: "quick_wit", name: "Quick Wit", desc: "Roll Init: regain 2 spent Inspiration charges (expire end of combat)." },
+            { id: "quick_wit", name: "Quick Wit", desc: "Roll Init: regain 2 spent Inspiration charges (expire end of combat)." }, 
             { id: "windbag", name: "Windbag", type: "windbag_choice", desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Learn a Utility Spell from each spell school you know.", getCount: (level) => level >= 14 ? 0 : level >= 6 ? 2 : 1 }
         ],
         4: [
@@ -147,61 +147,52 @@ const SONGWEAVER_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Songweaver",
-    subtitle: "Musical mystic who weaves spells through song",
-    keyStats: ['wil', 'int'], 
-    saves: { adv: 'wil', dis: 'str' }, 
-    proficiencies: {
-        armor: "Cloth, Leather",
-        weapons: "Staves, Instruments"
-    },
-    baseHp: 13,
-    hpPerLevel: 6,
-    hitDie: 8,
-    
-    theme: {
-        accent: "#fbbf24",
-        accentDim: "#d97706",
-        bodyBg: "#070401",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.08) 0%, transparent 100%), linear-gradient(180deg, #1a140a 0%, #070401 100%)",
-        panelBg: "rgba(35, 25, 15, 0.7)",
-        border: "rgba(251, 191, 36, 0.3)"
-    },
+class SongweaverClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Songweaver",
+            subtitle: "Musical mystic who weaves spells through song",
+            keyStats: ['wil', 'int'],
+            saves: { adv: 'wil', dis: 'str' },
+            proficiencies: {
+                armor: "Cloth, Leather",
+                weapons: "Staves, Instruments"
+            },
+            baseHp: 13,
+            hpPerLevel: 6,
+            hitDie: 8,
+            theme: {
+                accent: "#fbbf24",
+                accentDim: "#d97706",
+                bodyBg: "#070401",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.08) 0%, transparent 100%), linear-gradient(180deg, #1a140a 0%, #070401 100%)",
+                panelBg: "rgba(35, 25, 15, 0.7)",
+                border: "rgba(251, 191, 36, 0.3)"
+            },
+            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "HeraldSnark", label: "Herald of Snark", accent: "#ef4444" },
+                { value: "HeraldCourage", label: "Herald of Courage", accent: "#fbbf24" }
+            ],
+            resources: [
+                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },     
+                { id: 'inspiration', label: 'Inspiration', manual: true, calcMax: (level, stats, state) => {
+                    let max = stats.wil * 2;
+                    let lyrical = state.selectedLyrical || [];
+                    if (lyrical.includes("Heroic Ballad")) max += 2;
+                    return max;
+                }}
+            ],
+            featuresData: SONGWEAVER_FEATURES,
+            optionsData: SONGWEAVER_OPTIONS
+        });
+    }
 
-    initialStats: {
-        baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "HeraldSnark", label: "Herald of Snark", accent: "#ef4444" },
-        { value: "HeraldCourage", label: "Herald of Courage", accent: "#fbbf24" }
-    ],
-
-    resources: [
-        { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },
-        { id: 'inspiration', label: 'Inspiration', manual: true, calcMax: (level, stats, state) => {
-            let max = stats.wil * 2;
-            let lyrical = state.selectedLyrical || [];
-            if (lyrical.includes("Heroic Ballad")) max += 2;
-            return max;
-        }}
-    ],
-
-    customHeaderStats: [],
-
-    getDerivedStats: function(level, subclass, state) {
-        let speed = 6; let woundMax = 6;
-        return { speed, woundMax };
-    },
-
-    getShieldBonus: function(level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         const manaMax = derived.resourceMaxes.mana;
         const inspMax = derived.resourceMaxes.inspiration;
-        
+
         const inspCur = state.resourceValues.inspiration || 0;
 
         // Vicious Mockery Calculation
@@ -224,7 +215,7 @@ const CLASS_CONFIG = {
                             <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
                             <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
                         </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${manaMax}</div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
                     </div>
                 </div>` : ''}
 
@@ -248,30 +239,24 @@ const CLASS_CONFIG = {
                 </div>
             </div>
         </div>`;
-    },
+    }
 
-    actions: {},
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, SONGWEAVER_FEATURES, SONGWEAVER_OPTIONS, this);
-    },
-
-    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
+    renderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "windbag_choice";
         let count = (typeof feat.getCount === "function") ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
         let context = (feat.id === "vicious_mockery") ? { type: 'cantrip' } : {};
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
 
-        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
+        const statsMap = derived.statsMap;
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
             let selection = state[feat.stateKey] || [];
-            let options = Object.keys(SONGWEAVER_OPTIONS[collection] || {});
+            let options = Object.keys(this.optionsData[collection] || {});
 
             let optsHtml = `<option value="None">-- Select Option --</option>`;
             options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
@@ -279,7 +264,7 @@ const CLASS_CONFIG = {
             for (let i = 0; i < count; i++) {
                 let idx = (feat.startIndex || 0) + i;
                 let val = selection[idx] || "None";
-                let d = (val !== "None" && SONGWEAVER_OPTIONS[collection][val]) ? SONGWEAVER_OPTIONS[collection][val].desc : "";
+                let d = (val !== "None" && this.optionsData[collection][val]) ? this.optionsData[collection][val].desc : "";   
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
@@ -289,20 +274,20 @@ const CLASS_CONFIG = {
             desc += choiceHtml + `</div>`;
         } else if (feat.type === "windbag_choice" && count > 0) {
             const knownSchools = ["Wind"];
-            if (state.secondarySchool?.[0] && state.secondarySchool[0] !== "None") knownSchools.push(state.secondarySchool[0]);
+            if (state.secondarySchool?.[0] && state.secondarySchool[0] !== "None") knownSchools.push(state.secondarySchool[0]);    
 
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
 
             knownSchools.forEach(sch => {
                 let stateKey = `windbagSpells_${sch}`;
                 let selection = state[stateKey] || [];
-                
+
                 for (let i = 0; i < count; i++) {
                     let optsHtml = `<option value="None">-- Select ${sch} Utility --</option>`;
                     if (UTILITY_SPELLS[sch]) {
-                        Object.keys(UTILITY_SPELLS[sch]).forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+                        Object.keys(UTILITY_SPELLS[sch]).forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);     
                     }
-                    
+
                     let val = selection[i] || "None";
                     let d = (val !== "None" && UTILITY_SPELLS[sch]?.[val]) || "";
 
@@ -317,8 +302,9 @@ const CLASS_CONFIG = {
         }
 
         return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
-    },
-    getAvailableSpells: function (level, subclass, state, derived) {
+    }
+
+    getAvailableSpells(level, subclass, state, derived) {
         let spells = [];
         const masteredSchools = ["Wind"];
         if (state.secondarySchool && state.secondarySchool[0] !== "None") {
@@ -361,4 +347,6 @@ const CLASS_CONFIG = {
 
         return spells;
     }
-};
+}
+
+const CLASS_CONFIG = new SongweaverClass();

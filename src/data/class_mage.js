@@ -34,12 +34,14 @@ const MAGE_FEATURES = {
             { id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", desc: "Choose modular shadow powers.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 }
         ],
         5: [
-            { id: "surge", name: "Elemental Surge", desc: (level) => {
-                let surge = `WIL`;
-                if (level >= 17) surge = `WIL+2d4`;
-                else if (level >= 10) surge = `WIL+1d4`;
-                return `Roll Init: Regain <strong>${surge}</strong> mana (expires end of combat).`;
-            }},
+            {
+                id: "surge", name: "Elemental Surge", desc: (level) => {
+                    let surge = `WIL`;
+                    if (level >= 17) surge = `WIL+2d4`;
+                    else if (level >= 10) surge = `WIL+1d4`;
+                    return `Roll Init: Regain <strong>${surge}</strong> mana (expires end of combat).`;
+                }
+            },
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true },
             { id: "cantrips_1", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger (scaling varies by cantrip).", minor: true }
         ],
@@ -91,11 +93,13 @@ const MAGE_FEATURES = {
         "Control": {
             3: [
                 { id: "force_will", name: "Force of Will", desc: "1/round: Choose 1 option from the Control Table. You must cycle through all options before resetting (resets on Initiative). <br><strong>Deny Fate:</strong> Whenever you miss with a spell or an effect you cause is saved against, you MUST Demand Control." },
-                { id: "control_table", name: "Control Table", desc: `<div style="font-size:0.9em; color:var(--text-muted); margin-top:8px;">
+                {
+                    id: "control_table", name: "Control Table", desc: `<div style="font-size:0.9em; color:var(--text-muted); margin-top:8px;">
                     ● <strong>I INSIST:</strong> Cast a cantrip for free, ignoring all disadvantage; it cannot miss.<br>
                     ● <strong>ELEMENTAL AFFLICTION:</strong> A creature within 12 reach gains the Charged, Smoldering, or Slowed condition.<br>
-                    ● <strong>NO:</strong> Choose a creature; it cannot harm a creature of your choice during its next turn.<br>
-                    ● <strong>LOSE CONTROL:</strong> Do ALL of the above, but the GM chooses each time.</div>` }
+                    ● <strong>NO:</strong> Choose a creature; it cannot harm a creature of your choice during its next turn.<br>  
+                    ● <strong>LOSE CONTROL:</strong> Do ALL of the above, but the GM chooses each time.</div>` },
+                { id: "deny_fate", name: "Deny Fate", desc: "Whenever you miss with a spell or an effect you cause is saved against, you MUST Demand Control." }
             ],
             7: [
                 { id: "cost", name: "At Any Cost", desc: "Learn 1 cantrip and 1 tiered spell from the Necrotic school." },
@@ -126,56 +130,47 @@ const MAGE_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Mage",
-    subtitle: "Master of elemental forces & spellshaping",
-    keyStats: ['int', 'wil'], 
-    saves: { adv: 'int', dis: 'str' }, 
-    proficiencies: {
-        armor: "Cloth",
-        weapons: "Blades, Staves, Wands"
-    },
-    baseHp: 10,
-    hpPerLevel: 5,
-    hitDie: 6,
+class MageClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Mage",
+            subtitle: "Master of elemental forces & spellshaping",
+            keyStats: ['int', 'wil'],
+            saves: { adv: 'int', dis: 'str' },
+            proficiencies: {
+                armor: "Cloth",
+                weapons: "Blades, Staves, Wands"
+            },
+            baseHp: 10,
+            hpPerLevel: 5,
+            hitDie: 6,
+            theme: {
+                accent: "#818cf8",
+                accentDim: "#4f46e5",
+                bodyBg: "#05070a",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(129, 140, 248, 0.08) 0%, transparent 100%), linear-gradient(180deg, #0f111a 0%, #05070a 100%)",
+                panelBg: "rgba(20, 22, 35, 0.7)",
+                border: "rgba(129, 140, 248, 0.3)"
+            },
+            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "Control", label: "Invoker of Control", accent: "#38bdf8" },
+                { value: "Chaos", label: "Invoker of Chaos", accent: "#f97316" }
+            ],
+            resources: [
+                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.int * 3) + level : 0 }
+            ],
+            featuresData: MAGE_FEATURES,
+            optionsData: MAGE_OPTIONS
+        });
+    }
 
-    theme: {
-        accent: "#818cf8",
-        accentDim: "#4f46e5",
-        bodyBg: "#05070a",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(129, 140, 248, 0.08) 0%, transparent 100%), linear-gradient(180deg, #0f111a 0%, #05070a 100%)",
-        panelBg: "rgba(20, 22, 35, 0.7)",
-        border: "rgba(129, 140, 248, 0.3)"
-    },
-
-    initialStats: {
-        baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "Control", label: "Invoker of Control", accent: "#38bdf8" },
-        { value: "Chaos", label: "Invoker of Chaos", accent: "#f97316" }
-    ],
-
-    resources: [
-        { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.int * 3) + level : 0 }
-    ],
-
-    customHeaderStats: [],
-
-    getDerivedStats: function(level, subclass, state) {
-        let speed = 6; let woundMax = 6;
-        return { speed, woundMax };
-    },
-
-    getShieldBonus: function(level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         const totalWil = (state.baseWil || 0) + (state.addWil || 0);
         const manaMax = derived.resourceMaxes.mana;
 
-        let surgeNotation = `1d1+${totalWil}-1`; // Default to just totalWil if no dice added
+        let surgeNotation = `${totalWil > 0 ? totalWil : ''}`;
         let surgeDisplay = `+${totalWil}`;
         if (level >= 17) {
             surgeNotation = `2d4+${totalWil}`;
@@ -186,52 +181,53 @@ const CLASS_CONFIG = {
         }
 
         return `
-        <div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 10px; justify-content: center;">
+        <div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 15px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: flex; align-items: stretch; gap: 15px; justify-content: center; flex: 1;">
+                
+                <!-- Mana Column -->
                 ${level >= 2 ? `
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 15px; justify-content: center; text-align: center;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
+                    <div style="display: flex; align-items: center; gap: 6px;">
                         <div class="dark-incrementer">
                             <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
-                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
+                            <input type="number" id="res_mana" value="${state.resourceValues.mana || 0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
                             <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
                         </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.95em;">/ ${manaMax}</div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.1em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
                     </div>
                 </div>` : ''}
 
-                ${level >= 5 ? `
-                <div style="flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Surge</label>
-                    <div class="roll-link" onclick="dispatchRoll('${surgeNotation}', 'Elemental Surge')" style="font-size: 1.8em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">${surgeDisplay}</div>
-                    <div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic;">Regain on Init</div>
+                <!-- Surge Column -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Elemental Surge</label>
+                    <div class="roll-link" onclick="dispatchRoll('${surgeNotation}', 'Elemental Surge')" style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1;">${surgeDisplay}</div>
+                    <div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; margin-top: 4px;">Regain on Init</div>
+                </div>
+
+                <!-- Subclass Action Column -->
+                ${subclass === "Chaos" ? `
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px dashed rgba(255,255,255,0.15); padding-left: 15px;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Chaos</label>
+                    <button class="roll-link" onclick="dispatchRoll('1d20', 'Invoke Chaos')" 
+                            style="background: rgba(249, 115, 22, 0.15); border: 1px solid var(--class-accent); color: #fff; font-family: 'Cinzel'; font-size: 0.8em; font-weight: bold; padding: 6px 10px; border-radius: 4px; cursor: pointer; text-transform: uppercase; width: 100%;">
+                        Invoke
+                    </button>
+                </div>` : subclass === "Control" ? `
+                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px dashed rgba(255,255,255,0.15); padding-left: 15px;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Control</label>
+                    <div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; text-align: center;">
+                        Demand Control 1/round or on miss.
+                    </div>
                 </div>` : ''}
             </div>
-            ${subclass === "Chaos" ? `
-            <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; text-align: center;">
-                <div class="roll-link" onclick="dispatchRoll('1d20', 'Invoke Chaos')" style="color: var(--class-accent); font-size: 0.85em; font-weight: bold; text-transform: uppercase; font-family: 'Cinzel'; letter-spacing: 1px; cursor:pointer;">Invoke Chaos (1d20)</div>
-            </div>` : subclass === "Control" && level >= 3 ? `
-            <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 2px; text-align: center;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text';">
-                    <div style="text-align: right;"><strong>I INSIST:</strong> Cantrip Hit</div>
-                    <div style="text-align: left;"><strong>AFFLICTION:</strong> Condition</div>
-                    <div style="text-align: right;"><strong>NO:</strong> Disarm Harm</div>
-                    <div style="text-align: left;"><strong>LOSE:</strong> ALL (GM)</div>
-                </div>
-            </div>` : ''}
         </div>`;
-    },
+    }
 
-    actions: {},
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, MAGE_FEATURES, MAGE_OPTIONS, this);
-    },
-    getAvailableSpells: function(level, subclass, state, derived) {
+    getAvailableSpells(level, subclass, state, derived) {
         let spells = [];
         const baseSchools = ["Fire", "Ice", "Lightning"];
-        
+
         // 1. Gather all tiered spells and cantrips from base schools
         baseSchools.forEach(school => {
             if (!SPELL_REGISTRY[school]) return;
@@ -275,4 +271,6 @@ const CLASS_CONFIG = {
 
         return spells;
     }
-};
+}
+
+const CLASS_CONFIG = new MageClass();

@@ -127,51 +127,49 @@ const OATHSWORN_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Oathsworn",
-    subtitle: "Faithful guardian, protector, and avenger",
-    keyStats: ['str', 'wil'],
-    saves: { adv: 'str', dis: 'dex' },
-    proficiencies: {
-        armor: "All Armor",
-        weapons: "STR Weapons"
-    },
-    baseHp: 17,
-    hpPerLevel: 8,
-    hitDie: 10,
+class OathswornClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Oathsworn",
+            subtitle: "Faithful guardian, protector, and avenger",
+            keyStats: ['str', 'wil'],
+            saves: { adv: 'str', dis: 'dex' },
+            proficiencies: {
+                armor: "All Armor",
+                weapons: "STR Weapons"
+            },
+            baseHp: 17,
+            hpPerLevel: 8,
+            hitDie: 10,
+            theme: {
+                accent: "#38bdf8",
+                accentDim: "#0284c7",
+                bodyBg: "#05070a",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.1) 0%, transparent 100%), linear-gradient(180deg, #111827 0%, #0a0f1a 100%)",
+                panelBg: "rgba(30, 41, 59, 0.7)",
+                border: "var(--gold-dim)"
+            },
+            initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "Vengeance", label: "Vengeance", accent: "#ef4444" },
+                { value: "Refuge", label: "Refuge", accent: "#f8fafc" },
+                { value: "Oathbreaker", label: "Oathbreaker", accent: "#a855f7" }
+            ],
+            spellProgression: [0, 2, 4, 6, 8, 10, 13, 17],
+            resources: [
+                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? Math.max(0, stats.wil + level) : 0 },
+                { id: 'loh', label: 'Lay on Hands', manual: true, calcMax: (level, stats) => level * 5 }
+            ],
+            customHeaderStats: [
+                { id: 'auraContainer', label: 'Aura', position: 'left', color: 'var(--class-accent)', isVisible: (level, subclass) => level >= 3 && subclass !== 'None', getValue: (derived) => `R ${derived.auraReach}` }
+            ],
+            featuresData: OATHSWORN_FEATURES,
+            optionsData: OATHSWORN_OPTIONS
+        });
+    }
 
-    theme: {
-        accent: "#38bdf8",
-        accentDim: "#0284c7",
-        bodyBg: "#05070a",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.1) 0%, transparent 100%), linear-gradient(180deg, #111827 0%, #0a0f1a 100%)",
-        panelBg: "rgba(30, 41, 59, 0.7)",
-        border: "var(--gold-dim)"
-    },
-
-    initialStats: {
-        baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "Vengeance", label: "Vengeance", accent: "#ef4444" },
-        { value: "Refuge", label: "Refuge", accent: "#f8fafc" },
-        { value: "Oathbreaker", label: "Oathbreaker", accent: "#a855f7" }
-    ],
-
-    spellProgression: [0, 2, 4, 6, 8, 10, 13, 17],
-
-    resources: [
-        { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? Math.max(0, stats.wil + level) : 0 },
-        { id: 'loh', label: 'Lay on Hands', manual: true, calcMax: (level, stats) => level * 5 }
-    ],
-
-    customHeaderStats: [
-        { id: 'auraContainer', label: 'Aura', position: 'left', color: 'var(--class-accent)', isVisible: (level, subclass) => level >= 3 && subclass !== 'None', getValue: (derived) => `R ${derived.auraReach}` }
-    ],
-
-    getDerivedStats: function (level, subclass, state) {
+    getDerivedStats(level, subclass, state) {
         let speed = 6; let auraReach = 4; let woundMax = 6;
         let decrees = state.selectedDecrees || [];
         if (decrees.includes("Unstoppable Protector")) speed += 1;
@@ -190,13 +188,13 @@ const CLASS_CONFIG = {
         let jdText = `${jdCount}d${faces}${jdAdvText}`;
 
         return { speed, auraReach, woundMax, jdText, jdCount, jdFaces: faces };
-    },
+    }
 
-    getShieldBonus: function (level, subclass, stats) {
+    getShieldBonus(level, subclass, stats) {
         return (subclass === 'Refuge' && level >= 3) ? stats.wil : 0;
-    },
+    }
 
-    getMechanicPanelHTML: function (level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         const manaMax = derived.resourceMaxes.mana;
         const lohMax = derived.resourceMaxes.loh;
 
@@ -301,9 +299,9 @@ const CLASS_CONFIG = {
                 </div>
             </div>
         </div>`;
-    },
+    }
 
-    actions: {
+    actions = {
         maximizeDie: function (idx) {
             if (!state.judgmentDice || !state.judgmentDice[idx]) return;
             const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
@@ -362,12 +360,9 @@ const CLASS_CONFIG = {
             saveState(); render();
         },
         spendJudgmentDice: function () { state.judgmentDice = null; saveState(); render(); }
-    },
+    };
 
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, OATHSWORN_FEATURES, OATHSWORN_OPTIONS, this);
-    },
-    getAvailableSpells: function (level, subclass, state, derived) {
+    getAvailableSpells(level, subclass, state, derived) {
         let spells = [];
         const progress = this.spellProgression;
         const isOathbreaker = subclass === "Oathbreaker";
@@ -433,4 +428,6 @@ const CLASS_CONFIG = {
 
         return spells;
     }
-};
+}
+
+const CLASS_CONFIG = new OathswornClass();

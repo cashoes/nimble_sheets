@@ -8,11 +8,11 @@ const STORMSHIFTER_OPTIONS = {
     },
     chimericBoons: {
         "Beast of the Sea (Swim/Breath)": { desc: "Swim speed equal to normal speed. Can breathe underwater." },
-        "Climber (Walk walls/ceilings)": { desc: "Walk on walls and ceilings as normal ground; ignore difficult terrain." },
+        "Climber (Walk walls/ceilings)": { desc: "Walk on walls and ceilings as normal ground; ignore difficult terrain." },       
         "Fleet Footed (+2 Speed, ADV Stealth)": { desc: "+2 speed. Advantage on Stealth and against Grappled." },
         "Earthwalker (+2 Armor, Burrow)": { desc: "+2 armor. Burrow at 1/2 speed. Advantage vs Prone." },
         "Keen Senses (ADV Perception/Assess)": { desc: "Advantage on Perception and Assess. Unaffected by Blinded." },
-        "Leader of the Pack (ADV Fear/Charm for 6r aura)": { desc: "Advantage vs Fear and Charm for you and allies in 6 reach." },
+        "Leader of the Pack (ADV Fear/Charm for 6r aura)": { desc: "Advantage vs Fear and Charm for you and allies in 6 reach." }, 
         "Phasebeast (Teleport 6 on shift)": { desc: "Teleport up to 6 spaces when shifting in or out of form." },
         "Prehensile Tail (Grapple on melee hit)": { desc: "Melee hit on targets your size or smaller: they are Grappled. Large targets: you move with them." },
         "Winged (Fly speed, forced move 2x)": { desc: "Gain fly speed. Forced movement moves you twice as far." }
@@ -26,11 +26,11 @@ const STORMSHIFTER_OPTIONS = {
 const STORMSHIFTER_FEATURES = {
     core: {
         1: [
-            { id: "master", name: "Master of Storms", desc: "You know all cantrips from the Lightning and Wind schools." },
+            { id: "master", name: "Master of Storms", desc: "You know all cantrips from the Lightning and Wind schools." },        
             { id: "shift", name: "Beastshift", desc: "Action: Transform into a harmless beast. Speek with animals. DEX charges/Safe Rest. Form ends if you drop to 0 HP or cast spell." }
         ],
         2: [
-            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x WIL+LVL</strong>) to cast Tempest spells." },
+            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x WIL+LVL</strong>) to cast Tempest spells." }, 
             { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true },
             { id: "dire_1", name: "Direbeast Form", desc: "You can now Beastshift into a <strong>Fearsome Beast</strong> (Large)." }
         ],
@@ -45,7 +45,7 @@ const STORMSHIFTER_FEATURES = {
         5: [
             { id: "dire_3", name: "Direbeast Form (3)", desc: "You can now Beastshift into a <strong>Beast of Nightmares</strong> (Tiny)." },
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true },
-            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your lightning/wind cantrips grow stronger.", minor: true }
+            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your lightning/wind cantrips grow stronger.", minor: true }        
         ],
         6: [
             { id: "boons", name: "Chimeric Boons", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", desc: "Choose form mutations.", getCount: (level) => level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2 },
@@ -120,7 +120,7 @@ const STORMSHIFTER_FEATURES = {
                 { id: "wake", name: "Storm Wake", desc: "(1/encounter) Action: Spend 3 mana to shift into Beast of the Pack, teleport 12 reach in a line, and deal <strong>WIL</strong> d8 lightning dmg to targets in path." }
             ],
             11: [
-                { id: "forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." },
+                { id: "forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." },      
                 { id: "gaze", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into Beast of Nightmares, pull enemy within 12 by 2x WIL spaces, and free Sting on contact." }
             ],
             15: [
@@ -130,61 +130,59 @@ const STORMSHIFTER_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Stormshifter",
-    subtitle: "Master of weather, beast, and nature",
-    keyStats: ['wil', 'dex'], 
-    saves: { adv: 'wil', dis: 'str' }, 
-    proficiencies: {
-        armor: "Cloth, Leather",
-        weapons: "Staves, Wands"
-    },
-    baseHp: 13,
-    hpPerLevel: 6,
-    hitDie: 8,
-    
-    theme: {
-        accent: "#2dd4bf",
-        accentDim: "#0d9488",
-        bodyBg: "#040a09",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(45, 212, 191, 0.08) 0%, transparent 100%), linear-gradient(180deg, #0f1a18 0%, #040a09 100%)",
-        panelBg: "rgba(20, 35, 33, 0.7)",
-        border: "rgba(45, 212, 191, 0.3)"
-    },
+class StormshifterClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Stormshifter",
+            subtitle: "Master of weather, beast, and nature",
+            keyStats: ['wil', 'dex'],
+            saves: { adv: 'wil', dis: 'str' },
+            proficiencies: {
+                armor: "Cloth, Leather",
+                weapons: "Staves, Wands"
+            },
+            baseHp: 13,
+            hpPerLevel: 6,
+            hitDie: 8,
+            theme: {
+                accent: "#2dd4bf",
+                accentDim: "#0d9488",
+                bodyBg: "#040a09",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(45, 212, 191, 0.08) 0%, transparent 100%), linear-gradient(180deg, #0f1a18 0%, #040a09 100%)",
+                panelBg: "rgba(20, 35, 33, 0.7)",
+                border: "rgba(45, 212, 191, 0.3)"
+            },
+            initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "SkyStorm", label: "Circle of Sky & Storm", accent: "#bae6fd" },
+                { value: "FangClaw", label: "Circle of Fang & Claw", accent: "#f97316" }
+            ],
+            resources: [
+                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },     
+                { id: 'shiftUses', label: 'Beastshift', manual: true, calcMax: (level, stats) => {
+                    let base = stats.dex;
+                    if (level >= 6) base += 1;
+                    if (level >= 9) base += 1;
+                    if (level >= 12) base += 1;
+                    if (level >= 15) base += 2; // Expert Shifter (approximate)
+                    return Math.max(1, base);
+                }}
+            ],
+            featuresData: STORMSHIFTER_FEATURES,
+            optionsData: STORMSHIFTER_OPTIONS
+        });
+    }
 
-    initialStats: {
-        baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "SkyStorm", label: "Circle of Sky & Storm", accent: "#bae6fd" },
-        { value: "FangClaw", label: "Circle of Fang & Claw", accent: "#f97316" }
-    ],
-
-    resources: [
-        { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },
-        { id: 'shiftUses', label: 'Beastshift', manual: true, calcMax: (level, stats) => {
-            let base = stats.dex;
-            if (level >= 6) base += 1;
-            if (level >= 9) base += 1;
-            if (level >= 12) base += 1;
-            if (level >= 15) base += 2; // Expert Shifter (approximate)
-            return Math.max(1, base);
-        }}
-    ],
-
-    customHeaderStats: [],
-
-    getDerivedStats: function(level, subclass, state) {
+    getDerivedStats(level, subclass, state) {
         const activeForm = (state.currentForm && state.currentForm[0]) || "Normal";
         let speed = (activeForm === "Beast of Nightmares") ? 2 : 6;
         let woundMax = 6;
 
         return { speed, woundMax };
-    },
+    }
 
-    getStatOverrides: function(level, subclass, state, statsMap) {
+    getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
         const activeForm = (state.currentForm && state.currentForm[0]) || "Normal";
         const selectedBoons = state.selectedBoons || [];
@@ -210,11 +208,9 @@ const CLASS_CONFIG = {
         }
 
         return overrides;
-    },
+    }
 
-    getShieldBonus: function(level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         const manaMax = derived.resourceMaxes.mana;
         const shiftMax = derived.resourceMaxes.shiftUses;
 
@@ -258,7 +254,7 @@ const CLASS_CONFIG = {
                 <div style="flex: 1.6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                     <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Current Form</label>
                     <select onchange="updateClassState('currentForm', 0, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 3px; font-size: 0.85em;">${opts}</select>
-                    
+
                     <div style="min-height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;">
                         ${(function() {
                             const totalStr = (state.baseStr || 0) + (state.addStr || 0);
@@ -268,7 +264,7 @@ const CLASS_CONFIG = {
                                 <span class="roll-link" onclick="dispatchRoll('1d6+${level}', 'Gore Attack', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">GORE 1d6+${level}</span>
                                 <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">+${totalDex+level} THP | 1 Mana Reroll</div>`;
                             if (activeForm === "Beast of the Pack") return `
-                                <span class="roll-link" onclick="dispatchRoll('1d4+${level}', 'Thunderfang', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">THUNDERFANG 1d4+${level}</span>
+                                <span class="roll-link" onclick="dispatchRoll('1d4+${level}', 'Thunderfang', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">THUNDERFANG 1d4+${level}</span>     
                                 <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">+${totalDex} SPD | +1d4 Dmg on Kill</div>`;
                             if (activeForm === "Beast of Nightmares") return `
                                 <span class="roll-link" onclick="dispatchRoll('1d4+${3*level}', 'Sting', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">STING 1d4+${3*level}</span>
@@ -282,30 +278,24 @@ const CLASS_CONFIG = {
                 </div>
             </div>
         </div>`;
-    },
+    }
 
-    actions: {},
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, STORMSHIFTER_FEATURES, STORMSHIFTER_OPTIONS, this);
-    },
-
-    renderFeature: function (feat, level, subclass, state, bFeat, iStats, formatPips, rSSC, cssClass) {
+    renderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "stormcaller_choice";
         let count = (typeof feat.getCount === "function") ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, CLASS_CONFIG.getDerivedStats(level, subclass, state), rSSC) : (feat.desc || "");
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");
 
         let finalCssClass = cssClass || "";
         if (feat.minor) finalCssClass += " minor-feature";
 
-        const statsMap = { str: state.baseStr + state.addStr, dex: state.baseDex + state.addDex, int: state.baseInt + state.addInt, wil: state.baseWil + state.addWil };
-        let context = (feat.id === "shift" || (feat.id && feat.id.startsWith("dire"))) ? { type: 'attack', stat: 'wil' } : {};
+        const statsMap = derived.statsMap;
+        let context = (feat.id === "shift" || (feat.id && feat.id.startsWith("dire"))) ? { type: 'attack', stat: 'wil' } : {};     
 
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
             let selection = state[feat.stateKey] || [];
-            let options = Object.keys(STORMSHIFTER_OPTIONS[collection] || {});
+            let options = Object.keys(this.optionsData[collection] || {});
 
             let optsHtml = `<option value="None">-- Select Option --</option>`;
             options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
@@ -313,7 +303,7 @@ const CLASS_CONFIG = {
             for (let i = 0; i < count; i++) {
                 let idx = (feat.startIndex || 0) + i;
                 let val = selection[idx] || "None";
-                let d = (val !== "None" && STORMSHIFTER_OPTIONS[collection][val]) ? STORMSHIFTER_OPTIONS[collection][val].desc : "";
+                let d = (val !== "None" && this.optionsData[collection][val]) ? this.optionsData[collection][val].desc : "";
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
                     <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
@@ -330,13 +320,13 @@ const CLASS_CONFIG = {
             knownSchools.forEach(sch => {
                 let stateKey = `stormcallerSpells_${sch}`;
                 let selection = state[stateKey] || [];
-                
+
                 for (let i = 0; i < count; i++) {
                     let optsHtml = `<option value="None">-- Select ${sch} Utility --</option>`;
                     if (UTILITY_SPELLS[sch]) {
-                        Object.keys(UTILITY_SPELLS[sch]).forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+                        Object.keys(UTILITY_SPELLS[sch]).forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);     
                     }
-                    
+
                     let val = selection[i] || "None";
                     let d = (val !== "None" && UTILITY_SPELLS[sch]?.[val]) || "";
 
@@ -351,10 +341,11 @@ const CLASS_CONFIG = {
         }
 
         return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
-    },
-    getAvailableSpells: function (level, subclass, state, derived) {
+    }
+
+    getAvailableSpells(level, subclass, state, derived) {
         let spells = [];
-        
+
         // Known Schools
         const schools = ["Lightning", "Wind"];
         if (subclass === "SkyStorm" && state.deepeningStudySchool?.[0] && state.deepeningStudySchool[0] !== "None") {
@@ -387,4 +378,6 @@ const CLASS_CONFIG = {
 
         return spells;
     }
-};
+}
+
+const CLASS_CONFIG = new StormshifterClass();

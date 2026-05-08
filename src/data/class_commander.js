@@ -13,7 +13,7 @@ const COMMANDER_OPTIONS = {
             empowered: "<strong>(Crystalline Armor)</strong> Target set to 3x LVL HP and gains that much Temp HP. Enemies who reduce this Temp HP in melee have speed halved for next turn."
         },
         "I Can Do This ALL DAY!": {
-            desc: "(1/encounter) Reaction (you drop to 0 HP): Expend Hit Dice and set HP to the sum rolled (no STR bonus).",
+            desc: "(1/encounter) Reaction (you drop to 0 HP): Expend Hit Dice and set HP to the sum rolled (no STR bonus).",       
             empowered: "<strong>(Rising Phoenix)</strong> Roll HD for HP, then deal HD fire damage to each enemy within 2. They gain Smoldering."
         },
         "Move it! Move it!": {
@@ -21,7 +21,7 @@ const COMMANDER_OPTIONS = {
             empowered: "<strong>(Borne upon the Wind)</strong> Gain advantage on Initiative, +3 speed, and FLY for 1 round. You and chosen ally both move for free."
         },
         "Reposition!": {
-            desc: "Action/Reaction (on ally's turn): Command 1 ally to move their speed (or 2 allies 1/2 speed) for free.",
+            desc: "Action/Reaction (on ally's turn): Command 1 ally to move their speed (or 2 allies 1/2 speed) for free.",        
             empowered: "<strong>(Flashstep)</strong> Command ally to move their speed (or 2 allies 1/2 speed) for free. You may exchange places with one of them."
         }
     },
@@ -34,7 +34,7 @@ const COMMANDER_OPTIONS = {
     },
     masteries: {
         "Slashing": { desc: "Your attacks with slashing weapons cannot miss unarmored enemies." },
-        "Bludgeoning": { desc: "When your primary die rolls a 7 or higher with a bludgeoning weapon, ignore Heavy Armor." },
+        "Bludgeoning": { desc: "When your primary die rolls a 7 or higher with a bludgeoning weapon, ignore Heavy Armor." },       
         "Piercing": { desc: "Your attacks with piercing weapons ignore Medium Armor." }
     }
 };
@@ -122,7 +122,7 @@ const COMMANDER_FEATURES = {
         },
         "Spellblade": {
             3: [
-                { id: "arcane_command_passive", replaces: ["tactics", "mastery"], name: "Arcane Command", desc: "You gain INT mana when you roll Initiative. Your Commander's Orders are empowered. (See your updated Arcane Command feature above).", minor: true },
+                { id: "arcane_command_passive", replaces: ["tactics", "mastery"], name: "Arcane Command", desc: "You gain INT mana when you roll Initiative. Your Commander's Orders are empowered. (See your updated Arcane Command feature above).", minor: true }, 
                 { id: "firebrand", name: "Firebrand", desc: "When you roll Initiative you may cast Enchant Weapon for free (can be upcast as normal by spending additional mana)." },
                 { id: "deep_knowledge", name: "Deep Knowledge", type: "dynamic_spell_choice", stateKey: "selectedSpells", desc: "Choose a tiered spell (based on your level) and any Utility Spell.", utility: true, utilStateKey: "selectedUtilitySpells", getCount: (level) => level >= 15 ? 4 : level >= 11 ? 3 : level >= 7 ? 2 : 1, getTier: (idx) => idx + 1 }
             ]
@@ -130,59 +130,57 @@ const COMMANDER_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Commander",
-    subtitle: "Fearless leader, tactician, & weapon master",
-    keyStats: ['str', 'int'],
-    saves: { adv: 'str', dis: 'dex' },
-    proficiencies: {
-        armor: "Mail, Shields",
-        weapons: "All Martial Weapons"
-    },
-    baseHp: 17,
-    hpPerLevel: 8,
-    hitDie: 10,
+class CommanderClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Commander",
+            subtitle: "Fearless leader, tactician, & weapon master",
+            keyStats: ['str', 'int'],
+            saves: { adv: 'str', dis: 'dex' },
+            proficiencies: {
+                armor: "Mail, Shields",
+                weapons: "All Martial Weapons"
+            },
+            baseHp: 17,
+            hpPerLevel: 8,
+            hitDie: 10,
+            theme: {
+                accent: "#f59e0b",
+                accentDim: "#b45309",
+                bodyBg: "#0f0a0a",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0f11 0%, #0f0a0a 100%)",
+                panelBg: "rgba(35, 20, 20, 0.8)",
+                border: "rgba(245, 158, 11, 0.25)"
+            },
+            initialStats: { baseStr: 2, baseDex: 0, baseInt: 2, baseWil: -1 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "Bulwark", label: "Champion of the Bulwark", accent: "#94a3b8" },
+                { value: "Vanguard", label: "Champion of the Vanguard", accent: "#ef4444" },
+                { value: "Spellblade", label: "Spellblade", accent: "#a855f7" }
+            ],
+            resources: [
+                { id: 'combatDice', label: 'Combat Dice', manual: true, calcMax: (level, stats, state, subclass) => {
+                    let max = stats.str;
+                    if (level >= 11 && subclass === "Vanguard") max += 1;
+                    return max;
+                }},
+                { id: 'coordStrike', label: 'Coordinated Strike', manual: true, calcMax: (level, stats, state, subclass) => {
+                    let max = stats.int;
+                    if (level >= 9) max += 1;
+                    if (level >= 13) max += 1;
+                    if (level >= 17) max += 1;
+                    if (level >= 7 && subclass === "Vanguard") max += 1;
+                    return max;
+                }},
+                { id: 'mana', label: 'Mana Pool', manual: true, isVisible: (level, subclass) => subclass === "Spellblade", calcMax: (level, stats) => stats.int }
+            ],
+            featuresData: COMMANDER_FEATURES,
+            optionsData: COMMANDER_OPTIONS
+        });
+    }
 
-    theme: {
-        accent: "#f59e0b",
-        accentDim: "#b45309",
-        bodyBg: "#0f0a0a",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0f11 0%, #0f0a0a 100%)",
-        panelBg: "rgba(35, 20, 20, 0.8)",
-        border: "rgba(245, 158, 11, 0.25)"
-    },
-
-    initialStats: {
-        baseStr: 2, baseDex: 0, baseInt: 2, baseWil: -1
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "Bulwark", label: "Champion of the Bulwark", accent: "#94a3b8" },
-        { value: "Vanguard", label: "Champion of the Vanguard", accent: "#ef4444" },
-        { value: "Spellblade", label: "Spellblade", accent: "#a855f7" }
-    ],
-
-    resources: [
-        { id: 'combatDice', label: 'Combat Dice', manual: true, calcMax: (level, stats, state, subclass) => {
-            let max = stats.str;
-            if (level >= 11 && subclass === "Vanguard") max += 1;
-            return max;
-        }},
-        { id: 'coordStrike', label: 'Coordinated Strike', manual: true, calcMax: (level, stats, state, subclass) => {
-            let max = stats.int;
-            if (level >= 9) max += 1;
-            if (level >= 13) max += 1;
-            if (level >= 17) max += 1;
-            if (level >= 7 && subclass === "Vanguard") max += 1;
-            return max;
-        }},
-        { id: 'mana', label: 'Mana Pool', manual: true, isVisible: (level, subclass) => subclass === "Spellblade", calcMax: (level, stats) => stats.int }
-    ],
-
-    customHeaderStats: [],
-
-    getDerivedStats: function (level, subclass, state) {
+    getDerivedStats(level, subclass, state) {
         let speed = 6;
         let woundMax = 6;
 
@@ -193,16 +191,9 @@ const CLASS_CONFIG = {
         if (level >= 17) cdType = "d20";
 
         return { speed, woundMax, cdType };
-    },
+    }
 
-    getStatOverrides: function (level, subclass, state, statsMap) {
-        let overrides = {};
-        return overrides;
-    },
-
-    getShieldBonus: function (level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function (level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         const maxCD = derived.resourceMaxes.combatDice;
         const strikeMax = derived.resourceMaxes.coordStrike;
         const manaMax = derived.resourceMaxes.mana;
@@ -257,21 +248,15 @@ const CLASS_CONFIG = {
                </div>
             </div>
         </div>`;
-    },
+    }
 
-    actions: {},
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, COMMANDER_FEATURES, COMMANDER_OPTIONS, this);
-    },
-
-    renderFeature: function(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
+    renderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
         const statsMap = derived.statsMap;
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "spell_choice" || feat.type === "dynamic_spell_choice";
         let name = feat.name;
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
         let collection = feat.collection;
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");
+        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");       
 
         let finalCssClass = cssClass || "";
         if (feat.minor) {
@@ -284,7 +269,7 @@ const CLASS_CONFIG = {
         if (feat.id === "orders" && subclass === "Spellblade") {
             name = "Arcane Command";
             collection = "sb_options";
-            desc = "Your focus on the arcane causes you to lose access to Weapon Mastery and Combat Tactics, but you now gain INT mana when you roll Initiative. Your Commander's Orders are empowered with magical power. Whenever you could choose a Combat Tactic or Weapon Mastery, instead choose another Commander’s Order or a tier 1 (or lower) spell from any spell school.";
+            desc = "Your focus on the arcane causes you to lose access to Weapon Mastery and Combat Tactics, but you now gain INT mana when you roll Initiative. Your Commander's Orders are empowered with magical power. Whenever you could choose a Combat Tactic or Weapon Mastery, instead choose another Commander’s Order or a tier 1 (or lower) spell from any school.";
             let c = 2; // base 2 orders
             if (level >= 4) c += 1;
             if (level >= 6) c += 2;
@@ -413,4 +398,6 @@ const CLASS_CONFIG = {
 
         return bFeat(name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
     }
-};
+}
+
+const CLASS_CONFIG = new CommanderClass();

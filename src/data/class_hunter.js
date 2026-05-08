@@ -19,9 +19,45 @@ const HUNTER_OPTIONS = {
     },
     companionSizes: {
         "None": { desc: "No companion selected." },
-        "Small": { desc: "Keen Eyes: Mark a target for free (1/encounter). Protect Me!: Attacks against you miss when you Defend. Go for the Throat! (1/round): 1 TotH charge, 1d4+LVL dmg." },
-        "Medium": { desc: "Ferocious: When you or companion crit, companion attacks again for LVL dmg. Protect Me!: When you Defend, first attack that creature (1d4+LVL). Go for the Throat!: 1 TotH charge, 1d8+3x LVL dmg." },
-        "Large": { desc: "Alpha Protector: Damage from first attack against you each round is halved. Protect Me!: After a Wound, whisked up to 12 spaces away. Go for the Throat!: 2 TotH charges, 2 actions, 1d12+4xLVL dmg." }
+        "Small": {
+            desc: (level) => {
+                let pts = [
+                    `● <strong>Keen Eyes:</strong> Mark a target for free (1/encounter).`,
+                    `● <strong>Protect Me!:</strong> (1/encounter) Attacks against you miss when you Defend, move up to half speed away.`,
+                    `● <strong>Go for the Throat!:</strong> (1/encounter) 1 TotH: attack quarry for 1d4+LVL (ignores armor).`
+                ];
+                if (level >= 7) pts.push(`● <strong>7+:</strong> Keen Eyes (2/enc), Protect Me! (2/enc).`);
+                if (level >= 11) pts.push(`● <strong>11+:</strong> Keen Eyes (3/enc), Go for the Throat! (2/enc, 1/round).`);
+                if (level >= 15) pts.push(`● <strong>15+:</strong> Go for the Throat! (3/enc, 1/round).`);
+                return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
+            }
+        },
+        "Medium": {
+            desc: (level) => {
+                let pts = [
+                    `● <strong>Ferocious:</strong> When you/companion crit quarry, companion attacks for LVL (ignore armor). Move up to 2 spaces free.`,
+                    `● <strong>Protect Me!:</strong> When you Defend, companion counter-attacks (1d4+LVL).`,
+                    `● <strong>Go for the Throat!:</strong> (1/encounter) 1 TotH: attack quarry for 1d8+3x LVL (ignores armor).`
+                ];
+                if (level >= 7) pts.push(`● <strong>7+:</strong> Ferocious move increases to 4 spaces.`);
+                if (level >= 11) pts.push(`● <strong>11+:</strong> Go for the Throat! (2/encounter).`);
+                if (level >= 15) pts.push(`● <strong>15+:</strong> Ferocious move increases to 6 spaces.`);
+                return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
+            }
+        },
+        "Large": {
+            desc: (level) => {
+                let pts = [
+                    `● <strong>Alpha Protector:</strong> 1st attack dmg against you each round halved.`,
+                    `● <strong>Protect Me!:</strong> (1/encounter) When Wounded, whisked away up to 12 spaces.`,
+                    `● <strong>Go for the Throat!:</strong> (1/encounter) 2 TotH, 2 actions: attack for 1d12+4x LVL (ignores armor).`
+                ];
+                if (level >= 7) pts.push(`● <strong>7+:</strong> Protect Me! whisks you away <em>before</em> the Wound.`);
+                if (level >= 11) pts.push(`● <strong>11+:</strong> Go for the Throat! (2/encounter).`);
+                if (level >= 15) pts.push(`● <strong>15+:</strong> Protect Me! (2/encounter).`);
+                return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
+            }
+        }
     }
 };
 
@@ -89,7 +125,8 @@ const HUNTER_FEATURES = {
         "Shadowpath": {
             3: [
                 { id: "ambusher", name: "Ambusher", desc: "Mark quarry for free on Initiative. Advantage on first attack each encounter." },
-                { id: "skilled_tracker", name: "Skilled Tracker", desc: "Advantage on skill checks to track creatures." }
+                { id: "skilled_tracker", name: "Skilled Tracker", desc: "Advantage on skill checks to track creatures." },
+                { id: "skilled_navigator", name: "Skilled Navigator", desc: "You cannot become lost by nonmagical means." }
             ],
             7: [
                 { id: "primal_predator", name: "Primal Predator", desc: "(1/encounter) Your weapon attacks ignore cover and armor this turn." }
@@ -107,7 +144,8 @@ const HUNTER_FEATURES = {
                 { id: "high_ground", name: "I Have the High Ground", desc: "Gain 1/2 speed for free on Init or when gaining TotH charges." }
             ],
             7: [
-                { id: "herbalist", name: "Resourceful Herbalist", desc: "(1/Safe Rest) Craft <strong>WIL</strong> Healing Salves (Heal WIL d6 HP)." }
+                { id: "herbalist", name: "Resourceful Herbalist", desc: "(1/Safe Rest) Craft <strong>WIL</strong> Healing Salves (Heal WIL d6 HP)." },
+                { id: "healing_salve", name: "Healing Salve", desc: "Action: Heal yourself or an adjacent creature WIL d6 HP. Only you or another experienced Herbalist may administer these, and they expire whenever you Safe Rest." }
             ],
             11: [
                 { id: "here", name: "Ha! I'm Over Here!", desc: "(1/Safe Rest) If an attack would drop you to 0 HP, move speed away and take no damage." }
@@ -133,71 +171,67 @@ const HUNTER_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Hunter",
-    subtitle: "Resourceful survivalist, bowmaster, and skilled tracker",
-    keyStats: ['dex', 'wil'], 
-    saves: { adv: 'dex', dis: 'int' }, 
-    proficiencies: {
-        armor: "Leather Armor",
-        weapons: "DEX Weapons"
-    },
-    baseHp: 13,
-    hpPerLevel: 6,
-    hitDie: 8,
-    
-    theme: {
-        accent: "#4ade80",
-        accentDim: "#166534",
-        bodyBg: "#061008",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(74, 222, 128, 0.05) 0%, transparent 100%), linear-gradient(180deg, #0d1a0f 0%, #061008 100%)",
-        panelBg: "rgba(20, 35, 25, 0.8)",
-        border: "rgba(74, 222, 128, 0.2)"
-    },
+class HunterClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Hunter",
+            subtitle: "Resourceful survivalist, bowmaster, and skilled tracker",
+            keyStats: ['dex', 'wil'],
+            saves: { adv: 'dex', dis: 'int' },
+            proficiencies: {
+                armor: "Leather Armor",
+                weapons: "DEX Weapons"
+            },
+            baseHp: 13,
+            hpPerLevel: 6,
+            hitDie: 8,
+            theme: {
+                accent: "#4ade80",
+                accentDim: "#166534",
+                bodyBg: "#061008",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(74, 222, 128, 0.05) 0%, transparent 100%), linear-gradient(180deg, #0d1a0f 0%, #061008 100%)",
+                panelBg: "rgba(20, 35, 25, 0.8)",
+                border: "rgba(74, 222, 128, 0.2)"
+            },
+            initialStats: { baseStr: -1, baseDex: 3, baseInt: -1, baseWil: 1 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "Shadowpath", label: "Keeper of the Shadowpath", accent: "#94a3b8" },
+                { value: "WildHeart", label: "Keeper of the Wild Heart", accent: "#f59e0b" },
+                { value: "Beastmaster", label: "Beastmaster", accent: "#86efac" }
+            ],
+            resources: [
+                { id: 'tothCharges', label: 'TotH Charges', manual: true, calcMax: (level, stats) => Math.max(1, Math.max(stats.dex, stats.wil)) }
+            ],
+            featuresData: HUNTER_FEATURES,
+            optionsData: HUNTER_OPTIONS
+        });
+    }
 
-    initialStats: {
-        baseStr: -1, baseDex: 3, baseInt: -1, baseWil: 1
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "Shadowpath", label: "Keeper of the Shadowpath", accent: "#94a3b8" },
-        { value: "WildHeart", label: "Keeper of the Wild Heart", accent: "#f59e0b" },
-        { value: "Beastmaster", label: "Beastmaster", accent: "#86efac" }
-    ],
-
-    resources: [
-        { id: 'tothCharges', label: 'TotH Charges', manual: true, calcMax: (level, stats) => Math.max(1, Math.max(stats.dex, stats.wil)) }
-    ],
-
-    customHeaderStats: [],
-
-    getDerivedStats: function(level, subclass, state) {
-        let speed = 6; 
+    getDerivedStats(level, subclass, state) {
+        let speed = 6;
         let woundMax = 6;
-        if (level >= 4) speed += 2; 
+        if (level >= 4) speed += 2;
 
         // Dynamic HP scaling for Impressive Form
         if (subclass === "WildHeart" && level >= 3) {
-            CLASS_CONFIG.hitDie = 10;
-            CLASS_CONFIG.baseHp = 18; // Base 13 + 5
+            this.hitDie = 10;
+            this.baseHp = 18; // Base 13 + 5
         } else {
-            CLASS_CONFIG.hitDie = 8;
-            CLASS_CONFIG.baseHp = 13;
+            this.hitDie = 8;
+            this.baseHp = 13;
         }
 
         return { speed, woundMax };
-    },
+    }
 
-    getStatOverrides: function(level, subclass, state, statsMap) {
+    getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
         if (subclass === "WildHeart" && level >= 15) overrides.armor = (overrides.armor || 0) + statsMap.wil;
         return overrides;
-    },
+    }
 
-    getShieldBonus: function(level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         const maxCharges = derived.resourceMaxes.tothCharges;
         const currentCharges = state.resourceValues.tothCharges || 0;
 
@@ -215,7 +249,7 @@ const CLASS_CONFIG = {
                    <div style="display: flex; align-items: center; gap: 8px;">
                        <div class="dark-incrementer">
                            <button onclick="adjRes('tothCharges', -1, ${maxCharges})">-</button>
-                           <input type="number" id="res_tothCharges" value="${currentCharges}" min="0" max="${maxCharges}" 
+                           <input type="number" id="res_tothCharges" value="${currentCharges}" min="0" max="${maxCharges}"
                                   onchange="adjRes('tothCharges', parseInt(this.value), ${maxCharges}, true)">
                            <button onclick="adjRes('tothCharges', 1, ${maxCharges})">+</button>
                        </div>
@@ -234,14 +268,9 @@ const CLASS_CONFIG = {
                </div>
             </div>
         </div>`;
-    },
+    }
 
-    actions: {},
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, HUNTER_FEATURES, HUNTER_OPTIONS, this);
-    },
-    renderFeature: function (feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
+    renderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
         const statsMap = derived.statsMap;
         let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
         let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
@@ -255,7 +284,7 @@ const CLASS_CONFIG = {
         if (feat.type === "choice" || feat.type === "dynamic_choice") {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
             let selection = state[feat.stateKey] || [];
-            let options = Object.keys(HUNTER_OPTIONS[collection] || {});
+            let options = Object.keys(this.optionsData[collection] || {});
 
             let optsHtml = `<option value="None">-- Select Option --</option>`;
             options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
@@ -263,7 +292,8 @@ const CLASS_CONFIG = {
             for (let i = 0; i < count; i++) {
                 let idx = (feat.startIndex || 0) + i;
                 let val = selection[idx] || "None";
-                let d = (val !== "None" && HUNTER_OPTIONS[collection][val]) ? HUNTER_OPTIONS[collection][val].desc : "";
+                let d = (val !== "None" && this.optionsData[collection][val]) ? this.optionsData[collection][val].desc : "";
+                if (typeof d === "function") d = d(level);
 
                 let abilityContext = { ...context };
                 if (val === "Go for the Throat!" || val === "Protect Me!") abilityContext.isMinion = true;
@@ -278,4 +308,6 @@ const CLASS_CONFIG = {
 
         return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
     }
-};
+}
+
+const CLASS_CONFIG = new HunterClass();

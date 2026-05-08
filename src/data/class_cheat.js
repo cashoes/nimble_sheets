@@ -107,43 +107,40 @@ const CHEAT_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Cheat",
-    subtitle: "Master of stealth, dirty fighting, & rules",
-    keyStats: ['dex', 'int'],
-    saves: { adv: 'dex', dis: 'wil' },
-    proficiencies: {
-        armor: "Leather Armor",
-        weapons: "DEX Weapons"
-    },
-    baseHp: 10,
-    hpPerLevel: 5,
-    hitDie: 6,
+class CheatClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Cheat",
+            subtitle: "Master of stealth, dirty fighting, & rules",
+            keyStats: ['dex', 'int'],
+            saves: { adv: 'dex', dis: 'wil' },
+            proficiencies: {
+                armor: "Leather Armor",
+                weapons: "DEX Weapons"
+            },
+            baseHp: 10,
+            hpPerLevel: 5,
+            hitDie: 6,
+            theme: {
+                accent: "#cbd5e1",
+                accentDim: "#64748b",
+                bodyBg: "#0f1115",
+                containerBg: "radial-gradient(circle at 50% 50%, rgba(203, 213, 225, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1e2125 0%, #0f1115 100%)",
+                panelBg: "rgba(35, 40, 45, 0.8)",
+                border: "rgba(203, 213, 225, 0.2)"
+            },
+            initialStats: { baseStr: -1, baseDex: 3, baseInt: 1, baseWil: -1 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#94a3b8" },
+                { value: "Scoundrel", label: "Tools of the Scoundrel", accent: "#22c55e" }
+            ],
+            featuresData: CHEAT_FEATURES,
+            optionsData: CHEAT_OPTIONS
+        });
+    }
 
-    theme: {
-        accent: "#cbd5e1",
-        accentDim: "#64748b",
-        bodyBg: "#0f1115",
-        containerBg: "radial-gradient(circle at 50% 50%, rgba(203, 213, 225, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1e2125 0%, #0f1115 100%)",
-        panelBg: "rgba(35, 40, 45, 0.8)",
-        border: "rgba(203, 213, 225, 0.2)"
-    },
-
-    initialStats: {
-        baseStr: -1, baseDex: 3, baseInt: 1, baseWil: -1
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#94a3b8" },
-        { value: "Scoundrel", label: "Tools of the Scoundrel", accent: "#22c55e" }
-    ],
-
-    resources: [],
-
-    customHeaderStats: [],
-
-    getDerivedStats: function (level, subclass, state) {
+    getDerivedStats(level, subclass, state) {
         let speed = 6;
         let woundMax = 6;
 
@@ -156,18 +153,16 @@ const CLASS_CONFIG = {
         if (level >= 17) saDice = "3d20";
 
         return { speed, woundMax, saDice };
-    },
+    }
 
-    getStatOverrides: function (level, subclass, state, statsMap) {
+    getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
         let underhanded = state.selectedUnderhanded || [];
         if (underhanded.includes("Misdirection")) overrides.armor = (overrides.armor || 0) + statsMap.int;
         return overrides;
-    },
+    }
 
-    getShieldBonus: function (level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function (level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         let cunningHtml = "";
         let oppBorder = "";
         if (level >= 2) {
@@ -197,11 +192,7 @@ const CLASS_CONFIG = {
 ${cunningHtml}
             </div>
         </div>`;
-    },
-
-    actions: {},
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, CHEAT_FEATURES, CHEAT_OPTIONS, this);
     }
-};
+}
+
+const CLASS_CONFIG = new CheatClass();

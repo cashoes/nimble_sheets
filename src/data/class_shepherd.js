@@ -20,7 +20,7 @@ const SHEPHERD_FEATURES = {
             { id: "spirit", name: "Lifebinding Spirit", desc: (level, subclass, state, derived, rSSC) => {
                 const totalWil = (state.baseWil || 0) + (state.addWil || 0);
                 const wilDisplay = `${totalWil >= 0 ? "+" : ""}${totalWil}`;
-                
+
                 let intro = `You know the unique Radiant spell <strong>Lifebinding Spirit</strong>:`;
                 let card = rSSC({
                     name: "Lifebinding Spirit",
@@ -30,7 +30,7 @@ const SHEPHERD_FEATURES = {
                     <div style="margin-top:5px;">● It attacks or heals for <strong>1d6${wilDisplay}</strong> radiant damage (ignoring armor), or heals for the same amount.</div>
                     <div style="margin-top:5px;">● <strong>Upcast:</strong> +1 die size (max d12), +1 healing use per tier. <em>(Current max upcast dmg: <strong>${derived.spiritDmg}${wilDisplay}</strong>)</em></div>`
                 }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: state.baseInt+state.addInt, wil: totalWil }, { isMinion: true });
-                
+
                 return intro + card;
             } },
             { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true }
@@ -42,7 +42,7 @@ const SHEPHERD_FEATURES = {
         5: [
             { id: "graces", name: "Sacred Graces", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", desc: "Choose modular graces.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 },
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 INT or DEX.", minor: true },
-            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your shadow/radiant cantrips grow stronger.", minor: true }
+            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your shadow/radiant cantrips grow stronger.", minor: true }        
         ],
         6: [
             { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }
@@ -122,81 +122,77 @@ const SHEPHERD_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Shepherd",
-    subtitle: "Master of life and death, leader of spirits",
-    keyStats: ['wil', 'str'], 
-    saves: { adv: 'wil', dis: 'dex' }, 
-    proficiencies: {
-        armor: "Mail, Shields",
-        weapons: "STR Weapons, Wands"
-    },
-    baseHp: 17,
-    hpPerLevel: 8,
-    hitDie: 10,
-    
-    theme: {
-        accent: "#a855f7",
-        accentDim: "#6b21a8",
-        bodyBg: "#0a0712",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 100%), linear-gradient(180deg, #130f24 0%, #0a0712 100%)",
-        panelBg: "rgba(25, 20, 45, 0.75)",
-        border: "rgba(168, 85, 247, 0.3)"
-    },
+class ShepherdClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Shepherd",
+            subtitle: "Master of life and death, leader of spirits",
+            keyStats: ['wil', 'str'],
+            saves: { adv: 'wil', dis: 'dex' },
+            proficiencies: {
+                armor: "Mail, Shields",
+                weapons: "STR Weapons, Wands"
+            },
+            baseHp: 17,
+            hpPerLevel: 8,
+            hitDie: 10,
+            theme: {
+                accent: "#a855f7",
+                accentDim: "#6b21a8",
+                bodyBg: "#0a0712",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 100%), linear-gradient(180deg, #130f24 0%, #0a0712 100%)",
+                panelBg: "rgba(25, 20, 45, 0.75)",
+                border: "rgba(168, 85, 247, 0.3)"
+            },
+            initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "Mercy", label: "Luminary of Mercy", accent: "#f8fafc" },
+                { value: "Malice", label: "Luminary of Malice", accent: "#4ade80" }
+            ],
+            resources: [
+                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },     
+                { id: 'searingLight', label: 'Searing Light', manual: true, calcMax: (level, stats) => stats.wil }
+            ],
+            featuresData: SHEPHERD_FEATURES,
+            optionsData: SHEPHERD_OPTIONS
+        });
+    }
 
-    initialStats: {
-        baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "Mercy", label: "Luminary of Mercy", accent: "#f8fafc" },
-        { value: "Malice", label: "Luminary of Malice", accent: "#4ade80" }
-    ],
-
-    resources: [
-        { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },
-        { id: 'searingLight', label: 'Searing Light', manual: true, calcMax: (level, stats) => stats.wil }
-    ],
-
-    customHeaderStats: [],
-
-    getDerivedStats: function(level, subclass, state) {
-        let speed = 6; 
+    getDerivedStats(level, subclass, state) {
+        let speed = 6;
         let woundMax = 6;
         let hdFace = 10;
-        
+
         // Calculate Max Spirit Die based on available Spell Tiers
         let maxTier = Math.max(1, Math.floor(level / 2));
         let graces = state.selectedGraces || [];
         let hasEmpowered = graces.includes("Empowered Companion");
-        
+
         let effectiveTier = maxTier + (hasEmpowered ? 1 : 0);
         let dieSizes = ['1d6', '1d8', '1d10', '1d12'];
         if (hasEmpowered) dieSizes.push('1d20');
         let dieIdx = Math.min(dieSizes.length - 1, effectiveTier - 1);
-        
+
         let spiritDmg = dieSizes[dieIdx];
         if (level >= 20) {
             spiritDmg = spiritDmg.replace('1d', '2d');
         }
-        
-        return { speed, woundMax, hdFace, spiritDmg };
-    },
 
-    getStatOverrides: function(level, subclass, state, statsMap) {
+        return { speed, woundMax, hdFace, spiritDmg };
+    }
+
+    getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
         if (subclass === "Malice" && level >= 15) overrides.armor = (overrides.armor || 0) + statsMap.wil;
         return overrides;
-    },
+    }
 
-    getShieldBonus: function(level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         const totalWil = (state.baseWil || 0) + (state.addWil || 0);
         const manaMax = derived.resourceMaxes.mana;
         const searingMax = derived.resourceMaxes.searingLight;
-        
+
         let spiritType = subclass === "Malice" ? "Deadly" : "Lifebinding";
         let spiritColor = subclass === "Malice" ? "var(--save-adv)" : "var(--class-accent)";
 
@@ -239,15 +235,9 @@ const CLASS_CONFIG = {
                 </div>
             </div>
         </div>`;
-    },
+    }
 
-    actions: {},
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, SHEPHERD_FEATURES, SHEPHERD_OPTIONS, this);
-    },
-
-    getAvailableSpells: function (level, subclass, state, derived) {
+    getAvailableSpells(level, subclass, state, derived) {
         let spells = [];
         const progress = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]; // Default progression
         const schools = ["Radiant", "Necrotic"];
@@ -284,7 +274,7 @@ const CLASS_CONFIG = {
                     let rCustom = `<select onchange="updateClassState('spiritSpellsRadiant', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${rOpts.replace(`value="${rVal}"`, `value="${rVal}" selected`)}</select>`;
                     if (rVal !== "None") rCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Radiant[rVal]}</div>`;
                     spells.push({ name: "", tier: "Utility", school: "Radiant", customHtml: rCustom });
-                    
+
                     // Necrotic Utility
                     let nVal = state.spiritSpellsNecrotic?.[i] || "None";
                     let nOpts = `<option value="None">Select Necrotic Utility...</option>`;
@@ -298,4 +288,6 @@ const CLASS_CONFIG = {
 
         return spells;
     }
-};
+}
+
+const CLASS_CONFIG = new ShepherdClass();

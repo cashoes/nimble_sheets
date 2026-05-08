@@ -4,7 +4,7 @@ const ZEPHYR_OPTIONS = {
         "Blur": { desc: "(1/encounter) When you Defend, you may first move up to half your speed away, taking no damage if you are now out of range or have Full Cover." },
         "Bodily Discipline": { desc: "You may spend 1 action to end any non-Wound condition on yourself." },
         "Enduring Soul": { desc: "Each time you roll Initiative, gain Hit Dice equal to the actions you get on your first turn. These Hit Dice expire at the end of combat if unused." },
-        "I Jump On His Back!": { desc: "While moving with your Windstep, if you move into the space of a creature your size or larger, you may jump onto its back. Gain advantage on melee attacks against it, and any damage you avoid is dealt to it instead." },
+        "I Jump On His Back!": { desc: "While moving with your Windstep, if you move into the space of a creature your size or larger, you may jump onto its back. Gain advantage on melee attacks against it, and any damage you avoid is dealt to it instead." },   
         "Kinetic Barrage": { desc: "Whenever you miss an attack, gain a cumulative +STR bonus to all damage you do for the rest of this encounter." },
         "Mighty Soul": { desc: "You cannot be moved against your will. Whenever you would fail a saving throw, you may gain a Wound in order to add your STR to the result you rolled. You may repeat this any number of times." },
         "Quickstrike": { desc: "When you Interpose, you may first make an unarmed strike against the enemy for free." },
@@ -22,7 +22,7 @@ const ZEPHYR_FEATURES = {
         ],
         2: [
             { id: "feet", name: "Swift Feet", desc: "While unarmored, gain +2 speed and +LVL Initiative." },
-            { id: "burst", name: "Burst of Speed", desc: "Gain DEX Bursts of Speed. Spend 1: Slipstream (Defend, attack misses), Whirling Def (apply armor to all attacks), Swiftstrike (Ignore rush DIS), or Windstep (Move free, ignore difficult terrain)." }
+            { id: "burst", name: "Burst of Speed", desc: "Gain DEX Bursts of Speed. Spend 1: Slipstream (Defend, attack misses), Whirling Def (apply armor to all attacks), Swiftstrike (Ignore rush DIS), or Windstep (Move free, ignore difficult terrain)." }      
         ],
         3: [
             { id: "subclass", name: "Subclass", desc: "Choose a Zephyr subclass.", minor: true },
@@ -30,12 +30,12 @@ const ZEPHYR_FEATURES = {
             { id: "projection", name: "Ethereal Projection", desc: "(1/day) Meditate 10 mins: Project an ethereal version of yourself up to 30 ft away for 10 mins. Can move through walls, cannot interact." }
         ],
         4: [
-            { id: "resolve", name: "Unyielding Resolve", desc: "Ignore the first Wound you would suffer each encounter." },
+            { id: "resolve", name: "Unyielding Resolve", desc: "Ignore the first Wound you would suffer each encounter." },        
             { id: "martial", name: "Martial Master", type: "dynamic_choice", collection: "martial", stateKey: "selectedMartial", desc: "Choose Martial Arts abilities.", getCount: (level) => level >= 18 ? 8 : level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 },
             { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 DEX or STR.", minor: true }
         ],
         5: [
-            { id: "reverb", name: "Reverberating Strikes", desc: "Add LVL bludgeoning damage to all of your melee attacks." },
+            { id: "reverb", name: "Reverberating Strikes", desc: "Add LVL bludgeoning damage to all of your melee attacks." },     
             { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
         ],
         6: [
@@ -72,7 +72,7 @@ const ZEPHYR_FEATURES = {
                 { id: "bring_pain", name: "Bring the Pain", desc: "(1/round) Turn any melee attack against you into a crit. When crit, take 1/2 damage. Attacker takes same damage you took. Suffer 1 Wound to double enemy damage." }
             ],
             7: [
-                { id: "share_pain", name: "Share My Pain", desc: "Swiftstrike can also target a 2nd creature within Reach 2." }
+                { id: "share_pain", name: "Share My Pain", desc: "Swiftstrike can also target a 2nd creature within Reach 2." }    
             ],
             11: [
                 { id: "sharpens", name: "Pain Sharpens the Mind", desc: "While Bloodied, gain advantage on the first attack each turn, and on all saves." }
@@ -98,56 +98,54 @@ const ZEPHYR_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Zephyr",
-    subtitle: "A disciplined martial artist with swift hands",
-    keyStats: ['dex', 'str'],
-    saves: { adv: 'dex', dis: 'int' },
-    proficiencies: {
-        armor: "None",
-        weapons: "Melee"
-    },
-    baseHp: 13,
-    hpPerLevel: 6,
-    hitDie: 8,
+class ZephyrClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Zephyr",
+            subtitle: "A disciplined martial artist with swift hands",
+            keyStats: ['dex', 'str'],
+            saves: { adv: 'dex', dis: 'int' },
+            proficiencies: {
+                armor: "None",
+                weapons: "Melee"
+            },
+            baseHp: 13,
+            hpPerLevel: 6,
+            hitDie: 8,
+            theme: {
+                accent: "#60a5fa",
+                accentDim: "#2563eb",
+                bodyBg: "#050810",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(96, 165, 251, 0.07) 0%, transparent 100%), linear-gradient(180deg, #0a0f1e 0%, #050810 100%)",
+                panelBg: "rgba(15, 23, 42, 0.7)",
+                border: "rgba(96, 165, 251, 0.3)"
+            },
+            initialStats: { baseStr: 2, baseDex: 2, baseInt: -1, baseWil: 0 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "WayOfPain", label: "Way of Pain", accent: "#ef4444" },
+                { value: "WayOfFlame", label: "Way of Flame", accent: "#f97316" }
+            ],
+            resources: [
+                { id: 'burstSpeed', label: 'Bursts of Speed', manual: true, calcMax: (level, stats) => level >= 2 ? stats.dex : 0 }        
+            ],
+            featuresData: ZEPHYR_FEATURES,
+            optionsData: ZEPHYR_OPTIONS
+        });
+    }
 
-    theme: {
-        accent: "#60a5fa",
-        accentDim: "#2563eb",
-        bodyBg: "#050810",
-        containerBg: "radial-gradient(circle at 50% 0%, rgba(96, 165, 251, 0.07) 0%, transparent 100%), linear-gradient(180deg, #0a0f1e 0%, #050810 100%)",
-        panelBg: "rgba(15, 23, 42, 0.7)",
-        border: "rgba(96, 165, 251, 0.3)"
-    },
-
-    initialStats: {
-        baseStr: 2, baseDex: 2, baseInt: -1, baseWil: 0
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "WayOfPain", label: "Way of Pain", accent: "#ef4444" },
-        { value: "WayOfFlame", label: "Way of Flame", accent: "#f97316" }
-    ],
-
-    resources: [
-        { id: 'burstSpeed', label: 'Bursts of Speed', manual: true, calcMax: (level, stats) => level >= 2 ? stats.dex : 0 }
-    ],
-
-    customHeaderStats: [],
-
-    getDerivedStats: function(level, subclass, state) {
+    getDerivedStats(level, subclass, state) {
         let speed = 6; let woundMax = 6;
         if (level >= 2) speed += 2;
         if (level >= 9) speed += 2;
         return { speed, woundMax };
-    },
+    }
 
-    getStatOverrides: function(level, subclass, state, statsMap) {
+    getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
         let isUnarmored = true;
         state.inventory.forEach(item => { if(item.type==='armor' && item.equipped) isUnarmored = false; });
-        
+
         if (isUnarmored) {
             overrides.armorBase = statsMap.dex + statsMap.str;
             if (level >= 13) overrides.armorBase *= 2;
@@ -158,16 +156,14 @@ const CLASS_CONFIG = {
         }
 
         return overrides;
-    },
+    }
 
-    getShieldBonus: function(level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function (level, subclass, state, derived) {
+    getMechanicPanelHTML(level, subclass, state, derived) {
         const burstMax = derived.resourceMaxes.burstSpeed;
         const burstCur = state.resourceValues.burstSpeed || 0;
         let acVal = (state.baseDex + state.addDex) + (state.baseStr + state.addStr);
         if (level >= 13) acVal *= 2;
-        
+
         let isUnarmored = true;
         state.inventory.forEach(item => { if(item.type==='armor' && item.equipped) isUnarmored = false; });
 
@@ -206,11 +202,7 @@ const CLASS_CONFIG = {
                </div>
             </div>
         </div>`;
-    },
-
-    actions: {},
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, ZEPHYR_FEATURES, ZEPHYR_OPTIONS, this);
     }
-};
+}
+
+const CLASS_CONFIG = new ZephyrClass();

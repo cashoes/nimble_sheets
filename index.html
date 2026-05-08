@@ -40,10 +40,15 @@
 
         <button id="buildBtn" onclick="buildTracker()">Download Tracker</button>
         <div id="status" class="status">Ready.</div>
+
+        <!-- Debug Section -->
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #3a4a5e; text-align: center;">
+            <button onclick="buildAll()" style="background: transparent; border: 1px solid #3a4a5e; color: #94a3b8; font-size: 12px; width: auto; padding: 8px 15px;">Debug: Build All Classes</button>
+        </div>
     </div>
 
     <script>
-        const VERSION = '1.4.0';
+        const VERSION = '1.5.0';
 
         async function fetchFile(path) {
             const response = await fetch(`${path}?t=${Date.now()}`);
@@ -51,17 +56,47 @@
             return await response.text();
         }
 
-        async function buildTracker() {
-            const className = document.getElementById('classSelect').value;
+        async function buildAll() {
+            const select = document.getElementById('classSelect');
+            const options = Array.from(select.options).map(opt => opt.value);
+            const statusEl = document.getElementById('status');
+            
+            for (const className of options) {
+                try {
+                    statusEl.innerText = `Building ${className}...`;
+                    await buildTracker(className);
+                    // Small delay to prevent browser download throttling
+                    await new Promise(r => setTimeout(r, 300));
+                } catch (e) {
+                    console.error(`Failed to build ${className}:`, e);
+                }
+            }
+            statusEl.innerText = "All classes downloaded.";
+            statusEl.style.color = '#22c55e';
+        }
+
+        async function buildTracker(classNameOverride = null) {
+            const className = classNameOverride || document.getElementById('classSelect').value;
             const statusEl = document.getElementById('status');
             const btn = document.getElementById('buildBtn');
             
             try {
-                btn.disabled = true;
+                if (!classNameOverride) btn.disabled = true;
                 statusEl.innerText = `Fetching files for ${className}...`;
                 statusEl.style.color = '#94a3b8';
 
                 // 1. Fetch all necessary files in parallel
+                const engineModules = [
+                    'roll_engine.js',
+                    'feat_helpers.js',
+                    'base_class.js',
+                    'rendering_engine.js',
+                    'logic.js',
+                    'ui_helpers.js',
+                    'state_manager.js',
+                    'main.js'
+                ];
+
                 const [
                     template,
                     itemsJson,
@@ -71,7 +106,7 @@
                     backgroundsJson,
                     spellsJson,
                     classData,
-                    engine
+                    ...engineParts
                 ] = await Promise.all([
                     fetchFile('src/base_template.html'),
                     fetchFile('src/data/json/items.json'),
@@ -81,7 +116,7 @@
                     fetchFile('src/data/json/backgrounds.json'),
                     fetchFile('src/data/json/spells.json'),
                     fetchFile(`src/data/class_${className}.js`),
-                    fetchFile('src/engine.js')
+                    ...engineModules.map(m => fetchFile(`src/engine/${m}`))
                 ]);
 
                 statusEl.innerText = 'Stitching files together...';
@@ -90,6 +125,16 @@
                 const ancestries = JSON.parse(ancestriesJson);
                 const backgrounds = JSON.parse(backgroundsJson);
                 const spells = JSON.parse(spellsJson);
+                
+                // Extract engine parts by index based on engineModules array
+                const rollEngine = engineParts[0];
+                const featHelpers = engineParts[1];
+                const baseClass = engineParts[2];
+                const renderingEngine = engineParts[3];
+                const logic = engineParts[4];
+                const uiHelpers = engineParts[5];
+                const stateManager = engineParts[6];
+                const main = engineParts[7];
 
                 let jsContent = `// --- Generated Core Data ---\n`;
                 jsContent += `const ITEM_TEMPLATES = ${itemsJson};\n`;
@@ -102,8 +147,10 @@
                 jsContent += `const UTILITY_SPELLS = ${JSON.stringify(spells.utility)};\n`;
                 jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
 
+                jsContent += `// --- Engine Helpers & Base ---\n${rollEngine}\n${featHelpers}\n${baseClass}\n\n`;
                 jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
-                jsContent += `// --- Source: src/engine.js ---\n${engine}\n\n`;
+                jsContent += `// --- Engine Logic ---\n${renderingEngine}\n${logic}\n${uiHelpers}\n${stateManager}\n\n`;
+                jsContent += `// --- Main Entry ---\n${main}\n\n`;
 
                 const fullScript = `<script>\n${jsContent}<\/script>`;
 

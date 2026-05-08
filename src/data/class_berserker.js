@@ -2,16 +2,16 @@ const BERSERKER_OPTIONS = {
     arsenal: {
         "Death Blow": { desc: "After you deal damage from a crit, you may expend any number of Fury Dice. Sum the dice and deal double that amount of damage." },
         "Deathless Rage": { desc: "(1/turn) While Dying, you may suffer 1 Wound to gain 1 action." },
-        "Eager for Battle": { desc: "Gain advantage on Initiative. Move 2x DEX spaces for free on your first turn each encounter." },
-        "Into the Fray": { desc: "Action: Leap up to 2x DEX spaces toward an enemy. If you land adjacent to at least 2 enemies, make an attack against 1 of them for free." },
+        "Eager for Battle": { desc: "Gain advantage on Initiative. Move 2×DEX spaces for free on your first turn each encounter." },
+        "Into the Fray": { desc: "Action: Leap up to 2×DEX spaces toward an enemy. If you land adjacent to at least 2 enemies, make an attack against 1 of them for free." },
         "Mighty Endurance": { desc: "You can now survive an additional 4 Wounds before death." },
         "MORE BLOOD!": { desc: "Whenever an enemy crits you, gain 1 Fury Die." },
-        "Rampage": { desc: "(1/turn) After you land a hit, you may treat your next attack this turn as if you rolled that same amount instead of rolling again." },
+        "Rampage": { desc: "(1/ turn) After you land a hit, you may treat your next attack this turn as if you rolled that same amount instead of rolling again." },
         "Swift Fury": { desc: "Whenever you gain one or more Fury Dice, move up to DEX spaces for free, ignoring difficult terrain." },
         "Thunderous Steps": { desc: "After moving at least 4 spaces while Raging, you may deal STR Bludgeoning damage to all adjacent creatures where you stop." },
         "Unstoppable Force": { desc: "While Dying and Raging, taking damage causes 1 Wound (instead of 2) and critical hits inflict 2 Wounds (instead of 3)." },
-        "Whirlwind": { desc: "2 actions: Attack ALL targets within your melee weapon's reach." },
-        "You're Next!": { desc: "Action: While Raging, you can make a Might skill check to demoralize an enemy within Reach 12 (DC: their current HP). On a success, they immediately flee the battle." }
+        "Whirlwind": { desc: "2 actions: Attack ALL targets within your melee weapon’s reach." },
+        "You’re Next!": { desc: "Action: While Raging, you can make a Might skill check to demoralize an enemy within Reach 12 (DC: their current HP). On a success, they immediately flee the battle." }
     }
 };
 
@@ -19,12 +19,11 @@ const BERSERKER_FEATURES = {
     core: {
         1: [
             { id: "rage", name: "Rage", desc: "(1/turn) Action: Roll a Fury Die (1d4) and set it aside. Add it to every STR attack you make. You can have a max of KEY Fury Dice; they are lost when your Rage ends." },
-            { id: "that_all", name: "That all you got?!", desc: "When you are attacked, you may expend 1 or more Fury Dice to reduce the damage taken by STR+DEX for each die spent." },
-            { id: "rage_ends", name: "Your Rage Ends...", desc: "If you leave combat, drop to 0 HP, or go 1 round without attacking or Raging.", minor: true }
+            { id: "got", name: "That all you got?!", desc: "When you are attacked, you may expend 1 or more Fury Dice to reduce the damage taken by STR+DEX for each die spent." }
         ],
         2: [
             { id: "intensifying", name: "Intensifying Fury", desc: "If you are Raging at the beginning of your turn, roll 1 Fury Die for free." },
-            { id: "ancients", name: "One with the Ancients", desc: "(1/Safe Rest) When faced with a decision about which direction or course of action to take, you can call upon your ancestors to guide you toward the most dangerous or challenging path." }
+            { id: "one_ancients", name: "One with the Ancients", desc: "(1/Safe Rest) When faced with a decision about which direction or course of action to take, you can call upon your ancestors to guide you toward the most dangerous or challenging path." }
         ],
         3: [
             { id: "subclass", name: "Subclass", desc: "Choose a Berserker subclass.", minor: true },
@@ -32,36 +31,46 @@ const BERSERKER_FEATURES = {
         ],
         4: [
             { id: "enduring_rage", name: "Enduring Rage", desc: "While Dying, you Rage automatically for free at the beginning of your turn, have a max of 2 actions instead of 1, and ignore the STR saves to make attacks." },
-            { id: "arsenal", name: "Savage Arsenal", type: "dynamic_choice", collection: "arsenal", stateKey: "selectedArsenal", desc: "Choose Savage Arsenal abilities as you level up.", getCount: (level) => level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 },
-            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true }
+            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true },
+            { id: "arsenal_1", name: "Savage Arsenal", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, desc: "Choose 1 ability from the Savage Arsenal." }
         ],
         5: [
-            { id: "rage_2", name: "Rage (2)", desc: "Whenever you Rage, gain 2 Fury Dice instead." },
-            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+            { id: "rage_2", name: "Rage (2)", desc: "Whenever you Rage, gain 2 Fury Dice instead.", minor: true },
+            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 WIL or INT.", minor: true }
         ],
         6: [
+            { id: "arsenal_2", name: "Savage Arsenal (2)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 1, desc: "Choose a 2nd Savage Arsenal ability." },
             { id: "intensifying_2", name: "Intensifying Fury (2)", desc: "Your Fury Dice are now d6s.", minor: true }
         ],
         8: [
+            { id: "arsenal_3", name: "Savage Arsenal (3)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 2, desc: "Choose a 3rd Savage Arsenal ability." },
             { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true }
         ],
         9: [
             { id: "intensifying_3", name: "Intensifying Fury (3)", desc: "Your Fury Dice are now d8s.", minor: true },
-            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 WIL or INT.", minor: true }
+        ],
+        10: [
+            { id: "arsenal_4", name: "Savage Arsenal (4)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 3, desc: "Choose a 4th Savage Arsenal ability." }
         ],
         12: [
+            { id: "arsenal_5", name: "Savage Arsenal (5)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 4, desc: "Choose a 5th Savage Arsenal ability." },
             { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true }
         ],
         13: [
             { id: "intensifying_4", name: "Intensifying Fury (4)", desc: "Your Fury Dice are now d10s.", minor: true },
-            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 WIL or INT.", minor: true }
+        ],
+        14: [
+            { id: "arsenal_6", name: "Savage Arsenal (6)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 5, desc: "Choose a 6th Savage Arsenal ability." }
         ],
         16: [
+            { id: "arsenal_7", name: "Savage Arsenal (7)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 6, desc: "Choose a 7th Savage Arsenal ability." },
             { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 STR or DEX.", minor: true }
         ],
         17: [
             { id: "intensifying_5", name: "Intensifying Fury (5)", desc: "Your Fury Dice are now d12s.", minor: true },
-            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 INT or WIL.", minor: true }
+            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 WIL or INT.", minor: true }
         ],
         18: [
             { id: "deep_rage", name: "DEEP RAGE", desc: "Dropping to 0 HP does not cause your Rage to end." }
@@ -76,17 +85,17 @@ const BERSERKER_FEATURES = {
     subclasses: {
         "Mountainheart": {
             3: [
-                { id: "stone_resilience", name: "Stone's Resilience", desc: "Whenever you expend Fury Dice to reduce incoming damage, add the value of the die to the amount reduced." },
+                { id: "stones_resilience", name: "Stone’s Resilience", desc: "Whenever you expend Fury Dice to reduce incoming damage, add the value of the die to the amount reduced." },
                 { id: "mountainous_tenacity", name: "Mountainous Tenacity", desc: "Whenever you expend your Hit Dice to recover HP, for every 10 HP you would recover, you may heal 1 Wound instead." }
             ],
             7: [
-                { id: "unbreakable", name: "Unbreakable", desc: "(1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don't." }
+                { id: "unbreakable", name: "Unbreakable", desc: "(1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don’t." }
             ],
             11: [
-                { id: "titans_fury", name: "Titan's Fury", desc: "After you miss an attack or are crit by an enemy, Rage for free." }
+                { id: "titans_fury", name: "Titan’s Fury", desc: "After you miss an attack or are crit by an enemy, Rage for free." }
             ],
             15: [
-                { id: "mountains_endurance", name: "Mountain's Endurance", desc: "While Dying, if an attack against you would be a crit, the attack is rerolled instead (when-crit abilities, such as Titan's Fury, still trigger)." }
+                { id: "mountains_endurance", name: "Mountain’s Endurance", desc: "While Dying, if an attack against you would be a crit, the attack is rerolled instead (when-crit abilities, such as Titan’s Fury, still trigger)." }
             ]
         },
         "RedMist": {
@@ -98,7 +107,7 @@ const BERSERKER_FEATURES = {
                 { id: "unstoppable_brutality", name: "Unstoppable Brutality", desc: "While Raging, you may gain 1 Wound to reroll any attack or save." }
             ],
             11: [
-                { id: "opportunistic_frenzy", name: "Opportunistic Frenzy", desc: "While Raging, you can make opportunity attacks without disadvantage, and you may make them whenever an enemy enters your melee weapon's reach." }
+                { id: "opportunistic_frenzy", name: "Opportunistic Frenzy", desc: "While Raging, you can make opportunity attacks without disadvantage, and you may make them whenever an enemy enters your melee weapon’s reach." }
             ],
             15: [
                 { id: "onslaught", name: "Onslaught", desc: "While Raging, gain +2 speed. (1/round) you may move for free." }
@@ -107,146 +116,150 @@ const BERSERKER_FEATURES = {
     }
 };
 
-const CLASS_CONFIG = {
-    name: "Berserker",
-    subtitle: "An unstoppable force of wrath and ruin",
-    keyStats: ['str', 'dex'], 
-    saves: { adv: 'str', dis: 'int' }, 
-    proficiencies: {
-        armor: "None",
-        weapons: "All STR weapons"
-    },
-    baseHp: 20,
-    hpPerLevel: 9,
-    hitDie: 12,
-    
-    theme: {
-        accent: "#ef4444",
-        accentDim: "#991b1b",
-        bodyBg: "#0c0606",
-        containerBg: "radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0f1f 0%, #0c0606 100%)",
-        panelBg: "rgba(26, 15, 15, 0.8)",
-        border: "rgba(239, 68, 68, 0.25)"
-    },
-
-    initialStats: {
-        baseStr: 3, baseDex: 1, baseInt: -1, baseWil: -1
-    },
-
-    subclasses: [
-        { value: "None", label: "None (Lvl 3)" },
-        { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#d97706" },
-        { value: "RedMist", label: "Path of the Red Mist", accent: "#7f1d1d" }
-    ],
-
-    resources: [], // Fury is managed via custom classState.furyDice array
-
-    customHeaderStats: [],
-
-    getDerivedStats: function(level, subclass, state) {
-        let speed = 6; 
-        let woundMax = 6;
-        let arsenal = state.selectedArsenal || [];
-        if (arsenal.includes("Mighty Endurance")) woundMax += 4;
-        
-        let fdType = "d4";
-        if(level>=6) fdType = "d6";
-        if(level>=9) fdType = "d8";
-        if(level>=13) fdType = "d10";
-        if(level>=17) fdType = "d12";
-
-        return { speed, woundMax, fdType };
-    },
-
-    getStatOverrides: function(level, subclass, state, statsMap) {
-        let overrides = {};
-        return overrides;
-    },
-
-    getShieldBonus: function(level, subclass, stats) { return 0; },
-
-    getMechanicPanelHTML: function(level, subclass, state, derived) {
-        if (!state.furyDice) state.furyDice = [];
-        let maxFD = Math.max(state.baseStr + state.addStr, state.baseDex + state.addDex);
-        let fdType = derived.fdType;
-        
-        let diceHtml = "";
-        let totalFury = 0;
-        state.furyDice.forEach((die, idx) => {
-            totalFury += die.total;
-            diceHtml += `
-            <div onclick="CLASS_CONFIG.actions.spendDie(${idx})" 
-                 oncontextmenu="event.preventDefault(); CLASS_CONFIG.actions.maximizeDie(${idx})"
-                 title="Left-click to spend, Right-click to Maximize" 
-                 style="cursor:pointer; background: rgba(239, 68, 68, 0.25); border: 2px solid var(--save-dis); border-radius: 6px; padding: 6px; min-width: 42px; text-align: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
-                <span style="font-family: 'Cinzel', serif; font-weight: 900; color: #fff; font-size: 1.4em;">${die.total}</span>
-            </div>`;
+class BerserkerClass extends BaseClass {
+    constructor() {
+        super({
+            name: "Berserker",
+            subtitle: "Avatar of rage, fury, and raw power",
+            keyStats: ['str', 'dex'],
+            saves: { adv: 'str', dis: 'int' },
+            proficiencies: {
+                armor: "None",
+                weapons: "all STR weapons"
+            },
+            baseHp: 20,
+            hpPerLevel: 8,
+            hitDie: 12,
+            theme: {
+                accent: "#ef4444",
+                accentDim: "#991b1b",
+                bodyBg: "#0a0505",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.15) 0%, transparent 100%), linear-gradient(180deg, #1a0f0f 0%, #0a0505 100%)",
+                panelBg: "rgba(45, 20, 20, 0.7)",
+                border: "rgba(239, 68, 68, 0.3)"
+            },
+            initialStats: { baseStr: 3, baseDex: 1, baseInt: -1, baseWil: 0 },
+            subclasses: [
+                { value: "None", label: "None (Lvl 3)" },
+                { value: "RedMist", label: "Path of the Red Mist", accent: "#f87171" },
+                { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#9ca3af" }
+            ],
+            featuresData: BERSERKER_FEATURES,
+            optionsData: BERSERKER_OPTIONS
         });
+    }
 
-        if (state.furyDice.length === 0) {
-            diceHtml = `<div style="color: var(--text-muted); font-style: italic; font-size: 0.9em; opacity: 0.5;">Awaiting Fury...</div>`;
+    getDerivedStats(level, subclass, state) {
+        let furyMax = (state.baseStr || 0) + (state.addStr || 0); // KEY stats are STR/DEX, PDF says "max of KEY Fury Dice"
+        // Key Stats are STR, DEX. KEY value in Nimble is the highest of your key stats.
+        const statsMap = getStatsMap(state);
+        furyMax = Math.max(statsMap.str, statsMap.dex);
+
+        let faces = 4;
+        if (level >= 17) faces = 12;
+        else if (level >= 13) faces = 10;
+        else if (level >= 9) faces = 8;
+        else if (level >= 6) faces = 6;
+
+        return {
+            speed: 6,
+            woundMax: 6,
+            furyMax: furyMax,
+            furyText: `d${faces}`,
+            furyFaces: faces
+        };
+    }
+
+    getStatOverrides(level, subclass, state, statsMap) {
+        return {};
+    }
+
+    getMechanicPanelHTML(level, subclass, state, derived) {
+        let furyHtml = "";
+        const furyCount = state.furyDice ? state.furyDice.length : 0;
+        const furyMax = derived.furyMax;
+        let totalFury = 0;
+
+        for (let i = 0; i < furyMax; i++) {
+            const active = i < furyCount;
+            const die = active ? state.furyDice[i] : null;
+            if (active) totalFury += die.total;
+            
+            furyHtml += `
+                <div class="fury-die ${active ? 'active' : ''}" 
+                     onclick="CLASS_CONFIG.actions.toggleFury(${i})"
+                     oncontextmenu="event.preventDefault(); CLASS_CONFIG.actions.maximizeDie(${i})"
+                     title="${active ? 'Right-click to Maximize' : 'Click to Gain Die'}"
+                     style="width: 32px; height: 32px; border: 2px solid ${active ? 'var(--class-accent)' : 'rgba(255,255,255,0.1)'}; 
+                            background: ${active ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0,0,0,0.3)'}; 
+                            border-radius: 4px; display: flex; align-items: center; justify-content: center; 
+                            font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer; position: relative; transition: all 0.2s;">
+                    ${active ? die.total : `<span style="opacity: 0.2; font-size: 0.6em;">d${derived.furyFaces}</span>`}
+                </div>`;
         }
 
         return `
-        <div class="panel mechanic-panel" style="padding: 5px 15px; min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 10px; flex: 1;">
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
-                   <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Fury Bonus</label>
-                   <div style="font-size: 2.2em; font-family: 'Cinzel', serif; font-weight: 900; color: var(--save-dis); line-height: 1;">+${totalFury}</div>
-                   <div style="font-size: 0.65em; color: var(--text-muted); text-align: center; margin-top: 2px; font-weight: bold; font-family: 'Cinzel';">STR DMG</div>
-               </div>
+        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center; padding: 5px 15px;">
+            <div style="display: flex; align-items: stretch; gap: 15px; flex: 1;">
+                
+                <!-- Dice Grid Column -->
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Fury Dice (d${derived.furyFaces})</label>
+                        <div style="display: flex; gap: 5px;">
+                            <button onclick="CLASS_CONFIG.actions.rollFury()" style="background: rgba(239,68,68,0.2); border: 1px solid var(--class-accent); color: #fff; font-size: 0.6em; padding: 1px 5px; border-radius: 3px; cursor: pointer; font-family:'Cinzel';">+ Die</button>
+                            <button onclick="CLASS_CONFIG.actions.clearFury()" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); font-size: 0.6em; padding: 1px 5px; border-radius: 3px; cursor: pointer; font-family:'Cinzel';">Clear</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                        ${furyHtml}
+                    </div>
+                </div>
 
-               <div style="flex: 2.5; display: flex; flex-direction: column; align-items: center; padding-left: 10px; justify-content: center;">
-                   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 4px;">
-                       <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Pool (${fdType})</label>
-                       <div style="display: flex; gap: 6px; align-items: center;">
-                           <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">${state.furyDice.length} / <span style="color: var(--text-main);">${maxFD}</span></div>
-                           <button onclick="CLASS_CONFIG.actions.rollOneDie()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--save-dis); color: #fff; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;" ${state.furyDice.length >= maxFD ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>ROLL</button>
-                           <button onclick="CLASS_CONFIG.actions.resetFury()" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: var(--text-muted); font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">X</button>
-                       </div>
-                   </div>
-                   <div style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; width: 100%; justify-content: center; align-items: center; scrollbar-width: none; min-height: 32px; flex: 1;">
-                       ${diceHtml}
-                   </div>
-                   <div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; text-align: center; margin-top: 2px;">
-                        Spend 1: Move DEX or Reduce STR+DEX
-                   </div>
-               </div>
+                <!-- Total Damage Column -->
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px;">
+                    <span style="font-size: 2.2em; font-family: 'Cinzel', serif; font-weight: 900; color: ${totalFury > 0 ? 'var(--gold-light)' : 'var(--text-muted)'}; line-height: 1;">+${totalFury}</span>
+                    <span style="font-size: 0.6em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-top: 4px;">Total Damage</span>
+                    <div style="font-size: 0.55em; color: var(--text-muted); margin-top: 8px; font-style: italic; text-align: center; line-height: 1.1;">
+                        Gain on hit<br>or dmg taken.
+                    </div>
+                </div>
             </div>
         </div>`;
-    },
-
-    actions: {
-        rollOneDie: function() {
-            if (!state.furyDice) state.furyDice = [];
-            let maxFD = Math.max(state.baseStr + state.addStr, state.baseDex + state.addDex);
-            if (state.furyDice.length >= maxFD) return;
-
-            let faces = parseInt(CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state).fdType.replace('d', ''));
-            let roll = Math.floor(Math.random() * faces) + 1;
-
-            state.furyDice.push({
-                chain: [roll],
-                total: roll
-            });
-            saveState(); render();
-        },
-        spendDie: function(idx) {
-            state.furyDice.splice(idx, 1);
-            saveState(); render();
-        },
-        maximizeDie: function(idx) {
-            let faces = parseInt(CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state).fdType.replace('d', ''));
-            state.furyDice[idx].total = faces;
-            saveState(); render();
-        },
-        resetFury: function() { 
-            state.furyDice = []; 
-            saveState(); render(); 
-        }
-    },
-
-    getFeaturesHTML: function (level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, BERSERKER_FEATURES, BERSERKER_OPTIONS, this);
     }
-};
+
+    actions = {
+        maximizeDie: function(idx) {
+            if (!state.furyDice || !state.furyDice[idx]) return;
+            const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
+            state.furyDice[idx].total = derived.furyFaces;
+            saveState(); render();
+        },
+        toggleFury: function(idx) {
+            if (!state.furyDice) state.furyDice = [];
+            if (idx < state.furyDice.length) {
+                state.furyDice.splice(idx, 1);
+            } else {
+                const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
+                const roll = Math.floor(Math.random() * derived.furyFaces) + 1;
+                state.furyDice.push({ total: roll });
+            }
+            saveState(); render();
+        },
+        rollFury: function() {
+            const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
+            if (!state.furyDice) state.furyDice = [];
+            if (state.furyDice.length < derived.furyMax) {
+                const roll = Math.floor(Math.random() * derived.furyFaces) + 1;
+                state.furyDice.push({ total: roll });
+                saveState(); render();
+            }
+        },
+        clearFury: function() {
+            state.furyDice = [];
+            saveState(); render();
+        }
+    };
+}
+
+const CLASS_CONFIG = new BerserkerClass();
