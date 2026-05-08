@@ -26,13 +26,14 @@ class OathswornClass extends BaseClass {
             ],
             spellSchools: ["Radiant"],
             subclassSchools: { "Oathbreaker": ["Necrotic"] },
-            spellProgression: [0, 2, 4, 6, 8, 10, 13, 17],
+            extraSchoolsKeys: ["selectedBenediction"],
+            spellProgression: [2, 2, 4, 6, 8, 10, 13, 17, 19, 21],
             spellReplacements: [
                 createSpellReplacement("True Strike", "Entice", "Necrotic", "Oathbreaker"),
                 createSpellReplacement("Heal", "Shadow Trap", "Necrotic", "Oathbreaker"),
                 createSpellReplacement("Warding Bond", "Dread Visage", "Necrotic", "Oathbreaker")
             ],
-            includeUtilitySpells: createUtilityConfig(null, "selectedSpells"),
+            includeUtilitySpells: createUtilityConfig(null, ["selectedSpells", "selectedBenediction"]),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('loh', 'Lay on Hands', (level) => 5 * level)
@@ -66,17 +67,38 @@ class OathswornClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or WIL', 'DEX or INT', true, [0, 2, 4, 6, 8, 10, 13, 17]);
         
         core[1] = [
-            { id: "judgment", name: "Radiant Judgment", desc: (level, subclass, state, derived) => `Whenever an enemy attacks you, if you have no Judgment Dice, roll your Judgment dice (<strong>${derived.jdText}</strong>). On your next melee attack this encounter, if you hit, deal that much additional radiant damage. The dice are expended whether you hit or miss.` },
+            { id: "judgment", name: "Radiant Judgment", milestones: [1, 3, 5, 8, 10, 14], desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
+                `Whenever an enemy attacks you, if you have no Judgment Dice, roll your Judgment dice (<strong>${derived.jdText}</strong>). On your next melee attack this encounter, if you hit, deal that much additional radiant damage. The dice are expended whether you hit or miss.`,
+                [
+                    { level: 1, text: "Roll 2 Judgment Dice. Your Judgment Dice are d6s." },
+                    { level: 3, text: "Your Judgment Dice are now d8s." },
+                    { level: 5, text: "Your Judgment Dice are now d10s." },
+                    { level: 8, text: "Your Judgment Dice are now d12s." },
+                    { level: 10, text: "Your Judgment Dice are now d20s." },
+                    { level: 14, text: "Roll 3 Judgment Dice." }
+                ],
+                level
+            )},
             { id: "loh", name: "Lay on Hands", desc: (level) => `Gain a magical pool of healing power. This pool’s maximum is always equal to <strong>${5 * level}</strong> and recharges on a Safe Rest. Action: Touch a target and spend any amount of remaining healing power to restore that many HP.` }
         ];
         core[2].push({ id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target's armor by 1 step for this attack.</li></ul>" });
         core[2].push({ id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." });
         
-        core[3].push({ id: "decrees", name: "Sacred Decree", type: "dynamic_choice", collection: "decrees", stateKey: "selectedDecrees", desc: "Learn Sacred Decrees.", getCount: (level) => level >= 16 ? 6 : level >= 14 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 });
+        core[3].push({ id: "decrees", name: "Sacred Decree", type: "dynamic_choice", collection: "decrees", stateKey: "selectedDecrees", milestones: [3, 6, 9, 12, 14, 16], desc: "Learn Sacred Decrees.", getCount: (level) => level >= 16 ? 6 : level >= 14 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 });
         
         core[4].push({ id: "life", name: "My Life, for My Friends", desc: "You can Interpose for free." });
-        core[7].push({ id: "master_radiance", name: "Master of Radiance", desc: "Choose 1 Radiant Utility Spell." });
-        core[11].push({ id: "master_radiance_2", name: "Master of Radiance (2)", desc: "Choose a 2nd Radiant Utility Spell." });
+        
+        core[7].push(FeatureGen.createSpellChoiceFeature({
+            id: "master_radiance",
+            name: "Master of Radiance",
+            level: 7,
+            spellType: "utility",
+            schools: ["Radiant"],
+            stateKey: "selectedSpells",
+            getCount: (level) => level >= 11 ? 2 : 1,
+            milestones: [7, 11],
+            desc: "Choose Radiant Utility Spells."
+        }));
         
         core[18] = [{ id: "unending", name: "Unending Judgment", desc: "While you have no Judgment Dice, gain +5 damage to melee attacks." }];
         core[20].push({ id: "glorious_paragon", name: "Glorious Paragon", desc: "+1 to any 2 of your stats. Defend for free whenever you Interpose." });
@@ -102,7 +124,18 @@ class OathswornClass extends BaseClass {
             ],
             3: [
                 { id: "we_all_suffer", name: "We All Suffer", desc: "Gain +2 max Wounds. When an ally within your aura would gain any Wounds or fail a save, you may suffer the effect instead and trigger your Radiant Judgment ability." },
-                { id: "bring_pain", name: "Bring Me Your Pain", desc: "Reaction (When a willing ally within your aura would drop to 0 HP): Switch HP with them (if your current HP is higher than their max HP, they gain Temp HP equal to the difference), dropping to 0 hp and gaining the Wound instead." }
+                { id: "bring_pain", name: "Bring Me Your Pain", desc: "Reaction (When a willing ally within your aura would drop to 0 HP): Switch HP with them (if your current HP is higher than their max HP, they gain Temp HP equal to the difference), dropping to 0 hp and gaining the Wound instead." },
+                FeatureGen.createSpellChoiceFeature({
+                    id: "dark_benediction",
+                    name: "Dark Benediction",
+                    level: 3,
+                    spellType: "utility",
+                    schools: ["Necrotic"],
+                    stateKey: "selectedBenediction",
+                    getCount: (level) => level >= 11 ? 0 : (level >= 7 ? 2 : 1),
+                    milestones: [3, 7, 11],
+                    desc: (level) => level >= 11 ? "You know all Necrotic Utility Spells." : "Choose Necrotic Utility Spells."
+                })
             ],
             7: [
                 { id: "torment", name: "Torment", desc: "Your Lay on Hands heals you for twice as much, and others for half as much. When you deal damage, you can expend healing power from your Lay on Hands pool to increase the damage dealt by an amount equal to the points spent (ignoring armor)." }

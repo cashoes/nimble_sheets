@@ -20,8 +20,8 @@ class CheatClass extends BaseClass {
             initialStats: { baseStr: -1, baseDex: 3, baseInt: 1, baseWil: -1 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#94a3b8" },
-                { value: "Scoundrel", label: "Tools of the Scoundrel", accent: "#22c55e" }
+                { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#0f172a" },
+                { value: "Scoundrel", label: "Tools of the Scoundrel", accent: "#16a34a" }
             ],
             featuresData: CheatClass.FEATURES,
             optionsData: CheatClass.OPTIONS
@@ -49,7 +49,18 @@ class CheatClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or INT', 'WIL or STR', false);
         
         core[1] = [
-            { id: "sneak_attack", name: "Sneak Attack", desc: (level, subclass, state, derived) => `(1/turn) When you crit, deal <strong>+${derived.saDice}</strong> damage.` },
+            { id: "sneak_attack", name: "Sneak Attack", milestones: [1, 3, 7, 9, 11, 15, 17], desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
+                `(1/turn) When you crit, deal <strong>+${derived.saDice}</strong> damage.`,
+                [
+                    { level: 3, text: "Deal +1d8 damage." },
+                    { level: 7, text: "Deal +2d8 damage." },
+                    { level: 9, text: "Deal +2d10 damage." },
+                    { level: 11, text: "Deal +2d12 damage." },
+                    { level: 15, text: "Deal +2d20 damage." },
+                    { level: 17, text: "Deal +3d20 damage." }
+                ],
+                level
+            )},
             { id: "vicious_opp", name: "Vicious Opportunist", desc: "(1/turn) When you hit a Distracted target with a melee attack, you may change the Primary Die roll to whatever you like (changing it to the max value counts as a crit)." }
         ];
         core[2] = [
@@ -57,13 +68,16 @@ class CheatClass extends BaseClass {
         ];
         core[3].push({ id: "thieves_cant", name: "Thieves’ Cant", desc: "You learn the secret language of rogues and scoundrels." });
         
-        core[4].push({ id: "underhanded", name: "Underhanded Abilities", type: "dynamic_choice", collection: "underhanded", stateKey: "selectedUnderhanded", desc: "Choose Underhanded Abilities as you level up.", getCount: (level) => level >= 18 ? 8 : level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 });
+        core[4].push({ id: "underhanded", name: "Underhanded Abilities", type: "dynamic_choice", collection: "underhanded", stateKey: "selectedUnderhanded", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose Underhanded Abilities as you level up.", getCount: (level) => level >= 18 ? 8 : level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 });
         
-        core[5].push({ id: "twist_blade", name: "Twist the Blade", desc: "Action: Change one of your Sneak Attack dice to whatever you like." });
+        core[5].push({ id: "twist_blade", name: "Twist the Blade", milestones: [5, 13], desc: (level) => FeatureGen.createScalingList(
+            "Action: Change one of your Sneak Attack dice to whatever you like.",
+            [{ level: 13, text: "You can Twist the Blade for free (1/turn)." }],
+            level
+        )});
         core[5].push({ id: "quick_read", name: "Quick Read", desc: "Gain advantage on an Assess check (1/encounter) and an Examination check (1/day)." });
         
         core[6].push({ id: "not_happened", name: "THAT'S Not What Happened!", desc: "(1/Safe Rest) Action: After a Distracted enemy attacks you, you may change the Primary Die roll to whatever you like (changing the die to the minimum value counts as a miss)." });
-        core[13].push({ id: "twist_blade_2", name: "Twist the Blade (2)", desc: "(1/turn) You can Twist the Blade for free." });
         
         core[20].push({ id: "supreme_exec", name: "Supreme Execution", desc: "+1 to any 2 of your stats. When you attack with a blade, you do not require targets to be Distracted to trigger Vicious Opportunist." });
 

@@ -25,7 +25,8 @@ class StormshifterClass extends BaseClass {
             ],
             spellSchools: ["Lightning", "Wind"],
             subclassSchools: { "SkyStorm": [] }, // Handled by study choice
-            includeUtilitySpells: createUtilityConfig(false, null), // Special stormcaller logic
+            extraSchoolsKeys: ["selectedStudy"],
+            includeUtilitySpells: createUtilityConfig(false, ["selectedStormcaller"]),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('shiftUses', 'Beastshift', (level, stats) => stats.dex + (level >= 6 ? 1 : 0) + (level >= 9 ? 1 : 0) + (level >= 12 ? 1 : 0) + (level >= 15 ? 2 : 0))
@@ -67,23 +68,55 @@ class StormshifterClass extends BaseClass {
         
         core[1] = [
             { id: "master", name: "Master of Storms", desc: "You know all cantrips from the Lightning and Wind schools." },
-            { id: "shift", name: "Beastshift", desc: "Action: Transform into a harmless beast. Speak with animals. DEX charges/Safe Rest. Form ends if you drop to 0 HP, cast a spell, or if you end it on your turn for free." }
+            { id: "shift", name: "Beastshift", desc: (level) => FeatureGen.createScalingList(
+                "Action: Transform into a harmless beast. Speak with animals. DEX charges/Safe Rest. Form ends if you drop to 0 HP, cast a spell, or if you end it on your turn for free.",
+                [
+                    { level: 2, text: "You can Beastshift into a Fearsome Beast." },
+                    { level: 3, text: "You can Beastshift into a Beast of the Pack." },
+                    { level: 5, text: "You can Beastshift into a Beast of Nightmares." }
+                ],
+                level
+            )}
         ];
-        core[2].push({ id: "dire_1", name: "Direbeast Form", desc: "You can Beastshift into a Fearsome Beast." });
-        core[3].push({ id: "dire_2", name: "Direbeast Form (2)", desc: "You can Beastshift into a Beast of the Pack." });
-        core[4].push({ id: "caller", name: "Stormcaller", desc: "Learn a Utility Spell from each spell school you know." });
-        core[5].push({ id: "dire_3", name: "Direbeast Form (3)", desc: "You can Beastshift into a Beast of Nightmares." });
         
-        core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", desc: "Choose 2 Chimeric Boons. Whenever you shapeshift into a Direbeast form, you may modify it with 1 Chimeric Boon you know.", getCount: (level) => level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2 });
+        core[4].push(FeatureGen.createSpellChoiceFeature({
+            id: "caller",
+            name: "Stormcaller",
+            level: 4,
+            spellType: "utility",
+            stateKey: "selectedStormcaller",
+            perSchool: true,
+            multiplier: (level) => level >= 14 ? 0 : (level >= 7 ? 2 : 1),
+            milestones: [4, 7, 14],
+            desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Learn a Utility Spell from each spell school you know."
+        }));
+        
+        core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", milestones: [6, 9, 12, 17], desc: "Choose Chimeric Boons. Whenever you shapeshift into a Direbeast form, you may modify it with 1 Chimeric Boon you know.", getCount: (level) => level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2 });
         core[6].push({ id: "expert", name: "Expert Shifter", desc: "Gain 1 additional use of Beastshift per Safe Rest." });
         
-        core[8].push({ id: "stormborn", name: "Stormborn", desc: "Gain resistance to lightning damage. (1/day) You may gain advantage on a Naturecraft check or Concentration check." });
-        core[13].push({ id: "stormborn_2", name: "Stormborn (2)", desc: "Instead of rolling dice, deal the max damage of a Wind spell by spending a charge of Beastshift. Whenever you end Beastshift, you may cast a cantrip for free." });
+        core[8].push({ id: "stormborn", name: "Stormborn", desc: (level) => FeatureGen.createScalingList(
+            "Gain resistance to lightning damage. (1/day) You may gain advantage on a Naturecraft check or Concentration check.",
+            [{ level: 13, text: "Instead of rolling dice, deal the max damage of a Wind spell by spending a charge of Beastshift. Whenever you end Beastshift, you may cast a cantrip for free." }],
+            level
+        )});
         
         core[20].push({ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. (1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." });
 
         subclasses["SkyStorm"] = {
-            3: [{ id: "study", name: "Deepening Study", type: "choice", collection: "studySchools", stateKey: "deepeningStudySchool", count: 1, desc: "Choose the Ice or Radiant school to learn." }, { id: "creature", name: "Creature of the Fey", desc: "You may cast spells while Beastshifted." }, { id: "attuned", name: "Attuned to Nature", desc: "(1/day) Add LVL to any skill check related to nature or weather." }],
+            3: [
+                FeatureGen.createSpellChoiceFeature({
+                    id: "study",
+                    name: "Deepening Study",
+                    level: 3,
+                    spellType: "school",
+                    schools: ["Ice", "Radiant"],
+                    stateKey: "selectedStudy",
+                    getCount: 1,
+                    desc: "Choose the Ice or Radiant school to learn."
+                }),
+                { id: "creature", name: "Creature of the Fey", desc: "You may cast spells while Beastshifted." }, 
+                { id: "attuned", name: "Attuned to Nature", desc: "(1/day) Add LVL to any skill check related to nature or weather." }
+            ],
             7: [{ id: "tempest", name: "Raging Tempest", desc: "Whenever you crit with a tiered spell, you may cast a cantrip for free from a school you know and haven’t used this turn." }],
             11: [{ id: "primordial", name: "Primordial Force", desc: "Spending 2+ mana on a spell grants an additional effect based on school: <ul><li><strong>Ice:</strong> Gain WIL temp HP.</li><li><strong>Lightning:</strong> Deal additional damage equal to your WIL.</li><li><strong>Radiant:</strong> You may heal a creature within 6 spaces WIL HP.</li><li><strong>Wind:</strong> Gain a flying speed this turn. Move up to 6 spaces for free.</li></ul>" }],
             15: [{ id: "master_storm", name: "Master of Storm", desc: "Concentrate on 1 lightning and 1 wind spell at the same time. (1/Safe Rest) Cast Ride the Lightning for 0 mana." }]
@@ -139,29 +172,6 @@ class StormshifterClass extends BaseClass {
         `);
 
         return builder.build();
-    }
-
-    getAvailableSpells(level, subclass, state, derived) {
-        const spells = super.getAvailableSpells(level, subclass, state, derived);
-        const schools = ["Lightning", "Wind"];
-        const study = (state.deepeningStudySchool || [])[0] || "None";
-        if (study !== "None") schools.push(study);
-
-        // Stormcaller Utility Logic
-        schools.forEach(sch => {
-            const selKey = `stormcallerSpells_${sch}`;
-            const val = (state[selKey] || [])[0] || "None";
-            if (val !== "None" && UTILITY_SPELLS[sch]?.[val]) {
-                const desc = UTILITY_SPELLS[sch][val];
-                let customHtml = `<select onchange="updateClassState('${selKey}', 0, this.value)" style="border-bottom-color: var(--class-accent);"><option value="None">Select ${sch} Utility...</option>${Object.keys(UTILITY_SPELLS[sch]).map(k => `<option value="${k}" ${k===val?'selected':''}>${k}</option>`).join('')}</select><div style="margin-top:8px;">${desc}</div>`;
-                spells.push({ name: "", tier: "Utility", school: sch, customHtml });
-            } else if (level >= 4) {
-                let customHtml = `<select onchange="updateClassState('${selKey}', 0, this.value)" style="border-bottom-color: var(--class-accent);"><option value="None">Select ${sch} Utility...</option>${Object.keys(UTILITY_SPELLS[sch] || {}).map(k => `<option value="${k}">${k}</option>`).join('')}</select>`;
-                spells.push({ name: "", tier: "Utility", school: sch, customHtml });
-            }
-        });
-
-        return spells;
     }
 }
 

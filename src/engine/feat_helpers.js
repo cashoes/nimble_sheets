@@ -9,8 +9,7 @@ function bFeat(t, l, d, theme = "", skip = false, level, statsMap, context = {})
 
 function defaultRenderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
     const statsMap = derived.statsMap;
-    let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
-    let count = feat.type === "dynamic_choice" ? feat.getCount(level, subclass, state) : (feat.count || 1);
+    let count = (feat.type === "dynamic_choice" || feat.type === "spell_choice") ? (typeof feat.getCount === 'function' ? feat.getCount(level, subclass, state) : (feat.count || 1)) : (feat.count || 1);
     let collection = feat.collection;
     let context = feat.context || {};
     
@@ -26,28 +25,124 @@ function defaultRenderFeature(feat, level, subclass, state, derived, bFeat, iSta
     let finalCssClass = cssClass || "";
     if (feat.minor) finalCssClass += " minor-feature";
 
-    if (feat.type === "choice" || feat.type === "dynamic_choice") {
+    if (feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "spell_choice") {
         let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
         let selection = state[feat.stateKey] || [];
-        let options = Object.keys(optionsRef[collection] || {});
+        
+        if (feat.type === "spell_choice") {
+            // Refined spell selection UI: No embedded cards, supports multiple dropdowns
+            let schools = Array.isArray(feat.schools) ? feat.schools : [feat.schools];
+            
+            // Filter by known schools if filterKnown is true
+            if (feat.filterKnown && configRef && configRef.getKnownSchools) {
+                const known = configRef.getKnownSchools(level, subclass, state);
+                schools = schools.filter(school => known.includes(school));
+            }
 
-        let optsHtml = `<option value="None">-- Select Option --</option>`;
-        options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+            const isUtility = feat.spellType === "utility";
+            const isSchool = feat.spellType === "school";
+            const isCantrip = feat.spellType === "cantrip";
+            
+            if (feat.perSchool && configRef && configRef.getKnownSchools) {
+                // SPECIAL MODE: One (or more) dropdowns PER school known
+                const known = configRef.getKnownSchools(level, subclass, state);
+                const multiplier = typeof feat.multiplier === 'function' ? feat.multiplier(level, subclass, state) : (feat.multiplier || 1);
+                
+                if (multiplier > 0) {
+                    let totalIdx = 0;
+                    for (let m = 0; m < multiplier; m++) {
+                        known.forEach(school => {
+                            if (!UTILITY_SPELLS[school]) return;
+                            
+                            let idx = (feat.startIndex || 0) + totalIdx;
+                            let val = selection[idx] || "None";
+                            let optsHtml = `<option value="None">-- Select ${school} Utility --</option>`;
+                            
+                            Object.keys(UTILITY_SPELLS[school]).forEach(sName => {
+                                optsHtml += `<option value="${sName}" ${val === sName ? 'selected' : ''}>${sName}</option>`;
+                            });
 
-        for (let i = 0; i < count; i++) {
-            let idx = (feat.startIndex || 0) + i;
-            let val = selection[idx] || "None";
-            let d = (val !== "None" && optionsRef[collection][val]) ? optionsRef[collection][val].desc : "";
+                            choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                                <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; display: block; margin-bottom: 4px;">${school} School</label>
+                                <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); width: 100%;">${optsHtml}</select>
+                            </div>`;
+                            totalIdx++;
+                        });
+                    }
+                }
+            } else {
+                // REGULAR MODE: count dropdowns from schools list
+                const isPaired = feat.spellType === "paired";
+                
+                for (let i = 0; i < count; i++) {
+                    let idx = (feat.startIndex || 0) + i;
+                    let val = selection[idx] || "None";
+                    
+                    // For paired mode, alternating dropdowns are Utility then Tiered
+                    const effectiveType = isPaired ? (i % 2 === 0 ? "utility" : "tiered") : feat.spellType;
+                    const effectiveTier = isPaired ? (i % 2 === 0 ? null : (feat.tiers ? feat.tiers[Math.floor(i/2)] : feat.tier)) : feat.tier;
+                    
+                    let selectLabel = isSchool ? 'School' : (effectiveType === 'cantrip' ? 'Cantrip' : (effectiveType === 'utility' ? 'Utility' : 'Spell'));
+                    let optsHtml = `<option value="None">-- Select ${selectLabel} --</option>`;
+                    if (isSchool) {
+                        schools.forEach(school => {
+                            optsHtml += `<option value="${school}" ${val === school ? 'selected' : ''}>${school}</option>`;
+                        });
+                    } else {
+                        schools.forEach(school => {
+                            const source = (effectiveType === "utility") ? UTILITY_SPELLS : SPELL_REGISTRY;
+                            if (source[school]) {
+                                let spells = Object.entries(source[school]);
+                                if (effectiveType === "cantrip") {
+                                    spells = spells.filter(([_, data]) => data.tier.toLowerCase().includes('cantrip'));
+                                } else if (effectiveTier) {
+                                    spells = spells.filter(([_, data]) => data.tier === `Tier ${effectiveTier}`);
+                                }
 
-            choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
-            </div>`;
+                                if (spells.length > 0) {
+                                    optsHtml += `<optgroup label="${school}">`;
+                                    spells.forEach(([sName, _]) => {
+                                        optsHtml += `<option value="${sName}" ${val === sName ? 'selected' : ''}>${sName}</option>`;
+                                    });
+                                    optsHtml += `</optgroup>`;
+                                }
+                            }
+                        });
+                    }
+
+                    choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                        ${isPaired ? `<label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; display: block; margin-bottom: 4px;">${effectiveType} Selection</label>` : ''}
+                        <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); width: 100%;">${optsHtml}</select>
+                    </div>`;
+                }
+            }
+        } else {
+            // Existing option selection UI
+            let options = Object.keys(optionsRef[collection] || {});
+            let optsHtml = `<option value="None">-- Select Option --</option>`;
+            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
+
+            for (let i = 0; i < count; i++) {
+                let idx = (feat.startIndex || 0) + i;
+                let val = selection[idx] || "None";
+                let d = (val !== "None" && optionsRef[collection][val]) ? optionsRef[collection][val].desc : "";
+                if (typeof d === "function") d = d(level, subclass, state, derived, rSSC);
+
+                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
+                </div>`;
+            }
         }
         desc += choiceHtml + `</div>`;
     }
 
-    return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+    let displayLevel = feat.level || "";
+    if (feat.milestones && Array.isArray(feat.milestones)) {
+        displayLevel = feat.milestones.filter(m => level >= m).pop() || displayLevel;
+    }
+
+    return bFeat(feat.name, displayLevel, desc, finalCssClass, false, level, statsMap, context);
 }
 
 function defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, featuresRef, optionsRef, configRef) {
@@ -72,12 +167,14 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, 
         if (featuresRef.core[l]) {
             featuresRef.core[l].forEach(feat => {
                 if (!replacedIds.has(feat.id)) {
+                    if (feat.level === undefined) feat.level = l;
                     fHtml += renderFn(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, "", optionsRef, configRef);
                 }
             });
         }
         if (subData[l]) {
             subData[l].forEach(feat => {
+                if (feat.level === undefined) feat.level = l;
                 fHtml += renderFn(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, sCls, optionsRef, configRef);
             });
         }

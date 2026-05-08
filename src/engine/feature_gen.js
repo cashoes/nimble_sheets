@@ -84,6 +84,45 @@ function createSubclassFeature(level = 3) {
 }
 
 /**
+ * Create a spell choice feature
+ */
+function createSpellChoiceFeature({ id, name, level, spellType, schools, stateKey, getCount, desc, minor = false, filterKnown = false, tier = null, tiers = null, milestones = [], perSchool = false, multiplier = 1 }) {
+    return {
+        id,
+        name,
+        level,
+        type: "spell_choice",
+        spellType, // "utility" or "tiered" or "school" or "cantrip" or "paired"
+        schools,   // string or array of strings
+        stateKey,
+        getCount: typeof getCount === "function" ? getCount : () => (getCount || 1),
+        desc,
+        minor,
+        filterKnown,
+        tier,
+        tiers,
+        milestones: milestones.length > 0 ? milestones : [level],
+        perSchool,
+        multiplier: typeof multiplier === "function" ? multiplier : () => multiplier
+    };
+}
+
+/**
+ * Helper to create a growing point-form list for scaling descriptions
+ */
+function createScalingList(base, upgrades, level) {
+    let text = base;
+    const items = upgrades
+        .filter(u => level >= u.level)
+        .map(u => `<li>Level ${u.level}+: ${u.text}</li>`);
+    
+    if (items.length > 0) {
+        text += `<ul style="margin-top: 5px; margin-bottom: 0; padding-left: 20px;">${items.join('')}</ul>`;
+    }
+    return text;
+}
+
+/**
  * Generate all standard progression features for a class
  */
 function generateStandardFeatures(keyStats, secStats, isCaster = false, customTierProgression = null) {
@@ -108,9 +147,15 @@ function generateStandardFeatures(keyStats, secStats, isCaster = false, customTi
     if (isCaster) {
         [5, 10, 15, 20].forEach((l, idx) => addFeature(createCantripFeature(idx + 1)));
         
-        const tiers = customTierProgression || [2, 4, 6, 8, 10, 12, 14, 16, 18];
+        const tiers = customTierProgression || [1, 2, 4, 6, 8, 10, 12, 14, 16, 18];
         tiers.forEach((l, idx) => {
-            if (l > 0) addFeature(createTierFeature(idx + 1, l));
+            if (l > 0) {
+                if (idx === 0) {
+                    // This is the cantrip level, usually 1
+                } else {
+                    addFeature(createTierFeature(idx, l));
+                }
+            }
         });
     }
     
@@ -124,5 +169,7 @@ const FeatureGen = {
     createCantripFeature,
     createEpicBoonFeature,
     createSubclassFeature,
+    createSpellChoiceFeature,
+    createScalingList,
     generateStandardFeatures
 };

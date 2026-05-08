@@ -10,21 +10,21 @@ class ShepherdClass extends BaseClass {
             hpPerLevel: 8,
             hitDie: 10,
             theme: {
-                accent: "#a855f7",
-                accentDim: "#6b21a8",
-                bodyBg: "#0a0712",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 100%), linear-gradient(180deg, #130f24 0%, #0a0712 100%)",
-                panelBg: "rgba(25, 20, 45, 0.75)",
-                border: "rgba(168, 85, 247, 0.3)"
+                accent: "#d946ef",
+                accentDim: "#a21caf",
+                bodyBg: "#08040a",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(217, 70, 239, 0.1) 0%, transparent 100%), linear-gradient(180deg, #1a0f24 0%, #08040a 100%)",
+                panelBg: "rgba(35, 20, 45, 0.75)",
+                border: "rgba(217, 70, 239, 0.3)"
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "Mercy", label: "Luminary of Mercy", accent: "#f8fafc" },
-                { value: "Malice", label: "Luminary of Malice", accent: "#4ade80" }
+                { value: "Mercy", label: "Luminary of Mercy", accent: "#f0f9ff" },
+                { value: "Malice", label: "#312e81" }
             ],
             spellSchools: ["Radiant", "Necrotic"],
-            includeUtilitySpells: createUtilityConfig(false, null), // Special handling
+            includeUtilitySpells: createUtilityConfig((level) => level >= 11, "selectedTwilight"),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('searingLight', 'Searing Light', (level, stats) => stats.wil)
@@ -54,15 +54,27 @@ class ShepherdClass extends BaseClass {
         
         core[1] = [
             { id: "keeper", name: "Keeper of Life & Death", desc: "You know Radiant and Necrotic cantrips." },
-            { id: "searing", name: "Searing Light", desc: "(WIL times/Safe Rest) Action: Heal or Inflict grievous injuries: <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>" }
+            { id: "searing", name: "Searing Light", desc: (level) => FeatureGen.createScalingList(
+                "(WIL times/Safe Rest) Action: Heal or Inflict grievous injuries: <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>",
+                [{ level: 1, text: "Healing and damage are WIL d8." }],
+                level
+            )}
         ];
         core[2].push({ id: "spirit", name: "Lifebinding Spirit", desc: "You know the unique Radiant spell <strong>Lifebinding Spirit</strong> (Tier 1). Action: Summon spirit (ignores harm, lasts until cast again or healing spent). Action: Attack/Heal within Reach 4 for 1d6+WIL radiant. Upcasting: +1 die size (max d12), +1 use." });
         
-        core[3].push({ id: "twilight", name: "Master of Twilight", desc: "Choose 1 Necrotic and 1 Radiant Utility Spell." });
-        core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", desc: "Choose modular graces.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
+        core[3].push(FeatureGen.createSpellChoiceFeature({
+            id: "twilight",
+            name: "Master of Twilight",
+            level: 3,
+            spellType: "utility",
+            stateKey: "selectedTwilight",
+            perSchool: true,
+            multiplier: (level) => level >= 11 ? 0 : (level >= 6 ? 2 : 1),
+            milestones: [3, 6, 11],
+            desc: (level) => level >= 11 ? "You know all Necrotic and Radiant Utility Spells." : "Choose Necrotic and Radiant Utility Spells."
+        }));
         
-        core[6].push({ id: "twilight_2", name: "Master of Twilight (2)", desc: "Choose a 2nd Necrotic and Radiant Utility Spell." });
-        core[11].push({ id: "twilight_3", name: "Master of Twilight (3)", desc: "You know all Necrotic and Radiant Utility Spells." });
+        core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", milestones: [5, 9, 13, 17], desc: "Choose modular graces.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
         
         core[17] = [{ id: "revitalizing", name: "Revitalizing Blessing", desc: "(1/round) Whenever you roll a 6 or higher on one or more healing die, the target may recover one Wound." }];
         core[20].push({ id: "sage", name: "Twilight Sage", desc: "+1 to any 2 of your stats. Your Lifebinding Spirit rolls twice as many dice." });
@@ -106,40 +118,6 @@ class ShepherdClass extends BaseClass {
         builder.addRollDisplay(`${derived.spiritDmg}+${statsMap.wil}`, `${spiritType} Spirit`, `${derived.spiritDmg}+${statsMap.wil}`, `Reach 4 | T${Math.max(1, Math.floor(level/2))} uses`, { isMinion: true });
 
         return builder.build();
-    }
-
-    getAvailableSpells(level, subclass, state, derived) {
-        let spells = super.getAvailableSpells(level, subclass, state, derived);
-        
-        // Shepherd paired utility selection (Level 3+)
-        if (level >= 3 && level < 11) {
-            let numPairs = level >= 6 ? 2 : 1;
-            for (let i = 0; i < numPairs; i++) {
-                // Radiant
-                let rVal = (state.spiritSpellsRadiant || [])[i] || "None";
-                let rOpts = `<option value="None">Select Radiant Utility...</option>`;
-                Object.keys(UTILITY_SPELLS.Radiant || {}).forEach(k => rOpts += `<option value="${k}">${k}</option>`);
-                let rCustom = `<select onchange="updateClassState('spiritSpellsRadiant', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${rOpts.replace(`value="${rVal}"`, `value="${rVal}" selected`)}</select>`;
-                if (rVal !== "None") rCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Radiant[rVal]}</div>`;
-                spells.push({ name: "", tier: "Utility", school: "Radiant", customHtml: rCustom });
-
-                // Necrotic
-                let nVal = (state.spiritSpellsNecrotic || [])[i] || "None";
-                let nOpts = `<option value="None">Select Necrotic Utility...</option>`;
-                Object.keys(UTILITY_SPELLS.Necrotic || {}).forEach(k => nOpts += `<option value="${k}">${k}</option>`);
-                let nCustom = `<select onchange="updateClassState('spiritSpellsNecrotic', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${nOpts.replace(`value="${nVal}"`, `value="${nVal}" selected`)}</select>`;
-                if (nVal !== "None") nCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Necrotic[nVal]}</div>`;
-                spells.push({ name: "", tier: "Utility", school: "Necrotic", customHtml: nCustom });
-            }
-        } else if (level >= 11) {
-            ["Radiant", "Necrotic"].forEach(sch => {
-                Object.entries(UTILITY_SPELLS[sch] || {}).forEach(([name, desc]) => {
-                    spells.push({ name, desc, tier: "Utility", school: sch });
-                });
-            });
-        }
-        
-        return spells;
     }
 }
 

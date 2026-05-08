@@ -20,8 +20,8 @@ class BerserkerClass extends BaseClass {
             initialStats: { baseStr: 3, baseDex: 1, baseInt: -1, baseWil: 0 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "RedMist", label: "Path of the Red Mist", accent: "#f87171" },
-                { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#9ca3af" }
+                { value: "RedMist", label: "Path of the Red Mist", accent: "#fb923c" },
+                { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#4b5563" }
             ],
             featuresData: BerserkerClass.FEATURES,
             optionsData: BerserkerClass.OPTIONS
@@ -55,25 +55,22 @@ class BerserkerClass extends BaseClass {
             { id: "got", name: "That all you got?!", desc: "When you are attacked, you may expend 1 or more Fury Dice to reduce the damage taken by STR+DEX for each die spent." }
         ];
         core[2] = [
-            { id: "intensifying", name: "Intensifying Fury", desc: "If you are Raging at the beginning of your turn, roll 1 Fury Die for free." },
+            { id: "intensifying", name: "Intensifying Fury", milestones: [2, 6, 9, 13, 17], desc: (level) => FeatureGen.createScalingList(
+                "If you are Raging at the beginning of your turn, roll 1 Fury Die for free.",
+                [
+                    { level: 6, text: "Your Fury Dice are now d6s." },
+                    { level: 9, text: "Your Fury Dice are now d8s." },
+                    { level: 13, text: "Your Fury Dice are now d10s." },
+                    { level: 17, text: "Your Fury Dice are now d12s." }
+                ],
+                level
+            )},
             { id: "one_ancients", name: "One with the Ancients", desc: "(1/Safe Rest) When faced with a decision about which direction or course of action to take, you can call upon your ancestors to guide you toward the most dangerous or challenging path." }
         ];
         core[3].push({ id: "bloodlust", name: "Bloodlust", desc: "Expend 1 or more Fury Dice on your turn, move DEX spaces per die spent for free." });
         
         core[4].push({ id: "enduring_rage", name: "Enduring Rage", desc: "While Dying, you Rage automatically for free at the beginning of your turn, have a max of 2 actions instead of 1, and ignore the STR saves to make attacks." });
-        core[4].push({ id: "arsenal_1", name: "Savage Arsenal", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, desc: "Choose 1 ability from the Savage Arsenal." });
-        
-        core[6].push({ id: "arsenal_2", name: "Savage Arsenal (2)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 1, desc: "Choose a 2nd Savage Arsenal ability." });
-        core[6].push({ id: "intensifying_2", name: "Intensifying Fury (2)", desc: "Your Fury Dice are now d6s.", minor: true });
-        
-        core[8].push({ id: "arsenal_3", name: "Savage Arsenal (3)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 2, desc: "Choose a 3rd Savage Arsenal ability." });
-        core[9].push({ id: "intensifying_3", name: "Intensifying Fury (3)", desc: "Your Fury Dice are now d8s.", minor: true });
-        core[10].push({ id: "arsenal_4", name: "Savage Arsenal (4)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 3, desc: "Choose a 4th Savage Arsenal ability." });
-        core[12].push({ id: "arsenal_5", name: "Savage Arsenal (5)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 4, desc: "Choose a 5th Savage Arsenal ability." });
-        core[13].push({ id: "intensifying_4", name: "Intensifying Fury (4)", desc: "Your Fury Dice are now d10s.", minor: true });
-        core[14].push({ id: "arsenal_6", name: "Savage Arsenal (6)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 5, desc: "Choose a 6th Savage Arsenal ability." });
-        core[16].push({ id: "arsenal_7", name: "Savage Arsenal (7)", type: "choice", collection: "arsenal", stateKey: "selectedArsenal", count: 1, startIndex: 6, desc: "Choose a 7th Savage Arsenal ability." });
-        core[17].push({ id: "intensifying_5", name: "Intensifying Fury (5)", desc: "Your Fury Dice are now d12s.", minor: true });
+        core[4].push({ id: "arsenal", name: "Savage Arsenal", type: "dynamic_choice", collection: "arsenal", stateKey: "selectedArsenal", milestones: [4, 6, 8, 10, 12, 14, 16], desc: "Choose abilities from the Savage Arsenal as you level up.", getCount: (level) => level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 });
         
         core[18] = [{ id: "deep_rage", name: "DEEP RAGE", desc: "Dropping to 0 HP does not cause your Rage to end." }];
         core[20].push({ id: "boundless_rage", name: "BOUNDLESS RAGE", desc: "+1 to any 2 of your stats. Anytime you roll less than 6 on a Fury Die, change it to 6 instead." });

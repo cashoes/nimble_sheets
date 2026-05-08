@@ -26,8 +26,10 @@ class ShadowmancerClass extends BaseClass {
             ],
             spellSchools: ["Necrotic"],
             subclassSchools: { "RedDragon": ["Fire"], "AbyssalDepths": ["Ice"] },
-            spellProgression: [0, 2, 5, 7, 10, 13, 16, 19],
-            includeUtilitySpells: createUtilityConfig(true, null),
+            extraSchoolsKeys: [],
+            spellProgression: [2, 2, 5, 7, 10, 13, 16, 19, 21, 23],
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14, ["selectedShadowmastery", "selectedSubclassSpells"]),
+            includeTieredSpells: [],
             resources: [
                 createManaResource('int'),
                 createSimpleResource('pilfer', 'Pilfer Uses', (level, stats, state, subclass) => subclass !== "Reaver" && level >= 2 ? stats.dex : 0)
@@ -68,41 +70,79 @@ class ShadowmancerClass extends BaseClass {
     }
 
     static get FEATURES() {
-        const { core, subclasses } = FeatureGen.generateStandardFeatures('INT or DEX', 'STR or WIL', true, [0, 2, 5, 7, 10, 13, 16, 19]);
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('INT or DEX', 'STR or WIL', true, [2, 2, 5, 7, 10, 13, 16, 19, 21, 23]);
         
         core[1] = [
-            { id: "conduit", name: "Conduit of Shadow", desc: "Your Patron grants you knowledge of Shadow Blast (1d12+KEY, +1d12 every 5 levels) and Summon Shadows (Reach 1, +1 every 5 levels). You can summon a max of INT or LVL minions, whichever is lower. (1/turn) Command ALL minions to move 6 then attack (Reach 1, 1d12 each)." },
+            { id: "conduit", name: "Conduit of Shadow", milestones: [1, 5, 10, 15, 20], desc: (level) => {
+                let blastDice = 1 + Math.floor(level / 5);
+                let summonReach = 1 + Math.floor(level / 5);
+                return FeatureGen.createScalingList(
+                    `Your Patron grants you knowledge of Shadow Blast (<strong>${blastDice}d12+KEY</strong>) and Summon Shadows (Reach <strong>${summonReach}</strong>). You can summon a max of INT or LVL minions, whichever is lower. (1/turn) Command ALL minions to move 6 then attack (Reach 1, 1d12 each).`,
+                    [
+                        { level: 5, text: "Shadow Blast increases to 2d12, Summon Reach increases to 2." },
+                        { level: 10, text: "Shadow Blast increases to 3d12, Summon Reach increases to 3." },
+                        { level: 15, text: "Shadow Blast increases to 4d12, Summon Reach increases to 4." },
+                        { level: 20, text: "Shadow Blast increases to 5d12, Summon Reach increases to 5." }
+                    ],
+                    level
+                );
+            }},
             { id: "minions", name: "Shadow Minions", desc: "They have 1 HP, no damage bonus, and do not crit. They abandon you immediately outside of combat. You and your minions count as different creatures." }
         ];
+        core[2].push({ id: "master_darkness", name: "Master of Darkness", desc: "You know Necrotic cantrips. You gain INT mana whenever you roll Initiative (this expires if unspent at the end of combat)." });
         core[2].push({ id: "pilfer", name: "Pilfered Power", desc: "You may steal power to cast spells at the highest tier you have unlocked. You can do this DEX times before your patron damages you for half your max HP. Resets on Safe Rest." });
         
-        core[3].push({ id: "lesser_1", name: "Lesser Invocation", type: "choice", collection: "lesserInvocations", stateKey: "selectedLesser", count: 1, desc: "Choose 1 Lesser Shadow Invocation." });
-        core[4].push({ id: "greater_1", name: "A Gift from the Master", type: "choice", collection: "greaterInvocations", stateKey: "selectedGreater", count: 1, desc: "Choose 1 Greater Shadow Invocation." });
-        core[6].push({ id: "greater_2", name: "A Gift from the Master (2)", type: "choice", collection: "greaterInvocations", stateKey: "selectedGreater", count: 1, startIndex: 1, desc: "Choose a 2nd Greater Shadow Invocation." });
-        core[6].push({ id: "shadowmastery_1", name: "Shadowmastery", desc: "Choose 1 Necrotic Utility Spell." });
+        core[3].push({ id: "lesser", name: "Lesser Invocation", type: "dynamic_choice", collection: "lesserInvocations", stateKey: "selectedLesser", milestones: [3, 8, 11], desc: "Choose Lesser Shadow Invocations as you level up.", getCount: (level) => level >= 11 ? 3 : level >= 8 ? 2 : 1 });
+        core[4].push({ id: "greater", name: "A Gift from the Master", type: "dynamic_choice", collection: "greaterInvocations", stateKey: "selectedGreater", milestones: [4, 6, 9, 14, 18], desc: "Choose Greater Shadow Invocations as you level up.", getCount: (level) => level >= 18 ? 5 : level >= 14 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 });
         
-        core[8].push({ id: "lesser_2", name: "Lesser Invocation (2)", type: "choice", collection: "lesserInvocations", stateKey: "selectedLesser", count: 1, startIndex: 1, desc: "Choose a 2nd Lesser Shadow Invocation." });
-        core[8].push({ id: "shadowmastery_2", name: "Shadowmastery (2)", desc: "Choose a 2nd Necrotic Utility Spell." });
-        core[9].push({ id: "greater_3", name: "A Gift from the Master (3)", type: "choice", collection: "greaterInvocations", stateKey: "selectedGreater", count: 1, startIndex: 2, desc: "Choose a 3rd Greater Shadow Invocation." });
-        core[11].push({ id: "lesser_3", name: "Lesser Invocation (3)", type: "choice", collection: "lesserInvocations", stateKey: "selectedLesser", count: 1, startIndex: 2, desc: "Choose a 3rd Lesser Shadow Invocation." });
+        core[6].push(FeatureGen.createSpellChoiceFeature({
+            id: "shadowmastery",
+            name: "Shadowmastery",
+            level: 6,
+            spellType: "utility",
+            schools: ["Necrotic"],
+            stateKey: "selectedShadowmastery",
+            getCount: (level) => level >= 14 ? 0 : (level >= 8 ? 2 : 1),
+            milestones: [6, 8, 14],
+            desc: (level) => level >= 14 ? "You know all Necrotic Utility Spells." : "Choose Necrotic Utility Spells."
+        }));
+
         core[12].push({ id: "greedy_pact", name: "Greedy Pact", desc: "When you would take damage from Pilfer Power, make a STR save: 1-9: Suffer damage as normal. 10-19: Suffer only 10 HP of damage. 20+: Suffer no damage and cast the spell as if it were 1 tier higher." });
-        
-        core[14].push({ id: "greater_4", name: "A Gift from the Master (4)", type: "choice", collection: "greaterInvocations", stateKey: "selectedGreater", count: 1, startIndex: 3, desc: "Choose a 4th Greater Shadow Invocation." });
-        core[14].push({ id: "shadowmastery_3", name: "Shadowmastery (3)", desc: "You know all Necrotic Utility Spells." });
         core[17].push({ id: "dire_shadows", name: "Dire Shadows", desc: "Attacks against your shadow minions are made with disadvantage. They take no damage from successful saves." });
-        core[18].push({ id: "greater_5", name: "A Gift from the Master (5)", type: "choice", collection: "greaterInvocations", stateKey: "selectedGreater", count: 1, startIndex: 4, desc: "Choose a 5th Greater Shadow Invocation." });
         
         core[20].push({ id: "eldritch_usurper", name: "Eldritch Usurper", desc: "+1 to any 2 of your stats. Whenever you summon a single shadow minion, summon 2 instead. They die only when they receive 12 or more damage at one time." });
 
         subclasses["RedDragon"] = {
             3: [{ id: "crimson_rite", name: "Draconic Crimson Rite", desc: "Your Patron grants you knowledge of Fire spells. Your shadow minions become flaming dragon wyrmling shadows. Your Shadow Blast and minions can deal fire or necrotic damage and inflict Smoldering whenever they would crit." }],
-            7: [{ id: "all_burn", name: "We’ll ALL Burn!", desc: "You may cast Pyroclasm without Pilfering Power by including yourself in the damage. You have advantage on the save. Choose 1 Fire Utility Spell." }],
+            7: [
+                FeatureGen.createSpellChoiceFeature({
+                    id: "all_burn",
+                    name: "We’ll ALL Burn!",
+                    level: 7,
+                    spellType: "utility",
+                    schools: ["Fire"],
+                    stateKey: "selectedSubclassSpells",
+                    getCount: 1,
+                    desc: "You may cast Pyroclasm without Pilfering Power by including yourself in the damage. You have advantage on the save. Additionally, choose 1 Fire Utility Spell."
+                })
+            ],
             11: [{ id: "heart_fire", name: "Heart of Burning Fire", desc: "Regain 1 use of Pilfered Power each time you roll Initiative. This expires at the end of combat if unused." }],
             15: [{ id: "enveloped", name: "Enveloped by the Master", desc: "Gain 1d4 Wounds to cast Dragonform." }]
         };
         subclasses["AbyssalDepths"] = {
             3: [{ id: "master_nightfrost", name: "Master of Nightfrost", desc: "Your Patron grants you knowledge of Ice spells. Gain the ability to breathe underwater. Your shadow minions become beings of nightfrost. Your shadow blast and minions can deal cold or necrotic damage, and whenever they would crit, you gain INT+LVL temp HP." }],
-            7: [{ id: "shadowfrost", name: "Shadowfrost", desc: "Your Shadow Blast also Slows. You can cast Cryosleep or Rimeblades without Pilfering Power by expending 10 temp HP. Choose 1 Ice Utility Spell." }],
+            7: [
+                FeatureGen.createSpellChoiceFeature({
+                    id: "shadowfrost",
+                    name: "Shadowfrost",
+                    level: 7,
+                    spellType: "utility",
+                    schools: ["Ice"],
+                    stateKey: "selectedSubclassSpells",
+                    getCount: 1,
+                    desc: "Your Shadow Blast also Slows. You can cast Cryosleep or Rimeblades without Pilfering Power by expending 10 temp HP. Additionally, choose 1 Ice Utility Spell."
+                })
+            ],
             11: [{ id: "glacial_resilience", name: "Glacial Resilience", desc: "(1/Safe Rest) Reaction (whenever you are attacked or would gain a condition), gain 10×LVL temp HP and end ALL negative conditions on yourself. At the end of your next turn, any remaining temp HP are lost." }],
             15: [{ id: "reprisal", name: "Cryomancer’s Reprisal", desc: "Pay half your max HP to cast ANY Ice spell. After casting an Ice spell in this way, you gain an invisible aura: the next creature that hits you with a melee attack this encounter takes cold damage equal to half the HP you spent on this casting." }]
         };

@@ -20,11 +20,12 @@ class SongweaverClass extends BaseClass {
             initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "HeraldSnark", label: "Herald of Snark", accent: "#ef4444" },
-                { value: "HeraldCourage", label: "Herald of Courage", accent: "#fbbf24" }
+                { value: "HeraldSnark", label: "Herald of Snark", accent: "#be123c" },
+                { value: "HeraldCourage", label: "Herald of Courage", accent: "#4338ca" }
             ],
             spellSchools: ["Wind"],
-            includeUtilitySpells: createUtilityConfig(false, null), // Special windbag logic
+            extraSchoolsKeys: ["secondarySchool"],
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedWindbag"),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('inspiration', 'Inspiration', (level, stats, state) => (stats.wil * 2) + (state.selectedLyrical?.includes("Heroic Ballad") ? 2 : 0))
@@ -48,11 +49,6 @@ class SongweaverClass extends BaseClass {
                 "Mal, the Malevolent Imp": { desc: "Summon for 1 night. Find dangerous information you have no right to know! Or “take care” of a problem with only the slightest chance of things going wrong. Influence check to help." },
                 "Gran Gran (NOT a hag)": { desc: "Summon for 1 hour while resting. Bakes pastries equal to WIL+INT. Eating one recovers mana, Hit Die, or Wound. Expire in 10 mins." },
                 "Linos, the Everfriendly": { desc: "Summon legendary flying creature to transport party. May request a very large amount of food as payment." }
-            },
-            schools: {
-                "Fire": { desc: "Master the school of Fire." },
-                "Ice": { desc: "Master the school of Ice." },
-                "Lightning": { desc: "Master the school of Lightning." }
             }
         };
     }
@@ -61,22 +57,49 @@ class SongweaverClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('WIL or INT', 'STR or DEX', true);
         
         core[1] = [
-            { id: "school_choice", name: "Secondary School", type: "choice", collection: "schools", stateKey: "secondarySchool", desc: "Master a second elemental school (Fire, Ice, or Lightning).", count: 1 },
-            { id: "vicious_mockery", name: "Vicious Mockery", desc: "You know the unique Wind cantrip <strong>Vicious Mockery</strong>. Range: 12. Damage: 1d4+INT psychic (ignoring armor). Taunts on hit. +2 damage every 5 levels." },
+            FeatureGen.createSpellChoiceFeature({
+                id: "school_choice",
+                name: "Secondary School",
+                level: 1,
+                spellType: "school",
+                schools: ["Fire", "Ice", "Lightning"],
+                stateKey: "secondarySchool",
+                desc: "Master a second elemental school (Fire, Ice, or Lightning)."
+            }),
+            { id: "vicious_mockery", name: "Vicious Mockery", desc: (level) => FeatureGen.createScalingList(
+                "You know the unique Wind cantrip <strong>Vicious Mockery</strong>. Range: 12. Damage: 1d4+INT psychic (ignoring armor). Taunts on hit.",
+                [
+                    { level: 1, text: "Damage is 1d4+INT." },
+                    { level: 5, text: "Damage bonus increases by +2." },
+                    { level: 10, text: "Damage bonus increases by +4." },
+                    { level: 15, text: "Damage bonus increases by +6." }
+                ],
+                level
+            )},
             { id: "inspiration", name: "Songweaver’s Inspiration", desc: (level, subclass, state, derived) => `(<strong>${derived.resourceMaxes.inspiration}</strong> uses/Safe Rest) Free Reaction: Allow an ally to reroll a single die related to an attack or save.` }
         ];
         core[2].push({ id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." });
-        core[2].push({ id: "song_rest", name: "Song of Rest", desc: "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your WIL." });
+        core[2].push({ id: "song_rest", name: "Song of Rest", desc: (level) => FeatureGen.createScalingList(
+            "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your WIL.",
+            [{ level: 1, text: "Bonus healing is WIL." }],
+            level
+        )});
         
         core[3].push({ id: "quick_wit", name: "Quick Wit", desc: "When you roll Initiative, regain 2 spent uses of Inspiration (expire end of combat)." });
-        core[3].push({ id: "windbag", name: "Windbag", desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Choose 1 Utility Spell from each spell school you know." });
+        core[3].push(FeatureGen.createSpellChoiceFeature({
+            id: "windbag",
+            name: "Windbag",
+            level: 3,
+            spellType: "utility",
+            stateKey: "selectedWindbag",
+            perSchool: true,
+            multiplier: (level) => level >= 14 ? 0 : 1,
+            milestones: [3, 14],
+            desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Choose 1 Utility Spell from each spell school you know."
+        }));
         
-        core[4].push({ id: "lyrical_1", name: "Lyrical Weaponry", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, desc: "Choose 1 ability from the Lyrical Weaponry list." });
-        core[5].push({ id: "people", name: "A “People“ Person", type: "choice", collection: "friends", stateKey: "selectedFriends", count: 2, desc: "Choose 2 friends you can temporarily summon via song (1/Safe Rest each)." });
-        
-        core[9].push({ id: "lyrical_2", name: "Lyrical Weaponry (2)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 1, desc: "Choose a 2nd Lyrical Weaponry ability." });
-        core[13].push({ id: "lyrical_3", name: "Lyrical Weaponry (3)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 2, desc: "Choose a 3rd Lyrical Weaponry ability." });
-        core[17].push({ id: "lyrical_4", name: "Lyrical Weaponry (4)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 3, desc: "Choose a 4th Lyrical Weaponry ability." });
+        core[4].push({ id: "lyrical", name: "Lyrical Weaponry", type: "dynamic_choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", milestones: [4, 9, 13, 17], desc: "Choose abilities from the Lyrical Weaponry list as you level up.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
+        core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "Choose friends you can temporarily summon via song (1/Safe Rest each).", getCount: (level) => 2 });
         
         core[20].push({ id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 of your stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." });
 
@@ -115,39 +138,6 @@ class SongweaverClass extends BaseClass {
         builder.addRollDisplay(derived.vmDisplay, 'Vicious Mockery', derived.vmDisplay, 'Range 12 | Taunts', { type: 'cantrip', school: 'Wind' });
 
         return builder.build();
-    }
-
-    getAvailableSpells(level, subclass, state, derived) {
-        const spells = super.getAvailableSpells(level, subclass, state, derived);
-        const secondary = (state.secondarySchool || [])[0] || "None";
-        const schools = ["Wind"];
-        if (secondary !== "None") schools.push(secondary);
-
-        // Windbag Utility Logic
-        if (level >= 14) {
-            schools.forEach(sch => {
-                if (UTILITY_SPELLS[sch]) {
-                    Object.entries(UTILITY_SPELLS[sch]).forEach(([name, desc]) => {
-                        spells.push({ name, desc, tier: "Utility", school: sch });
-                    });
-                }
-            });
-        } else if (level >= 3) {
-            schools.forEach(sch => {
-                const selKey = `windbagSpells_${sch}`;
-                const val = (state[selKey] || [])[0] || "None";
-                if (val !== "None" && UTILITY_SPELLS[sch]?.[val]) {
-                    const desc = UTILITY_SPELLS[sch][val];
-                    let customHtml = `<select onchange="updateClassState('${selKey}', 0, this.value)" style="border-bottom-color: var(--class-accent);"><option value="None">Select ${sch} Utility...</option>${Object.keys(UTILITY_SPELLS[sch]).map(k => `<option value="${k}" ${k===val?'selected':''}>${k}</option>`).join('')}</select><div style="margin-top:8px;">${desc}</div>`;
-                    spells.push({ name: "", tier: "Utility", school: sch, customHtml });
-                } else {
-                    let customHtml = `<select onchange="updateClassState('${selKey}', 0, this.value)" style="border-bottom-color: var(--class-accent);"><option value="None">Select ${sch} Utility...</option>${Object.keys(UTILITY_SPELLS[sch] || {}).map(k => `<option value="${k}">${k}</option>`).join('')}</select>`;
-                    spells.push({ name: "", tier: "Utility", school: sch, customHtml });
-                }
-            });
-        }
-
-        return spells;
     }
 }
 

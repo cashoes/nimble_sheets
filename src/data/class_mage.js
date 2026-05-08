@@ -25,10 +25,13 @@ class MageClass extends BaseClass {
             ],
             spellSchools: ["Fire", "Ice", "Lightning"],
             subclassSchools: {
-                "Control": ["Necrotic"],
-                "Chaos": ["Wind"]
+                "Control": [],
+                "Chaos": []
             },
-            includeUtilitySpells: createUtilityConfig(null, "selectedMastery"),
+            extraSchoolsKeys: ["selectedSubclassCantrip", "selectedSubclassTiered"],
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedMastery"),
+            includeCantripSpells: ["selectedSubclassCantrip"],
+            includeTieredSpells: ["selectedSubclassTiered"],
             resources: [
                 createManaResource('int')
             ],
@@ -62,29 +65,82 @@ class MageClass extends BaseClass {
         
         core[1] = [{ id: "spellcasting", name: "Elemental Spellcasting", desc: "You know Fire, Ice, and Lightning cantrips." }];
         core[2].push({ id: "researcher", name: "Talented Researcher", desc: "Gain advantage on Arcana or Lore checks when you have access to a large amount of books and time to study them." });
-        core[3] = [{ id: "mastery_1", name: "Elemental Mastery", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1, desc: "Learn the Utility Spells from 1 spell school you know." }];
         
-        core[4].push({ id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", desc: "Choose Spellshaper abilities as you level up. You may use 1/turn.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 });
+        core[3] = [FeatureGen.createSpellChoiceFeature({
+            id: "mastery",
+            name: "Elemental Mastery",
+            level: 3,
+            spellType: "school",
+            schools: ["Fire", "Ice", "Lightning"],
+            stateKey: "selectedMastery",
+            getCount: (level) => level >= 14 ? 0 : (level >= 6 ? 2 : 1),
+            filterKnown: true,
+            milestones: [3, 6, 14],
+            desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Learn the Utility Spells from a spell school you know."
+        })];
         
-        core[5].push({ id: "surge", name: "Elemental Surge", desc: (level) => {
-            let surge = level >= 17 ? "WIL+2d4" : (level >= 10 ? "WIL+1d4" : "WIL");
-            return `When you roll Initiative, regain <strong>${surge}</strong> mana (this expires at the end of combat if unused).`;
-        }});
+        core[4].push({ id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", milestones: [4, 9, 13], desc: "Choose Spellshaper abilities as you level up. You may use 1/turn.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 });
         
-        core[6].push({ id: "mastery_2", name: "Elemental Mastery (2)", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1, startIndex: 1, desc: "Learn the Utility Spells from a 2nd spell school you know." });
-        core[14].push({ id: "mastery_3", name: "Elemental Mastery (3)", type: "choice", collection: "masterySchools", stateKey: "selectedMastery", count: 1, startIndex: 2, desc: "Learn the Utility Spells from a 3rd spell school you know." });
+        core[5].push({ id: "surge", name: "Elemental Surge", desc: (level) => FeatureGen.createScalingList(
+            `When you roll Initiative, regain <strong>WIL</strong> mana (this expires at the end of combat if unused).`,
+            [
+                { level: 10, text: "Regain WIL+1d4 mana." },
+                { level: 17, text: "Regain WIL+2d4 mana." }
+            ],
+            level
+        )});
         
         core[20].push({ id: "archmage", name: "Archmage", desc: "+1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana." });
 
         subclasses["Control"] = {
             3: [{ id: "force_will", name: "Force of Will", desc: "(1/round) On your turn, you may Demand Control: Choose 1 option from the Control Table which you haven't chosen yet; resets when you roll Initiative, or when you have chosen all options once. <strong>Deny Fate:</strong> Whenever you miss with a spell or an effect you cause is saved against, you MUST Demand Control." }],
-            7: [{ id: "cost", name: "At Any Cost", desc: "Learn 1 cantrip and 1 tiered spell from the Necrotic school." }, { id: "nullify", name: "Nullify", desc: "(1/encounter) Ignore all disadvantage and other negative effects on your next action this turn, then Demand Control." }],
+            7: [
+                FeatureGen.createSpellChoiceFeature({
+                    id: "cost_cantrip",
+                    name: "At Any Cost (Cantrip)",
+                    level: 7,
+                    spellType: "cantrip",
+                    schools: ["Necrotic"],
+                    stateKey: "selectedSubclassCantrip",
+                    desc: "Learn 1 cantrip from the Necrotic school."
+                }),
+                FeatureGen.createSpellChoiceFeature({
+                    id: "cost_tiered",
+                    name: "At Any Cost (Tiered)",
+                    level: 7,
+                    spellType: "tiered",
+                    schools: ["Necrotic"],
+                    stateKey: "selectedSubclassTiered",
+                    desc: "Learn 1 tiered spell from the Necrotic school."
+                }),
+                { id: "nullify", name: "Nullify", desc: "(1/encounter) Ignore all disadvantage and other negative effects on your next action this turn, then Demand Control." }
+            ],
             11: [{ id: "steel_will", name: "Steel Will", desc: "(1/Safe Rest) Whenever you would fail a save, you may succeed instead. Whenever you roll a 1 on an Elemental Surge die, you may reroll it once." }],
             15: [{ id: "supreme_control", name: "Supreme Control", desc: "Whenever you Demand Control, you may choose to trigger the selected option twice. You may Demand Control as a Reaction." }]
         };
         subclasses["Chaos"] = {
             3: [{ id: "force_chaos", name: "Force of Chaos", desc: "Whenever you cast a spell, you can choose to spend 1 less mana. Whenever you do this and whenever you crit, Invoke Chaos: Roll on the Chaos Table." }],
-            7: [{ id: "tempest", name: "Tempest Mage", desc: "Learn 1 cantrip and 1 tiered spell from the Wind school." }, { id: "chaos_lash", name: "Chaos Lash", desc: "(1/encounter) Reaction (when an enemy moves adjacent to you): They are pushed back 2 spaces, and on a failed WIL save, knocked Prone as well. Invoke Chaos." }],
+            7: [
+                FeatureGen.createSpellChoiceFeature({
+                    id: "tempest_cantrip",
+                    name: "Tempest Mage (Cantrip)",
+                    level: 7,
+                    spellType: "cantrip",
+                    schools: ["Wind"],
+                    stateKey: "selectedSubclassCantrip",
+                    desc: "Learn 1 cantrip from the Wind school."
+                }),
+                FeatureGen.createSpellChoiceFeature({
+                    id: "tempest_tiered",
+                    name: "Tempest Mage (Tiered)",
+                    level: 7,
+                    spellType: "tiered",
+                    schools: ["Wind"],
+                    stateKey: "selectedSubclassTiered",
+                    desc: "Learn 1 tiered spell from the Wind school."
+                }),
+                { id: "chaos_lash", name: "Chaos Lash", desc: "(1/encounter) Reaction (when an enemy moves adjacent to you): They are pushed back 2 spaces, and on a failed WIL save, knocked Prone as well. Invoke Chaos." }
+            ],
             11: [{ id: "thrive", name: "Thrive in Chaos", desc: "Whenever you Invoke Chaos, you may roll twice and cause both effects. (1/Safe Rest) You may choose which roll to use instead." }],
             15: [{ id: "master_chaos", name: "Master of Chaos", desc: "Whenever you Invoke Chaos, roll with advantage." }]
         };
