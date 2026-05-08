@@ -46,9 +46,29 @@ Finally, the OBR room needs to be able to receive the rolls.
 ---
 
 ## 🛠️ Development
-This project is built using a modular `src/` structure. 
-- **Core Engine**: `src/engine.js`
-- **UI Template**: `src/base_template.html`
-- **Class Data**: `src/data/class_[name].js`
+This project uses a modular `src/` structure with shared engine modules.
 
-To contribute or modify, serve the root directory with a local webserver (e.g., `python -m http.server 8000`) and use the `index.html` builder to test your changes.
+### Project Structure
+- **Builder**: `index.html` (generates self-contained tracker HTML files)
+- **Template**: `src/base_template.html` (HTML + CSS for trackers)
+- **Engine**: `src/engine/` (shared modules: BaseClass, PanelBuilder, FeatureGen, etc.)
+- **Class Data**: `src/data/class_[name].js` (11 character classes)
+- **Game Data**: `src/data/json/` (spells, items, ancestries, etc.)
+
+### Architecture Documentation
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed documentation on:
+- Engine module descriptions
+- Class structure and configuration
+- Build process and data flow
+- How to add new classes
+
+### Quick Start
+1. Serve the root directory: `python -m http.server 8000`
+2. Open `http://localhost:8000` in your browser
+3. Use the builder to select a class and download a tracker
+4. Open the downloaded `.html` file to manage your character
+
+### Key Design Principles
+- **Self-contained output**: Each tracker is a single HTML file with all JS/CSS embedded
+- **Configuration over inheritance**: Classes declare *what* they are via config, not *how* to do things
+- **Deduplication**: Shared logic lives in engine modules (BaseClass, PanelBuilder, FeatureGen)
