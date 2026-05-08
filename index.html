@@ -89,6 +89,9 @@
                 const engineModules = [
                     'roll_engine.js',
                     'feat_helpers.js',
+                    'panel_builder.js',
+                    'feature_gen.js',
+                    'resource_factory.js',
                     'base_class.js',
                     'rendering_engine.js',
                     'logic.js',
@@ -129,12 +132,15 @@
                 // Extract engine parts by index based on engineModules array
                 const rollEngine = engineParts[0];
                 const featHelpers = engineParts[1];
-                const baseClass = engineParts[2];
-                const renderingEngine = engineParts[3];
-                const logic = engineParts[4];
-                const uiHelpers = engineParts[5];
-                const stateManager = engineParts[6];
-                const main = engineParts[7];
+                const panelBuilder = engineParts[2];
+                const featureGen = engineParts[3];
+                const resourceFactory = engineParts[4];
+                const baseClass = engineParts[5];
+                const renderingEngine = engineParts[6];
+                const logic = engineParts[7];
+                const uiHelpers = engineParts[8];
+                const stateManager = engineParts[9];
+                const main = engineParts[10];
 
                 let jsContent = `// --- Generated Core Data ---\n`;
                 jsContent += `const ITEM_TEMPLATES = ${itemsJson};\n`;
@@ -147,7 +153,7 @@
                 jsContent += `const UTILITY_SPELLS = ${JSON.stringify(spells.utility)};\n`;
                 jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
 
-                jsContent += `// --- Engine Helpers & Base ---\n${rollEngine}\n${featHelpers}\n${baseClass}\n\n`;
+                jsContent += `// --- Engine Helpers & Base ---\n${rollEngine}\n${featHelpers}\n${panelBuilder}\n${featureGen}\n${resourceFactory}\n${baseClass}\n\n`;
                 jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
                 jsContent += `// --- Engine Logic ---\n${renderingEngine}\n${logic}\n${uiHelpers}\n${stateManager}\n\n`;
                 jsContent += `// --- Main Entry ---\n${main}\n\n`;
