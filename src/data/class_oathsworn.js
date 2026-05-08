@@ -1,132 +1,3 @@
-const OATHSWORN_OPTIONS = {
-    decrees: {
-        "Blinding Aura": { desc: "(1/Safe Rest) Action: Enemies in your aura are Blinded until the end of their next turn." },
-        "Courage!": { desc: "(1/encounter) When you or an ally in your aura would drop to 0 HP, set their HP to 1 instead." },
-        "Explosive Judgment": { desc: "(1/encounter) 2 actions: Expend your Judgment Dice, deal that much radiant damage to all enemies in your aura." },
-        "Improved Aura": { desc: "+2 aura Reach." },
-        "Radiant Aura": { desc: "Action: End any single harmful condition or effect on yourself or another willing creature within your aura. You may use this ability WIL times/Safe Rest." },
-        "Reliable Justice": { desc: "Whenever you roll Judgment Dice, roll with advantage (roll one extra and drop the lowest)." },
-        "Shining Mandate": { desc: "The first time each round you are attacked while you already have Judgment Dice, select an ally within your aura to roll one and apply it to their next attack. You have advantage on skill checks to see through illusions." },
-        "Stand Fast, Friends!": { desc: "When you roll Initiative, grant allies temp HP equal to your STR+WIL. You and allies within your aura have advantage against fear and effects that would move or knock Prone." },
-        "Unstoppable Protector": { desc: "Gain +1 speed. You may Interpose even if you are restrained, stunned, or otherwise incapacitated. If you Interpose for a noncombatant NPC, you may Interpose again this round." },
-        "Well Armored": { desc: "Whenever you Interpose, gain temp HP equal to your STR." }
-    }
-};
-
-const OATHSWORN_FEATURES = {
-    core: {
-        1: [
-            { id: "judgment", name: "Radiant Judgment", desc: (level, subclass, state, derived) => `Whenever an enemy attacks you, if you have no Judgment Dice, roll <strong>${derived.jdText}</strong>. On your next melee hit, deal that much extra radiant damage. Dice are expended whether you hit or miss.` },
-            { id: "loh", name: "Lay on Hands", desc: (level) => `Magical pool of <strong>${level * 5}</strong> healing power. Action: Touch target, spend points to restore HP.` }
-        ],
-        2: [
-            { id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked tier) to choose one for each mana spent: <strong>Condemning Strike</strong> (+5 radiant damage) or <strong>Blessed Aim</strong> (decrease target's armor by 1 step)." },
-            { id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence when telling the truth." },
-            { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true }
-        ],
-        3: [
-            { id: "decrees", name: "Sacred Decrees", type: "dynamic_choice", collection: "decrees", stateKey: "selectedDecrees", desc: "You know modular Sacred Decrees.", getCount: (level) => level >= 16 ? 6 : level >= 14 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 }
-        ],
-        4: [
-            { id: "life", name: "My Life, for My Friends", desc: "You may Interpose for free once per round." },
-            { id: "tier_2", name: "Tier 2 Spells", desc: "You gain access to Tier 2 spells.", minor: true },
-            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 STR or WIL.", minor: true }
-        ],
-        5: [
-            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 DEX or INT.", minor: true },
-            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your Radiant/Necrotic cantrips grow stronger.", minor: true }
-        ],
-        6: [
-            { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }
-        ],
-        8: [
-            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 STR or WIL.", minor: true },
-            { id: "tier_4", name: "Tier 4 Spells", desc: "You gain access to Tier 4 spells.", minor: true }
-        ],
-        9: [
-            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 DEX or INT.", minor: true }
-        ],
-        10: [
-            { id: "tier_5", name: "Tier 5 Spells", desc: "You gain access to Tier 5 spells.", minor: true }
-        ],
-        12: [
-            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 STR or WIL.", minor: true }
-        ],
-        13: [
-            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 DEX or INT.", minor: true },
-            { id: "tier_6", name: "Tier 6 Spells", desc: "You gain access to Tier 6 spells.", minor: true }
-        ],
-        16: [
-            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 STR or WIL.", minor: true }
-        ],
-        17: [
-            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 DEX or INT.", minor: true },
-            { id: "tier_7", name: "Tier 7 Spells", desc: "You gain access to Tier 7 spells.", minor: true }
-        ],
-        18: [
-            { id: "unending", name: "Unending Judgment", desc: (level, subclass, state) => `While you have no Judgment Dice, gain +5 damage to melee attacks.${(level >= 18 && !state.judgmentDice) ? ' <strong>(Active)</strong>' : ''}` }
-        ],
-        19: [
-            { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
-        ],
-        20: [
-            { id: "paragon_20", name: "Glorious Paragon", desc: "+1 to any 2 of your stats. Defend for free whenever you Interpose." }
-        ]
-    },
-    subclasses: {
-        "Vengeance": {
-            3: [
-                { id: "zeal", name: "Aura of Zeal", desc: (level, subclass, state, derived) => `Roll 1 more JD. Reach ${derived.auraReach} aura. JD triggers when ally in aura is attacked.` }
-            ],
-            7: [
-                { id: "avenger", name: "Avenger", desc: "When you/ally in aura gain Wounds, set max JD to their max value. Move 1/2 speed free." }
-            ],
-            11: [
-                { id: "unerring", name: "Unerring Judgment", desc: "+1 to Primary Die rolls on melee attacks while you have JD." }
-            ],
-            15: [
-                { id: "maximum", name: "Maximum Judgment", desc: "When attacked, set a Judgment Die to its max value." }
-            ]
-        },
-        "Refuge": {
-            3: [
-                { id: "aura_refuge", name: "Aura of Refuge", desc: (level, subclass, state, derived) => `Shields gain +WIL armor. Reach ${derived.auraReach} aura. Interpose anywhere within aura.` }
-            ],
-            7: [
-                { id: "face_me", name: "Face Me, Foul Creature!", desc: "When you Interpose, attacker is also Taunted by you." }
-            ],
-            11: [
-                { id: "reprieve", name: "Glorious Reprieve", desc: "Allies in aura gain 1 Wound instead of dropping below 1 HP." }
-            ],
-            15: [
-                { id: "grace", name: "Divine Grace", desc: "Resistant to ALL damage while Interposing." }
-            ]
-        },
-        "Oathbreaker": {
-            1: [
-                { id: "judgment", replaces: "judgment", name: "Aura of Suffering", desc: (level, subclass, state, derived) => `Replaces standard Radiant Judgment. Judgment Dice (<strong>${derived.jdText}</strong>) trigger whenever you could Interpose but don't. Dealing <strong>necrotic</strong> damage instead.` },
-                { id: "dark", name: "Dark Benediction", desc: "Lose access to True Strike, Heal, and Warding Bond. Gain access to Entice, Shadow Trap, and Dread Visage. Choose Radiant or Necrotic Utility Spells." }
-            ],
-            2: [
-                { id: "paragon", replaces: "paragon", name: "Paragon of Power", desc: "Advantage on Might checks to intimidate." }
-            ],
-            3: [
-                { id: "suffer", name: "We All Suffer", desc: (level, subclass, state, derived) => `+2 max Wounds. Reach ${derived.auraReach} aura. Suffer ally's wound/failed save to trigger JD.` },
-                { id: "pain", name: "Bring Me Your Pain", desc: "Reaction: Switch HP with willing dying ally." }
-            ],
-            7: [
-                { id: "torment", name: "Torment", desc: "LOH heals you 2x / others 1/2x. Expend LOH points to increase damage (ignoring armor)." }
-            ],
-            11: [
-                { id: "exploit", name: "Exploit", desc: "Reaction: When ally in aura Defends, force enemy in aura to Interpose." }
-            ],
-            15: [
-                { id: "terror", name: "Bloody Terror", desc: "Attacker gains 1 instance of DIS for each Wound you have (max 3)." }
-            ]
-        }
-    }
-};
-
 class OathswornClass extends BaseClass {
     constructor() {
         super({
@@ -134,10 +5,7 @@ class OathswornClass extends BaseClass {
             subtitle: "Faithful guardian, protector, and avenger",
             keyStats: ['str', 'wil'],
             saves: { adv: 'str', dis: 'dex' },
-            proficiencies: {
-                armor: "All Armor",
-                weapons: "STR Weapons"
-            },
+            proficiencies: { armor: "All Armor", weapons: "STR Weapons" },
             baseHp: 17,
             hpPerLevel: 8,
             hitDie: 10,
@@ -152,42 +20,124 @@ class OathswornClass extends BaseClass {
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "Vengeance", label: "Vengeance", accent: "#ef4444" },
-                { value: "Refuge", label: "Refuge", accent: "#f8fafc" },
-                { value: "Oathbreaker", label: "Oathbreaker", accent: "#a855f7" }
+                { value: "Vengeance", label: "Oath of Vengeance", accent: "#ef4444" },
+                { value: "Refuge", label: "Oath of Refuge", accent: "#f8fafc" },
+                { value: "Oathbreaker", label: "Oathbreaker (Extra)", accent: "#a855f7" }
             ],
+            spellSchools: ["Radiant"],
+            subclassSchools: { "Oathbreaker": ["Necrotic"] },
             spellProgression: [0, 2, 4, 6, 8, 10, 13, 17],
+            spellReplacements: [
+                createSpellReplacement("True Strike", "Entice", "Necrotic", "Oathbreaker"),
+                createSpellReplacement("Heal", "Shadow Trap", "Necrotic", "Oathbreaker"),
+                createSpellReplacement("Warding Bond", "Dread Visage", "Necrotic", "Oathbreaker")
+            ],
+            includeUtilitySpells: createUtilityConfig(null, "selectedSpells"),
             resources: [
-                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? Math.max(0, stats.wil + level) : 0 },
-                { id: 'loh', label: 'Lay on Hands', manual: true, calcMax: (level, stats) => level * 5 }
+                createManaResource('wil'),
+                createSimpleResource('loh', 'Lay on Hands', (level) => 5 * level)
             ],
             customHeaderStats: [
                 { id: 'auraContainer', label: 'Aura', position: 'left', color: 'var(--class-accent)', isVisible: (level, subclass) => level >= 3 && subclass !== 'None', getValue: (derived) => `R ${derived.auraReach}` }
             ],
-            featuresData: OATHSWORN_FEATURES,
-            optionsData: OATHSWORN_OPTIONS
+            featuresData: OathswornClass.FEATURES,
+            optionsData: OathswornClass.OPTIONS
         });
     }
 
+    static get OPTIONS() {
+        return {
+            decrees: {
+                "Blinding Aura": { desc: "(1/Safe Rest) Action: Enemies in your aura are Blinded until the end of their next turn." },
+                "Courage!": { desc: "(1/encounter) When you or an ally in your aura would drop to 0 HP, set their HP to 1 instead." },
+                "Explosive Judgment": { desc: "(1/encounter) 2 actions: Expend your Judgment Dice, deal that much radiant damage to all enemies in your aura." },
+                "Improved Aura": { desc: "+2 aura Reach." },
+                "Radiant Aura": { desc: "Action: End any single harmful condition or effect on yourself or another willing creature within your aura. You may use this ability WIL times/Safe Rest." },
+                "Reliable Justice": { desc: "Whenever you roll Judgment Dice, roll with advantage (roll one extra and drop the lowest)." },
+                "Shining Mandate": { desc: "The first time each round you are attacked while you already have Judgment Dice, select an ally within your aura to roll one and apply it to their next attack. You have advantage on skill checks to see through illusions." },
+                "Stand Fast, Friends!": { desc: "When you roll Initiative, grant allies temp HP equal to your STR+WIL. You and allies within your aura have advantage against fear and effects that would move or knock Prone." },
+                "Unstoppable Protector": { desc: "Gain +1 speed. You may Interpose even if you are restrained, stunned, or otherwise incapacitated. If you Interpose for a noncombatant NPC, you may Interpose again this round." },
+                "Well Armored": { desc: "Whenever you Interpose, gain temp HP equal to your STR." }
+            }
+        };
+    }
+
+    static get FEATURES() {
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or WIL', 'DEX or INT', true, [0, 2, 4, 6, 8, 10, 13, 17]);
+        
+        core[1] = [
+            { id: "judgment", name: "Radiant Judgment", desc: (level, subclass, state, derived) => `Whenever an enemy attacks you, if you have no Judgment Dice, roll your Judgment dice (<strong>${derived.jdText}</strong>). On your next melee attack this encounter, if you hit, deal that much additional radiant damage. The dice are expended whether you hit or miss.` },
+            { id: "loh", name: "Lay on Hands", desc: (level) => `Gain a magical pool of healing power. This pool’s maximum is always equal to <strong>${5 * level}</strong> and recharges on a Safe Rest. Action: Touch a target and spend any amount of remaining healing power to restore that many HP.` }
+        ];
+        core[2].push({ id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target's armor by 1 step for this attack.</li></ul>" });
+        core[2].push({ id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." });
+        
+        core[3].push({ id: "decrees", name: "Sacred Decree", type: "dynamic_choice", collection: "decrees", stateKey: "selectedDecrees", desc: "Learn Sacred Decrees.", getCount: (level) => level >= 16 ? 6 : level >= 14 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 });
+        
+        core[4].push({ id: "life", name: "My Life, for My Friends", desc: "You can Interpose for free." });
+        core[7].push({ id: "master_radiance", name: "Master of Radiance", desc: "Choose 1 Radiant Utility Spell." });
+        core[11].push({ id: "master_radiance_2", name: "Master of Radiance (2)", desc: "Choose a 2nd Radiant Utility Spell." });
+        
+        core[18] = [{ id: "unending", name: "Unending Judgment", desc: "While you have no Judgment Dice, gain +5 damage to melee attacks." }];
+        core[20].push({ id: "glorious_paragon", name: "Glorious Paragon", desc: "+1 to any 2 of your stats. Defend for free whenever you Interpose." });
+
+        subclasses["Vengeance"] = {
+            3: [{ id: "aura_zeal", name: "Aura of Zeal", desc: (level, subclass, state, derived) => `Whenever you roll Judgment Dice, roll 1 more. Gain an aura with a Reach of 4. Your Radiant Judgment also triggers when an ally within your aura is attacked while you have no Judgment Dice.` }],
+            7: [{ id: "avenger", name: "Avenger", desc: "Whenever you or an ally within your aura gain any Wounds, change up to that many Judgment Dice to their max. Then, move up to half your speed for free." }],
+            11: [{ id: "unerring", name: "Unerring Judgment", desc: "Increase your primary die rolls on melee attacks by 1 whenever you have Judgment Dice." }],
+            15: [{ id: "max_judgment", name: "Maximum Judgment", desc: "Whenever you are attacked, set a Judgment Die to its max." }]
+        };
+        subclasses["Refuge"] = {
+            3: [{ id: "aura_refuge", name: "Aura of Refuge", desc: "Your shields gain +WIL armor and count as your spellcasting focus. Gain an aura with a Reach of 4; you can Interpose for an ally anywhere within your aura." }],
+            7: [{ id: "face_me", name: "Face Me, Foul Creature!", desc: "When you Interpose, the attacking enemy is also Taunted by you until the end of their next turn." }],
+            11: [{ id: "reprieve", name: "Glorious Reprieve", desc: "You and allies in your aura cannot drop below 1 HP. Whenever this triggers, they gain 1 Wound instead (heroes still die at max Wounds)." }],
+            15: [{ id: "grace", name: "Divine Grace", desc: "You are resistant to all damage while Interposing." }]
+        };
+        subclasses["Oathbreaker"] = {
+            1: [
+                { id: "judgment", replaces: "judgment", name: "Aura of Suffering", desc: "You gain an aura with a Reach of 4 and can Interpose for an ally anywhere within your aura; however, your Radiant Judgment ability no longer triggers when attacked. Instead, it triggers whenever you could Interpose but don’t." }
+            ],
+            2: [
+                { id: "paragon", replaces: "paragon", name: "Paragon of Power", desc: "Advantage on Might checks when attempting to intimidate others." }
+            ],
+            3: [
+                { id: "we_all_suffer", name: "We All Suffer", desc: "Gain +2 max Wounds. When an ally within your aura would gain any Wounds or fail a save, you may suffer the effect instead and trigger your Radiant Judgment ability." },
+                { id: "bring_pain", name: "Bring Me Your Pain", desc: "Reaction (When a willing ally within your aura would drop to 0 HP): Switch HP with them (if your current HP is higher than their max HP, they gain Temp HP equal to the difference), dropping to 0 hp and gaining the Wound instead." }
+            ],
+            7: [
+                { id: "torment", name: "Torment", desc: "Your Lay on Hands heals you for twice as much, and others for half as much. When you deal damage, you can expend healing power from your Lay on Hands pool to increase the damage dealt by an amount equal to the points spent (ignoring armor)." }
+            ],
+            11: [
+                { id: "exploit", name: "Exploit", desc: "Reaction (whenever an ally within your aura Defends), you may expend your Judgment Dice to force an enemy within your Aura to Interpose (a creature cannot interpose against its own attack)." }
+            ],
+            15: [
+                { id: "terror", name: "Bloody Terror", desc: "Attacks against you gain 1 instance of disadvantage for each Wound you have (max 3)." }
+            ]
+        };
+        
+        return { core, subclasses };
+    }
+
     getDerivedStats(level, subclass, state) {
-        let speed = 6; let auraReach = 4; let woundMax = 6;
+        let auraReach = 4;
+        let woundMax = 6;
         let decrees = state.selectedDecrees || [];
-        if (decrees.includes("Unstoppable Protector")) speed += 1;
         if (decrees.includes("Improved Aura")) auraReach += 2;
-        if (subclass === "Oathbreaker" && level >= 3) woundMax += 2;
+        if (subclass === "Oathbreaker") woundMax += 2;
 
-        let jdCount = 2; let faces = 6;
-        if (level >= 3) { faces = 8; }
-        if (level >= 5) { faces = 10; }
-        if (level >= 8) { faces = 12; }
-        if (level >= 10) { faces = 20; }
-        if (level >= 14) { jdCount += 1; }
-        if (subclass === "Vengeance" && level >= 3) jdCount += 1;
+        let jdCount = 2;
+        let faces = 6;
+        if (level >= 14) jdCount++;
+        if (subclass === "Vengeance") jdCount++;
+        
+        if (level >= 10) faces = 20;
+        else if (level >= 8) faces = 12;
+        else if (level >= 5) faces = 10;
+        else if (level >= 3) faces = 8;
 
-        let jdAdvText = decrees.includes("Reliable Justice") ? " <em>(Adv)</em>" : "";
-        let jdText = `${jdCount}d${faces}${jdAdvText}`;
+        let jdText = `${jdCount}d${faces}${decrees.includes("Reliable Justice") ? " (Adv)" : ""}`;
 
-        return { speed, auraReach, woundMax, jdText, jdCount, jdFaces: faces };
+        return { speed: 6, woundMax, auraReach, jdCount, jdFaces: faces, jdText };
     }
 
     getShieldBonus(level, subclass, stats) {
@@ -195,159 +145,53 @@ class OathswornClass extends BaseClass {
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {
+        const builder = new PanelBuilder();
         const manaMax = derived.resourceMaxes.mana;
         const lohMax = derived.resourceMaxes.loh;
 
-        let decrees = state.selectedDecrees || [];
-        let isAdv = decrees.includes("Reliable Justice");
-        let isExploding = !!(state.explodingDice?.[0]);
-
-        // Dice Processing
-        let totalJudgment = 0;
-        let diceHtml = "";
-        if (state.judgmentDice && state.judgmentDice.length > 0) {
-            state.judgmentDice.forEach((die, idx) => {
-                totalJudgment += die.total;
-                const exploded = die.detail && die.detail.includes('!');
-                diceHtml += `
-                <div oncontextmenu="event.preventDefault(); CLASS_CONFIG.actions.maximizeDie(${idx})"
-                     title="${die.detail} (Right-click to Maximize)"
-                     style="background: rgba(56, 189, 248, 0.15); border: 1px solid ${exploded ? 'var(--gold-light)' : 'var(--class-accent)'}; border-radius: 4px; padding: 3px 6px; min-width: 28px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); position: relative;">
-                    <span style="font-family: 'Cinzel', serif; font-weight: bold; color: #fff; font-size: 1.2em;">${die.total}</span>
-                    ${exploded ? `<div style="position: absolute; top: -7px; right: -7px; width: 14px; height: 14px; background: var(--gold-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #000; font-weight: 900; box-shadow: 0 0 6px var(--gold-light); border: 1px solid #000;">!</div>` : ''}
-                </div>`;
-            });
-        } else {
-            diceHtml = `<div style="color: var(--text-muted); font-style: italic; font-size: 0.85em; opacity: 0.5; padding: 5px;">Awaiting Judgment...</div>`;
+        if (level >= 2) {
+            builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, manaMax);
         }
+        builder.addResource('loh', 'Lay on Hands', state.resourceValues.loh, lohMax);
 
-        let valText = state.judgmentDice ? `+${totalJudgment}` : "-";
-        let valColor = state.judgmentDice ? "var(--gold-light)" : "#fff";
+        let totalJD = 0;
+        (state.judgmentDice || []).forEach(d => totalJD += d.total);
 
-        let tagRows = [];
-        let topRowItems = [];
-        if (isAdv) {
-            topRowItems.push(`<div style="display: flex; align-items: center; gap: 3px; color: var(--save-adv);">
-                <div style="width: 7px; height: 7px; background: var(--save-adv); border-radius: 50%; box-shadow: 0 0 4px var(--save-adv);"></div>
-                <span style="font-size: 0.7em;">Advantage</span>
-            </div>`);
-        }
-        
-        topRowItems.push(`
-            <div onclick="updateClassState('explodingDice', 0, ${!isExploding}); event.stopPropagation();" 
-                 style="display: flex; align-items: center; gap: 5px; color: ${isExploding ? 'var(--class-accent)' : 'var(--text-muted)'}; cursor: pointer; user-select: none; transition: all 0.2s;">
-                <div style="width: 9px; height: 9px; border: 2px solid ${isExploding ? 'var(--class-accent)' : 'var(--class-border)'}; border-radius: 50%; background: ${isExploding ? 'var(--class-accent)' : 'rgba(0,0,0,0.3)'}; box-shadow: ${isExploding ? '0 0 6px var(--class-accent)' : 'none'}; transition: all 0.2s;"></div>
-                <span style="font-size: 0.75em; letter-spacing: 1px;">BOOM</span>
+        builder.addDicePool(
+            state.judgmentDice || [],
+            'Judgment Dice',
+            `d${derived.jdFaces}`,
+            'CLASS_CONFIG.actions.rollJudgmentDice()',
+            'CLASS_CONFIG.actions.spendJudgmentDice()',
+            'CLASS_CONFIG.actions.toggleJudgment'
+        );
+
+        builder.addCustom(`
+            <div style="display: flex; flex-direction: column; align-items: center; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 12px; min-width: 80px;">
+                <span style="font-size: 1.8em; font-family: 'Cinzel', serif; font-weight: 900; color: ${totalJD > 0 ? 'var(--gold-light)' : '#fff'}; line-height: 1;">+${totalJD}</span>
+                <span style="font-size: 0.55em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; white-space: nowrap;">Radiant DMG</span>
+                <div style="margin-top: 5px; display: flex; gap: 5px;">
+                    ${state.selectedDecrees?.includes("Reliable Justice") ? `<div style="width: 8px; height: 8px; background: var(--save-adv); border-radius: 50%;" title="Advantage"></div>` : ''}
+                </div>
             </div>
         `);
-        tagRows.push(`<div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 2px; align-items: center;">${topRowItems.join('')}</div>`);
-        tagRows.push(`<div style="display: flex; justify-content: center; color: var(--text-muted); opacity: 0.5; font-size: 0.75em; font-style: italic;">Next Attack Only</div>`);
 
-        return `
-        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center; padding: 5px 15px;">
-            <div style="display: flex; align-items: stretch; gap: 15px; flex: 1;">
-                
-                <!-- Resources Column -->
-                <div style="display: flex; flex-direction: column; gap: 10px; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 15px; min-width: 110px;">
-                    ${level >= 2 ? `
-                    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                        <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <div class="dark-incrementer">
-                                <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
-                                <input type="number" id="res_mana" value="${state.resourceValues.mana || 0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
-                                <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
-                            </div>
-                            <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.85em; width: 35px;">/ ${manaMax}</div>
-                        </div>
-                    </div>` : ''}
-
-                    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                        <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Lay on Hands</label>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <div class="dark-incrementer">
-                                <button onclick="adjRes('loh', -1, ${lohMax})">-</button>
-                                <input type="number" id="res_loh" value="${state.resourceValues.loh || 0}" onchange="adjRes('loh', parseInt(this.value), ${lohMax}, true)">
-                                <button onclick="adjRes('loh', 1, ${lohMax})">+</button>
-                            </div>
-                            <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.85em; width: 35px;">/ ${lohMax}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Judgment Column -->
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding-left: 5px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 2px;">
-                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Judgment Dice (${derived.jdFaces ? 'd' + derived.jdFaces : ''})</label>
-                        <div style="display: flex; gap: 6px;">
-                            <button onclick="CLASS_CONFIG.actions.rollJudgmentDice()" style="background: rgba(56,189,248,0.15); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Roll All</button>
-                            <button onclick="CLASS_CONFIG.actions.spendJudgmentDice()" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-muted); font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Clear</button>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; width: 100%; justify-content: center;">
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; align-items: center; flex: 1;">
-                            ${diceHtml}
-                        </div>
-                        <div style="display: flex; flex-direction: column; align-items: center; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 12px;">
-                             <span style="font-size: 1.8em; font-family: 'Cinzel', serif; font-weight: 900; color: ${valColor}; line-height: 1;">${valText}</span>
-                             <span style="font-size: 0.55em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; white-space: nowrap;">Radiant DMG</span>
-                        </div>
-                    </div>
-
-                    <div style="width: 100%; margin-top: 2px; font-family:'Cinzel'; font-weight:bold;">${tagRows.join('')}</div>
-                </div>
-            </div>
-        </div>`;
+        return builder.build();
     }
 
     actions = {
-        maximizeDie: function (idx) {
-            if (!state.judgmentDice || !state.judgmentDice[idx]) return;
-            const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
-            const faces = derived.jdFaces;
-            state.judgmentDice[idx].total = faces;
-            state.judgmentDice[idx].detail = faces.toString() + " (Max)";
-            saveState(); render();
-        },
-        maximizeJudgment: function () {
-            const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
-            const jdCount = derived.jdCount;
-            const faces = derived.jdFaces;
-            state.judgmentDice = [];
-            for (let i = 0; i < jdCount; i++) {
-                state.judgmentDice.push({
-                    total: faces,
-                    detail: faces.toString() + " (Max)"
-                });
-            }
-            saveState(); render();
-        },
         rollJudgmentDice: function () {
-            const derived = CLASS_CONFIG.getDerivedStats(state.level, state.subclass, state);
+            const derived = this.getDerivedStats(state.level, state.subclass, state);
             const jdCount = derived.jdCount;
             const faces = derived.jdFaces;
-            const decrees = state.selectedDecrees || [];
-
-            let hasAdv = decrees.includes("Reliable Justice");
-            let isExploding = !!(state.explodingDice?.[0]);
-            let rollCount = hasAdv ? jdCount + 1 : jdCount;
+            const hasAdv = state.selectedDecrees?.includes("Reliable Justice");
             
             let finalDice = [];
+            let rollCount = hasAdv ? jdCount + 1 : jdCount;
 
             for (let i = 0; i < rollCount; i++) {
                 let r = Math.floor(Math.random() * faces) + 1;
-                let totalForThisDie = r;
-                let detailsForThisDie = r.toString();
-                
-                if (isExploding) {
-                    while (r === faces) {
-                        r = Math.floor(Math.random() * faces) + 1;
-                        totalForThisDie += r;
-                        detailsForThisDie += '!' + r;
-                    }
-                }
-                finalDice.push({ total: totalForThisDie, detail: detailsForThisDie });
+                finalDice.push({ total: r, detail: r.toString() });
             }
 
             if (hasAdv) {
@@ -359,75 +203,14 @@ class OathswornClass extends BaseClass {
             state.judgmentDice = finalDice;
             saveState(); render();
         },
+        toggleJudgment: function(idx) {
+            if (!state.judgmentDice || !state.judgmentDice[idx]) return;
+            const derived = this.getDerivedStats(state.level, state.subclass, state);
+            state.judgmentDice[idx].total = derived.jdFaces;
+            saveState(); render();
+        },
         spendJudgmentDice: function () { state.judgmentDice = null; saveState(); render(); }
     };
-
-    getAvailableSpells(level, subclass, state, derived) {
-        let spells = [];
-        const progress = this.spellProgression;
-        const isOathbreaker = subclass === "Oathbreaker";
-
-        // 1. Gather Radiant Spells (Primary School)
-        if (SPELL_REGISTRY["Radiant"]) {
-            Object.entries(SPELL_REGISTRY["Radiant"]).forEach(([name, data]) => {
-                let tNum = parseInt(data.tier.replace(/\D/g, '')) || 0;
-                let requiredLevel = data.tier.includes("Cantrip") ? 1 : (progress[tNum] || 99);
-
-                if (level >= requiredLevel) {
-                    // Oathbreaker Replacements
-                    if (isOathbreaker) {
-                        if (name === "True Strike") return; // Replaced by Entice
-                        if (name === "Heal") return;        // Replaced by Shadow Trap
-                        if (name === "Warding Bond") return; // Replaced by Dread Visage
-                    }
-                    spells.push({ name, ...data, school: "Radiant" });
-                }
-            });
-        }
-
-        // 2. Oathbreaker Specific Additions
-        if (isOathbreaker) {
-            const replacements = [
-                { name: "Entice", school: "Necrotic" },
-                { name: "Shadow Trap", school: "Necrotic" },
-                { name: "Dread Visage", school: "Necrotic" }
-            ];
-
-            replacements.forEach(r => {
-                const data = SPELL_REGISTRY[r.school]?.[r.name];
-                if (data) {
-                    let tNum = parseInt(data.tier.replace(/\D/g, '')) || 0;
-                    let requiredLevel = data.tier.includes("Cantrip") ? 1 : (progress[tNum] || 99);
-                    if (level >= requiredLevel) {
-                        spells.push({ name: r.name, ...data, school: r.school });
-                    }
-                }
-            });
-        }
-
-        // 3. Utility Selection (Level 7+)
-        if (level >= 7) {
-            let numSpells = level >= 11 ? 2 : 1;
-            for (let i = 0; i < numSpells; i++) {
-                let val = state.selectedSpells?.[i] || "None";
-                let opts = `<option value="None">Select a Utility Spell...</option>`;
-                if (isOathbreaker) {
-                    opts += `<optgroup label="Radiant">`; Object.keys(UTILITY_SPELLS.Radiant).forEach(k => opts += `<option value="${k}">${k}</option>`);
-                    opts += `</optgroup><optgroup label="Necrotic">`; Object.keys(UTILITY_SPELLS.Necrotic).forEach(k => opts += `<option value="${k}">${k}</option>`); opts += `</optgroup>`;
-                } else { Object.keys(UTILITY_SPELLS.Radiant).forEach(k => opts += `<option value="${k}">${k}</option>`); }
-
-                let school = (isOathbreaker && UTILITY_SPELLS.Necrotic[val]) ? "Necrotic" : "Radiant";
-                let desc = UTILITY_SPELLS[school][val] || "";
-
-                let customHtml = `<select onchange="updateClassState('selectedSpells', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${opts.replace(`value="${val}"`, `value="${val}" selected`)}</select>`;
-                if (val !== "None") customHtml += `<div style="margin-top:8px;">${desc}</div>`;
-
-                spells.push({ name: "", tier: "Utility", school: school, customHtml: customHtml });
-            }
-        }
-
-        return spells;
-    }
 }
 
 const CLASS_CONFIG = new OathswornClass();

@@ -1,29 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NIMBLE Tracker Builder</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #0f141a; color: #e2e8f0; }
-        .container { background: #1b222c; padding: 30px; border-radius: 8px; border: 1px solid #3a4a5e; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        h1 { color: #38bdf8; margin-top: 0; text-align: center; }
-        p { color: #94a3b8; text-align: center; line-height: 1.5; margin-bottom: 25px; }
-        select, button { padding: 12px; font-size: 16px; width: 100%; box-sizing: border-box; border-radius: 4px; }
-        select { background: #070a0e; color: #e2e8f0; border: 1px solid #3a4a5e; margin-bottom: 20px; cursor: pointer; }
-        select:focus { outline: none; border-color: #38bdf8; }
-        button { background: #38bdf8; color: #000; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        button:hover { background: #0284c7; color: #fff; }
-        button:disabled { background: #3a4a5e; color: #94a3b8; cursor: not-allowed; }
-        .status { margin-top: 20px; font-size: 14px; text-align: center; min-height: 20px; font-weight: 500; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0f141a;
+            color: #e2e8f0;
+        }
+
+        .container {
+            background: #1b222c;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #3a4a5e;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: #38bdf8;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        p {
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        select,
+        button {
+            padding: 12px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 4px;
+        }
+
+        select {
+            background: #070a0e;
+            color: #e2e8f0;
+            border: 1px solid #3a4a5e;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+
+        button {
+            background: #38bdf8;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #0284c7;
+            color: #fff;
+        }
+
+        button:disabled {
+            background: #3a4a5e;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+            min-height: 20px;
+            font-weight: 500;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>NIMBLE Builder</h1>
         <p>Select a class below to generate and download its self-contained digital character tracker.</p>
-        
+
         <select id="classSelect">
             <option value="berserker">Berserker</option>
             <option value="cheat">Cheat</option>
@@ -43,7 +114,9 @@
 
         <!-- Debug Section -->
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #3a4a5e; text-align: center;">
-            <button onclick="buildAll()" style="background: transparent; border: 1px solid #3a4a5e; color: #94a3b8; font-size: 12px; width: auto; padding: 8px 15px;">Debug: Build All Classes</button>
+            <button onclick="buildAll()"
+                style="background: transparent; border: 1px solid #3a4a5e; color: #94a3b8; font-size: 12px; width: auto; padding: 8px 15px;">Debug:
+                Build All Classes</button>
         </div>
     </div>
 
@@ -60,7 +133,7 @@
             const select = document.getElementById('classSelect');
             const options = Array.from(select.options).map(opt => opt.value);
             const statusEl = document.getElementById('status');
-            
+
             for (const className of options) {
                 try {
                     statusEl.innerText = `Building ${className}...`;
@@ -79,7 +152,7 @@
             const className = classNameOverride || document.getElementById('classSelect').value;
             const statusEl = document.getElementById('status');
             const btn = document.getElementById('buildBtn');
-            
+
             try {
                 if (!classNameOverride) btn.disabled = true;
                 statusEl.innerText = `Fetching files for ${className}...`;
@@ -128,7 +201,7 @@
                 const ancestries = JSON.parse(ancestriesJson);
                 const backgrounds = JSON.parse(backgroundsJson);
                 const spells = JSON.parse(spellsJson);
-                
+
                 // Extract engine parts by index based on engineModules array
                 const rollEngine = engineParts[0];
                 const featHelpers = engineParts[1];
@@ -152,7 +225,6 @@
                 jsContent += `const BACKGROUND_FEATURES = ${JSON.stringify(backgrounds.features)};\n`;
                 jsContent += `const UTILITY_SPELLS = ${JSON.stringify(spells.utility)};\n`;
                 jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
-
                 jsContent += `// --- Engine Helpers & Base ---\n${rollEngine}\n${featHelpers}\n${panelBuilder}\n${featureGen}\n${resourceFactory}\n${baseClass}\n\n`;
                 jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
                 jsContent += `// --- Engine Logic ---\n${renderingEngine}\n${logic}\n${uiHelpers}\n${stateManager}\n\n`;
@@ -167,17 +239,17 @@
                 statusEl.innerText = 'Generating download...';
                 const blob = new Blob([finalHtml], { type: 'text/html' });
                 const url = URL.createObjectURL(blob);
-                
+
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `nimble_tracker_${className}_v${VERSION}.html`;
                 document.body.appendChild(a);
                 a.click();
-                
+
                 // Cleanup
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                
+
                 statusEl.innerText = `Success! ${className} tracker downloaded.`;
                 statusEl.style.color = '#22c55e'; // green
 
@@ -191,4 +263,5 @@
         }
     </script>
 </body>
+
 </html>

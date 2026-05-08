@@ -1,176 +1,3 @@
-const HUNTER_OPTIONS = {
-    tothAbilities: {
-        "Addling Arrow": { desc: "Action: Attack with a ranged weapon. The next attack the target makes must be against the closest other creature, chosen at random." },
-        "Come Get Some!": { desc: "Action: Attack a target. It is Taunted by you until the end of their next turn." },
-        "Decoy": { desc: "When you Defend: The attack misses instead, and you can move up to half your speed away (where you really were all along!)." },
-        "Fleet Feet": { desc: "Move up to your speed for free, ignoring difficult terrain." },
-        "Grease Trap": { desc: "(1/encounter) Reaction (enemy moves within 6 spaces): Target falls Prone, is vulnerable to fire damage, and is treated as Smoldering." },
-        "Hail of Arrows": { desc: "(Half range) 2 actions: Shoot all creatures within a 3x3 area. Their speed is halved until the end of their next turn." },
-        "Heavy Shot": { desc: "(Half range) Action: Attack with a ranged weapon and push your target: 4 spaces for small, 2 for medium, 1 for large." },
-        "Incendiary Shot": { desc: "(Half range) Action: Attack with a ranged weapon, add WIL d8 fire damage." },
-        "Multishot": { desc: "(Half range) Action: Attack your quarry with a ranged weapon and load an extra projectile. Select a 2nd target within 2 spaces to take the same damage." },
-        "Pinning Shot": { desc: "Spend 3 actions shooting your quarry. They are Restrained until they can escape (DC 10+WIL)." },
-        "Snare Trap": { desc: "(1/encounter) Reaction (enemy moves within 6 spaces): Move them back 1 space, they are Restrained until they can escape (DC 10+WIL)." },
-        "Sharpshooter": { desc: "Action: If you have not moved this turn and your quarry is 4 or more spaces away, attack them for double damage." },
-        "Vital Shot": { desc: "(Half range) Action: Attack your Hampered quarry with a ranged weapon, ignoring armor or doubling Hunter's Mark damage." },
-        "Wild Instinct": { desc: "(1/round, costs 0 TotH) If you have none, Assess for free, with advantage." },
-        "Go for the Throat!": { desc: "Command companion to attack your quarry. Small: 1 TotH (1d4+LVL), Med: 1 TotH (1d8+3x LVL), Large: 2 TotH/2 Actions (1d12+4xLVL)." },
-        "Protect Me!": { desc: "Command companion to defend you. Small: Miss on Defend, Med: Free counter-attack (1d4+LVL), Large: Half damage from first attack each round." }
-    },
-    companionSizes: {
-        "None": { desc: "No companion selected." },
-        "Small": {
-            desc: (level) => {
-                let pts = [
-                    `● <strong>Keen Eyes:</strong> Mark a target for free (1/encounter).`,
-                    `● <strong>Protect Me!:</strong> (1/encounter) Attacks against you miss when you Defend, move up to half speed away.`,
-                    `● <strong>Go for the Throat!:</strong> (1/encounter) 1 TotH: attack quarry for 1d4+LVL (ignores armor).`
-                ];
-                if (level >= 7) pts.push(`● <strong>7+:</strong> Keen Eyes (2/enc), Protect Me! (2/enc).`);
-                if (level >= 11) pts.push(`● <strong>11+:</strong> Keen Eyes (3/enc), Go for the Throat! (2/enc, 1/round).`);
-                if (level >= 15) pts.push(`● <strong>15+:</strong> Go for the Throat! (3/enc, 1/round).`);
-                return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
-            }
-        },
-        "Medium": {
-            desc: (level) => {
-                let pts = [
-                    `● <strong>Ferocious:</strong> When you/companion crit quarry, companion attacks for LVL (ignore armor). Move up to 2 spaces free.`,
-                    `● <strong>Protect Me!:</strong> When you Defend, companion counter-attacks (1d4+LVL).`,
-                    `● <strong>Go for the Throat!:</strong> (1/encounter) 1 TotH: attack quarry for 1d8+3x LVL (ignores armor).`
-                ];
-                if (level >= 7) pts.push(`● <strong>7+:</strong> Ferocious move increases to 4 spaces.`);
-                if (level >= 11) pts.push(`● <strong>11+:</strong> Go for the Throat! (2/encounter).`);
-                if (level >= 15) pts.push(`● <strong>15+:</strong> Ferocious move increases to 6 spaces.`);
-                return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
-            }
-        },
-        "Large": {
-            desc: (level) => {
-                let pts = [
-                    `● <strong>Alpha Protector:</strong> 1st attack dmg against you each round halved.`,
-                    `● <strong>Protect Me!:</strong> (1/encounter) When Wounded, whisked away up to 12 spaces.`,
-                    `● <strong>Go for the Throat!:</strong> (1/encounter) 2 TotH, 2 actions: attack for 1d12+4x LVL (ignores armor).`
-                ];
-                if (level >= 7) pts.push(`● <strong>7+:</strong> Protect Me! whisks you away <em>before</em> the Wound.`);
-                if (level >= 11) pts.push(`● <strong>11+:</strong> Go for the Throat! (2/encounter).`);
-                if (level >= 15) pts.push(`● <strong>15+:</strong> Protect Me! (2/encounter).`);
-                return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
-            }
-        }
-    }
-};
-
-const HUNTER_FEATURES = {
-    core: {
-        1: [
-            { id: "mark", name: "Hunter's Mark", desc: "Action: Mark a quarry for 1 day. Attacks against it have advantage OR +<strong>LVL</strong> damage." },
-            { id: "forager", name: "Forager", desc: "Advantage on skill checks to find food and water in the wild." }
-        ],
-        2: [
-            { id: "toth", name: "Thrill of the Hunt", desc: "Gain a charge whenever: Quarry dies, you hit quarry in melee, or you crit quarry at range." },
-            { id: "roll_strike", name: "Roll & Strike", desc: "Action: If you have no TotH charges, move up to speed and make a free melee attack." },
-            { id: "toth_abilities", name: "Thrill of the Hunt Abilities", type: "dynamic_choice", collection: "tothAbilities", stateKey: "selectedToth", desc: "Choose TotH abilities as you level up.", getCount: (level) => level >= 14 ? 7 : level >= 12 ? 6 : level >= 8 ? 5 : level >= 6 ? 4 : level >= 4 ? 3 : 2 }
-        ],
-        3: [
-            { id: "intuition", name: "Tracker's Intuition", desc: "Accurately discern numbers, direction, and timing of past encounters by tracks." }
-        ],
-        4: [
-            { id: "explorer", name: "Explorer of the Wilds", desc: "+2 speed and gain a climbing speed.<br><strong>Key Stat Increase:</strong> +1 DEX or WIL." }
-        ],
-        5: [
-            { id: "resolve", name: "Hunter's Resolve", desc: "When you have no TotH charges, treat all creatures as your quarry for movement and melee attacks." },
-            { id: "takedown", name: "Final Takedown", desc: "Spend 1 TotH charge to turn a hit on a Bloodied quarry into a crit and double Mark damage. If they survive, they crit you back." },
-            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
-        ],
-        6: [
-            { id: "bowmaster", name: "Versatile Bowmaster", desc: "When attacking with Longbow, roll <strong>2d4</strong> instead of 1d8; or Crossbow, <strong>2d8</strong> instead of 4d4." }
-        ],
-        8: [
-            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 DEX or WIL.", minor: true }
-        ],
-        9: [
-            { id: "no_escape", name: "No Escape", desc: "When an ally makes an opportunity attack, you may make a ranged opportunity attack against the same target." },
-            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
-        ],
-        10: [
-            { id: "stalker", name: "Veteran Stalker", desc: "Gain a TotH charge when first Bloodied and for every Wound gained." },
-            { id: "steady_hand", name: "Keen Eye, Steady Hand", desc: "Add <strong>WIL</strong> to your ranged weapon damage." }
-        ],
-        12: [
-            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 DEX or WIL.", minor: true }
-        ],
-        13: [
-            { id: "keen_sight", name: "Keen Sight", desc: "Advantage on Perception checks." },
-            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
-        ],
-        16: [
-            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 DEX or WIL.", minor: true }
-        ],
-        17: [
-            { id: "peerless", name: "Peerless Hunter", desc: "You can Defend against your quarry for free." },
-            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
-        ],
-        18: [
-            { id: "wild_endurance", name: "Wild Endurance", desc: "Gain 1 Thrill of the Hunt charge at the start of your turns." }
-        ],
-        19: [
-            { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
-        ],
-        20: [
-            { id: "nemesis", name: "Nemesis", desc: "+1 to any 2 of your stats. Your Hunter’s Mark can target any number of creatures simultaneously." }
-        ]
-    },
-    subclasses: {
-        "Shadowpath": {
-            3: [
-                { id: "ambusher", name: "Ambusher", desc: "Mark quarry for free on Initiative. Advantage on first attack each encounter." },
-                { id: "skilled_tracker", name: "Skilled Tracker", desc: "Advantage on skill checks to track creatures." },
-                { id: "skilled_navigator", name: "Skilled Navigator", desc: "You cannot become lost by nonmagical means." }
-            ],
-            7: [
-                { id: "primal_predator", name: "Primal Predator", desc: "(1/encounter) Your weapon attacks ignore cover and armor this turn." }
-            ],
-            11: [
-                { id: "pack_hunter", name: "Pack Hunter", desc: "When you mark a creature, mark another within 6 spaces for free." }
-            ],
-            15: [
-                { id: "apex_predator", name: "Apex Predator", desc: "Use Primal Predator twice per encounter. Gain 1 TotH charge on Initiative." }
-            ]
-        },
-        "WildHeart": {
-            3: [
-                { id: "form", name: "Impressive Form", desc: "+5 max HP. Upgrade Hit Dice to d10s." },
-                { id: "high_ground", name: "I Have the High Ground", desc: "Gain 1/2 speed for free on Init or when gaining TotH charges." }
-            ],
-            7: [
-                { id: "herbalist", name: "Resourceful Herbalist", desc: "(1/Safe Rest) Craft <strong>WIL</strong> Healing Salves (Heal WIL d6 HP)." },
-                { id: "healing_salve", name: "Healing Salve", desc: "Action: Heal yourself or an adjacent creature WIL d6 HP. Only you or another experienced Herbalist may administer these, and they expire whenever you Safe Rest." }
-            ],
-            11: [
-                { id: "here", name: "Ha! I'm Over Here!", desc: "(1/Safe Rest) If an attack would drop you to 0 HP, move speed away and take no damage." }
-            ],
-            15: [
-                { id: "survivalist", name: "Unparalleled Survivalist", desc: "Gain <strong>+WIL</strong> Armor. When attacking at range, move 1/2 speed for free first." }
-            ]
-        },
-        "Beastmaster": {
-            3: [
-                { id: "companion", name: "Animal Companion", type: "choice", collection: "companionSizes", stateKey: "selectedCompanion", desc: "No stats or actions to track. Your companion's attacks count as your own for TotH." }
-            ],
-            7: [
-                { id: "scaling_1", name: "Companion Scaling", desc: "Small: Keen Eyes (2/enc), Protect Me! upgrades. Med: Ferocious (4 spaces). Large: Protect Me! upgrades." }
-            ],
-            11: [
-                { id: "scaling_2", name: "Companion Scaling", desc: "Small: Keen Eyes (3/enc), Go for the Throat! (2/enc). Med: Go for the Throat! (2/enc). Large: Go for the Throat! (2/enc)." }
-            ],
-            15: [
-                { id: "scaling_3", name: "Companion Scaling", desc: "Small: Go for the Throat! (3/enc). Med: Ferocious (6 spaces). Large: Protect Me! (2/enc)." }
-            ]
-        }
-    }
-};
-
 class HunterClass extends BaseClass {
     constructor() {
         super({
@@ -178,10 +5,7 @@ class HunterClass extends BaseClass {
             subtitle: "Resourceful survivalist, bowmaster, and skilled tracker",
             keyStats: ['dex', 'wil'],
             saves: { adv: 'dex', dis: 'int' },
-            proficiencies: {
-                armor: "Leather Armor",
-                weapons: "DEX Weapons"
-            },
+            proficiencies: { armor: "Leather Armor", weapons: "DEX Weapons" },
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
@@ -200,29 +24,121 @@ class HunterClass extends BaseClass {
                 { value: "WildHeart", label: "Keeper of the Wild Heart", accent: "#f59e0b" },
                 { value: "Beastmaster", label: "Beastmaster", accent: "#86efac" }
             ],
+            featuresData: HunterClass.FEATURES,
+            optionsData: HunterClass.OPTIONS,
             resources: [
-                { id: 'tothCharges', label: 'TotH Charges', manual: true, calcMax: (level, stats) => Math.max(1, Math.max(stats.dex, stats.wil)) }
-            ],
-            featuresData: HUNTER_FEATURES,
-            optionsData: HUNTER_OPTIONS
+                createSimpleResource('tothCharges', 'TotH Charges', (level, stats) => Math.max(1, Math.max(stats.dex, stats.wil)))
+            ]
         });
+    }
+
+    static get OPTIONS() {
+        return {
+            tothAbilities: {
+                "Addling Arrow": { desc: "Action: Attack with a ranged weapon. The next attack the target makes must be against the closest other creature, chosen at random." },
+                "Come Get Some!": { desc: "Action: Attack a target. It is Taunted by you until the end of their next turn." },
+                "Decoy": { desc: "When you Defend: The attack misses instead, and you can move up to half your speed away (where you really were all along!)." },
+                "Fleet Feet": { desc: "Move up to your speed for free, ignoring difficult terrain." },
+                "Grease Trap": { desc: "(1/encounter) Reaction (when an enemy moves adjacent to you or an ally within 6 spaces): Target falls Prone, is vulnerable to the next fire damage it takes, and is treated as if it is Smoldering." },
+                "Hail of Arrows": { desc: "(Half range) 2 actions: Shoot all creatures within a 3×3 area. Their speed is halved until the end of their next turn." },
+                "Heavy Shot": { desc: "(Half range) Action: Attack with a ranged weapon and push your target: 4 spaces for a small creature, 2 for a medium creature, 1 for a large creature." },
+                "Incendiary Shot": { desc: "(Half range) Action: Attack with a ranged weapon, add WIL d8 fire damage." },
+                "Multishot": { desc: "(Half range) Action: Attack your quarry with a ranged weapon and load an extra projectile. Select a 2nd target within 2 spaces of them to take the same amount of damage." },
+                "Pinning Shot": { desc: "Spend 3 actions shooting your quarry. They are Restrained until they can escape (DC 10+WIL)." },
+                "Snare Trap": { desc: "(1/encounter) Reaction (when an enemy moves adjacent to you or an ally within 6 spaces): Move them back 1 space, they are Restrained until they can escape (DC 10+WIL)." },
+                "Sharpshooter": { desc: "Action: If you have not moved this turn and your quarry is 4 or more spaces away, attack them for double damage." },
+                "Vital Shot": { desc: "(Half Range) Action: Attack your Hampered quarry with a ranged weapon, ignoring their armor or doubling your Hunter's Mark damage bonus if they have none." },
+                "Wild Instinct": { desc: "(1/round, costs 0 TotH charges if you have none.) Assess for free, with advantage." }
+            },
+            companionSizes: {
+                "None": { desc: "No companion selected." },
+                "Small": { desc: (level) => {
+                    let pts = [
+                        `● <strong>Keen Eyes:</strong> Mark a target for free (1/encounter).`,
+                        `● <strong>Protect Me!:</strong> (1/encounter) Whenever you Defend, your companion distracts the attacker, causing the attack to miss, and you move up to half your speed away.`,
+                        `● <strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d4+LVL damage for free (ignoring armor).`
+                    ];
+                    if (level >= 7) pts.push(`● <strong>Lvl 7+:</strong> Keen Eyes (2/enc), Protect Me! (2/enc).`);
+                    if (level >= 11) pts.push(`● <strong>Lvl 11+:</strong> Keen Eyes (3/enc), Go for the Throat! (2/enc, 1/round).`);
+                    if (level >= 15) pts.push(`● <strong>Lvl 15+:</strong> Go for the Throat! (3/enc, 1/round).`);
+                    return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
+                }},
+                "Medium": { desc: (level) => {
+                    let pts = [
+                        `● <strong>Ferocious:</strong> Whenever you or your companion crit your quarry, your companion attacks again for LVL damage (ignoring armor), and you can move up to 2 spaces for free.`,
+                        `● <strong>Protect Me!:</strong> When you Defend, your companion may first attack that creature for 1d4+LVL damage.`,
+                        `● <strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d8+3x LVL damage (ignoring armor).`
+                    ];
+                    if (level >= 7) pts.push(`● <strong>Lvl 7+:</strong> Ferocious move increases to 4 spaces.`);
+                    if (level >= 11) pts.push(`● <strong>Lvl 11+:</strong> Go for the Throat! (2/encounter).`);
+                    if (level >= 15) pts.push(`● <strong>Lvl 15+:</strong> Ferocious move increases to 6 spaces.`);
+                    return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
+                }},
+                "Large": { desc: (level) => {
+                    let pts = [
+                        `● <strong>Alpha Protector:</strong> Damage from the first attack against you each round is halved.`,
+                        `● <strong>Protect Me!:</strong> (1/encounter) After you gain a Wound, your companion can whisk you away to safety up to 12 spaces.`,
+                        `● <strong>Go for the Throat!:</strong> (1/encounter) Costs 2 TotH charges, 2 actions: Your companion attacks your quarry for 1d12+4x LVL damage (ignoring armor).`
+                    ];
+                    if (level >= 7) pts.push(`● <strong>Lvl 7+:</strong> Protect Me! now whisks you away <em>before</em> the Wound.`);
+                    if (level >= 11) pts.push(`● <strong>Lvl 11+:</strong> Go for the Throat! (2/encounter).`);
+                    if (level >= 15) pts.push(`● <strong>Lvl 15+:</strong> Protect Me! (2/encounter).`);
+                    return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
+                }}
+            }
+        };
+    }
+
+    static get FEATURES() {
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or WIL', 'STR or INT', false);
+        
+        core[1] = [
+            { id: "mark", name: "Hunter's Mark", desc: "Action: A creature you can see is marked as your quarry for 1 day (or until you mark another creature). It can’t be hidden from you, and your attacks against it gain your choice of advantage OR +LVL damage (choose before each attack)." },
+            { id: "forager", name: "Forager", desc: "Gain advantage on skill checks to find food and water in the wild." }
+        ];
+        core[2] = [
+            { id: "toth", name: "Thrill of the Hunt", desc: "Choose 2 Thrill of the Hunt (TotH) abilities. Gain a charge to use these abilities during that encounter whenever:<ul><li>Your quarry dies.</li><li>You hit your quarry in melee or crit your quarry at range.</li></ul>" },
+            { id: "roll_strike", name: "Roll & Strike", desc: "Action: If you have no Thrill of the Hunt charges, move up to your speed toward your quarry. If you end adjacent to them, make a melee attack against them for free." },
+            { id: "toth_abilities", name: "Thrill of the Hunt Abilities", type: "dynamic_choice", collection: "tothAbilities", stateKey: "selectedToth", desc: "Choose TotH abilities as you level up.", getCount: (level) => level >= 14 ? 7 : level >= 12 ? 6 : level >= 8 ? 5 : level >= 6 ? 4 : level >= 4 ? 3 : 2 }
+        ];
+        core[3].push({ id: "intuition", name: "Tracker's Intuition", desc: "You can discern the events of a past encounter by studying tracks and other subtle environmental clues, accurately determining the kind and amount of creatures, their direction, key actions, and passage of time." });
+        core[4].push({ id: "explorer", name: "Explorer of the Wilds", desc: "+2 speed; gain a climbing speed." });
+        core[5].push({ id: "resolve", name: "Hunter's Resolve", desc: "Whenever you have no Thrill of the Hunt charges, gain Hunter's Resolve until the end of your turn: treat all creatures as your quarry for the purposes of movement and melee attacks." });
+        core[5].push({ id: "takedown", name: "Final Takedown", desc: "Action: Spend 1 Thrill of the Hunt charge to make a melee attack against your Bloodied quarry. Turn it into a crit and double the damage of your Hunter’s Mark. If they survive, they crit you back." });
+        core[6].push({ id: "bowmaster", name: "Versatile Bowmaster", desc: "Whenever you attack with a Longbow, you may roll 2d4 instead of 1d8; or with a Crossbow, 2d8 instead of 4d4." });
+        core[9].push({ id: "no_escape", name: "No Escape", desc: "Whenever you see one or more allies make an opportunity attack, you may also make a ranged opportunity attack against the same target." });
+        core[10].push({ id: "stalker", name: "Veteran Stalker", desc: "Gain a Thrill of the Hunt charge whenever you are first Bloodied in an encounter and for every Wound you gain." });
+        core[10].push({ id: "steady_hand", name: "Keen Eye, Steady Hand", desc: "Add WIL to your ranged weapon damage." });
+        core[13].push({ id: "keen_sight", name: "Keen Sight", desc: "Advantage on Perception checks." });
+        core[17].push({ id: "peerless", name: "Peerless Hunter", desc: "You can Defend against your quarry for free." });
+        core[18] = [{ id: "wild_endurance", name: "Wild Endurance", desc: "Gain 1 Thrill of the Hunt charge at the start of your turns." }];
+        core[20].push({ id: "nemesis", name: "Nemesis", desc: "+1 to any 2 of your stats. Your Hunter’s Mark can target any number of creatures simultaneously." });
+
+        subclasses["Shadowpath"] = {
+            3: [{ id: "ambusher", name: "Ambusher", desc: "When you roll Initiative, you may use Hunter’s Mark for free. Gain advantage on the first attack you make each encounter." }, { id: "track", name: "Skilled Tracker", desc: "You have advantage on skill checks to track creatures." }, { id: "navigator", name: "Skilled Navigator", desc: "You cannot become lost by nonmagical means." }],
+            7: [{ id: "primal", name: "Primal Predator", desc: "(1/encounter) Your weapon attacks ignore cover and armor this turn." }],
+            11: [{ id: "pack", name: "Pack Hunter", desc: "Whenever you mark a creature, you may also mark another creature within 6 spaces of them for free." }],
+            15: [{ id: "apex", name: "Apex Predator", desc: "You may use your Primal Predator ability twice each encounter. Gain 1 Thrill of the Hunt charge when you roll Initiative." }]
+        };
+        subclasses["WildHeart"] = {
+            3: [{ id: "form", name: "Impressive Form", desc: "+5 max HP. Upgrade your Hit Dice to d10s." }, { id: "high_ground", name: "I Have the High Ground", desc: "When you roll Initiative or gain one or more Thrill of the Hunt charges, move up to half your speed for free, ignoring difficult terrain." }],
+            7: [{ id: "herbalist", name: "Resourceful Herbalist", desc: "Whenever you Safe Rest in a location near where plants or fungi can grow, you may spend a day collecting healing herbs to craft a number of Healing Salves equal to your WIL. <strong>Healing Salve:</strong> Action: Heal yourself or an adjacent creature WIL d6 HP. Only you or another experienced Herbalist may administer these, and they expire whenever you Safe Rest." }],
+            11: [{ id: "here", name: "Ha! I’m Over Here!", desc: "(1/Safe Rest) If an attack would cause you to drop to 0 HP, you instead move up to your speed away and take no damage." }],
+            15: [{ id: "survivalist", name: "Unparalleled Survivalist", desc: "Gain +WIL armor. When you attack with a ranged weapon, you may first move half your speed for free." }]
+        };
+        subclasses["Beastmaster"] = {
+            3: [{ id: "companion", name: "Animal Companion", type: "choice", collection: "companionSizes", stateKey: "selectedCompanion", desc: "Choose a Small, Medium, or Large animal as your companion. No stats or actions to track. Your companion's attacks count as your own for TotH." }]
+        };
+        
+        return { core, subclasses };
     }
 
     getDerivedStats(level, subclass, state) {
         let speed = 6;
-        let woundMax = 6;
         if (level >= 4) speed += 2;
-
-        // Dynamic HP scaling for Impressive Form
-        if (subclass === "WildHeart" && level >= 3) {
-            this.hitDie = 10;
-            this.baseHp = 18; // Base 13 + 5
-        } else {
-            this.hitDie = 8;
-            this.baseHp = 13;
-        }
-
-        return { speed, woundMax };
+        let hdFace = (subclass === "WildHeart" && level >= 3) ? 10 : 8;
+        this.baseHp = (subclass === "WildHeart" && level >= 3) ? 18 : 13;
+        return { speed, woundMax: 6, hdFace };
     }
 
     getStatOverrides(level, subclass, state, statsMap) {
@@ -232,81 +148,22 @@ class HunterClass extends BaseClass {
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {
-        const maxCharges = derived.resourceMaxes.tothCharges;
-        const currentCharges = state.resourceValues.tothCharges || 0;
+        const builder = new PanelBuilder();
+        const statsMap = getStatsMap(state);
 
-        return `
-        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 15px;">
-               <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
-                   <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Hunter's Mark</label>
-                   <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1.2; text-align: center; margin: auto 0;">Advantage<br><span style="font-size: 0.8em; color: var(--gold-light);">OR</span> +${level} Dmg</div>
-                   <div style="font-size: 0.65em; color: var(--text-muted); text-align: center; margin-top: auto; font-family:'Cinzel'; font-weight:bold;">Primary Quarry</div>
-               </div>
+        builder.addRollDisplay('1d20', 'Hunter\'s Mark', `+${level}`, 'Advantage OR Bonus Dmg', { type: 'attack', stat: 'dex' });
+        builder.addResource('tothCharges', 'TotH Charges', state.resourceValues.tothCharges, derived.resourceMaxes.tothCharges);
 
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
-                   <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">TotH Charges</label>
-                   <div style="display: flex; align-items: center; gap: 8px;">
-                       <div class="dark-incrementer">
-                           <button onclick="adjRes('tothCharges', -1, ${maxCharges})">-</button>
-                           <input type="number" id="res_tothCharges" value="${currentCharges}" min="0" max="${maxCharges}"
-                                  onchange="adjRes('tothCharges', parseInt(this.value), ${maxCharges}, true)">
-                           <button onclick="adjRes('tothCharges', 1, ${maxCharges})">+</button>
-                       </div>
-                       <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.1em;">/ <span style="color: var(--text-main);">${maxCharges}</span></div>
-                   </div>
-               </div>
-
-               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                   <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Gain Charge</label>
-                   <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.3; margin: auto 0; font-family:'Crimson Text'; font-style:italic;">
-                        ● Quarry Dies<br>
-                        ● Melee Hit<br>
-                        ● Ranged Crit
-                   </div>
-                   <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Cinzel'; font-weight:bold;">RECOVERY</div>
-               </div>
+        builder.addCustom(`
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Gain Charge</label>
+                <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.3; margin: auto 0; font-family:'Crimson Text'; font-style:italic;">
+                    ● Quarry Dies<br>● Melee Hit<br>● Ranged Crit
+                </div>
             </div>
-        </div>`;
-    }
+        `);
 
-    renderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
-        const statsMap = derived.statsMap;
-        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice";
-        let count = feat.type === "dynamic_choice" ? feat.getCount(level) : (feat.count || 1);
-        let collection = feat.collection;
-        let context = (feat.id === "mark" || feat.id === "volley") ? { type: 'attack', stat: 'dex' } : {};
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");
-
-        let finalCssClass = cssClass || "";
-        if (feat.minor) finalCssClass += " minor-feature";
-
-        if (feat.type === "choice" || feat.type === "dynamic_choice") {
-            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            let selection = state[feat.stateKey] || [];
-            let options = Object.keys(this.optionsData[collection] || {});
-
-            let optsHtml = `<option value="None">-- Select Option --</option>`;
-            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
-
-            for (let i = 0; i < count; i++) {
-                let idx = (feat.startIndex || 0) + i;
-                let val = selection[idx] || "None";
-                let d = (val !== "None" && this.optionsData[collection][val]) ? this.optionsData[collection][val].desc : "";
-                if (typeof d === "function") d = d(level);
-
-                let abilityContext = { ...context };
-                if (val === "Go for the Throat!" || val === "Protect Me!") abilityContext.isMinion = true;
-
-                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, abilityContext)}</div>
-                </div>`;
-            }
-            desc += choiceHtml + `</div>`;
-        }
-
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+        return builder.build();
     }
 }
 

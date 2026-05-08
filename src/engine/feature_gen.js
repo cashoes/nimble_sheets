@@ -88,6 +88,7 @@ function createSubclassFeature(level = 3) {
  */
 function generateStandardFeatures(keyStats, secStats, isCaster = false, customTierProgression = null) {
     const core = {};
+    for (let i = 1; i <= 20; i++) core[i] = [];
     
     const addFeature = (f) => {
         if (!core[f.level]) core[f.level] = [];

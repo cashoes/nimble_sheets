@@ -1,135 +1,3 @@
-const STORMSHIFTER_OPTIONS = {
-    forms: {
-        "Normal": { desc: "Standard humanoid form. No bonuses." },
-        "Harmless": { desc: "Tiny beast (Squirrel, Bird). Speed: 6. Speak with animals. Ending ends form." },
-        "Fearsome": { desc: "Large beast. Gain DEX+LVL temp HP. Attack: Gore (1d6+LVL). Reroll Defend/Interpose for 1 mana." },
-        "Beast of the Pack": { desc: "Medium beast. Gain +DEX Speed. Attack: Thunderfang (1d4+LVL). Kill: +1d4 lightning (cumulative). Spend WIL mana for +1d8/pt dmg." },
-        "Beast of Nightmares": { desc: "Tiny beast. Speed: 2. Attack: Sting (1d4+3x LVL acid). Silent But Deadly: Cannot be targeted until you attack." }
-    },
-    chimericBoons: {
-        "Beast of the Sea (Swim/Breath)": { desc: "Swim speed equal to normal speed. Can breathe underwater." },
-        "Climber (Walk walls/ceilings)": { desc: "Walk on walls and ceilings as normal ground; ignore difficult terrain." },       
-        "Fleet Footed (+2 Speed, ADV Stealth)": { desc: "+2 speed. Advantage on Stealth and against Grappled." },
-        "Earthwalker (+2 Armor, Burrow)": { desc: "+2 armor. Burrow at 1/2 speed. Advantage vs Prone." },
-        "Keen Senses (ADV Perception/Assess)": { desc: "Advantage on Perception and Assess. Unaffected by Blinded." },
-        "Leader of the Pack (ADV Fear/Charm for 6r aura)": { desc: "Advantage vs Fear and Charm for you and allies in 6 reach." }, 
-        "Phasebeast (Teleport 6 on shift)": { desc: "Teleport up to 6 spaces when shifting in or out of form." },
-        "Prehensile Tail (Grapple on melee hit)": { desc: "Melee hit on targets your size or smaller: they are Grappled. Large targets: you move with them." },
-        "Winged (Fly speed, forced move 2x)": { desc: "Gain fly speed. Forced movement moves you twice as far." }
-    },
-    studySchools: {
-        "Ice": { desc: "Gain access to all Ice spells. (Spirit of the Tundra)" },
-        "Radiant": { desc: "Gain access to all Radiant spells. (Spirit of the Sun)" }
-    }
-};
-
-const STORMSHIFTER_FEATURES = {
-    core: {
-        1: [
-            { id: "master", name: "Master of Storms", desc: "You know all cantrips from the Lightning and Wind schools." },        
-            { id: "shift", name: "Beastshift", desc: "Action: Transform into a harmless beast. Speek with animals. DEX charges/Safe Rest. Form ends if you drop to 0 HP or cast spell." }
-        ],
-        2: [
-            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x WIL+LVL</strong>) to cast Tempest spells." }, 
-            { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true },
-            { id: "dire_1", name: "Direbeast Form", desc: "You can now Beastshift into a <strong>Fearsome Beast</strong> (Large)." }
-        ],
-        3: [
-            { id: "dire_2", name: "Direbeast Form (2)", desc: "You can now Beastshift into a <strong>Beast of the Pack</strong> (Medium)." }
-        ],
-        4: [
-            { id: "caller", name: "Stormcaller", type: "stormcaller_choice", desc: "Learn a Utility Spell from each spell school you know.", getCount: (level) => level >= 7 ? 2 : 1 },
-            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 WIL or DEX.", minor: true },
-            { id: "tier_2", name: "Tier 2 Spells", desc: "You gain access to Tier 2 spells.", minor: true }
-        ],
-        5: [
-            { id: "dire_3", name: "Direbeast Form (3)", desc: "You can now Beastshift into a <strong>Beast of Nightmares</strong> (Tiny)." },
-            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true },
-            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your lightning/wind cantrips grow stronger.", minor: true }        
-        ],
-        6: [
-            { id: "boons", name: "Chimeric Boons", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", desc: "Choose form mutations.", getCount: (level) => level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2 },
-            { id: "expert", name: "Expert Shifter", desc: "Gain 1 additional use of Beastshift per Safe Rest." },
-            { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }
-        ],
-        8: [
-            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 WIL or DEX.", minor: true },
-            { id: "stormborn", name: "Stormborn", desc: "Gain resistance to lightning damage. (1/day) You may gain advantage on a Naturecraft check or Concentration check." },
-            { id: "tier_4", name: "Tier 4 Spells", desc: "You gain access to Tier 4 spells.", minor: true }
-        ],
-        9: [
-            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
-        ],
-        10: [
-            { id: "tier_5", name: "Tier 5 Spells", desc: "You gain access to Tier 5 spells.", minor: true }
-        ],
-        12: [
-            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 WIL or DEX.", minor: true },
-            { id: "tier_6", name: "Tier 6 Spells", desc: "You gain access to Tier 6 spells.", minor: true }
-        ],
-        13: [
-            { id: "stormborn_2", name: "Stormborn (2)", desc: "Spend Beastshift charge to deal max damage with a Wind spell. Cast cantrip for free when ending shift." },
-            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
-        ],
-        14: [
-            { id: "tier_7", name: "Tier 7 Spells", desc: "You gain access to Tier 7 spells.", minor: true }
-        ],
-        15: [
-            { id: "cantrips_2", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
-        ],
-        16: [
-            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 WIL or DEX.", minor: true },
-            { id: "tier_8", name: "Tier 8 Spells", desc: "You gain access to Tier 8 spells.", minor: true }
-        ],
-        17: [
-            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 STR or INT.", minor: true }
-        ],
-        18: [
-            { id: "tier_9", name: "Tier 9 Spells", desc: "You gain access to Tier 9 spells.", minor: true }
-        ],
-        19: [
-            { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
-        ],
-        20: [
-            { id: "druid", name: "Archdruid", desc: "+1 to any 2 of your stats. (1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form. Upgraded Cantrips." }
-        ]
-    },
-    subclasses: {
-        "SkyStorm": {
-            3: [
-                { id: "study", name: "Deepening Study", type: "choice", collection: "studySchools", stateKey: "deepeningStudySchool", count: 1, desc: "Choose the Ice or Radiant school to learn. Cast spells while Beastshifted." }
-            ],
-            7: [
-                { id: "tempest", name: "Raging Tempest", desc: "Whenever you crit with a tiered spell, you may cast a cantrip for free from a school you know and haven't used this turn (at the same level of dis/advantage)." }
-            ],
-            11: [
-                { id: "primordial", name: "Primordial Force", desc: "Spending 2+ mana on a spell grants an additional effect:<ul><li><strong>Ice:</strong> Gain WIL temp HP.</li><li><strong>Lightning:</strong> Deal additional damage equal to your WIL.</li><li><strong>Radiant:</strong> You may heal a creature within 6 spaces WIL HP.</li><li><strong>Wind:</strong> Gain a flying speed this turn. Move up to 6 spaces for free.</li></ul>" }
-            ],
-            15: [
-                { id: "master_storm", name: "Master of Storm", desc: "Concentrate on 1 lightning and 1 wind spell at the same time. (1/Safe Rest) Cast Ride the Lightning for 0 mana." }
-            ]
-        },
-        "FangClaw": {
-            3: [
-                { id: "swiftshift", name: "Swiftshift", desc: "Init: Beastshift or Move for free. Shift between Direbeast forms for free (Reaction for 1 mana)." },
-                { id: "windborne", name: "Windborne Protector", desc: "(1/encounter) Reaction: When an enemy attacks, spend 2 mana to shift into Fearsome Beast, Interpose from 12 reach, and Defend for free." },
-                { id: "friend", name: "Friend of Beasts", desc: "Beasts won't attack unless harmed. Transform into harmless beasts without spending charges." }
-            ],
-            7: [
-                { id: "unleash", name: "Unleash the Beast", desc: "(1/encounter) When you miss, you can crit instead." },
-                { id: "wake", name: "Storm Wake", desc: "(1/encounter) Action: Spend 3 mana to shift into Beast of the Pack, teleport 12 reach in a line, and deal <strong>WIL</strong> d8 lightning dmg to targets in path." }
-            ],
-            11: [
-                { id: "forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." },      
-                { id: "gaze", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into Beast of Nightmares, pull enemy within 12 by 2x WIL spaces, and free Sting on contact." }
-            ],
-            15: [
-                { id: "forms_2", name: "Master of Forms (2)", desc: "Beastshift 2 additional times per Safe Rest. Your Direbeast forms can have 3 Boons at a time." }
-            ]
-        }
-    }
-};
-
 class StormshifterClass extends BaseClass {
     constructor() {
         super({
@@ -137,10 +5,7 @@ class StormshifterClass extends BaseClass {
             subtitle: "Master of weather, beast, and nature",
             keyStats: ['wil', 'dex'],
             saves: { adv: 'wil', dis: 'str' },
-            proficiencies: {
-                armor: "Cloth, Leather",
-                weapons: "Staves, Wands"
-            },
+            proficiencies: { armor: "Cloth or Leather Armor", weapons: "Staves, Wands" },
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
@@ -158,223 +23,143 @@ class StormshifterClass extends BaseClass {
                 { value: "SkyStorm", label: "Circle of Sky & Storm", accent: "#bae6fd" },
                 { value: "FangClaw", label: "Circle of Fang & Claw", accent: "#f97316" }
             ],
+            spellSchools: ["Lightning", "Wind"],
+            subclassSchools: { "SkyStorm": [] }, // Handled by study choice
+            includeUtilitySpells: createUtilityConfig(false, null), // Special stormcaller logic
             resources: [
-                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },     
-                { id: 'shiftUses', label: 'Beastshift', manual: true, calcMax: (level, stats) => {
-                    let base = stats.dex;
-                    if (level >= 6) base += 1;
-                    if (level >= 9) base += 1;
-                    if (level >= 12) base += 1;
-                    if (level >= 15) base += 2; // Expert Shifter (approximate)
-                    return Math.max(1, base);
-                }}
+                createManaResource('wil'),
+                createSimpleResource('shiftUses', 'Beastshift', (level, stats) => stats.dex + (level >= 6 ? 1 : 0) + (level >= 9 ? 1 : 0) + (level >= 12 ? 1 : 0) + (level >= 15 ? 2 : 0))
             ],
-            featuresData: STORMSHIFTER_FEATURES,
-            optionsData: STORMSHIFTER_OPTIONS
+            featuresData: StormshifterClass.FEATURES,
+            optionsData: StormshifterClass.OPTIONS
         });
     }
 
-    getDerivedStats(level, subclass, state) {
-        const activeForm = (state.currentForm && state.currentForm[0]) || "Normal";
-        let speed = (activeForm === "Beast of Nightmares") ? 2 : 6;
-        let woundMax = 6;
+    static get OPTIONS() {
+        return {
+            forms: {
+                "Normal": { desc: "Standard humanoid form. No bonuses." },
+                "Harmless": { desc: "Tiny beast (Squirrel, Bird). Speed: 6. Speak with animals. Form ends if you drop to 0 HP, cast a spell, or if you end it on your turn for free." },
+                "Fearsome": { desc: "Large beast. Gain DEX+LVL temp HP. Attack: Gore (1d6+LVL). Fearsome: Whenever you Interpose or Defend, you may spend 1 mana to force them to reroll the attack (you must choose either result)." },
+                "Beast of the Pack": { desc: "Medium beast. Gain +DEX speed. Thunderfang: 1d4+LVL damage. Whenever you crit or kill, gain cumulative +1d4 lightning damage until combat ends. Supercharge: Spend up to WIL mana for +1d8 lightning dmg per mana spent." },
+                "Beast of Nightmares": { desc: "Tiny beast. Speed: 2. Attack: Sting (1d4+3x LVL acid). Silent But Deadly: Cannot be targeted until you attack." }
+            },
+            chimericBoons: {
+                "Beast of the Sea": { desc: "Can move, breathe, and fight underwater without penalty." },
+                "Climber": { desc: "Can walk across walls and ceilings; ignores difficult terrain." },
+                "Fleet Footed": { desc: "+2 speed. Advantage on Stealth checks and against the Grappled condition." },
+                "Earthwalker": { desc: "+2 armor. Can burrow through dirt and unworked rock at half speed. Advantage against the Prone condition." },
+                "Keen Senses": { desc: "Advantage on Perception and Assess checks. Unaffected by Blinded." },
+                "Leader of the Pack": { desc: "Advantage against fear and charm effects for yourself and allies within 6 spaces." },
+                "Phasebeast": { desc: "Whenever you shift between this form and your normal form (and vice versa), you may teleport up to 6 spaces away." },
+                "Prehensile Tail": { desc: "Creatures you hit in melee that are your size or smaller are Grappled. If you hit a larger creature, you may move with it." },
+                "Winged": { desc: "Gain a flying speed. Forced movement moves you twice as far while flying." }
+            },
+            studySchools: {
+                "Ice": { desc: "Gain access to all Ice spells." },
+                "Radiant": { desc: "Gain access to all Radiant spells." }
+            }
+        };
+    }
 
-        return { speed, woundMax };
+    static get FEATURES() {
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('WIL or DEX', 'STR or INT', true);
+        
+        core[1] = [
+            { id: "master", name: "Master of Storms", desc: "You know all cantrips from the Lightning and Wind schools." },
+            { id: "shift", name: "Beastshift", desc: "Action: Transform into a harmless beast. Speak with animals. DEX charges/Safe Rest. Form ends if you drop to 0 HP, cast a spell, or if you end it on your turn for free." }
+        ];
+        core[2].push({ id: "dire_1", name: "Direbeast Form", desc: "You can Beastshift into a Fearsome Beast." });
+        core[3].push({ id: "dire_2", name: "Direbeast Form (2)", desc: "You can Beastshift into a Beast of the Pack." });
+        core[4].push({ id: "caller", name: "Stormcaller", desc: "Learn a Utility Spell from each spell school you know." });
+        core[5].push({ id: "dire_3", name: "Direbeast Form (3)", desc: "You can Beastshift into a Beast of Nightmares." });
+        
+        core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", desc: "Choose 2 Chimeric Boons. Whenever you shapeshift into a Direbeast form, you may modify it with 1 Chimeric Boon you know.", getCount: (level) => level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2 });
+        core[6].push({ id: "expert", name: "Expert Shifter", desc: "Gain 1 additional use of Beastshift per Safe Rest." });
+        
+        core[8].push({ id: "stormborn", name: "Stormborn", desc: "Gain resistance to lightning damage. (1/day) You may gain advantage on a Naturecraft check or Concentration check." });
+        core[13].push({ id: "stormborn_2", name: "Stormborn (2)", desc: "Instead of rolling dice, deal the max damage of a Wind spell by spending a charge of Beastshift. Whenever you end Beastshift, you may cast a cantrip for free." });
+        
+        core[20].push({ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. (1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." });
+
+        subclasses["SkyStorm"] = {
+            3: [{ id: "study", name: "Deepening Study", type: "choice", collection: "studySchools", stateKey: "deepeningStudySchool", count: 1, desc: "Choose the Ice or Radiant school to learn." }, { id: "creature", name: "Creature of the Fey", desc: "You may cast spells while Beastshifted." }, { id: "attuned", name: "Attuned to Nature", desc: "(1/day) Add LVL to any skill check related to nature or weather." }],
+            7: [{ id: "tempest", name: "Raging Tempest", desc: "Whenever you crit with a tiered spell, you may cast a cantrip for free from a school you know and haven’t used this turn." }],
+            11: [{ id: "primordial", name: "Primordial Force", desc: "Spending 2+ mana on a spell grants an additional effect based on school: <ul><li><strong>Ice:</strong> Gain WIL temp HP.</li><li><strong>Lightning:</strong> Deal additional damage equal to your WIL.</li><li><strong>Radiant:</strong> You may heal a creature within 6 spaces WIL HP.</li><li><strong>Wind:</strong> Gain a flying speed this turn. Move up to 6 spaces for free.</li></ul>" }],
+            15: [{ id: "master_storm", name: "Master of Storm", desc: "Concentrate on 1 lightning and 1 wind spell at the same time. (1/Safe Rest) Cast Ride the Lightning for 0 mana." }]
+        };
+        subclasses["FangClaw"] = {
+            3: [{ id: "swiftshift", name: "Swiftshift", desc: "Init: Beastshift or move for free. While transformed, you may shift between different Direbeast forms for free (Reaction for 1 mana)." }, { id: "windborne", name: "Windborne Protector", desc: "(1/encounter) Reaction: When an enemy attacks, spend 2 mana to shift into a Fearsome Beast, Interpose from 12 reach, and Defend for free." }, { id: "friend", name: "Friend of Beasts", desc: "Beasts will not attack you until you first harm them. Transform into harmless beasts without spending a charge." }],
+            7: [{ id: "unleash", name: "Unleash the Beast", desc: "(1/encounter) When you miss, you can crit instead." }, { id: "wake", name: "Storm Wake", desc: "(1/encounter) Action: Spend 3 mana to shift into a Beast of the Pack, teleport 12 reach in a line, and deal WIL d8 lightning dmg to targets in path." }],
+            11: [{ id: "master_forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." }, { id: "gaze", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into Beast of Nightmares, pull enemy within 12 reach closer by 2x WIL, and Sting for free on contact." }],
+            15: [{ id: "master_forms_2", name: "Master of Forms (2)", desc: "Beastshift 2 additional times per Safe Rest. Your Direbeast forms can have 3 Boons at a time." }]
+        };
+        
+        return { core, subclasses };
+    }
+
+    getDerivedStats(level, subclass, state) {
+        const activeForm = (state.currentForm || [])[0] || "Normal";
+        let speed = activeForm === "Beast of Nightmares" ? 2 : 6;
+        return { speed, woundMax: 6 };
     }
 
     getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
-        const activeForm = (state.currentForm && state.currentForm[0]) || "Normal";
-        const selectedBoons = state.selectedBoons || [];
-
-        // Form-based Speed
-        if (activeForm === "Beast of the Pack") {
-            overrides.speed = (overrides.speed || 0) + statsMap.dex;
-        }
-
-        // Earthwalker Armor Bonus
-        if (selectedBoons.some(b => b.startsWith("Earthwalker"))) {
-            overrides.armor = (overrides.armor || 0) + 2;
-        }
-
-        // Fleet Footed Speed Bonus
-        if (selectedBoons.some(b => b.startsWith("Fleet Footed"))) {
-            overrides.speed = (overrides.speed || 0) + 2;
-        }
-
-        // Winged Fly Speed
-        if (selectedBoons.some(b => b.startsWith("Winged"))) {
-            overrides.modFlySpeed = true;
-        }
-
+        const activeForm = (state.currentForm || [])[0] || "Normal";
+        const boons = state.selectedBoons || [];
+        if (activeForm === "Beast of the Pack") overrides.speed = statsMap.dex;
+        if (boons.includes("Earthwalker")) overrides.armor = 2;
+        if (boons.includes("Fleet Footed")) overrides.speed = (overrides.speed || 0) + 2;
+        if (boons.includes("Winged")) overrides.modFlySpeed = true;
         return overrides;
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {
-        const manaMax = derived.resourceMaxes.mana;
-        const shiftMax = derived.resourceMaxes.shiftUses;
+        const builder = new PanelBuilder();
+        builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+        builder.addResource('shiftUses', 'Beastshift', state.resourceValues.shiftUses, derived.resourceMaxes.shiftUses);
 
-        let activeForm = (state.currentForm && state.currentForm[0]) || "Normal";
-        let opts = ""; Object.keys(STORMSHIFTER_OPTIONS.forms).forEach(k => {
-            let show = true;
-            if (k === "Fearsome" && level < 2) show = false;
-            if (k === "Beast of the Pack" && level < 3) show = false;
-            if (k === "Beast of Nightmares" && level < 5) show = false;
-            if (show) opts += `<option value="${k}" ${k===activeForm?'selected':''}>${k}</option>`;
-        });
+        let activeForm = (state.currentForm || [])[0] || "Normal";
+        let opts = Object.keys(StormshifterClass.OPTIONS.forms).map(k => {
+            let skip = (k === "Fearsome" && level < 2) || (k === "Beast of the Pack" && level < 3) || (k === "Beast of Nightmares" && level < 5);
+            return skip ? '' : `<option value="${k}" ${k===activeForm?'selected':''}>${k}</option>`;
+        }).join('');
 
-        return `
-        <div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 15px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center; flex: 1;">
-                ${level >= 2 ? `
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 6px; justify-content: center;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Mana Pool</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer">
-                            <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
-                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
-                            <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
-                        </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.95em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
-                    </div>
-                </div>` : ''}
-
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding: 0 6px; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Beastshift</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer">
-                            <button onclick="adjRes('shiftUses', -1, ${shiftMax})">-</button>
-                            <input type="number" id="res_shiftUses" value="${state.resourceValues.shiftUses||0}" onchange="adjRes('shiftUses', parseInt(this.value), ${shiftMax}, true)">
-                            <button onclick="adjRes('shiftUses', 1, ${shiftMax})">+</button>
-                        </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.95em;">/ <span style="color: var(--text-main);">${shiftMax}</span></div>
-                    </div>
-                </div>
-
-                <div style="flex: 1.6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Current Form</label>
-                    <select onchange="updateClassState('currentForm', 0, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 3px; font-size: 0.85em;">${opts}</select>
-
-                    <div style="min-height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;">
-                        ${(function() {
-                            const totalStr = (state.baseStr || 0) + (state.addStr || 0);
-                            const totalWil = (state.baseWil || 0) + (state.addWil || 0);
-                            const totalDex = (state.baseDex || 0) + (state.addDex || 0);
-                            if (activeForm === "Fearsome") return `
-                                <span class="roll-link" onclick="dispatchRoll('1d6+${level}', 'Gore Attack', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">GORE 1d6+${level}</span>
-                                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">+${totalDex+level} THP | 1 Mana Reroll</div>`;
-                            if (activeForm === "Beast of the Pack") return `
-                                <span class="roll-link" onclick="dispatchRoll('1d4+${level}', 'Thunderfang', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">THUNDERFANG 1d4+${level}</span>     
-                                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">+${totalDex} SPD | +1d4 Dmg on Kill</div>`;
-                            if (activeForm === "Beast of Nightmares") return `
-                                <span class="roll-link" onclick="dispatchRoll('1d4+${3*level}', 'Sting', { type: 'attack' })" style="color: var(--class-accent); font-family: 'Cinzel'; font-weight: bold; font-size: 1.0em;">STING 1d4+${3*level}</span>
-                                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">SPD 2 | Unseen until Attack</div>`;
-                            if (activeForm === "Normal") return `
-                                <span class="roll-link" onclick="dispatchRoll('1d4+${totalStr}', 'Unarmed Strike', { type: 'attack', stat: 'str' })" style="color: var(--text-muted); font-family: 'Cinzel'; font-weight: bold; font-size: 0.85em;">UNARMED 1d4+${totalStr}</span>
-                                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.0;">Standard Humanoid Form</div>`;
-                            return `<div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.0; font-family:'Crimson Text'; font-style:italic;">${STORMSHIFTER_OPTIONS.forms[activeForm]?.desc || ""}</div>`;
-                        })()}
-                    </div>
+        builder.addCustom(`
+            <div style="flex: 1.6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; margin-bottom: 2px;">Form</label>
+                <select onchange="updateClassState('currentForm', 0, this.value)" style="border-bottom-color: var(--class-accent); font-size: 0.85em;">${opts}</select>
+                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">
+                    ${activeForm === "Fearsome" ? `Gore 1d6+${level} | +${getStatsMap(state).dex + level} THP` : 
+                      activeForm === "Beast of the Pack" ? `Thunderfang 1d4+${level} | +${getStatsMap(state).dex} SPD` : 
+                      activeForm === "Beast of Nightmares" ? `Sting 1d4+${3*level} | SPD 2 | Unseen` : 'Standard Form'}
                 </div>
             </div>
-        </div>`;
-    }
+        `);
 
-    renderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
-        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "stormcaller_choice";
-        let count = (typeof feat.getCount === "function") ? feat.getCount(level) : (feat.count || 1);
-        let collection = feat.collection;
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");
-
-        let finalCssClass = cssClass || "";
-        if (feat.minor) finalCssClass += " minor-feature";
-
-        const statsMap = derived.statsMap;
-        let context = (feat.id === "shift" || (feat.id && feat.id.startsWith("dire"))) ? { type: 'attack', stat: 'wil' } : {};     
-
-        if (feat.type === "choice" || feat.type === "dynamic_choice") {
-            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            let selection = state[feat.stateKey] || [];
-            let options = Object.keys(this.optionsData[collection] || {});
-
-            let optsHtml = `<option value="None">-- Select Option --</option>`;
-            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
-
-            for (let i = 0; i < count; i++) {
-                let idx = (feat.startIndex || 0) + i;
-                let val = selection[idx] || "None";
-                let d = (val !== "None" && this.optionsData[collection][val]) ? this.optionsData[collection][val].desc : "";
-
-                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
-                </div>`;
-            }
-            desc += choiceHtml + `</div>`;
-        } else if (feat.type === "stormcaller_choice") {
-            const knownSchools = ["Lightning", "Wind"];
-            if (subclass === "SkyStorm" && state.deepeningStudySchool?.[0] && state.deepeningStudySchool[0] !== "None") knownSchools.push(state.deepeningStudySchool[0]);
-
-            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-
-            knownSchools.forEach(sch => {
-                let stateKey = `stormcallerSpells_${sch}`;
-                let selection = state[stateKey] || [];
-
-                for (let i = 0; i < count; i++) {
-                    let optsHtml = `<option value="None">-- Select ${sch} Utility --</option>`;
-                    if (UTILITY_SPELLS[sch]) {
-                        Object.keys(UTILITY_SPELLS[sch]).forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);     
-                    }
-
-                    let val = selection[i] || "None";
-                    let d = (val !== "None" && UTILITY_SPELLS[sch]?.[val]) || "";
-
-                    choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                        <div style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; margin-bottom: 4px; font-family:'Cinzel'; font-weight:bold;">${sch} Utility ${i+1}</div>
-                        <select onchange="updateClassState('${stateKey}', ${i}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
-                    </div>`;
-                }
-            });
-            desc += choiceHtml + `</div>`;
-        }
-
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+        return builder.build();
     }
 
     getAvailableSpells(level, subclass, state, derived) {
-        let spells = [];
-
-        // Known Schools
+        const spells = super.getAvailableSpells(level, subclass, state, derived);
         const schools = ["Lightning", "Wind"];
-        if (subclass === "SkyStorm" && state.deepeningStudySchool?.[0] && state.deepeningStudySchool[0] !== "None") {
-            schools.push(state.deepeningStudySchool[0]);
-        }
+        const study = (state.deepeningStudySchool || [])[0] || "None";
+        if (study !== "None") schools.push(study);
 
-        // Tiered Spells
-        schools.forEach(school => {
-            if (!SPELL_REGISTRY[school]) return;
-            Object.entries(SPELL_REGISTRY[school]).forEach(([name, data]) => {
-                let tNum = parseInt(data.tier.replace(/\D/g, '')) || 0;
-                let requiredLevel = data.tier.includes("Cantrip") ? 1 : (tNum * 2);
-                if (level >= requiredLevel) {
-                    spells.push({ name, ...data, school });
-                }
-            });
+        // Stormcaller Utility Logic
+        schools.forEach(sch => {
+            const selKey = `stormcallerSpells_${sch}`;
+            const val = (state[selKey] || [])[0] || "None";
+            if (val !== "None" && UTILITY_SPELLS[sch]?.[val]) {
+                const desc = UTILITY_SPELLS[sch][val];
+                let customHtml = `<select onchange="updateClassState('${selKey}', 0, this.value)" style="border-bottom-color: var(--class-accent);"><option value="None">Select ${sch} Utility...</option>${Object.keys(UTILITY_SPELLS[sch]).map(k => `<option value="${k}" ${k===val?'selected':''}>${k}</option>`).join('')}</select><div style="margin-top:8px;">${desc}</div>`;
+                spells.push({ name: "", tier: "Utility", school: sch, customHtml });
+            } else if (level >= 4) {
+                let customHtml = `<select onchange="updateClassState('${selKey}', 0, this.value)" style="border-bottom-color: var(--class-accent);"><option value="None">Select ${sch} Utility...</option>${Object.keys(UTILITY_SPELLS[sch] || {}).map(k => `<option value="${k}">${k}</option>`).join('')}</select>`;
+                spells.push({ name: "", tier: "Utility", school: sch, customHtml });
+            }
         });
-
-        // Stormcaller Utility Selections
-        if (level >= 4) {
-            schools.forEach(sch => {
-                let selection = state[`stormcallerSpells_${sch}`] || [];
-                selection.forEach(name => {
-                    if (name !== "None" && UTILITY_SPELLS[sch]?.[name]) {
-                        spells.push({ name, desc: UTILITY_SPELLS[sch][name], tier: "Utility", school: sch });
-                    }
-                });
-            });
-        }
 
         return spells;
     }

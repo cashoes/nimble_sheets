@@ -1,152 +1,3 @@
-const SONGWEAVER_OPTIONS = {
-    lyricalWeaponry: {
-        "Heroic Ballad": { desc: "+2 max Inspiration charges. When used to reroll an ally's attack, grants them +WIL damage on the attack." },
-        "Inspiring Anthem": { desc: "(1/encounter) Action: Grant all friendly Dying creatures who can hear you 1 HP and 1 action." },
-        "Not My Beautiful Faaace!": { desc: "(1/encounter) When you Defend, force attacker to choose another target on failed WIL save (DC 10+WIL). Fail by 5+: they attack themselves." },
-        "Rhapsody of the Normal": { desc: "Roll 4+ on Vicious Mockery: spend Inspiration to suppress target's special abilities until end of next turn. They become an untrained villager (1d4 dmg, no features)." },
-        "Song of Domination": { desc: "(1/encounter) 2 actions: Play tune. All enemies in 6 reach must WIL save (DC 10+WIL). Fail: move them up to 6 spaces; they cannot move next turn." }
-    },
-    friends: {
-        "Stompy (Hill Giant)": { desc: "3 actions: Summon for 1 round. Success on DC 10 Influence: move 6 then Stomp (LVL+Influence dmg to path). Allies in 6 can also trigger Stomp." },
-        "Mal, the Malevolent Imp": { desc: "Summon for 1 night. Find dangerous info or 'take care' of a problem. Influence check to help (ADV for mischief, DIS for menial tasks)." },
-        "Gran Gran (NOT a hag)": { desc: "Summon for 1 hour while resting. Bakes pastries (WIL+INT). Eating one recovers 1 mana, HD, or Wound. Expire in 10 mins." },
-        "Linos, the Everfriendly": { desc: "Summon legendary flying creature to transport party. May request large amount of food as payment." }
-    },
-    schools: {
-        "Fire": { desc: "Master the school of Fire." },
-        "Ice": { desc: "Master the school of Ice." },
-        "Lightning": { desc: "Master the school of Lightning." }
-    }
-};
-
-const SONGWEAVER_FEATURES = {
-    core: {
-        1: [
-            { id: "school_choice", name: "Secondary School", type: "choice", collection: "schools", stateKey: "secondarySchool", desc: "Master a second elemental school (Fire, Ice, or Lightning).", count: 1 },
-            { id: "vicious_mockery", name: "Vicious Mockery", desc: (level, subclass, state, derived, rSSC) => {
-                const totalInt = (state.baseInt || 0) + (state.addInt || 0);
-                const totalWil = (state.baseWil || 0) + (state.addWil || 0);
-                let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
-                let vmBonus = totalInt;
-                if (level >= 15 && subclass === "HeraldSnark") vmBonus += totalWil;
-                let vmDisplay = `<strong>${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}</strong>`;
-
-                let intro = `You know the unique Wind cantrip <strong>Vicious Mockery</strong>:`;
-                let card = rSSC({
-                    name: "Vicious Mockery",
-                    tier: "Cantrip",
-                    school: "Wind",
-                    desc: `1 Action. Range: 12. Damage: ${vmDisplay} psychic (ignoring armor). On hit: target is Taunted during their next turn.`
-                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: totalInt, wil: totalWil });     
-
-                return intro + card;
-            } },
-            { id: "inspiration", name: "Songweaver’s Inspiration", desc: (level, subclass, state) => {
-                let uses = (state.baseWil + state.addWil) * 2;
-                return `(<strong>${uses}</strong> uses/Safe Rest) Free Reaction: Allow an ally to reroll a die for an attack or save (must keep result).`;
-            }}
-        ],
-        2: [
-            { id: "mana", name: "Mana Pool", desc: "You gain a mana pool (<strong>3x WIL+LVL</strong>) to cast tiered spells." },  
-            { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true },
-            { id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." },
-            { id: "song_rest", name: "Song of Rest", desc: "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your <strong>WIL</strong>." }
-        ],
-        3: [
-            { id: "subclass", name: "Subclass", desc: "Choose a Songweaver subclass.", minor: true },
-            { id: "quick_wit", name: "Quick Wit", desc: "Roll Init: regain 2 spent Inspiration charges (expire end of combat)." }, 
-            { id: "windbag", name: "Windbag", type: "windbag_choice", desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Learn a Utility Spell from each spell school you know.", getCount: (level) => level >= 14 ? 0 : level >= 6 ? 2 : 1 }
-        ],
-        4: [
-            { id: "lyrical_1", name: "Lyrical Weaponry", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, desc: "Choose a special musical ability." },
-            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 WIL or INT.", minor: true },
-            { id: "tier_2", name: "Tier 2 Spells", desc: "You gain access to Tier 2 spells.", minor: true }
-        ],
-        5: [
-            { id: "friends", name: "A “People“ Person", type: "choice", collection: "friends", stateKey: "selectedFriends", count: 2, desc: "Choose 2 friends you can temporarily summon via song (1/Safe Rest each)." },
-            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true },
-            { id: "cantrips_1", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
-        ],
-        6: [
-            { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }
-        ],
-        8: [
-            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 WIL or INT.", minor: true },
-            { id: "tier_4", name: "Tier 4 Spells", desc: "You gain access to Tier 4 spells.", minor: true }
-        ],
-        9: [
-            { id: "lyrical_2", name: "Lyrical Weaponry (2)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 1, desc: "Choose a 2nd modular ability." },
-            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true }
-        ],
-        10: [
-            { id: "cantrips_2", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true },
-            { id: "tier_5", name: "Tier 5 Spells", desc: "You gain access to Tier 5 spells.", minor: true }
-        ],
-        12: [
-            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 WIL or INT.", minor: true },
-            { id: "tier_6", name: "Tier 6 Spells", desc: "You gain access to Tier 6 spells.", minor: true }
-        ],
-        13: [
-            { id: "lyrical_3", name: "Lyrical Weaponry (3)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 2, desc: "Choose a 3rd modular ability." },
-            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true }
-        ],
-        14: [
-            { id: "tier_7", name: "Tier 7 Spells", desc: "You gain access to Tier 7 spells.", minor: true }
-        ],
-        15: [
-            { id: "cantrips_3", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
-        ],
-        16: [
-            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 WIL or INT.", minor: true },
-            { id: "tier_8", name: "Tier 8 Spells", desc: "You gain access to Tier 8 spells.", minor: true }
-        ],
-        17: [
-            { id: "lyrical_4", name: "Lyrical Weaponry (4)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 3, desc: "Choose a 4th modular ability." },
-            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 STR or DEX.", minor: true }
-        ],
-        18: [
-            { id: "tier_9", name: "Tier 9 Spells", desc: "You gain access to Tier 9 spells.", minor: true }
-        ],
-        19: [
-            { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
-        ],
-        20: [
-            { id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 of your stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." },
-            { id: "cantrips_4", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
-        ]
-    },
-    subclasses: {
-        "HeraldSnark": {
-            3: [
-                { id: "snark", name: "Opportunistic Snark", desc: "Reaction (enemy in 12 reach misses): Cast Vicious Mockery at them; it deals double damage." }
-            ],
-            7: [
-                { id: "picker", name: "Fight Picker", desc: "(1/turn) When enemy is damaged by Vicious Mockery, you may have an ally Taunt them until end of enemy's turn instead." }
-            ],
-            11: [
-                { id: "chord", name: "Chord of Chaos", desc: "(1/encounter) Action: Move ALL creatures within hearing up to 3 spaces (not into obvious danger)." }
-            ],
-            15: [
-                { id: "words_swords", name: "Words Like Swords", desc: "Your Vicious Mockery damage becomes <strong>1d6+INT+WIL</strong>." }
-            ]
-        },
-        "HeraldCourage": {
-            3: [
-                { id: "presence", name: "Inspiring Presence", desc: "Whenever you use Songweaver’s Inspiration, your allies within 12 spaces gain <strong>WIL</strong> temp HP." }
-            ],
-            7: [
-                { id: "courage", name: "Unfailing Courage", desc: "Your Songweaver’s Inspiration allows your target to roll with advantage." }
-            ],
-            11: [
-                { id: "bones", name: "Fire in my Bones", desc: "Your Songweaver’s Inspiration also grants your target 1 additional action." }
-            ],
-            15: [
-                { id: "chorus", name: "Chorus of Champions", desc: "(1/encounter) Free Reaction: Give all party members 1 action." }
-            ]
-        }
-    }
-};
-
 class SongweaverClass extends BaseClass {
     constructor() {
         super({
@@ -154,10 +5,7 @@ class SongweaverClass extends BaseClass {
             subtitle: "Musical mystic who weaves spells through song",
             keyStats: ['wil', 'int'],
             saves: { adv: 'wil', dis: 'str' },
-            proficiencies: {
-                armor: "Cloth, Leather",
-                weapons: "Staves, Instruments"
-            },
+            proficiencies: { armor: "Cloth, Leather", weapons: "DEX, Wands" },
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
@@ -175,173 +23,127 @@ class SongweaverClass extends BaseClass {
                 { value: "HeraldSnark", label: "Herald of Snark", accent: "#ef4444" },
                 { value: "HeraldCourage", label: "Herald of Courage", accent: "#fbbf24" }
             ],
+            spellSchools: ["Wind"],
+            includeUtilitySpells: createUtilityConfig(false, null), // Special windbag logic
             resources: [
-                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },     
-                { id: 'inspiration', label: 'Inspiration', manual: true, calcMax: (level, stats, state) => {
-                    let max = stats.wil * 2;
-                    let lyrical = state.selectedLyrical || [];
-                    if (lyrical.includes("Heroic Ballad")) max += 2;
-                    return max;
-                }}
+                createManaResource('wil'),
+                createSimpleResource('inspiration', 'Inspiration', (level, stats, state) => (stats.wil * 2) + (state.selectedLyrical?.includes("Heroic Ballad") ? 2 : 0))
             ],
-            featuresData: SONGWEAVER_FEATURES,
-            optionsData: SONGWEAVER_OPTIONS
+            featuresData: SongweaverClass.FEATURES,
+            optionsData: SongweaverClass.OPTIONS
         });
+    }
+
+    static get OPTIONS() {
+        return {
+            lyricalWeaponry: {
+                "Heroic Ballad": { desc: "+2 max Songweaver’s Inspiration charges. When used to reroll an ally’s attack, your Songweaver’s Inspiration also grants them +WIL damage on the attack." },
+                "Inspiring Anthem": { desc: "(1/encounter) Action: Grant all friendly Dying creatures who can hear you 1 HP and 1 action." },
+                "Not My Beautiful Faaace!": { desc: "(1/encounter) When you Defend, force the attacker to choose another target within range on a failed WIL save (if there is none, the attack fails). If they fail by 5+ they attack themselves." },
+                "Rhapsody of the Normal": { desc: "When you roll 4+ on Vicious Mockery, spend Inspiration to suppress special abilities until end of next turn. They become an untrained villager (1d4 dmg, spd 6, no features)." },
+                "Song of Domination": { desc: "(1/encounter) 2 actions: All enemies within 6 must make a WIL save. If they fail, you move them up to 6 spaces; they cannot move on their next turn." }
+            },
+            friends: {
+                "Stompy": { desc: "3 actions: Summon huge hill giant for 1 round. Success on DC 10 Influence: move 6 then Stomp (LVL+Influence dmg to path). Allies within 6 can also trigger Stomp." },
+                "Mal, the Malevolent Imp": { desc: "Summon for 1 night. Find dangerous information you have no right to know! Or “take care” of a problem with only the slightest chance of things going wrong. Influence check to help." },
+                "Gran Gran (NOT a hag)": { desc: "Summon for 1 hour while resting. Bakes pastries equal to WIL+INT. Eating one recovers mana, Hit Die, or Wound. Expire in 10 mins." },
+                "Linos, the Everfriendly": { desc: "Summon legendary flying creature to transport party. May request a very large amount of food as payment." }
+            },
+            schools: {
+                "Fire": { desc: "Master the school of Fire." },
+                "Ice": { desc: "Master the school of Ice." },
+                "Lightning": { desc: "Master the school of Lightning." }
+            }
+        };
+    }
+
+    static get FEATURES() {
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('WIL or INT', 'STR or DEX', true);
+        
+        core[1] = [
+            { id: "school_choice", name: "Secondary School", type: "choice", collection: "schools", stateKey: "secondarySchool", desc: "Master a second elemental school (Fire, Ice, or Lightning).", count: 1 },
+            { id: "vicious_mockery", name: "Vicious Mockery", desc: "You know the unique Wind cantrip <strong>Vicious Mockery</strong>. Range: 12. Damage: 1d4+INT psychic (ignoring armor). Taunts on hit. +2 damage every 5 levels." },
+            { id: "inspiration", name: "Songweaver’s Inspiration", desc: (level, subclass, state, derived) => `(<strong>${derived.resourceMaxes.inspiration}</strong> uses/Safe Rest) Free Reaction: Allow an ally to reroll a single die related to an attack or save.` }
+        ];
+        core[2].push({ id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." });
+        core[2].push({ id: "song_rest", name: "Song of Rest", desc: "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your WIL." });
+        
+        core[3].push({ id: "quick_wit", name: "Quick Wit", desc: "When you roll Initiative, regain 2 spent uses of Inspiration (expire end of combat)." });
+        core[3].push({ id: "windbag", name: "Windbag", desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Choose 1 Utility Spell from each spell school you know." });
+        
+        core[4].push({ id: "lyrical_1", name: "Lyrical Weaponry", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, desc: "Choose 1 ability from the Lyrical Weaponry list." });
+        core[5].push({ id: "people", name: "A “People“ Person", type: "choice", collection: "friends", stateKey: "selectedFriends", count: 2, desc: "Choose 2 friends you can temporarily summon via song (1/Safe Rest each)." });
+        
+        core[9].push({ id: "lyrical_2", name: "Lyrical Weaponry (2)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 1, desc: "Choose a 2nd Lyrical Weaponry ability." });
+        core[13].push({ id: "lyrical_3", name: "Lyrical Weaponry (3)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 2, desc: "Choose a 3rd Lyrical Weaponry ability." });
+        core[17].push({ id: "lyrical_4", name: "Lyrical Weaponry (4)", type: "choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", count: 1, startIndex: 3, desc: "Choose a 4th Lyrical Weaponry ability." });
+        
+        core[20].push({ id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 of your stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." });
+
+        subclasses["HeraldSnark"] = {
+            3: [{ id: "snark", name: "Opportunistic Snark", desc: "Reaction (when enemy in Range 12 misses): Cast Vicious Mockery; it deals double damage." }],
+            7: [{ id: "picker", name: "Fight Picker", desc: "(1/turn) When enemy is damaged by Vicious Mockery, you may have an ally Taunt them instead." }],
+            11: [{ id: "chord", name: "Chord of Chaos", desc: "(1/encounter) Action: Move ALL creatures within hearing up to 3 spaces (not into danger)." }],
+            15: [{ id: "words", name: "Words Like Swords", desc: "Your Vicious Mockery damage becomes 1d6+INT+WIL." }]
+        };
+        subclasses["HeraldCourage"] = {
+            3: [{ id: "presence", name: "Inspiring Presence", desc: "Whenever you use Songweaver’s Inspiration, allies in 12 reach who hear you gain WIL temp HP." }],
+            7: [{ id: "courage", name: "Unfailing Courage", desc: "Your Songweaver’s Inspiration allows your target to roll with advantage." }],
+            11: [{ id: "bones", name: "Fire in my Bones", desc: "Your Songweaver’s Inspiration also grants your target 1 additional action." }],
+            15: [{ id: "chorus", name: "Chorus of Champions", desc: "(1/encounter) Free Reaction: Give all party members 1 action." }]
+        };
+        
+        return { core, subclasses };
+    }
+
+    getDerivedStats(level, subclass, state) {
+        const statsMap = getStatsMap(state);
+        let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
+        let vmBonus = statsMap.int + (Math.floor(level / 5) * 2);
+        if (level >= 15 && subclass === "HeraldSnark") vmBonus += statsMap.wil;
+        let vmDisplay = `${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}`;
+
+        return { speed: 6, woundMax: 6, vmDisplay };
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {
-        const manaMax = derived.resourceMaxes.mana;
-        const inspMax = derived.resourceMaxes.inspiration;
+        const builder = new PanelBuilder();
+        
+        builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+        builder.addResource('inspiration', 'Inspiration', state.resourceValues.inspiration, derived.resourceMaxes.inspiration);
+        
+        builder.addRollDisplay(derived.vmDisplay, 'Vicious Mockery', derived.vmDisplay, 'Range 12 | Taunts', { type: 'cantrip', school: 'Wind' });
 
-        const inspCur = state.resourceValues.inspiration || 0;
-
-        // Vicious Mockery Calculation
-        const totalInt = (state.baseInt || 0) + (state.addInt || 0);
-        const totalWil = (state.baseWil || 0) + (state.addWil || 0);
-        let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
-        let vmBonus = totalInt + Math.floor(level / 5) * 2;
-        if (level >= 15 && subclass === "HeraldSnark") vmBonus += totalWil;
-        let vmDisplay = `${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}`;
-
-        return `
-        <div class="panel mechanic-panel" style="min-height: 100px; padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center;">
-                ${level >= 2 ? `
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer">
-                            <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
-                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
-                            <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
-                        </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
-                    </div>
-                </div>` : ''}
-
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Inspiration</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer">
-                            <button onclick="adjRes('inspiration', -1, ${inspMax})">-</button>
-                            <input type="number" id="res_inspiration" value="${inspCur}" onchange="adjRes('inspiration', parseInt(this.value), ${inspMax}, true)">
-                            <button onclick="adjRes('inspiration', 1, ${inspMax})">+</button>
-                        </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${inspMax}</div>
-                    </div>
-                </div>
-
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Vicious Mockery</label>
-                    <div class="roll-link" onclick="dispatchRoll('${vmDisplay}', 'Vicious Mockery', { type: 'cantrip' })" style="font-size: 2.2em; color: var(--class-accent); font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; cursor: pointer;">${vmDisplay}</div>
-                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 4px; font-family: 'Crimson Text'; font-style: italic;">Reach 12</div>
-                    <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.1; font-family: 'Crimson Text'; max-width: 120px;">On hit: the target is Taunted during their next turn.</div>
-                </div>
-            </div>
-        </div>`;
-    }
-
-    renderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, configRef) {
-        let isChoice = feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "windbag_choice";
-        let count = (typeof feat.getCount === "function") ? feat.getCount(level) : (feat.count || 1);
-        let collection = feat.collection;
-        let context = (feat.id === "vicious_mockery") ? { type: 'cantrip' } : {};
-        let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");
-
-        let finalCssClass = cssClass || "";
-        if (feat.minor) finalCssClass += " minor-feature";
-
-        const statsMap = derived.statsMap;
-
-        if (feat.type === "choice" || feat.type === "dynamic_choice") {
-            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-            let selection = state[feat.stateKey] || [];
-            let options = Object.keys(this.optionsData[collection] || {});
-
-            let optsHtml = `<option value="None">-- Select Option --</option>`;
-            options.forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);
-
-            for (let i = 0; i < count; i++) {
-                let idx = (feat.startIndex || 0) + i;
-                let val = selection[idx] || "None";
-                let d = (val !== "None" && this.optionsData[collection][val]) ? this.optionsData[collection][val].desc : "";   
-
-                choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
-                </div>`;
-            }
-            desc += choiceHtml + `</div>`;
-        } else if (feat.type === "windbag_choice" && count > 0) {
-            const knownSchools = ["Wind"];
-            if (state.secondarySchool?.[0] && state.secondarySchool[0] !== "None") knownSchools.push(state.secondarySchool[0]);    
-
-            let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
-
-            knownSchools.forEach(sch => {
-                let stateKey = `windbagSpells_${sch}`;
-                let selection = state[stateKey] || [];
-
-                for (let i = 0; i < count; i++) {
-                    let optsHtml = `<option value="None">-- Select ${sch} Utility --</option>`;
-                    if (UTILITY_SPELLS[sch]) {
-                        Object.keys(UTILITY_SPELLS[sch]).forEach(opt => optsHtml += `<option value="${opt}">${opt}</option>`);     
-                    }
-
-                    let val = selection[i] || "None";
-                    let d = (val !== "None" && UTILITY_SPELLS[sch]?.[val]) || "";
-
-                    choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                        <div style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; margin-bottom: 4px; font-family:'Cinzel'; font-weight:bold;">${sch} Utility ${i+1}</div>
-                        <select onchange="updateClassState('${stateKey}', ${i}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                        <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
-                    </div>`;
-                }
-            });
-            desc += choiceHtml + `</div>`;
-        }
-
-        return bFeat(feat.name, feat.level || "", desc, finalCssClass, false, level, statsMap, context);
+        return builder.build();
     }
 
     getAvailableSpells(level, subclass, state, derived) {
-        let spells = [];
-        const masteredSchools = ["Wind"];
-        if (state.secondarySchool && state.secondarySchool[0] !== "None") {
-            masteredSchools.push(state.secondarySchool[0]);
-        }
+        const spells = super.getAvailableSpells(level, subclass, state, derived);
+        const secondary = (state.secondarySchool || [])[0] || "None";
+        const schools = ["Wind"];
+        if (secondary !== "None") schools.push(secondary);
 
-        // 1. Core Tiered Spells (Mastered Schools only)
-        masteredSchools.forEach(school => {
-            if (!SPELL_REGISTRY[school]) return;
-            Object.entries(SPELL_REGISTRY[school]).forEach(([name, data]) => {
-                let tNum = parseInt(data.tier.replace(/\D/g, '')) || 0;
-                let requiredLevel = data.tier.includes("Cantrip") ? 1 : (tNum * 2);
-                if (level >= requiredLevel) {
-                    spells.push({ name, ...data, school });
-                }
-            });
-        });
-
-        // 2. Windbag Feature: Utility from mastered schools
+        // Windbag Utility Logic
         if (level >= 14) {
-            masteredSchools.forEach(sch => {
+            schools.forEach(sch => {
                 if (UTILITY_SPELLS[sch]) {
                     Object.entries(UTILITY_SPELLS[sch]).forEach(([name, desc]) => {
-                        if (!spells.find(s => s.name === name)) {
-                            spells.push({ name, desc, tier: "Utility", school: sch });
-                        }
+                        spells.push({ name, desc, tier: "Utility", school: sch });
                     });
                 }
             });
         } else if (level >= 3) {
-            masteredSchools.forEach(sch => {
-                let selection = state[`windbagSpells_${sch}`] || [];
-                selection.forEach(name => {
-                    if (name !== "None" && UTILITY_SPELLS[sch]?.[name]) {
-                        spells.push({ name, desc: UTILITY_SPELLS[sch][name], tier: "Utility", school: sch });
-                    }
-                });
+            schools.forEach(sch => {
+                const selKey = `windbagSpells_${sch}`;
+                const val = (state[selKey] || [])[0] || "None";
+                if (val !== "None" && UTILITY_SPELLS[sch]?.[val]) {
+                    const desc = UTILITY_SPELLS[sch][val];
+                    let customHtml = `<select onchange="updateClassState('${selKey}', 0, this.value)" style="border-bottom-color: var(--class-accent);"><option value="None">Select ${sch} Utility...</option>${Object.keys(UTILITY_SPELLS[sch]).map(k => `<option value="${k}" ${k===val?'selected':''}>${k}</option>`).join('')}</select><div style="margin-top:8px;">${desc}</div>`;
+                    spells.push({ name: "", tier: "Utility", school: sch, customHtml });
+                } else {
+                    let customHtml = `<select onchange="updateClassState('${selKey}', 0, this.value)" style="border-bottom-color: var(--class-accent);"><option value="None">Select ${sch} Utility...</option>${Object.keys(UTILITY_SPELLS[sch] || {}).map(k => `<option value="${k}">${k}</option>`).join('')}</select>`;
+                    spells.push({ name: "", tier: "Utility", school: sch, customHtml });
+                }
             });
         }
 

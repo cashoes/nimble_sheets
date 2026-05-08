@@ -1,278 +1,1266 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NIMBLE — Character Tracker v1.5.0</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --gold: #c8922a; --gold-light: #e8b84b; --gold-dim: #7a5818;
-    --slate-darkest: #070a0e; --slate-dark: #0f141a; --slate-mid: #1b222c;
-    --slate-light: #2a3441; --slate-lighter: #3a4a5e;
-    --text-main: #e2e8f0; --text-muted: #94a3b8;
-    --save-adv: #22c55e;
-    --save-dis: #ef4444;
-    --class-accent: #38bdf8;
-    --class-accent-dim: #0284c7;
-    --class-body-bg: #070a0e;
-    --class-container-bg: #0f141a;
-    --class-panel-bg: #1b222c;
-    --class-border: var(--slate-lighter);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIMBLE — Character Tracker v1.5.0</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --gold: #c8922a;
+      --gold-light: #e8b84b;
+      --gold-dim: #7a5818;
+      --slate-darkest: #070a0e;
+      --slate-dark: #0f141a;
+      --slate-mid: #1b222c;
+      --slate-light: #2a3441;
+      --slate-lighter: #3a4a5e;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --save-adv: #22c55e;
+      --save-dis: #ef4444;
+      --class-accent: #38bdf8;
+      --class-accent-dim: #0284c7;
+      --class-body-bg: #070a0e;
+      --class-container-bg: #0f141a;
+      --class-panel-bg: #1b222c;
+      --class-border: var(--slate-lighter);
 
-    /* Spell School Colors */
-    --fire-school: #ef4444;
-    --ice-school: #38bdf8;
-    --lightning-school: #eab308;
-    --wind-school: #a7f3d0;
-    --radiant-school: #fde047;
-    --necrotic-school: #a855f7;
-  }
+      /* Spell School Colors */
+      --fire-school: #ef4444;
+      --ice-school: #38bdf8;
+      --lightning-school: #eab308;
+      --wind-school: #a7f3d0;
+      --radiant-school: #fde047;
+      --necrotic-school: #a855f7;
+    }
 
-  * { -ms-overflow-style: none; scrollbar-width: none; }
-  *::-webkit-scrollbar { display: none; }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
-  @keyframes pulse-green { 0% { background-color: rgba(34, 197, 94, 0.4); } 100% { background-color: transparent; } }
-  @keyframes pulse-red { 0% { background-color: rgba(239, 68, 68, 0.4); } 100% { background-color: transparent; } }
-  .flash-green { animation: pulse-green 1s ease-out; }
-  .flash-red { animation: pulse-red 1s ease-out; }
+    *::-webkit-scrollbar {
+      display: none;
+    }
 
-  .error-glow { border-bottom-color: var(--save-dis) !important; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); color: var(--save-dis) !important; }
+    @keyframes pulse-green {
+      0% {
+        background-color: rgba(34, 197, 94, 0.4);
+      }
 
-  /* Top Utility Row */
-  .top-utility-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 2px 5px 8px 5px; font-family: 'Cinzel', serif; font-size: 0.65em; font-weight: bold; text-transform: uppercase;
-    min-height: 25px; margin-bottom: 5px;
-  }
-  .utility-group-left, .utility-group-right { display: flex; align-items: center; gap: 15px; }
+      100% {
+        background-color: transparent;
+      }
+    }
 
-  #saveIndicator { color: var(--slate-lighter); opacity: 0.8; min-width: 85px; display: inline-block; }
-  .subtle-link {
-    background: transparent; border: none; padding: 0; color: var(--text-muted); cursor: pointer;
-    text-decoration: none; transition: all 0.2s;
-    font-family: inherit; font-size: 1.15em; font-weight: inherit; text-transform: inherit;
-  }
-  .subtle-link:hover { color: #fff; text-shadow: 0 0 10px var(--class-accent), 0 0 20px var(--class-accent-dim); }
+    @keyframes pulse-red {
+      0% {
+        background-color: rgba(239, 68, 68, 0.4);
+      }
 
-  /* Combat Controls */
-  .advantage-controls {
-    display: flex; align-items: center; gap: 6px; padding: 2px 6px;
-  }
-  .adv-btn {
-    background: transparent; border: none; color: var(--text-muted);
-    width: 18px; height: 18px; cursor: pointer; font-family: 'Cinzel', serif;
-    display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 1.2em;
-  }
-  .adv-btn:hover { color: var(--class-accent); }
-  .adv-val { font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.1em; min-width: 80px; text-align: center; color: var(--text-muted); }
-  .adv-val.positive { color: var(--save-adv); }
-  .adv-val.negative { color: var(--save-dis); }
+      100% {
+        background-color: transparent;
+      }
+    }
 
-  /* Header (Hero Identity Row) */
-  .header { 
-    display: grid; grid-template-columns: 1fr 1.5fr 1fr; align-items: center; 
-    border-bottom: 2px solid var(--class-border); padding-bottom: 6px; margin-bottom: 10px; position: relative; 
-  }
-  .header::after { content: ''; position: absolute; bottom: -2px; left: 15%; width: 70%; height: 2px; background-color: var(--class-accent); }
-  .header-left-stats { display: flex; gap: 15px; justify-content: flex-start; align-items: center; }
-  .header-center { text-align: center; }
-  .header-right-stats { display: flex; gap: 15px; justify-content: flex-end; align-items: center; }
+    .flash-green {
+      animation: pulse-green 1s ease-out;
+    }
 
-  h1 { font-family: 'Cinzel Decorative', serif; color: var(--text-main); margin: 0; font-size: 2.2em; letter-spacing: 1px; line-height: 1; }
-  .subtitle { font-family: 'Cinzel', serif; color: var(--text-muted); letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase; font-size: 0.75em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .header-stat { display: flex; flex-direction: column; align-items: center; }
-  .header-stat label { color: var(--text-muted); font-family: 'Cinzel', serif; font-size: 0.75em; letter-spacing: 1px; text-transform: uppercase; margin: 0; font-weight: 600; }
-  .header-stat-val { font-family: 'Cinzel', serif; font-size: 1.6em; font-weight: bold; margin-top: -2px; color: #fff; line-height: 1.0; }
+    .flash-red {
+      animation: pulse-red 1s ease-out;
+    }
 
-  .action-pips { display: flex; gap: 6px; align-items: center; margin-left: 15px; }
-  .action-pip { appearance: none; width: 14px; height: 14px; border: 1px solid var(--class-accent); border-radius: 50%; cursor: pointer; background: rgba(0,0,0,0.4); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: inset 0 0 2px rgba(0,0,0,0.5); margin: 0; }
-  .action-pip:checked { background: var(--class-accent); box-shadow: 0 0 10px var(--class-accent), inset 0 0 2px rgba(255,255,255,0.5); transform: scale(1.1); }
+    .error-glow {
+      border-bottom-color: var(--save-dis) !important;
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+      color: var(--save-dis) !important;
+    }
 
-  body { background-color: var(--class-body-bg); color: var(--text-main); font-family: 'Crimson Text', serif; margin: 0; padding: 5px; display: flex; justify-content: center; font-size: 14px; transition: background-color 0.5s ease; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
-  .container { max-width: 1200px; width: 100%; background: var(--class-container-bg); border: 2px solid var(--class-border); box-shadow: 0 15px 40px rgba(0,0,0,0.8); padding: 8px 10px; position: relative; box-sizing: border-box; border-radius: 6px; transition: all 0.5s ease; }
+    /* Top Utility Row */
+    .top-utility-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 5px 8px 5px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.65em;
+      font-weight: bold;
+      text-transform: uppercase;
+      min-height: 25px;
+      margin-bottom: 5px;
+    }
 
-  h2.section-header { font-family: 'Cinzel Decorative', serif; border-bottom: 1px solid var(--class-border); padding-bottom: 3px; margin: 0 0 8px 0; color: var(--class-accent); font-size: 1.2em; }
-  .top-bar { display: grid; grid-template-columns: 2fr 0.6fr 1fr 1fr 1.2fr; gap: 6px; margin-bottom: 8px; align-items: end; }
-  .top-bar .panel { padding: 2px 6px; border: none; background: transparent; }
-  .top-bar input, .top-bar select { font-size: 0.85em; }
+    .utility-group-left,
+    .utility-group-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
 
-  .layout-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; margin-bottom: 10px; width: 100%; }
-  .layout-1col { width: 100%; margin-bottom: 10px; }
-  .left-col, .right-col { min-width: 0; width: 100%; }
-  .panel { background: var(--class-panel-bg); border: 1px solid var(--class-border); padding: 4px 8px; border-radius: 4px; }
-  
-  .roll-link { cursor: pointer !important; transition: all 0.2s ease !important; }
-  .roll-link:hover { color: #fff !important; text-shadow: 0 0 10px var(--class-accent), 0 0 20px var(--class-accent-dim) !important; }
-  .roll-link:active { transform: scale(0.95) !important; }
-  .core-stat[onclick]:hover { border-color: var(--class-accent) !important; box-shadow: 0 0 15px var(--class-accent-dim) !important; }
+    #saveIndicator {
+      color: var(--slate-lighter);
+      opacity: 0.8;
+      min-width: 85px;
+      display: inline-block;
+    }
 
-  .mechanic-panel { padding: 10px 15px; flex: 1; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; border: none; background: transparent; }
-  .panel-title { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; display: block; border-bottom: 1px solid var(--class-border); padding-bottom: 1px; }
-  
-  input[type="text"], input[type="number"], select { width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--class-border); font-family: 'Crimson Text', serif; font-size: 1.0em; color: var(--text-main); padding: 1px; font-weight: 600; transition: border-color 0.2s, opacity 0.2s; box-sizing: border-box; }
-  input[type="text"], input[type="number"] { text-align: center; }
-  select { text-align: left; text-align-last: left; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 4px center; background-size: 12px; padding-right: 20px; cursor: pointer; }
-  input:focus, select:focus { outline: none; border-bottom-color: var(--class-accent); background: rgba(255,255,255,0.05); }
-  select option { background-color: var(--slate-dark); color: var(--text-main); font-family: 'Crimson Text', serif; text-align: left; }
-  select optgroup { background-color: var(--slate-mid); color: var(--gold-light); font-family: 'Cinzel', serif; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; font-size: 0.7em; text-align: left; }
-  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  input[type=number] { -moz-appearance: textfield; }
+    .subtle-link {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-family: inherit;
+      font-size: 1.15em;
+      font-weight: inherit;
+      text-transform: inherit;
+    }
 
-  .hero-card { background: var(--class-bg-gradient, var(--class-panel-bg)); border: 1px solid var(--class-accent-dim); border-radius: 6px; padding: 10px; box-shadow: 0 8px 16px rgba(0,0,0,0.5); display: flex; flex-direction: column; height: 100%; box-sizing: border-box; overflow: hidden; }
-  .hero-card label { color: var(--text-muted); font-family: 'Cinzel', serif; font-size: 0.8em; letter-spacing: 1px; text-transform: uppercase; margin: 0; font-weight: bold; }
-  .ability-card { padding: 0; overflow: hidden; }
+    .subtle-link:hover {
+      color: #fff;
+      text-shadow: 0 0 10px var(--class-accent), 0 0 20px var(--class-accent-dim);
+    }
 
-  .core-stats-row { display: flex; justify-content: space-between; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid rgba(56, 189, 248, 0.2); }
-  .core-stat { display: flex; flex-direction: column; align-items: center; width: 23%; background: rgba(0,0,0,0.4); padding: 5px 2px; border: 1px solid var(--class-border); border-radius: 4px; transition: all 0.3s ease; position: relative; overflow: hidden; }
-  .save-indicator { position: absolute; top: 0; left: 0; right: 0; height: 3px; display: none; }
-  .core-stat.save-adv .save-indicator { display: block; background-color: var(--save-adv); box-shadow: 0 0 6px var(--save-adv); }
-  .core-stat.save-dis .save-indicator { display: block; background-color: var(--save-dis); box-shadow: 0 0 6px var(--save-dis); }
-  .core-stat-total { color: #fff; font-size: 2.0em; font-family: 'Cinzel', serif; font-weight: bold; margin: 1px 0; }
-  .core-stat-inputs { display: flex; gap: 4px; align-items: center; color: var(--text-muted); }
-  .core-stat-inputs input { width: 24px; padding: 1px 0; font-size: 0.8em; text-align: center; background: rgba(255,255,255,0.05); border: none; border-bottom: 2px solid var(--class-border); color: var(--text-main); border-radius: 2px; transition: border-color 0.2s, opacity 0.2s; }
-  .core-stat.key-stat { border: 1px solid var(--class-accent); background: linear-gradient(180deg, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0.4) 100%); box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.1), 0 0 6px rgba(56, 189, 248, 0.3); }
-  .core-stat.key-stat label { color: var(--class-accent); text-shadow: 0 0 5px rgba(56, 189, 248, 0.5); font-weight: 700; }
+    /* Combat Controls */
+    .advantage-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 6px;
+    }
 
-  .res-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-bottom: 5px; }
-  .res-val { font-family: 'Cinzel', serif; font-size: 1.3em; font-weight: bold; display: flex; align-items: center; gap: 6px; }
-  .pips { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-  .pip { appearance: none; width: 14px; height: 14px; border: 2px solid var(--class-border); border-radius: 50%; cursor: pointer; background: rgba(0,0,0,0.6); margin: 0; transition: all 0.2s; }
-  .pip:checked { background: var(--class-accent); border-color: var(--class-accent); box-shadow: 0 0 8px var(--class-accent); }
-  .pip.wound:checked { background: var(--save-dis); border-color: var(--save-dis); box-shadow: 0 0 8px var(--save-dis); }
-  .dark-incrementer { display: inline-flex; align-items: center; background: rgba(0,0,0,0.5); border-radius: 4px; padding: 2px; border: none; gap: 2px; box-sizing: border-box; }
-  .dark-incrementer button { background: var(--class-border); color: var(--text-main); border: none; width: 1.7em; height: 1.7em; cursor: pointer; font-weight: bold; font-family: monospace; border-radius: 2px; transition: 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0; flex-shrink: 0; }
-  .dark-incrementer button:hover { background: var(--class-accent); color: #000; }
-  .dark-incrementer span, .dark-incrementer input[type="number"] { font-family: 'Cinzel', serif; font-weight: bold; text-align: center; border: none; background: transparent; color: #fff; padding: 0; font-size: 1.1em; margin: 0; -moz-appearance: textfield; }
-  .dark-incrementer input[type="number"] { width: 2.2em; flex-shrink: 1; min-width: 0; }
-  .max-text { font-size: 0.8em; color: var(--text-muted); font-family: 'Cinzel', serif; font-weight: bold; min-width: 20px; margin-top: 2px; }
+    .adv-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-size: 1.2em;
+    }
 
-  .skills-box { background: var(--class-panel-bg); padding: 8px 12px; box-sizing: border-box; height: 150px; margin-top: auto; display: flex; flex-direction: column; }
-  .skill-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.7em; color: var(--text-muted); margin-bottom: 2px; border-bottom: 1px solid var(--class-border); padding-bottom: 1px; font-weight: bold; font-family: 'Cinzel', serif; }
-  .skills-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 15px; width: 100%; flex: 1; align-content: start; }
-  .skill-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; padding: 1px 0; font-family: 'Cinzel', serif; }
-  .skill-name { flex-grow: 1; font-weight: 600; color: var(--text-main); font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .skill-stat { font-size: 0.65em; color: var(--text-muted); text-transform: uppercase; margin-left: 3px; }
-  .skill-pts { width: 35px; margin: 0 4px; }
-  .skill-pts input { width: 100%; font-size: 0.85em; background: var(--slate-dark); border-bottom: 2px solid var(--class-border); border-radius: 2px; font-family: 'Cinzel', serif; font-weight: bold; }
-  .skill-total { width: 28px; text-align: right; font-weight: bold; color: var(--class-accent); font-size: 1.15em; }
+    .adv-btn:hover {
+      color: var(--class-accent);
+    }
 
-  .conditions-box { border: 1px solid var(--class-border); background: var(--class-panel-bg); padding: 10px; border-radius: 6px; }
-  .conditions-flex { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-  .condition-btn { background: var(--slate-dark); border: 1px solid var(--class-border); color: var(--text-muted); font-family: 'Cinzel', serif; font-size: 0.75em; font-weight: bold; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s; user-select: none; }
-  .condition-btn.debuff.active { background: rgba(239, 68, 68, 0.2); border-color: var(--save-dis); color: #fff; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
-  .condition-btn.buff.active { background: rgba(56, 189, 248, 0.2); border-color: var(--class-accent); color: #fff; box-shadow: 0 0 8px rgba(56, 189, 248, 0.4); }
+    .adv-val {
+      font-family: 'Cinzel', serif;
+      font-weight: bold;
+      font-size: 1.1em;
+      min-width: 80px;
+      text-align: center;
+      color: var(--text-muted);
+    }
 
-  .inv-header { display: grid; grid-template-columns: 20px 2fr 1fr 1.8fr 0.8fr 30px 1.6fr 1.6fr 20px; gap: 6px; padding: 0 4px 6px 4px; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-weight: bold; border-bottom: 2px solid var(--class-border); margin-bottom: 4px; letter-spacing: 1px; }
-  .inv-row { display: grid; grid-template-columns: 20px 2fr 1fr 1.8fr 0.8fr 30px 1.6fr 1.6fr 20px; gap: 4px; align-items: center; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px; transition: all 0.2s; }
-  .inv-row:hover { background: rgba(255,255,255,0.05); }
-  .inv-row.equipped { background: rgba(0,0,0,0.4); box-shadow: inset 3px 0 0 0 var(--class-accent); }
-  .inv-input { min-width: 0; background: transparent; color: var(--text-main); border: 1px solid transparent; border-radius: 2px; padding: 2px 4px; font-family: 'Crimson Text', serif; font-size: 0.95em; width: 100%; min-height: 26px; resize: vertical; transition: all 0.2s; }
-  .inv-input:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
-  .inv-input:focus { background: rgba(0,0,0,0.5); border-color: var(--class-accent); outline: none; }
-  .add-item-btn { background: var(--slate-light); color: var(--text-main); border: 1px solid var(--class-border); padding: 6px 10px; font-family: 'Cinzel', serif; font-weight: bold; letter-spacing: 1px; border-radius: 4px; cursor: pointer; transition: 0.2s; flex: 1; margin-top: 4px; font-size: 0.85em; }
-  .add-item-btn:hover { background: var(--class-accent); color: #000; border-color: var(--class-accent); }
+    .adv-val.positive {
+      color: var(--save-adv);
+    }
 
-  .feature { background: var(--class-panel-bg); border: 1px solid var(--class-border); border-left: 4px solid var(--class-accent); padding: 10px; margin-bottom: 10px; border-radius: 0 4px 4px 0; width: 100%; box-sizing: border-box; }
-  .feature h3 { font-family: 'Cinzel', serif; font-size: 1.05em; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px; color: var(--text-main); border-bottom: 1px solid var(--class-border); padding-bottom: 4px; }
-  .feature h3 span.level-tag { font-size: 0.6em; background: var(--slate-light); color: var(--text-main); padding: 2px 6px; border-radius: 2px; letter-spacing: 1px; }
-  .feature .feature-desc { margin: 4px 0 0 0; line-height: 1.4; font-size: 0.9em; color: var(--text-muted); }
-  .feature ul { margin: 8px 0 0 0; padding-left: 20px; list-style-type: circle; color: var(--text-muted); }
-  .feature li { margin-bottom: 4px; font-size: 0.9em; line-height: 1.4; }
+    .adv-val.negative {
+      color: var(--save-dis);
+    }
 
-  .minor-feature { display: none; }
-  body.show-minor .minor-feature { display: block; }
-  .subclass-feature { 
-    border-left-color: var(--subclass-accent) !important; 
-    background: linear-gradient(90deg, color-mix(in srgb, var(--subclass-accent), transparent 88%), rgba(0,0,0,0.2)) !important;
-  }
+    /* Header (Hero Identity Row) */
+    .header {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      align-items: center;
+      border-bottom: 2px solid var(--class-border);
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      position: relative;
+    }
 
-  .spell-grid { display: flex; flex-direction: column; width: 100%; }
-  .spell-card { background: var(--class-panel-bg); border: 1px solid var(--class-border); padding: 10px; display: flex; flex-direction: column; gap: 4px; position: relative; border-left: 4px solid var(--class-accent); border-radius: 0 4px 4px 0; transition: border-color 0.3s; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-  .spell-card.fire { border-left-color: var(--fire-school); }
-  .spell-card.ice { border-left-color: var(--ice-school); }
-  .spell-card.lightning { border-left-color: var(--lightning-school); }
-  .spell-card.wind { border-left-color: var(--wind-school); }
-  .spell-card.radiant { border-left-color: var(--radiant-school); }
-  .spell-card.necrotic { border-left-color: var(--necrotic-school); }
-  .spell-card h4 { margin: 0; font-family: 'Cinzel', serif; font-size: 1.0em; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--class-border); padding-bottom: 4px; color: var(--text-main); }
-  .spell-card h4 span.tier-tag { font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: normal; color: var(--text-muted); text-transform: uppercase; display: center; letter-spacing: 1px; }
-  .stat-hl { color: var(--gold-light); font-weight: bold; background: rgba(232, 184, 75, 0.1); border-radius: 3px; }
-  .dice-hl { color: #fff; font-weight: bold; }
-  .spell-desc { font-size: 0.95em; color: var(--text-muted); line-height: 1.3; }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 15%;
+      width: 70%;
+      height: 2px;
+      background-color: var(--class-accent);
+    }
 
-  #dynamicResourcesContainer { overflow-y: auto; flex: 1; margin-top: 5px; }
+    .header-left-stats {
+      display: flex;
+      gap: 15px;
+      justify-content: flex-start;
+      align-items: center;
+    }
 
-  @media (max-width: 850px) {
-    .layout-2col { grid-template-columns: 1fr; }
-    .top-bar { grid-template-columns: 1fr 1fr; }
-    .header { grid-template-columns: 1fr; gap: 10px; }
-    .header-left-stats, .header-right-stats { width: 100%; justify-content: center; }
-  }
-</style>
+    .header-center {
+      text-align: center;
+    }
+
+    .header-right-stats {
+      display: flex;
+      gap: 15px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    h1 {
+      font-family: 'Cinzel Decorative', serif;
+      color: var(--text-main);
+      margin: 0;
+      font-size: 2.2em;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    .subtitle {
+      font-family: 'Cinzel', serif;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75em;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header-stat label {
+      color: var(--text-muted);
+      font-family: 'Cinzel', serif;
+      font-size: 0.75em;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .header-stat-val {
+      font-family: 'Cinzel', serif;
+      font-size: 1.6em;
+      font-weight: bold;
+      margin-top: -2px;
+      color: #fff;
+      line-height: 1.0;
+    }
+
+    .action-pips {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-left: 15px;
+    }
+
+    .action-pip {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--class-accent);
+      border-radius: 50%;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.4);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
+      margin: 0;
+    }
+
+    .action-pip:checked {
+      background: var(--class-accent);
+      box-shadow: 0 0 10px var(--class-accent), inset 0 0 2px rgba(255, 255, 255, 0.5);
+      transform: scale(1.1);
+    }
+
+    body {
+      background-color: var(--class-body-bg);
+      color: var(--text-main);
+      font-family: 'Crimson Text', serif;
+      margin: 0;
+      padding: 5px;
+      display: flex;
+      justify-content: center;
+      font-size: 14px;
+      transition: background-color 0.5s ease;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      background: var(--class-container-bg);
+      border: 2px solid var(--class-border);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+      padding: 8px 10px;
+      position: relative;
+      box-sizing: border-box;
+      border-radius: 6px;
+      transition: all 0.5s ease;
+    }
+
+    h2.section-header {
+      font-family: 'Cinzel Decorative', serif;
+      border-bottom: 1px solid var(--class-border);
+      padding-bottom: 3px;
+      margin: 0 0 8px 0;
+      color: var(--class-accent);
+      font-size: 1.2em;
+    }
+
+    .top-bar {
+      display: grid;
+      grid-template-columns: 2fr 0.6fr 1fr 1fr 1.2fr;
+      gap: 6px;
+      margin-bottom: 8px;
+      align-items: end;
+    }
+
+    .top-bar .panel {
+      padding: 2px 6px;
+      border: none;
+      background: transparent;
+    }
+
+    .top-bar input,
+    .top-bar select {
+      font-size: 0.85em;
+    }
+
+    .layout-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+
+    .layout-1col {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .left-col,
+    .right-col {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .panel {
+      background: var(--class-panel-bg);
+      border: 1px solid var(--class-border);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .roll-link {
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .roll-link:hover {
+      color: #fff !important;
+      text-shadow: 0 0 10px var(--class-accent), 0 0 20px var(--class-accent-dim) !important;
+    }
+
+    .roll-link:active {
+      transform: scale(0.95) !important;
+    }
+
+    .core-stat[onclick]:hover {
+      border-color: var(--class-accent) !important;
+      box-shadow: 0 0 15px var(--class-accent-dim) !important;
+    }
+
+    .mechanic-panel {
+      padding: 10px 15px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
+      border: none;
+      background: transparent;
+    }
+
+    .panel-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7em;
+      font-weight: bold;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      display: block;
+      border-bottom: 1px solid var(--class-border);
+      padding-bottom: 1px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid var(--class-border);
+      font-family: 'Crimson Text', serif;
+      font-size: 1.0em;
+      color: var(--text-main);
+      padding: 1px;
+      font-weight: 600;
+      transition: border-color 0.2s, opacity 0.2s;
+      box-sizing: border-box;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      text-align: center;
+    }
+
+    select {
+      text-align: left;
+      text-align-last: left;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 4px center;
+      background-size: 12px;
+      padding-right: 20px;
+      cursor: pointer;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-bottom-color: var(--class-accent);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    select option {
+      background-color: var(--slate-dark);
+      color: var(--text-main);
+      font-family: 'Crimson Text', serif;
+      text-align: left;
+    }
+
+    select optgroup {
+      background-color: var(--slate-mid);
+      color: var(--gold-light);
+      font-family: 'Cinzel', serif;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 0.7em;
+      text-align: left;
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type=number] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    .hero-card {
+      background: var(--class-bg-gradient, var(--class-panel-bg));
+      border: 1px solid var(--class-accent-dim);
+      border-radius: 6px;
+      padding: 10px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .hero-card label {
+      color: var(--text-muted);
+      font-family: 'Cinzel', serif;
+      font-size: 0.8em;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin: 0;
+      font-weight: bold;
+    }
+
+    .ability-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .core-stats-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    .core-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 23%;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 5px 2px;
+      border: 1px solid var(--class-border);
+      border-radius: 4px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .save-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      display: none;
+    }
+
+    .core-stat.save-adv .save-indicator {
+      display: block;
+      background-color: var(--save-adv);
+      box-shadow: 0 0 6px var(--save-adv);
+    }
+
+    .core-stat.save-dis .save-indicator {
+      display: block;
+      background-color: var(--save-dis);
+      box-shadow: 0 0 6px var(--save-dis);
+    }
+
+    .core-stat-total {
+      color: #fff;
+      font-size: 2.0em;
+      font-family: 'Cinzel', serif;
+      font-weight: bold;
+      margin: 1px 0;
+    }
+
+    .core-stat-inputs {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      color: var(--text-muted);
+    }
+
+    .core-stat-inputs input {
+      width: 24px;
+      padding: 1px 0;
+      font-size: 0.8em;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      border-bottom: 2px solid var(--class-border);
+      color: var(--text-main);
+      border-radius: 2px;
+      transition: border-color 0.2s, opacity 0.2s;
+    }
+
+    .core-stat.key-stat {
+      border: 1px solid var(--class-accent);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.15) 0%, rgba(0, 0, 0, 0.4) 100%);
+      box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.1), 0 0 6px rgba(56, 189, 248, 0.3);
+    }
+
+    .core-stat.key-stat label {
+      color: var(--class-accent);
+      text-shadow: 0 0 5px rgba(56, 189, 248, 0.5);
+      font-weight: 700;
+    }
+
+    .res-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding-bottom: 5px;
+    }
+
+    .res-val {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3em;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pips {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pip {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--class-border);
+      border-radius: 50%;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.6);
+      margin: 0;
+      transition: all 0.2s;
+    }
+
+    .pip:checked {
+      background: var(--class-accent);
+      border-color: var(--class-accent);
+      box-shadow: 0 0 8px var(--class-accent);
+    }
+
+    .pip.wound:checked {
+      background: var(--save-dis);
+      border-color: var(--save-dis);
+      box-shadow: 0 0 8px var(--save-dis);
+    }
+
+    .dark-incrementer {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 4px;
+      padding: 2px;
+      border: none;
+      gap: 2px;
+      box-sizing: border-box;
+    }
+
+    .dark-incrementer button {
+      background: var(--class-border);
+      color: var(--text-main);
+      border: none;
+      width: 1.7em;
+      height: 1.7em;
+      cursor: pointer;
+      font-weight: bold;
+      font-family: monospace;
+      border-radius: 2px;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .dark-incrementer button:hover {
+      background: var(--class-accent);
+      color: #000;
+    }
+
+    .dark-incrementer span,
+    .dark-incrementer input[type="number"] {
+      font-family: 'Cinzel', serif;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+      background: transparent;
+      color: #fff;
+      padding: 0;
+      font-size: 1.1em;
+      margin: 0;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    .dark-incrementer input[type="number"] {
+      width: 2.2em;
+      flex-shrink: 1;
+      min-width: 0;
+    }
+
+    .max-text {
+      font-size: 0.8em;
+      color: var(--text-muted);
+      font-family: 'Cinzel', serif;
+      font-weight: bold;
+      min-width: 20px;
+      margin-top: 2px;
+    }
+
+    .skills-box {
+      background: var(--class-panel-bg);
+      padding: 8px 12px;
+      box-sizing: border-box;
+      height: 150px;
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .skill-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7em;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+      border-bottom: 1px solid var(--class-border);
+      padding-bottom: 1px;
+      font-weight: bold;
+      font-family: 'Cinzel', serif;
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 15px;
+      width: 100%;
+      flex: 1;
+      align-content: start;
+    }
+
+    .skill-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9em;
+      padding: 1px 0;
+      font-family: 'Cinzel', serif;
+    }
+
+    .skill-name {
+      flex-grow: 1;
+      font-weight: 600;
+      color: var(--text-main);
+      font-size: 0.75em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .skill-stat {
+      font-size: 0.65em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-left: 3px;
+    }
+
+    .skill-pts {
+      width: 35px;
+      margin: 0 4px;
+    }
+
+    .skill-pts input {
+      width: 100%;
+      font-size: 0.85em;
+      background: var(--slate-dark);
+      border-bottom: 2px solid var(--class-border);
+      border-radius: 2px;
+      font-family: 'Cinzel', serif;
+      font-weight: bold;
+    }
+
+    .skill-total {
+      width: 28px;
+      text-align: right;
+      font-weight: bold;
+      color: var(--class-accent);
+      font-size: 1.15em;
+    }
+
+    .conditions-box {
+      border: 1px solid var(--class-border);
+      background: var(--class-panel-bg);
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .conditions-flex {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .condition-btn {
+      background: var(--slate-dark);
+      border: 1px solid var(--class-border);
+      color: var(--text-muted);
+      font-family: 'Cinzel', serif;
+      font-size: 0.75em;
+      font-weight: bold;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .condition-btn.debuff.active {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--save-dis);
+      color: #fff;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+    .condition-btn.buff.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--class-accent);
+      color: #fff;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    }
+
+    .inv-header {
+      display: grid;
+      grid-template-columns: 20px 2fr 1fr 1.8fr 0.8fr 30px 1.6fr 1.6fr 20px;
+      gap: 6px;
+      padding: 0 4px 6px 4px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.8em;
+      color: var(--gold-light);
+      text-transform: uppercase;
+      font-weight: bold;
+      border-bottom: 2px solid var(--class-border);
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+
+    .inv-row {
+      display: grid;
+      grid-template-columns: 20px 2fr 1fr 1.8fr 0.8fr 30px 1.6fr 1.6fr 20px;
+      gap: 4px;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 4px;
+      transition: all 0.2s;
+    }
+
+    .inv-row:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .inv-row.equipped {
+      background: rgba(0, 0, 0, 0.4);
+      box-shadow: inset 3px 0 0 0 var(--class-accent);
+    }
+
+    .inv-input {
+      min-width: 0;
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid transparent;
+      border-radius: 2px;
+      padding: 2px 4px;
+      font-family: 'Crimson Text', serif;
+      font-size: 0.95em;
+      width: 100%;
+      min-height: 26px;
+      resize: vertical;
+      transition: all 0.2s;
+    }
+
+    .inv-input:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .inv-input:focus {
+      background: rgba(0, 0, 0, 0.5);
+      border-color: var(--class-accent);
+      outline: none;
+    }
+
+    .add-item-btn {
+      background: var(--slate-light);
+      color: var(--text-main);
+      border: 1px solid var(--class-border);
+      padding: 6px 10px;
+      font-family: 'Cinzel', serif;
+      font-weight: bold;
+      letter-spacing: 1px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: 0.2s;
+      flex: 1;
+      margin-top: 4px;
+      font-size: 0.85em;
+    }
+
+    .add-item-btn:hover {
+      background: var(--class-accent);
+      color: #000;
+      border-color: var(--class-accent);
+    }
+
+    .feature {
+      background: var(--class-panel-bg);
+      border: 1px solid var(--class-border);
+      border-left: 4px solid var(--class-accent);
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 0 4px 4px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .feature h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.05em;
+      margin: 0 0 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--class-border);
+      padding-bottom: 4px;
+    }
+
+    .feature h3 span.level-tag {
+      font-size: 0.6em;
+      background: var(--slate-light);
+      color: var(--text-main);
+      padding: 2px 6px;
+      border-radius: 2px;
+      letter-spacing: 1px;
+    }
+
+    .feature .feature-desc {
+      margin: 4px 0 0 0;
+      line-height: 1.4;
+      font-size: 0.9em;
+      color: var(--text-muted);
+    }
+
+    .feature ul {
+      margin: 8px 0 0 0;
+      padding-left: 20px;
+      list-style-type: circle;
+      color: var(--text-muted);
+    }
+
+    .feature li {
+      margin-bottom: 4px;
+      font-size: 0.9em;
+      line-height: 1.4;
+    }
+
+    .minor-feature {
+      display: none;
+    }
+
+    body.show-minor .minor-feature {
+      display: block;
+    }
+
+    .subclass-feature {
+      border-left-color: var(--subclass-accent) !important;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--subclass-accent), transparent 88%), rgba(0, 0, 0, 0.2)) !important;
+    }
+
+    .spell-grid {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .spell-card {
+      background: var(--class-panel-bg);
+      border: 1px solid var(--class-border);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      border-left: 4px solid var(--class-accent);
+      border-radius: 0 4px 4px 0;
+      transition: border-color 0.3s;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    .spell-card.fire {
+      border-left-color: var(--fire-school);
+    }
+
+    .spell-card.ice {
+      border-left-color: var(--ice-school);
+    }
+
+    .spell-card.lightning {
+      border-left-color: var(--lightning-school);
+    }
+
+    .spell-card.wind {
+      border-left-color: var(--wind-school);
+    }
+
+    .spell-card.radiant {
+      border-left-color: var(--radiant-school);
+    }
+
+    .spell-card.necrotic {
+      border-left-color: var(--necrotic-school);
+    }
+
+    .spell-card h4 {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 1.0em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--class-border);
+      padding-bottom: 4px;
+      color: var(--text-main);
+    }
+
+    .spell-card h4 span.tier-tag {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7em;
+      font-weight: normal;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      display: center;
+      letter-spacing: 1px;
+    }
+
+    .stat-hl {
+      color: var(--gold-light);
+      font-weight: bold;
+      background: rgba(232, 184, 75, 0.1);
+      border-radius: 3px;
+    }
+
+    .dice-hl {
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .spell-desc {
+      font-size: 0.95em;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    #dynamicResourcesContainer {
+      overflow-y: auto;
+      flex: 1;
+      margin-top: 5px;
+    }
+
+    @media (max-width: 850px) {
+      .layout-2col {
+        grid-template-columns: 1fr;
+      }
+
+      .top-bar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .header {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .header-left-stats,
+      .header-right-stats {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="container">
-  <div class="top-utility-row">
-    <div class="utility-group-left">
+  <div class="container">
+    <div class="top-utility-row">
+      <div class="utility-group-left">
         <button onclick="saveAsHTML()" class="subtle-link">Save as HTML</button>
         <span id="saveIndicator">Auto-saved</span>
+      </div>
+      <div id="combatControlsContainer" class="utility-group-right"></div>
     </div>
-    <div id="combatControlsContainer" class="utility-group-right"></div>
-  </div>
-  <div class="header">
-    <div class="header-left-stats" id="headerLeftStats"></div>
-    <div class="header-center">
+    <div class="header">
+      <div class="header-left-stats" id="headerLeftStats"></div>
+      <div class="header-center">
         <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
-            <h1 id="classNameDisplay">Class Name</h1>
-            <div class="action-pips">
-                <input type="checkbox" class="action-pip" id="action1" onclick="toggleAction(0)">
-                <input type="checkbox" class="action-pip" id="action2" onclick="toggleAction(1)">
-                <input type="checkbox" class="action-pip" id="action3" onclick="toggleAction(2)">
-            </div>
+          <h1 id="classNameDisplay">Class Name</h1>
+          <div class="action-pips">
+            <input type="checkbox" class="action-pip" id="action1" onclick="toggleAction(0)">
+            <input type="checkbox" class="action-pip" id="action2" onclick="toggleAction(1)">
+            <input type="checkbox" class="action-pip" id="action3" onclick="toggleAction(2)">
+          </div>
         </div>
         <div class="subtitle" id="classSubtitleDisplay">Subtitle</div>
+      </div>
+      <div class="header-right-stats" id="headerRightStats"></div>
     </div>
-    <div class="header-right-stats" id="headerRightStats"></div>
-  </div>
-  <div class="top-bar">
-    <div class="panel"><label class="panel-title">Hero Name</label><input type="text" id="charName" placeholder="Name"></div>
-    <div class="panel"><label class="panel-title">Lvl (1-20)</label><input type="number" id="level" min="1" max="20" value="1"></div>
-    <div class="panel"><label class="panel-title">Ancestry</label><select id="ancestry"></select></div>
-    <div class="panel"><label class="panel-title">Background</label><select id="background"></select></div>
-    <div class="panel"><label class="panel-title">Subclass</label><select id="subclass"></select></div>
-  </div>
-  <div class="layout-2col">
-    <div class="left-col">
-      <div class="hero-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-           <span style="font-family: 'Cinzel', serif; font-size: 0.9em; font-weight: bold; color: var(--text-main); letter-spacing: 1px;">ATTRIBUTES</span>
-           <span style="font-family: 'Cinzel', serif; font-size: 0.85em; font-weight: bold;" id="unspentStats">UNSPENT: MAXED OUT</span>
+    <div class="top-bar">
+      <div class="panel"><label class="panel-title">Hero Name</label><input type="text" id="charName"
+          placeholder="Name"></div>
+      <div class="panel"><label class="panel-title">Lvl (1-20)</label><input type="number" id="level" min="1" max="20"
+          value="1"></div>
+      <div class="panel"><label class="panel-title">Ancestry</label><select id="ancestry"></select></div>
+      <div class="panel"><label class="panel-title">Background</label><select id="background"></select></div>
+      <div class="panel"><label class="panel-title">Subclass</label><select id="subclass"></select></div>
+    </div>
+    <div class="layout-2col">
+      <div class="left-col">
+        <div class="hero-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span
+              style="font-family: 'Cinzel', serif; font-size: 0.9em; font-weight: bold; color: var(--text-main); letter-spacing: 1px;">ATTRIBUTES</span>
+            <span style="font-family: 'Cinzel', serif; font-size: 0.85em; font-weight: bold;" id="unspentStats">UNSPENT:
+              MAXED OUT</span>
+          </div>
+          <div class="core-stats-row" style="border-bottom: none;">
+            <div class="core-stat" id="statCard_str">
+              <div class="save-indicator"></div><label>STR</label>
+              <div class="core-stat-total" id="displayStr">0</div>
+              <div class="core-stat-inputs"><input type="number" id="baseStr" value="0"><span>+</span><input
+                  type="number" id="addStr" value="0" min="0"></div>
+            </div>
+            <div class="core-stat" id="statCard_dex">
+              <div class="save-indicator"></div><label>DEX</label>
+              <div class="core-stat-total" id="displayDex">0</div>
+              <div class="core-stat-inputs"><input type="number" id="baseDex" value="0"><span>+</span><input
+                  type="number" id="addDex" value="0" min="0"></div>
+            </div>
+            <div class="core-stat" id="statCard_int">
+              <div class="save-indicator"></div><label>INT</label>
+              <div class="core-stat-total" id="displayInt">0</div>
+              <div class="core-stat-inputs"><input type="number" id="baseInt" value="0"><span>+</span><input
+                  type="number" id="addInt" value="0" min="0"></div>
+            </div>
+            <div class="core-stat" id="statCard_wil">
+              <div class="save-indicator"></div><label>WIL</label>
+              <div class="core-stat-total" id="displayWil">0</div>
+              <div class="core-stat-inputs"><input type="number" id="baseWil" value="0"><span>+</span><input
+                  type="number" id="addWil" value="0" min="0"></div>
+            </div>
+          </div>
+          <div class="res-row"
+            style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; padding: 10px 12px; margin-bottom: 15px;">
+            <label
+              style="color: var(--save-dis); font-size: 1.1em; letter-spacing: 2px; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6); margin: 0;">Wounds</label>
+            <div class="pips" id="woundsContainer"></div>
+          </div>
+          <div class="res-row" style="align-items: stretch; margin-bottom: 12px;">
+            <div
+              style="display: flex; flex: 1; justify-content: space-between; align-items: center; padding-right: 15px; border-right: 1px dashed rgba(255,255,255,0.15);">
+              <label style="color: var(--class-accent);">Hit Points</label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="res-val dark-incrementer"><button onclick="adjHP(-1)">-</button><input type="number"
+                    id="displayCurrentHP" min="0" onchange="adjHP(parseInt(this.value), true)"><button
+                    onclick="adjHP(1)">+</button></div>
+                <div class="max-text">/ <span id="displayMaxHP" style="color:var(--text-main);">0</span></div>
+              </div>
+            </div>
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; padding-left: 15px; gap: 8px;">
+              <label style="color: var(--text-muted); font-size: 0.8em; margin:0;">Temp HP</label>
+              <div class="dark-incrementer"><button onclick="adjTempHP(-1)">-</button><input type="number"
+                  id="displayTempHP" min="0" onchange="adjTempHP(parseInt(this.value), true)"
+                  style="color: var(--class-accent);"><button onclick="adjTempHP(1)">+</button></div>
+            </div>
+          </div>
+          <div class="res-row"><label id="hitDiceLabel">Hit Dice</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="res-val dark-incrementer"><button onclick="adjHD(-1)">-</button><input type="number"
+                  id="displayHD" min="0" onchange="adjHD(parseInt(this.value), true)"><button
+                  onclick="adjHD(1)">+</button></div>
+              <div class="max-text">/ <span id="maxHD" style="color:var(--text-main);">1</span></div>
+            </div>
+          </div>
+          <div id="dynamicResourcesContainer"></div>
+          <div class="proficiency-row"
+            style="margin-top: auto; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+            <div style="text-align: left; flex: 1.5;"> WEAPONS: <span id="profWeapons" style="color: #fff;">--</span>
+            </div>
+            <div style="text-align: right; flex: 1;"> ARMOR: <span id="profArmor" style="color: #fff;">--</span> </div>
+          </div>
         </div>
-        <div class="core-stats-row" style="border-bottom: none;">
-          <div class="core-stat" id="statCard_str"><div class="save-indicator"></div><label>STR</label><div class="core-stat-total" id="displayStr">0</div><div class="core-stat-inputs"><input type="number" id="baseStr" value="0"><span>+</span><input type="number" id="addStr" value="0" min="0"></div></div>
-          <div class="core-stat" id="statCard_dex"><div class="save-indicator"></div><label>DEX</label><div class="core-stat-total" id="displayDex">0</div><div class="core-stat-inputs"><input type="number" id="baseDex" value="0"><span>+</span><input type="number" id="addDex" value="0" min="0"></div></div>
-          <div class="core-stat" id="statCard_int"><div class="save-indicator"></div><label>INT</label><div class="core-stat-total" id="displayInt">0</div><div class="core-stat-inputs"><input type="number" id="baseInt" value="0"><span>+</span><input type="number" id="addInt" value="0" min="0"></div></div>
-          <div class="core-stat" id="statCard_wil"><div class="save-indicator"></div><label>WIL</label><div class="core-stat-total" id="displayWil">0</div><div class="core-stat-inputs"><input type="number" id="baseWil" value="0"><span>+</span><input type="number" id="addWil" value="0" min="0"></div></div>
-        </div>
-        <div class="res-row" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; padding: 10px 12px; margin-bottom: 15px;"><label style="color: var(--save-dis); font-size: 1.1em; letter-spacing: 2px; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6); margin: 0;">Wounds</label><div class="pips" id="woundsContainer"></div></div>
-        <div class="res-row" style="align-items: stretch; margin-bottom: 12px;"><div style="display: flex; flex: 1; justify-content: space-between; align-items: center; padding-right: 15px; border-right: 1px dashed rgba(255,255,255,0.15);"><label style="color: var(--class-accent);">Hit Points</label><div style="display: flex; align-items: center; gap: 8px;"><div class="res-val dark-incrementer"><button onclick="adjHP(-1)">-</button><input type="number" id="displayCurrentHP" min="0" onchange="adjHP(parseInt(this.value), true)"><button onclick="adjHP(1)">+</button></div><div class="max-text">/ <span id="displayMaxHP" style="color:var(--text-main);">0</span></div></div></div><div style="display: flex; justify-content: space-between; align-items: center; padding-left: 15px; gap: 8px;"><label style="color: var(--text-muted); font-size: 0.8em; margin:0;">Temp HP</label><div class="dark-incrementer"><button onclick="adjTempHP(-1)">-</button><input type="number" id="displayTempHP" min="0" onchange="adjTempHP(parseInt(this.value), true)" style="color: var(--class-accent);"><button onclick="adjTempHP(1)">+</button></div></div></div>
-        <div class="res-row"><label id="hitDiceLabel">Hit Dice</label><div style="display: flex; align-items: center; gap: 8px;"><div class="res-val dark-incrementer"><button onclick="adjHD(-1)">-</button><input type="number" id="displayHD" min="0" onchange="adjHD(parseInt(this.value), true)"><button onclick="adjHD(1)">+</button></div><div class="max-text">/ <span id="maxHD" style="color:var(--text-main);">1</span></div></div></div>
-        <div id="dynamicResourcesContainer"></div>
-        <div class="proficiency-row" style="margin-top: auto; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 1px;"><div style="text-align: left; flex: 1.5;"> WEAPONS: <span id="profWeapons" style="color: #fff;">--</span> </div><div style="text-align: right; flex: 1;"> ARMOR: <span id="profArmor" style="color: #fff;">--</span> </div></div>
+      </div>
+      <div class="hero-card ability-card">
+        <div id="classMechanicPanel" class="mechanic-panel"></div>
+        <div id="skillsContainer" class="skills-box"></div>
       </div>
     </div>
-    <div class="hero-card ability-card">
-      <div id="classMechanicPanel" class="mechanic-panel"></div>
-      <div id="skillsContainer" class="skills-box"></div>
+    <div class="layout-1col">
+      <div class="conditions-box">
+        <h2 class="section-header" style="font-size: 1.1em; margin-bottom: 10px; border: none;">Conditions & Status
+          Effects</h2>
+        <div class="conditions-flex" id="conditionsContainer"></div>
+      </div>
+      <div class="skills-box" style="padding: 15px; height: auto;">
+        <div
+          style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom: 2px solid var(--slate-lighter); padding-bottom: 5px;">
+          <span
+            style="font-family:'Cinzel', serif; font-weight:bold; color:var(--text-main); font-size:1.1em;">INVENTORY &
+            EQUIPMENT</span>
+          <div style="display:flex; align-items:center; gap: 15px;"><span id="inventorySlots"
+              style="color:var(--class-accent); font-weight:bold; letter-spacing:1px; font-size: 0.9em;">SLOTS: 0 /
+              10</span>
+            <div
+              style="display:flex; align-items:center; border: 1px solid var(--gold-dim); background: linear-gradient(145deg, var(--slate-mid), var(--slate-dark)); border-radius: 4px; padding: 2px 8px; gap: 6px;">
+              <label
+                style="color: var(--gold-light); font-family: 'Cinzel', serif; font-size: 0.8em; font-weight: bold; margin: 0; text-transform: uppercase;">Gold</label><input
+                type="number" id="gold" class="gold-input" value="0"
+                style="width: 55px; font-size: 1.1em; padding: 0; border: none; border-bottom: 1px solid var(--gold-dim); background: transparent; color: #fff; font-family: 'Crimson Text', serif; font-weight: bold; text-align: center;">
+            </div>
+          </div>
+        </div>
+        <div id="inventoryContainer"></div>
+        <div style="display: flex; gap: 8px; margin-top: 10px;"><select class="add-item-btn"
+            id="meleeSelect"></select><select class="add-item-btn" id="rangedSelect"></select><select
+            class="add-item-btn" id="armorSelect"></select><button class="add-item-btn" onclick="addItem()">+
+            Custom</button></div>
+      </div>
+    </div>
+    <div class="layout-1col" id="featuresSpellsLayout">
+      <div class="left-col">
+        <div
+          style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; height: 35px; box-sizing: border-box;">
+          <h2 class="section-header" style="border: none; margin: 0; padding: 0;">Features & Traits</h2><label
+            style="display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--class-accent); cursor: pointer; user-select: none; font-family: 'Cinzel', serif; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--class-border);"><input
+              type="checkbox" id="toggleMinorFeatures"
+              onchange="document.body.classList.toggle('show-minor', this.checked); saveState();"> <span
+              style="margin-top: 1px;">Show All</span></label>
+        </div>
+        <div id="featuresContainer"></div>
+      </div>
+      <div class="right-col" id="spellsColWrapper" style="display: none;">
+        <div
+          style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; height: 35px; box-sizing: border-box;">
+          <h2 class="section-header" style="border: none; margin: 0; padding: 0;">Spells</h2><span id="maxTierDisplay"
+            style="font-size:0.6em; opacity:0.7; font-weight:normal; color:var(--gold-light); font-family: 'Cinzel', serif; text-transform: uppercase; margin-bottom: 4px;"></span>
+        </div>
+        <div id="spellsContainer" class="spell-grid"></div>
+      </div>
     </div>
   </div>
-  <div class="layout-1col"><div class="conditions-box"><h2 class="section-header" style="font-size: 1.1em; margin-bottom: 10px; border: none;">Conditions & Status Effects</h2><div class="conditions-flex" id="conditionsContainer"></div></div>
-    <div class="skills-box" style="padding: 15px; height: auto;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom: 2px solid var(--slate-lighter); padding-bottom: 5px;"><span style="font-family:'Cinzel', serif; font-weight:bold; color:var(--text-main); font-size:1.1em;">INVENTORY & EQUIPMENT</span><div style="display:flex; align-items:center; gap: 15px;"><span id="inventorySlots" style="color:var(--class-accent); font-weight:bold; letter-spacing:1px; font-size: 0.9em;">SLOTS: 0 / 10</span><div style="display:flex; align-items:center; border: 1px solid var(--gold-dim); background: linear-gradient(145deg, var(--slate-mid), var(--slate-dark)); border-radius: 4px; padding: 2px 8px; gap: 6px;"><label style="color: var(--gold-light); font-family: 'Cinzel', serif; font-size: 0.8em; font-weight: bold; margin: 0; text-transform: uppercase;">Gold</label><input type="number" id="gold" class="gold-input" value="0" style="width: 55px; font-size: 1.1em; padding: 0; border: none; border-bottom: 1px solid var(--gold-dim); background: transparent; color: #fff; font-family: 'Crimson Text', serif; font-weight: bold; text-align: center;"></div></div></div><div id="inventoryContainer"></div><div style="display: flex; gap: 8px; margin-top: 10px;"><select class="add-item-btn" id="meleeSelect"></select><select class="add-item-btn" id="rangedSelect"></select><select class="add-item-btn" id="armorSelect"></select><button class="add-item-btn" onclick="addItem()">+ Custom</button></div></div>
-  </div>
-  <div class="layout-1col" id="featuresSpellsLayout"><div class="left-col"><div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; height: 35px; box-sizing: border-box;"><h2 class="section-header" style="border: none; margin: 0; padding: 0;">Features & Traits</h2><label style="display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--class-accent); cursor: pointer; user-select: none; font-family: 'Cinzel', serif; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--class-border);"><input type="checkbox" id="toggleMinorFeatures" onchange="document.body.classList.toggle('show-minor', this.checked); saveState();"> <span style="margin-top: 1px;">Show All</span></label></div><div id="featuresContainer"></div></div><div class="right-col" id="spellsColWrapper" style="display: none;"><div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid var(--class-accent-dim); margin-bottom: 12px; padding-bottom: 4px; height: 35px; box-sizing: border-box;"><h2 class="section-header" style="border: none; margin: 0; padding: 0;">Spells</h2><span id="maxTierDisplay" style="font-size:0.6em; opacity:0.7; font-weight:normal; color:var(--gold-light); font-family: 'Cinzel', serif; text-transform: uppercase; margin-bottom: 4px;"></span></div><div id="spellsContainer" class="spell-grid"></div></div></div>
-</div>
-<!-- INJECT_SCRIPTS -->
+  <!-- INJECT_SCRIPTS -->
 </body>
+
 </html>

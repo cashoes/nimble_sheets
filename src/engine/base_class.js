@@ -109,7 +109,7 @@ class BaseClass {
                 // Remove replaced spells
                 if (replacement.replace) {
                     const replaceList = Array.isArray(replacement.replace) ? replacement.replace : [replacement.replace];
-                    replacement.replaceList.forEach(name => {
+                    replaceList.forEach(name => {
                         const idx = spells.findIndex(s => s.name === name);
                         if (idx !== -1) spells.splice(idx, 1);
                     });

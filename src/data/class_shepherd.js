@@ -1,127 +1,3 @@
-const SHEPHERD_OPTIONS = {
-    graces: {
-        "Assist Me, My Friend!": { desc: "Whenever you make your first melee attack each round, you may add your Lifebinding Spirit's damage to the attack." },
-        "Empowered Companion": { desc: "When summoning your Spirit, you cast it as if you spent 1 additional mana (ignoring tier limits). Max die size becomes d20." },
-        "Guiding Spirit": { desc: "When your Spirit rolls a 6+ on damage, the target glows; the next attack against them has advantage." },
-        "Hasty Companion": { desc: "+4 Reach for your Spirit. It can act for free when summoned." },
-        "Illuminate Soul": { desc: "Action: A creature within 6 spaces glows for 1 round; attacks against them have advantage OR disadvantage (your choice). WIL times/Safe Rest." },
-        "Light Bearer": { desc: "Regain 1 Searing Light use when you roll Initiative (expires at end of combat)." },
-        "Not Beyond MY Reach": { desc: "Target dead <1 round for healing. For every 10 HP healed, they recover 1 Wound instead (must heal 1+ Wound to revive)." },
-        "Vengeful Spirit": { desc: "Action: Spirit sacrifices itself in a vortex of light. At end of your turn, deals dmg to all enemies within 3 spaces equal to its remaining healing charges." }
-    }
-};
-
-const SHEPHERD_FEATURES = {
-    core: {
-        1: [
-            { id: "searing", name: "Searing Light", desc: "Action: Heal <strong>WIL</strong> d8 HP to Dying creature within 6. OR: Inflict <strong>WIL</strong> d8 radiant damage to Undead/Bloodied enemy." }
-        ],
-        2: [
-            { id: "spirit", name: "Lifebinding Spirit", desc: (level, subclass, state, derived, rSSC) => {
-                const totalWil = (state.baseWil || 0) + (state.addWil || 0);
-                const wilDisplay = `${totalWil >= 0 ? "+" : ""}${totalWil}`;
-
-                let intro = `You know the unique Radiant spell <strong>Lifebinding Spirit</strong>:`;
-                let card = rSSC({
-                    name: "Lifebinding Spirit",
-                    tier: "Tier 1",
-                    school: "Radiant",
-                    desc: `1 Action. Reach: 4. Summon a spirit companion that follows you. It lasts until you cast this spell again, take a Safe Rest, or it heals a number of times equal to the mana spent summoning it.<br>
-                    <div style="margin-top:5px;">● It attacks or heals for <strong>1d6${wilDisplay}</strong> radiant damage (ignoring armor), or heals for the same amount.</div>
-                    <div style="margin-top:5px;">● <strong>Upcast:</strong> +1 die size (max d12), +1 healing use per tier. <em>(Current max upcast dmg: <strong>${derived.spiritDmg}${wilDisplay}</strong>)</em></div>`
-                }, level, { str: state.baseStr+state.addStr, dex: state.baseDex+state.addDex, int: state.baseInt+state.addInt, wil: totalWil }, { isMinion: true });
-
-                return intro + card;
-            } },
-            { id: "tier_1", name: "Tier 1 Spells", desc: "You gain access to Tier 1 spells.", minor: true }
-        ],
-        4: [
-            { id: "key_stat_1", name: "Key Stat Increase", desc: "+1 WIL or STR.", minor: true },
-            { id: "tier_2", name: "Tier 2 Spells", desc: "You gain access to Tier 2 spells.", minor: true }
-        ],
-        5: [
-            { id: "graces", name: "Sacred Graces", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", desc: "Choose modular graces.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 },
-            { id: "sec_stat_1", name: "Secondary Stat Increase", desc: "+1 INT or DEX.", minor: true },
-            { id: "cantrips", name: "Upgraded Cantrips", desc: "Your shadow/radiant cantrips grow stronger.", minor: true }        
-        ],
-        6: [
-            { id: "tier_3", name: "Tier 3 Spells", desc: "You gain access to Tier 3 spells.", minor: true }
-        ],
-        8: [
-            { id: "key_stat_2", name: "Key Stat Increase", desc: "+1 WIL or STR.", minor: true },
-            { id: "tier_4", name: "Tier 4 Spells", desc: "You gain access to Tier 4 spells.", minor: true }
-        ],
-        9: [
-            { id: "sec_stat_2", name: "Secondary Stat Increase", desc: "+1 INT or DEX.", minor: true }
-        ],
-        10: [
-            { id: "tier_5", name: "Tier 5 Spells", desc: "You gain access to Tier 5 spells.", minor: true }
-        ],
-        12: [
-            { id: "key_stat_3", name: "Key Stat Increase", desc: "+1 WIL or STR.", minor: true },
-            { id: "tier_6", name: "Tier 6 Spells", desc: "You gain access to Tier 6 spells.", minor: true }
-        ],
-        13: [
-            { id: "sec_stat_3", name: "Secondary Stat Increase", desc: "+1 INT or DEX.", minor: true }
-        ],
-        14: [
-            { id: "tier_7", name: "Tier 7 Spells", desc: "You gain access to Tier 7 spells.", minor: true }
-        ],
-        15: [
-            { id: "cantrips_2", name: "Upgraded Cantrips", desc: "Your cantrips grow stronger.", minor: true }
-        ],
-        16: [
-            { id: "key_stat_4", name: "Key Stat Increase", desc: "+1 WIL or STR.", minor: true },
-            { id: "tier_8", name: "Tier 8 Spells", desc: "You gain access to Tier 8 spells.", minor: true }
-        ],
-        17: [
-            { id: "revitalizing", name: "Revitalizing Blessing", desc: "(1/round) Whenever you roll a 6 or higher on a healing die, target may recover one Wound." },
-            { id: "sec_stat_4", name: "Secondary Stat Increase", desc: "+1 INT or DEX.", minor: true }
-        ],
-        18: [
-            { id: "tier_9", name: "Tier 9 Spells", desc: "You gain access to Tier 9 spells.", minor: true }
-        ],
-        19: [
-            { id: "epic_boon", name: "Epic Boon", desc: "Choose an Epic Boon (see pg. 23 of the GM's Guide)." }
-        ],
-        20: [
-            { id: "sage", name: "Twilight Sage", desc: "+1 to any 2 of your stats. Your Lifebinding Spirit rolls twice as many dice. Upgraded Cantrips." }
-        ]
-    },
-    subclasses: {
-        "Mercy": {
-            3: [
-                { id: "merciful", name: "Merciful Healing", desc: "Effects that heal Dying creatures heal twice as much. (1/round) Spirit acts for free while you are Dying." },
-                { id: "beautiful", name: "Life is Beautiful", desc: "Harmless creatures follow you. Flowers bloom vibrantly in your presence." }
-            ],
-            7: [
-                { id: "conduit", name: "Conduit of Light", desc: "When an effect caused by you would heal HP, you may expend 1 use of Searing Light to heal another target within 6 spaces for the same amount." }
-            ],
-            11: [
-                { id: "powerful", name: "Powerful Healer", desc: "(WIL times/Safe Rest) When rolling dice to heal, you may take the max possible amount or give that many Temp HP." }
-            ],
-            15: [
-                { id: "empowered", name: "Empowered Conduit", desc: "Conduit of Light may target 1 additional creature. Regain 1 Searing Light use on Initiative." }
-            ]
-        },
-        "Malice": {
-            3: [
-                { id: "reaper", name: "Soul Reaper", desc: "When using Searing Light to harm, make a 2nd enemy within range take same damage." },
-                { id: "decay", name: "Harbinger of Decay", desc: "Foods spoil and flies awaken where you lodge. Spirit deals Necrotic damage." }
-            ],
-            7: [
-                { id: "veilwalker", name: "Veilwalker’s Blessing", desc: "(1/Safe Rest) Reaction: When you would drop to 0 HP, drop to 1 instead and force enemy in 6 reach to STR save or become Bloodied (or 0 HP if already Bloodied)." }
-            ],
-            11: [
-                { id: "deathbringer", name: "Deathbringer’s Touch", desc: "First melee attack each round against Bloodied creature is auto-crit. Spirit deals +STR damage." }
-            ],
-            15: [
-                { id: "conduit_death", name: "Conduit of Death", desc: "Veilwalker’s Blessing recharges whenever you roll Initiative." }
-            ]
-        }
-    }
-};
-
 class ShepherdClass extends BaseClass {
     constructor() {
         super({
@@ -129,10 +5,7 @@ class ShepherdClass extends BaseClass {
             subtitle: "Master of life and death, leader of spirits",
             keyStats: ['wil', 'str'],
             saves: { adv: 'wil', dis: 'dex' },
-            proficiencies: {
-                armor: "Mail, Shields",
-                weapons: "STR Weapons, Wands"
-            },
+            proficiencies: { armor: "Mail, Shields", weapons: "STR Weapons, Wands" },
             baseHp: 17,
             hpPerLevel: 8,
             hitDie: 10,
@@ -150,142 +23,122 @@ class ShepherdClass extends BaseClass {
                 { value: "Mercy", label: "Luminary of Mercy", accent: "#f8fafc" },
                 { value: "Malice", label: "Luminary of Malice", accent: "#4ade80" }
             ],
+            spellSchools: ["Radiant", "Necrotic"],
+            includeUtilitySpells: createUtilityConfig(false, null), // Special handling
             resources: [
-                { id: 'mana', label: 'Mana Pool', manual: true, calcMax: (level, stats) => level >= 2 ? (stats.wil * 3) + level : 0 },     
-                { id: 'searingLight', label: 'Searing Light', manual: true, calcMax: (level, stats) => stats.wil }
+                createManaResource('wil'),
+                createSimpleResource('searingLight', 'Searing Light', (level, stats) => stats.wil)
             ],
-            featuresData: SHEPHERD_FEATURES,
-            optionsData: SHEPHERD_OPTIONS
+            featuresData: ShepherdClass.FEATURES,
+            optionsData: ShepherdClass.OPTIONS
         });
+    }
+
+    static get OPTIONS() {
+        return {
+            graces: {
+                "Assist Me, My Friend!": { desc: "Whenever you make your first melee attack each round, you may add your Lifebinding Spirit’s damage to the attack." },
+                "Empowered Companion": { desc: "Whenever you spend mana to call forth your Lifebinding Spirit, you cast it as if you spent 1 additional mana (ignoring the typical spell tier restrictions). The maximum die size is now a d20." },
+                "Guiding Spirit": { desc: "When your Lifebinding Spirit rolls a 6 or higher on its damage die, the target begins to glow with radiant light. The next attack against that target has advantage." },
+                "Hasty Companion": { desc: "+4 Reach for your Lifebinding Spirit. It can also act for free when summoned." },
+                "Illuminate Soul": { desc: "Action: A creature within 6 spaces begins to glow with radiant light. For 1 Round, attacks against them are made with your choice of advantage or disadvantage. You may do this WIL times per Safe Rest." },
+                "Light Bearer": { desc: "Regain 1 use of Searing Light when you roll Initiative (this expires if unspent at the end of combat)." },
+                "Not Beyond MY Reach": { desc: "You may target creatures who have been dead less than 1 round for healing. For every 10 HP a dead creature is healed this way, you may have them recover 1 Wound instead (you must heal at least 1 Wound to revive them)." },
+                "Vengeful Spirit": { desc: "Action: Your Lifebinding Spirit sacrifices itself to transform into a swirling vortex of radiant light. At the end of your turn, it damages all enemies within 3 spaces of you, ignoring armor and cover. This lasts for a number of rounds equal to the healing charges left on the Lifebinding Spirit. This effect ends early if you summon your spirit again." }
+            }
+        };
+    }
+
+    static get FEATURES() {
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('WIL or STR', 'INT or DEX', true);
+        
+        core[1] = [
+            { id: "keeper", name: "Keeper of Life & Death", desc: "You know Radiant and Necrotic cantrips." },
+            { id: "searing", name: "Searing Light", desc: "(WIL times/Safe Rest) Action: Heal or Inflict grievous injuries: <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>" }
+        ];
+        core[2].push({ id: "spirit", name: "Lifebinding Spirit", desc: "You know the unique Radiant spell <strong>Lifebinding Spirit</strong> (Tier 1). Action: Summon spirit (ignores harm, lasts until cast again or healing spent). Action: Attack/Heal within Reach 4 for 1d6+WIL radiant. Upcasting: +1 die size (max d12), +1 use." });
+        
+        core[3].push({ id: "twilight", name: "Master of Twilight", desc: "Choose 1 Necrotic and 1 Radiant Utility Spell." });
+        core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", desc: "Choose modular graces.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
+        
+        core[6].push({ id: "twilight_2", name: "Master of Twilight (2)", desc: "Choose a 2nd Necrotic and Radiant Utility Spell." });
+        core[11].push({ id: "twilight_3", name: "Master of Twilight (3)", desc: "You know all Necrotic and Radiant Utility Spells." });
+        
+        core[17] = [{ id: "revitalizing", name: "Revitalizing Blessing", desc: "(1/round) Whenever you roll a 6 or higher on one or more healing die, the target may recover one Wound." }];
+        core[20].push({ id: "sage", name: "Twilight Sage", desc: "+1 to any 2 of your stats. Your Lifebinding Spirit rolls twice as many dice." });
+
+                subclasses["Mercy"] = {
+            3: [{ id: "merciful", name: "Merciful Healing", desc: "When an effect caused by you heals a Dying creature, they are healed for twice as much. (1/round) Your Lifebinding Spirit can act for free while you are Dying." }, { id: "beautiful", name: "Life is Beautiful", desc: "Harmless and lovely creatures follow you. Flowers bloom more vibrantly in your presence." }],
+            7: [{ id: "conduit", name: "Conduit of Light", desc: "When an effect caused by you would heal HP, you may expend 1 use of Searing Light to heal (or damage, ignoring armor) another target within 6 spaces of yourself for the same amount." }],
+            11: [{ id: "powerful", name: "Powerful Healer", desc: "(WIL times/Safe Rest) Whenever you would roll dice to heal damage, you may instead heal the max amount you could roll, or give that many temp HP." }],
+            15: [{ id: "empowered", name: "Empowered Conduit", desc: "Your Conduit of Light may target 1 additional creature. Regain 1 charge of Searing Light when you roll Initiative." }]
+        };
+        subclasses["Malice"] = {
+            3: [{ id: "reaper", name: "Soul Reaper", desc: "When you use Searing Light to harm an enemy, make a 2nd enemy within range take the same amount of damage (ignoring armor)." }, { id: "decay", name: "Harbinger of Decay", desc: "Foods spoil more rapidly in your presence. You may have your Lifebinding Spirit shift into a deathly version of itself and have its damage type become necrotic." }],
+            7: [{ id: "veilwalker", name: "Veilwalker’s Blessing", desc: "(1/Safe Rest) Reaction (when you would drop to 0 HP): Drop to 1 HP instead and force an enemy within 6 spaces to make a STR save. On a failure, they become Bloodied, or if they are already Bloodied, they drop to 0 HP." }],
+            11: [{ id: "deathbringer", name: "Deathbringer’s Touch", desc: "Your first melee attack each round against a Bloodied creature is an automatic critical hit. Your Lifebinding Spirit deals additional damage equal to your STR." }],
+            15: [{ id: "conduit_death", name: "Conduit of Death", desc: "Your Veilwalker’s Blessing ability recharges when you roll Initiative." }]
+        };
+        
+        return { core, subclasses };
     }
 
     getDerivedStats(level, subclass, state) {
-        let speed = 6;
-        let woundMax = 6;
-        let hdFace = 10;
-
-        // Calculate Max Spirit Die based on available Spell Tiers
         let maxTier = Math.max(1, Math.floor(level / 2));
-        let graces = state.selectedGraces || [];
-        let hasEmpowered = graces.includes("Empowered Companion");
+        let effectiveTier = maxTier + (state.selectedGraces?.includes("Empowered Companion") ? 1 : 0);
+        let dieSizes = ['1d6', '1d8', '1d10', '1d12', '1d20'];
+        let spiritDmg = dieSizes[Math.min(dieSizes.length - 1, effectiveTier - 1)];
+        if (level >= 20) spiritDmg = spiritDmg.replace('1', '2');
 
-        let effectiveTier = maxTier + (hasEmpowered ? 1 : 0);
-        let dieSizes = ['1d6', '1d8', '1d10', '1d12'];
-        if (hasEmpowered) dieSizes.push('1d20');
-        let dieIdx = Math.min(dieSizes.length - 1, effectiveTier - 1);
-
-        let spiritDmg = dieSizes[dieIdx];
-        if (level >= 20) {
-            spiritDmg = spiritDmg.replace('1d', '2d');
-        }
-
-        return { speed, woundMax, hdFace, spiritDmg };
-    }
-
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        if (subclass === "Malice" && level >= 15) overrides.armor = (overrides.armor || 0) + statsMap.wil;
-        return overrides;
+        return { speed: 6, woundMax: 6, spiritDmg };
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {
-        const totalWil = (state.baseWil || 0) + (state.addWil || 0);
-        const manaMax = derived.resourceMaxes.mana;
-        const searingMax = derived.resourceMaxes.searingLight;
+        const builder = new PanelBuilder();
+        const statsMap = getStatsMap(state);
+
+        if (level >= 2) {
+            builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+        }
+        builder.addResource('searingLight', 'Searing Light', state.resourceValues.searingLight, derived.resourceMaxes.searingLight);
 
         let spiritType = subclass === "Malice" ? "Deadly" : "Lifebinding";
-        let spiritColor = subclass === "Malice" ? "var(--save-adv)" : "var(--class-accent)";
+        builder.addRollDisplay(`${derived.spiritDmg}+${statsMap.wil}`, `${spiritType} Spirit`, `${derived.spiritDmg}+${statsMap.wil}`, `Reach 4 | T${Math.max(1, Math.floor(level/2))} uses`, { isMinion: true });
 
-        return `
-        <div class="panel mechanic-panel" style="min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: stretch; gap: 8px; justify-content: center;">
-                ${level >= 2 ? `
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Mana Pool</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer">
-                            <button onclick="adjRes('mana', -1, ${manaMax})">-</button>
-                            <input type="number" id="res_mana" value="${state.resourceValues.mana||0}" onchange="adjRes('mana', parseInt(this.value), ${manaMax}, true)">
-                            <button onclick="adjRes('mana', 1, ${manaMax})">+</button>
-                        </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${manaMax}</span></div>
-                    </div>
-                </div>` : ''}
-
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
-                    <label class="roll-link" onclick="dispatchRoll('${totalWil}d8', 'Searing Light')" style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px; cursor:pointer;">Searing Light</label>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div class="dark-incrementer">
-                            <button onclick="adjRes('searingLight', -1, ${searingMax})">-</button>
-                            <input type="number" id="res_searingLight" value="${state.resourceValues.searingLight||0}" onchange="adjRes('searingLight', parseInt(this.value), ${searingMax}, true)">
-                            <button onclick="adjRes('searingLight', 1, ${searingMax})">+</button>
-                        </div>
-                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${searingMax}</span></div>
-                    </div>
-                </div>
-
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">${spiritType} Spirit ${level < 2 ? '(Lvl 2)' : ''}</label>
-                    ${level >= 2 ? `
-                        <div class="roll-link" onclick="dispatchRoll('${derived.spiritDmg}${totalWil >= 0 ? '+' : ''}${totalWil}', 'Spirit Command', { isMinion: true })" style="font-size: 2.2em; color: ${spiritColor}; font-weight: bold; font-family: 'Cinzel', serif; line-height: 1; cursor:pointer;">${derived.spiritDmg}${totalWil >= 0 ? '+' : ''}${totalWil}</div>
-                        <div style="font-size: 0.65em; color: var(--text-muted); margin-top: 2px; font-family: 'Crimson Text'; font-style: italic;">(At max tier)</div>
-                        <div style="font-size: 0.7em; color: var(--text-muted); margin-top: 4px; font-family: 'Crimson Text'; font-style: italic;">Reach 4</div>
-                        <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.1; font-family: 'Crimson Text'; max-width: 130px;">Upcast: +1 die size (max ${state.selectedGraces?.includes("Empowered Companion") ? "d20" : "d12"}), +1 heal use.</div>
-                    ` : '<div style="font-size: 0.8em; color: var(--text-muted); font-style: italic; margin: auto 0;">Unlocked at Level 2</div>'}
-                </div>
-            </div>
-        </div>`;
+        return builder.build();
     }
 
     getAvailableSpells(level, subclass, state, derived) {
-        let spells = [];
-        const progress = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]; // Default progression
-        const schools = ["Radiant", "Necrotic"];
+        let spells = super.getAvailableSpells(level, subclass, state, derived);
+        
+        // Shepherd paired utility selection (Level 3+)
+        if (level >= 3 && level < 11) {
+            let numPairs = level >= 6 ? 2 : 1;
+            for (let i = 0; i < numPairs; i++) {
+                // Radiant
+                let rVal = (state.spiritSpellsRadiant || [])[i] || "None";
+                let rOpts = `<option value="None">Select Radiant Utility...</option>`;
+                Object.keys(UTILITY_SPELLS.Radiant || {}).forEach(k => rOpts += `<option value="${k}">${k}</option>`);
+                let rCustom = `<select onchange="updateClassState('spiritSpellsRadiant', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${rOpts.replace(`value="${rVal}"`, `value="${rVal}" selected`)}</select>`;
+                if (rVal !== "None") rCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Radiant[rVal]}</div>`;
+                spells.push({ name: "", tier: "Utility", school: "Radiant", customHtml: rCustom });
 
-        // 1. Core Tiered Spells (Both Schools)
-        schools.forEach(school => {
-            if (!SPELL_REGISTRY[school]) return;
-            Object.entries(SPELL_REGISTRY[school]).forEach(([name, data]) => {
-                let tNum = parseInt(data.tier.replace(/\D/g, '')) || 0;
-                let requiredLevel = data.tier.includes("Cantrip") ? 1 : (progress[tNum] || 99);
-                if (level >= requiredLevel) {
-                    spells.push({ name, ...data, school });
-                }
-            });
-        });
-
-        // 2. Utility Selection (Spirit Spells)
-        if (level >= 3) {
-            let numPairs = level >= 11 ? 99 : level >= 6 ? 2 : 1;
-            if (numPairs === 99) {
-                schools.forEach(sch => {
-                    if (UTILITY_SPELLS[sch]) {
-                        Object.entries(UTILITY_SPELLS[sch]).forEach(([name, desc]) => {
-                            spells.push({ name, desc, tier: "Utility", school: sch });
-                        });
-                    }
-                });
-            } else {
-                for(let i=0; i<numPairs; i++) {
-                    // Radiant Utility
-                    let rVal = state.spiritSpellsRadiant?.[i] || "None";
-                    let rOpts = `<option value="None">Select Radiant Utility...</option>`;
-                    Object.keys(UTILITY_SPELLS.Radiant).forEach(k => rOpts += `<option value="${k}">${k}</option>`);
-                    let rCustom = `<select onchange="updateClassState('spiritSpellsRadiant', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${rOpts.replace(`value="${rVal}"`, `value="${rVal}" selected`)}</select>`;
-                    if (rVal !== "None") rCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Radiant[rVal]}</div>`;
-                    spells.push({ name: "", tier: "Utility", school: "Radiant", customHtml: rCustom });
-
-                    // Necrotic Utility
-                    let nVal = state.spiritSpellsNecrotic?.[i] || "None";
-                    let nOpts = `<option value="None">Select Necrotic Utility...</option>`;
-                    Object.keys(UTILITY_SPELLS.Necrotic).forEach(k => nOpts += `<option value="${k}">${k}</option>`);
-                    let nCustom = `<select onchange="updateClassState('spiritSpellsNecrotic', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${nOpts.replace(`value="${nVal}"`, `value="${nVal}" selected`)}</select>`;
-                    if (nVal !== "None") nCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Necrotic[nVal]}</div>`;
-                    spells.push({ name: "", tier: "Utility", school: "Necrotic", customHtml: nCustom });
-                }
+                // Necrotic
+                let nVal = (state.spiritSpellsNecrotic || [])[i] || "None";
+                let nOpts = `<option value="None">Select Necrotic Utility...</option>`;
+                Object.keys(UTILITY_SPELLS.Necrotic || {}).forEach(k => nOpts += `<option value="${k}">${k}</option>`);
+                let nCustom = `<select onchange="updateClassState('spiritSpellsNecrotic', ${i}, this.value)" style="border-bottom-color: var(--class-accent);">${nOpts.replace(`value="${nVal}"`, `value="${nVal}" selected`)}</select>`;
+                if (nVal !== "None") nCustom += `<div style="margin-top:8px;">${UTILITY_SPELLS.Necrotic[nVal]}</div>`;
+                spells.push({ name: "", tier: "Utility", school: "Necrotic", customHtml: nCustom });
             }
+        } else if (level >= 11) {
+            ["Radiant", "Necrotic"].forEach(sch => {
+                Object.entries(UTILITY_SPELLS[sch] || {}).forEach(([name, desc]) => {
+                    spells.push({ name, desc, tier: "Utility", school: sch });
+                });
+            });
         }
-
+        
         return spells;
     }
 }
