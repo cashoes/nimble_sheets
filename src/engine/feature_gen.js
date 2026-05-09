@@ -114,7 +114,7 @@ function createScalingList(base, upgrades, level) {
     let text = base;
     const items = upgrades
         .filter(u => level >= u.level)
-        .map(u => `<li>Level ${u.level}+: ${u.text}</li>`);
+        .map(u => `<li><span style="color: #fff; font-weight: bold;">Level${u.level}+:</span> ${u.text}</li>`);
     
     if (items.length > 0) {
         text += `<ul style="margin-top: 5px; margin-bottom: 0; padding-left: 20px;">${items.join('')}</ul>`;

@@ -17,13 +17,16 @@ class HunterClass extends BaseClass {
                 panelBg: "rgba(20, 35, 25, 0.8)",
                 border: "rgba(74, 222, 128, 0.2)"
             },
-            initialStats: { baseStr: -1, baseDex: 3, baseInt: -1, baseWil: 1 },
+            initialStats: { baseStr: 0, baseDex: 3, baseInt: -1, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Shadowpath", label: "Keeper of the Shadowpath", accent: "#1e1b4b" },
                 { value: "WildHeart", label: "Keeper of the Wild Heart", accent: "#ea580c" },
                 { value: "Beastmaster", label: "Beastmaster", accent: "#d9f99d" }
             ],
+            scalingStats: {
+                saDice: { 1: "None", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
+            },
             featuresData: HunterClass.FEATURES,
             optionsData: HunterClass.OPTIONS,
             resources: [
@@ -52,39 +55,33 @@ class HunterClass extends BaseClass {
             },
             companionSizes: {
                 "None": { desc: "No companion selected." },
-                "Small": { desc: (level) => {
-                    let pts = [
-                        `● <strong>Keen Eyes:</strong> Mark a target for free (1/encounter).`,
-                        `● <strong>Protect Me!:</strong> (1/encounter) Whenever you Defend, your companion distracts the attacker, causing the attack to miss, and you move up to half your speed away.`,
-                        `● <strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d4+LVL damage for free (ignoring armor).`
-                    ];
-                    if (level >= 7) pts.push(`● <strong>Lvl 7+:</strong> Keen Eyes (2/enc), Protect Me! (2/enc).`);
-                    if (level >= 11) pts.push(`● <strong>Lvl 11+:</strong> Keen Eyes (3/enc), Go for the Throat! (2/enc, 1/round).`);
-                    if (level >= 15) pts.push(`● <strong>Lvl 15+:</strong> Go for the Throat! (3/enc, 1/round).`);
-                    return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
-                }},
-                "Medium": { desc: (level) => {
-                    let pts = [
-                        `● <strong>Ferocious:</strong> Whenever you or your companion crit your quarry, your companion attacks again for LVL damage (ignoring armor), and you can move up to 2 spaces for free.`,
-                        `● <strong>Protect Me!:</strong> When you Defend, your companion may first attack that creature for 1d4+LVL damage.`,
-                        `● <strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d8+3x LVL damage (ignoring armor).`
-                    ];
-                    if (level >= 7) pts.push(`● <strong>Lvl 7+:</strong> Ferocious move increases to 4 spaces.`);
-                    if (level >= 11) pts.push(`● <strong>Lvl 11+:</strong> Go for the Throat! (2/encounter).`);
-                    if (level >= 15) pts.push(`● <strong>Lvl 15+:</strong> Ferocious move increases to 6 spaces.`);
-                    return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
-                }},
-                "Large": { desc: (level) => {
-                    let pts = [
-                        `● <strong>Alpha Protector:</strong> Damage from the first attack against you each round is halved.`,
-                        `● <strong>Protect Me!:</strong> (1/encounter) After you gain a Wound, your companion can whisk you away to safety up to 12 spaces.`,
-                        `● <strong>Go for the Throat!:</strong> (1/encounter) Costs 2 TotH charges, 2 actions: Your companion attacks your quarry for 1d12+4x LVL damage (ignoring armor).`
-                    ];
-                    if (level >= 7) pts.push(`● <strong>Lvl 7+:</strong> Protect Me! now whisks you away <em>before</em> the Wound.`);
-                    if (level >= 11) pts.push(`● <strong>Lvl 11+:</strong> Go for the Throat! (2/encounter).`);
-                    if (level >= 15) pts.push(`● <strong>Lvl 15+:</strong> Protect Me! (2/encounter).`);
-                    return `<div style="display:flex; flex-direction:column; gap:4px;">${pts.map(p => `<div>${p}</div>`).join('')}</div>`;
-                }}
+                "Small": { desc: (level) => FeatureGen.createScalingList(
+                    "You have a small, agile animal companion. Gain the following abilities:<ul><li><strong>Keen Eyes:</strong> Mark a target for free (1/encounter).</li><li><strong>Protect Me!:</strong> (1/encounter) Whenever you Defend, your companion distracts the attacker, causing the attack to miss, and you move up to half your speed away.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d4+LVL damage for free (ignoring armor).</li></ul>",
+                    [
+                        { level: 7, text: "Keen Eyes (2/enc), Protect Me! (2/enc)." },
+                        { level: 11, text: "Keen Eyes (3/enc), Go for the Throat! (2/enc, 1/round)." },
+                        { level: 15, text: "Go for the Throat! (3/enc, 1/round)." }
+                    ],
+                    level
+                )},
+                "Medium": { desc: (level) => FeatureGen.createScalingList(
+                    "You have a medium, ferocious animal companion. Gain the following abilities:<ul><li><strong>Ferocious:</strong> Whenever you or your companion crit your quarry, your companion attacks again for LVL damage (ignoring armor), and you can move up to 2 spaces for free.</li><li><strong>Protect Me!:</strong> When you Defend, your companion may first attack that creature for 1d4+LVL damage.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d8+3x LVL damage (ignoring armor).</li></ul>",
+                    [
+                        { level: 7, text: "Ferocious move increases to 4 spaces." },
+                        { level: 11, text: "Go for the Throat! (2/encounter)." },
+                        { level: 15, text: "Ferocious move increases to 6 spaces." }
+                    ],
+                    level
+                )},
+                "Large": { desc: (level) => FeatureGen.createScalingList(
+                    "You have a large, powerful animal companion. Gain the following abilities:<ul><li><strong>Alpha Protector:</strong> Damage from the first attack against you each round is halved.</li><li><strong>Protect Me!:</strong> (1/encounter) After you gain a Wound, your companion can whisk you away to safety up to 12 spaces.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 2 TotH charges, 2 actions: Your companion attacks your quarry for 1d12+4x LVL damage (ignoring armor).</li></ul>",
+                    [
+                        { level: 7, text: "Protect Me! now whisks you away <em>before</em> the Wound." },
+                        { level: 11, text: "Go for the Throat! (2/encounter)." },
+                        { level: 15, text: "Protect Me! (2/encounter)." }
+                    ],
+                    level
+                )}
             }
         };
     }
@@ -138,11 +135,10 @@ class HunterClass extends BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
-        let speed = 6;
-        if (level >= 4) speed += 2;
-        let hdFace = (subclass === "WildHeart" && level >= 3) ? 10 : 8;
+        const stats = super.getDerivedStats(level, subclass, state);
+        stats.hdFace = (subclass === "WildHeart" && level >= 3) ? 10 : 8;
         this.baseHp = (subclass === "WildHeart" && level >= 3) ? 18 : 13;
-        return { speed, woundMax: 6, hdFace };
+        return stats;
     }
 
     getStatOverrides(level, subclass, state, statsMap) {
@@ -158,14 +154,7 @@ class HunterClass extends BaseClass {
         builder.addRollDisplay('1d20', 'Hunter\'s Mark', `+${level}`, 'Advantage OR Bonus Dmg', { type: 'attack', stat: 'dex' });
         builder.addResource('tothCharges', 'TotH Charges', state.resourceValues.tothCharges, derived.resourceMaxes.tothCharges);
 
-        builder.addCustom(`
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Gain Charge</label>
-                <div style="font-size: 0.65em; color: var(--text-muted); line-height: 1.3; margin: auto 0; font-family:'Crimson Text'; font-style:italic;">
-                    ● Quarry Dies<br>● Melee Hit<br>● Ranged Crit
-                </div>
-            </div>
-        `);
+        builder.addStatDisplay('', 'Gain Charge', '● Quarry Dies<br>● Melee Hit<br>● Ranged Crit', { borderLeft: true });
 
         return builder.build();
     }

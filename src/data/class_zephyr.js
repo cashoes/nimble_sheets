@@ -17,12 +17,16 @@ class ZephyrClass extends BaseClass {
                 panelBg: "rgba(15, 23, 42, 0.7)",
                 border: "rgba(96, 165, 251, 0.3)"
             },
-            initialStats: { baseStr: 2, baseDex: 2, baseInt: -1, baseWil: 0 },
+            initialStats: { baseStr: 1, baseDex: 3, baseInt: 0, baseWil: -1 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "WayOfPain", label: "Way of Pain", accent: "#991b1b" },
                 { value: "WayOfFlame", label: "Way of Flame", accent: "#ea580c" }
             ],
+            scalingStats: {
+                speed: { 1: 6, 2: 8, 9: 10 },
+                swiftBonus: { 1: 0, 5: (level) => level }
+            },
             resources: [
                 createSimpleResource('burstSpeed', 'Bursts of Speed', (level, stats) => level >= 2 ? stats.dex : 0)
             ],
@@ -110,10 +114,7 @@ class ZephyrClass extends BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
-        let speed = 6;
-        if (level >= 2) speed += 2;
-        if (level >= 9) speed += 2;
-        return { speed, woundMax: 6 };
+        return super.getDerivedStats(level, subclass, state);
     }
 
     getStatOverrides(level, subclass, state, statsMap) {
@@ -139,16 +140,11 @@ class ZephyrClass extends BaseClass {
         let isUnarmored = true;
         state.inventory.forEach(item => { if(item.type==='armor' && item.equipped) isUnarmored = false; });
 
-        builder.addCustom(`
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px; justify-content: center;">
-                <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Iron Defense</label>
-                ${isUnarmored ? `<div style="font-size: 3.0em; color: #fff; font-family: 'Cinzel', serif; font-weight: 900; line-height: 1;">${acVal}</div><div style="font-size: 0.8em; color: var(--gold-light); margin-top: 2px; font-family:'Cinzel'; font-weight:bold;">AC</div>` : `<div style="font-size: 1em; color: var(--text-muted); font-style: italic; text-align: center; margin: auto 0;">Inactive<br>(Armored)</div>`}
-            </div>
-        `);
+        builder.addStatDisplay(isUnarmored ? acVal : '--', 'Armor', isUnarmored ? 'Iron Defense' : 'Armored', { borderRight: true });
 
         builder.addResource('burstSpeed', 'Bursts', state.resourceValues.burstSpeed, derived.resourceMaxes.burstSpeed);
 
-        builder.addRollDisplay(`1d4+${statsMap.str}${level >= 5 ? '+'+level : ''}`, 'Swift Fists', `1d4+${statsMap.str}${level >= 5 ? '+'+level : ''}`, 'Ignores Rushed DIS', { type: 'attack', stat: 'str' });
+        builder.addRollDisplay(`1d4+${statsMap.str}${derived.swiftBonus ? '+'+derived.swiftBonus : ''}`, 'Swift Fists', `1d4+${statsMap.str}${derived.swiftBonus ? '+'+derived.swiftBonus : ''}`, 'Ignores Rushed DIS', { type: 'attack', stat: 'str' });
 
         return builder.build();
     }

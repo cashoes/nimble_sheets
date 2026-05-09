@@ -17,12 +17,15 @@ class SongweaverClass extends BaseClass {
                 panelBg: "rgba(35, 25, 15, 0.7)",
                 border: "rgba(251, 191, 36, 0.3)"
             },
-            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
+            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 3 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "HeraldSnark", label: "Herald of Snark", accent: "#be123c" },
                 { value: "HeraldCourage", label: "Herald of Courage", accent: "#4338ca" }
             ],
+            scalingStats: {
+                vmDisplay: { 1: "1d4+INT", 5: "1d4+INT+2", 10: "1d4+INT+4", 15: "1d4+INT+6" }
+            },
             spellSchools: ["Wind"],
             extraSchoolsKeys: ["secondarySchool"],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedWindbag"),
@@ -86,17 +89,21 @@ class SongweaverClass extends BaseClass {
         )});
         
         core[3].push({ id: "quick_wit", name: "Quick Wit", desc: "When you roll Initiative, regain 2 spent uses of Inspiration (expire end of combat)." });
-        core[3].push(FeatureGen.createSpellChoiceFeature({
+        core[3] = [FeatureGen.createSpellChoiceFeature({
             id: "windbag",
-            name: "Windbag",
+            name: "Master of Verse",
             level: 3,
             spellType: "utility",
-            stateKey: "selectedWindbag",
+            stateKey: "selectedSubclassSpells",
             perSchool: true,
             multiplier: (level) => level >= 14 ? 0 : 1,
             milestones: [3, 14],
-            desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Choose 1 Utility Spell from each spell school you know."
-        }));
+            desc: (level) => FeatureGen.createScalingList(
+                "Choose 1 Utility Spell from each spell school you know.",
+                [{ level: 14, text: "You know all Utility Spells from the spell schools you know." }],
+                level
+            )
+        })];
         
         core[4].push({ id: "lyrical", name: "Lyrical Weaponry", type: "dynamic_choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", milestones: [4, 9, 13, 17], desc: "Choose abilities from the Lyrical Weaponry list as you level up.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
         core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "Choose friends you can temporarily summon via song (1/Safe Rest each).", getCount: (level) => 2 });
@@ -120,13 +127,14 @@ class SongweaverClass extends BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
+        const stats = super.getDerivedStats(level, subclass, state);
         const statsMap = getStatsMap(state);
         let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
         let vmBonus = statsMap.int + (Math.floor(level / 5) * 2);
         if (level >= 15 && subclass === "HeraldSnark") vmBonus += statsMap.wil;
-        let vmDisplay = `${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}`;
+        stats.vmDisplay = `${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}`;
 
-        return { speed: 6, woundMax: 6, vmDisplay };
+        return stats;
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {

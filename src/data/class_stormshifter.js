@@ -17,12 +17,15 @@ class StormshifterClass extends BaseClass {
                 panelBg: "rgba(20, 35, 33, 0.7)",
                 border: "rgba(45, 212, 191, 0.3)"
             },
-            initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
+            initialStats: { baseStr: 1, baseDex: 2, baseInt: -1, baseWil: 3 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "SkyStorm", label: "Circle of Sky & Storm", accent: "#bae6fd" },
-                { value: "FangClaw", label: "Circle of Fang & Claw", accent: "#f97316" }
+                { value: "SkyStorm", label: "Pact of the Sky & Storm", accent: "#38bdf8" },
+                { value: "StormClaw", label: "Pact of the Storm & Claw", accent: "#fb923c" }
             ],
+            scalingStats: {
+                shiftFaces: { 1: 4, 3: 6, 5: 8 }
+            },
             spellSchools: ["Lightning", "Wind"],
             subclassSchools: { "SkyStorm": [] }, // Handled by study choice
             extraSchoolsKeys: ["selectedStudy"],
@@ -80,15 +83,19 @@ class StormshifterClass extends BaseClass {
         ];
         
         core[4].push(FeatureGen.createSpellChoiceFeature({
-            id: "caller",
-            name: "Stormcaller",
+            id: "stormcaller",
+            name: "Master of Storms",
             level: 4,
             spellType: "utility",
-            stateKey: "selectedStormcaller",
+            stateKey: "selectedSubclassSpells",
             perSchool: true,
-            multiplier: (level) => level >= 14 ? 0 : (level >= 7 ? 2 : 1),
-            milestones: [4, 7, 14],
-            desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Learn a Utility Spell from each spell school you know."
+            multiplier: (level) => level >= 14 ? 0 : 1,
+            milestones: [4, 14],
+            desc: (level) => FeatureGen.createScalingList(
+                "Learn a Utility Spell from each spell school you know.",
+                [{ level: 14, text: "You know all Utility Spells from the spell schools you know." }],
+                level
+            )
         }));
         
         core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", milestones: [6, 9, 12, 17], desc: "Choose Chimeric Boons. Whenever you shapeshift into a Direbeast form, you may modify it with 1 Chimeric Boon you know.", getCount: (level) => level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2 });
@@ -153,23 +160,19 @@ class StormshifterClass extends BaseClass {
         builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
         builder.addResource('shiftUses', 'Beastshift', state.resourceValues.shiftUses, derived.resourceMaxes.shiftUses);
 
-        let activeForm = (state.currentForm || [])[0] || "Normal";
-        let opts = Object.keys(StormshifterClass.OPTIONS.forms).map(k => {
-            let skip = (k === "Fearsome" && level < 2) || (k === "Beast of the Pack" && level < 3) || (k === "Beast of Nightmares" && level < 5);
-            return skip ? '' : `<option value="${k}" ${k===activeForm?'selected':''}>${k}</option>`;
-        }).join('');
+        const activeForm = (state.currentForm || [])[0] || "Normal";
+        const formOptions = Object.keys(StormshifterClass.OPTIONS.forms).filter(k => {
+            if (k === "Fearsome" && level < 2) return false;
+            if (k === "Beast of the Pack" && level < 3) return false;
+            if (k === "Beast of Nightmares" && level < 5) return false;
+            return true;
+        });
 
-        builder.addCustom(`
-            <div style="flex: 1.6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; margin-bottom: 2px;">Form</label>
-                <select onchange="updateClassState('currentForm', 0, this.value)" style="border-bottom-color: var(--class-accent); font-size: 0.85em;">${opts}</select>
-                <div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">
-                    ${activeForm === "Fearsome" ? `Gore 1d6+${level} | +${getStatsMap(state).dex + level} THP` : 
-                      activeForm === "Beast of the Pack" ? `Thunderfang 1d4+${level} | +${getStatsMap(state).dex} SPD` : 
-                      activeForm === "Beast of Nightmares" ? `Sting 1d4+${3*level} | SPD 2 | Unseen` : 'Standard Form'}
-                </div>
-            </div>
-        `);
+        const subtext = activeForm === "Fearsome" ? `Gore 1d6+${level} | +${getStatsMap(state).dex + level} THP` : 
+                       activeForm === "Beast of the Pack" ? `Thunderfang 1d4+${level} | +${getStatsMap(state).dex} SPD` : 
+                       activeForm === "Beast of Nightmares" ? `Sting 1d4+${3*level} | SPD 2 | Unseen` : 'Standard Form';
+
+        builder.addSelectDisplay('currentForm', 'Form', formOptions, activeForm, subtext);
 
         return builder.build();
     }

@@ -21,8 +21,11 @@ class ShepherdClass extends BaseClass {
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Mercy", label: "Luminary of Mercy", accent: "#f0f9ff" },
-                { value: "Malice", label: "#312e81" }
+                { value: "Malice", label: "Luminary of Malice", accent: "#312e81" }
             ],
+            scalingStats: {
+                spiritDmg: { 1: "1d6", 5: "1d8", 10: "1d10", 15: "1d12" }
+            },
             spellSchools: ["Radiant", "Necrotic"],
             includeUtilitySpells: createUtilityConfig((level) => level >= 11, "selectedTwilight"),
             resources: [
@@ -62,8 +65,8 @@ class ShepherdClass extends BaseClass {
         ];
         core[2].push({ id: "spirit", name: "Lifebinding Spirit", desc: "You know the unique Radiant spell <strong>Lifebinding Spirit</strong> (Tier 1). Action: Summon spirit (ignores harm, lasts until cast again or healing spent). Action: Attack/Heal within Reach 4 for 1d6+WIL radiant. Upcasting: +1 die size (max d12), +1 use." });
         
-        core[3].push(FeatureGen.createSpellChoiceFeature({
-            id: "twilight",
+        core[3] = [FeatureGen.createSpellChoiceFeature({
+            id: "master_spirits",
             name: "Master of Twilight",
             level: 3,
             spellType: "utility",
@@ -71,8 +74,12 @@ class ShepherdClass extends BaseClass {
             perSchool: true,
             multiplier: (level) => level >= 11 ? 0 : (level >= 6 ? 2 : 1),
             milestones: [3, 6, 11],
-            desc: (level) => level >= 11 ? "You know all Necrotic and Radiant Utility Spells." : "Choose Necrotic and Radiant Utility Spells."
-        }));
+            desc: (level) => FeatureGen.createScalingList(
+                "Choose Necrotic and Radiant Utility Spells.",
+                [{ level: 11, text: "You know all Necrotic and Radiant Utility Spells." }],
+                level
+            )
+        })];
         
         core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", milestones: [5, 9, 13, 17], desc: "Choose modular graces.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
         
@@ -96,13 +103,16 @@ class ShepherdClass extends BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
+        const stats = super.getDerivedStats(level, subclass, state);
+        const statsMap = getStatsMap(state);
+
         let maxTier = Math.max(1, Math.floor(level / 2));
         let effectiveTier = maxTier + (state.selectedGraces?.includes("Empowered Companion") ? 1 : 0);
         let dieSizes = ['1d6', '1d8', '1d10', '1d12', '1d20'];
-        let spiritDmg = dieSizes[Math.min(dieSizes.length - 1, effectiveTier - 1)];
-        if (level >= 20) spiritDmg = spiritDmg.replace('1', '2');
+        stats.spiritDmg = dieSizes[Math.min(dieSizes.length - 1, effectiveTier - 1)];
+        if (level >= 20) stats.spiritDmg = stats.spiritDmg.replace('1', '2');
 
-        return { speed: 6, woundMax: 6, spiritDmg };
+        return stats;
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {

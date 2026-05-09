@@ -17,12 +17,16 @@ class MageClass extends BaseClass {
                 panelBg: "rgba(20, 22, 35, 0.7)",
                 border: "rgba(129, 140, 248, 0.3)"
             },
-            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
+            initialStats: { baseStr: -1, baseDex: 0, baseInt: 3, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "Control", label: "Invoker of Control", accent: "#38bdf8" },
-                { value: "Chaos", label: "Invoker of Chaos", accent: "#f97316" }
+                { value: "Control", label: "Master of Control", accent: "#3b82f6" },
+                { value: "Chaos", label: "Master of Chaos", accent: "#f59e0b" }
             ],
+            scalingStats: {
+                surgeNotation: { 5: "WIL", 10: "WIL+1d4", 17: "WIL+2d4" },
+                surgeDisplay: { 5: "WIL", 10: "WIL+1d4", 17: "2d4+WIL" }
+            },
             spellSchools: ["Fire", "Ice", "Lightning"],
             subclassSchools: {
                 "Control": [],
@@ -67,7 +71,7 @@ class MageClass extends BaseClass {
         core[2].push({ id: "researcher", name: "Talented Researcher", desc: "Gain advantage on Arcana or Lore checks when you have access to a large amount of books and time to study them." });
         
         core[3] = [FeatureGen.createSpellChoiceFeature({
-            id: "mastery",
+            id: "master_utility",
             name: "Elemental Mastery",
             level: 3,
             spellType: "school",
@@ -76,13 +80,17 @@ class MageClass extends BaseClass {
             getCount: (level) => level >= 14 ? 0 : (level >= 6 ? 2 : 1),
             filterKnown: true,
             milestones: [3, 6, 14],
-            desc: (level) => level >= 14 ? "You know all Utility Spells from the spell schools you know." : "Learn the Utility Spells from a spell school you know."
+            desc: (level) => FeatureGen.createScalingList(
+                "Learn the Utility Spells from a spell school you know.",
+                [{ level: 14, text: "You know all Utility Spells from the spell schools you know." }],
+                level
+            )
         })];
-        
+
         core[4].push({ id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", milestones: [4, 9, 13], desc: "Choose Spellshaper abilities as you level up. You may use 1/turn.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 });
-        
+
         core[5].push({ id: "surge", name: "Elemental Surge", desc: (level) => FeatureGen.createScalingList(
-            `When you roll Initiative, regain <strong>WIL</strong> mana (this expires at the end of combat if unused).`,
+            "When you roll Initiative, regain <strong>WIL</strong> mana (this expires at the end of combat if unused).",
             [
                 { level: 10, text: "Regain WIL+1d4 mana." },
                 { level: 17, text: "Regain WIL+2d4 mana." }
@@ -150,38 +158,20 @@ class MageClass extends BaseClass {
 
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
-        const totalWil = (state.baseWil || 0) + (state.addWil || 0);
+        const statsMap = getStatsMap(state);
 
         if (level >= 2) {
             builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
         }
 
         if (level >= 5) {
-            let surgeNotation = `${totalWil > 0 ? totalWil : ''}`; 
-            let surgeDisplay = `+${totalWil}`;
-            if (level >= 17) { surgeNotation = `2d4+${totalWil}`; surgeDisplay = `2d4+${totalWil}`; }
-            else if (level >= 10) { surgeNotation = `1d4+${totalWil}`; surgeDisplay = `1d4+${totalWil}`; }
-            
-            builder.addRollDisplay(surgeNotation, 'Surge', surgeDisplay, 'Regain on Init', { type: 'surge' });
+            builder.addRollDisplay(derived.surgeNotation, 'Surge', derived.surgeDisplay, 'Regain on Init', { type: 'surge' });
         }
 
         if (subclass === "Chaos") {
-            builder.addCustom(`
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px dashed rgba(255,255,255,0.15); padding-left: 15px;">
-                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Chaos</label>
-                    <button class="roll-link" onclick="dispatchRoll('1d20', 'Invoke Chaos')" 
-                            style="background: rgba(249, 115, 22, 0.15); border: 1px solid var(--class-accent); color: #fff; font-family: 'Cinzel'; font-size: 0.8em; font-weight: bold; padding: 6px 10px; border-radius: 4px; cursor: pointer; text-transform: uppercase; width: 100%;">
-                        Invoke
-                    </button>
-                </div>`);
+            builder.addStatDisplay('1d20', 'Invoke Chaos', 'Roll on Chaos Table', { borderLeft: true, color: '#f59e0b' });
         } else if (subclass === "Control") {
-            builder.addCustom(`
-                <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px dashed rgba(255,255,255,0.15); padding-left: 15px;">
-                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Control</label>
-                    <div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; text-align: center;">
-                        Demand Control 1/round or on miss.
-                    </div>
-                </div>`);
+            builder.addStatDisplay('10+' + statsMap.int, 'Demand Control', '1/round or on miss', { borderLeft: true, color: '#3b82f6' });
         }
 
         return builder.build();

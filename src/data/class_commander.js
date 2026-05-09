@@ -24,6 +24,9 @@ class CommanderClass extends BaseClass {
                 { value: "Vanguard", label: "Champion of the Vanguard", accent: "#dc2626" },
                 { value: "Spellblade", label: "Spellblade", accent: "#8b5cf6" }
             ],
+            scalingStats: {
+                cdType: { 1: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" }
+            },
             spellProgression: [0, 3, 7, 11, 15],
             extraSchoolsKeys: ["selectedDeepKnowledge"],
             includeUtilitySpells: createUtilityConfig(null, ["selectedDeepKnowledge"]),
@@ -130,7 +133,16 @@ class CommanderClass extends BaseClass {
                     stateKey: "selectedDeepKnowledge",
                     getCount: (level) => level >= 15 ? 8 : (level >= 11 ? 6 : (level >= 7 ? 4 : 2)),
                     milestones: [3, 7, 11, 15],
-                    desc: (level) => `Choose 1 utility and 1 tiered spell for every level of Deep Knowledge you have unlocked. (Level 3: Tier 1, Level 7: Tier 2, Level 11: Tier 3, Level 15: Tier 4).`
+                    desc: (level) => FeatureGen.createScalingList(
+                        "Choose 1 utility and 1 tiered spell for every level of Deep Knowledge you have unlocked.",
+                        [
+                            { level: 3, text: "Tier 1 spells." },
+                            { level: 7, text: "Tier 2 spells." },
+                            { level: 11, text: "Tier 3 spells." },
+                            { level: 15, text: "Tier 4 spells." }
+                        ],
+                        level
+                    )
                 })
             ]
         };
@@ -139,13 +151,7 @@ class CommanderClass extends BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
-        let cdType = "d6";
-        if (level >= 17) cdType = "d20";
-        else if (level >= 13) cdType = "d12";
-        else if (level >= 9) cdType = "d10";
-        else if (level >= 5) cdType = "d8";
-
-        return { speed: 6, woundMax: 6, cdType };
+        return super.getDerivedStats(level, subclass, state);
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {
@@ -160,13 +166,7 @@ class CommanderClass extends BaseClass {
 
         builder.addResource('coordStrike', 'Coord. Strike', state.resourceValues.coordStrike, derived.resourceMaxes.coordStrike);
 
-        builder.addCustom(`
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Tactical DC</label>
-                <div style="font-size: 2.2em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; margin: auto 0;">${10 + statsMap.str}</div>
-                <div style="font-size: 0.65em; color: var(--text-muted); margin-top: auto; font-family:'Crimson Text'; font-style:italic;">10+STR save DC.</div>
-            </div>
-        `);
+        builder.addStatDisplay(10 + statsMap.str, 'Tactical DC', '10+STR save DC.', { borderLeft: true });
 
         return builder.build();
     }

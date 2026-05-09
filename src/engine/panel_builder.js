@@ -66,33 +66,119 @@ class MechanicPanelBuilder {
     }
     
     /**
+     * Internal helper to get die shape SVG
+     */
+    _getDieShape(faces, isFilled = true, color = 'currentColor') {
+        const svgStyle = `width: 48px; height: 48px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));`;
+        const fill = isFilled ? color : 'transparent';
+        const stroke = color;
+        const strokeWidth = 2.0;
+
+        // Shared filters for depth and inner shading
+        const filters = `
+            <defs>
+                <linearGradient id="grad_${faces}" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgba(255,255,255,0.2);stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:rgba(0,0,0,0.2);stop-opacity:1" />
+                </linearGradient>
+                <filter id="shadow_${faces}">
+                    <feOffset dx="0" dy="1" />
+                    <feGaussianBlur stdDeviation="1" result="offset-blur" />
+                    <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
+                    <feFlood flood-color="black" flood-opacity="0.5" result="color" />
+                    <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+                    <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+                </filter>
+            </defs>
+        `;
+
+        const shapes = {
+            4: `<polygon points="24,3 3,42 45,42" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
+                ${isFilled ? `<polygon points="24,3 3,42 45,42" fill="url(#grad_${faces})" />` : ''}`,
+            6: `<rect x="6" y="6" width="36" height="36" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
+                ${isFilled ? `<rect x="6" y="6" width="36" height="36" rx="3" fill="url(#grad_${faces})" />` : ''}`,
+            8: `<polygon points="24,3 3,24 24,45 45,24" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
+                ${isFilled ? `<polygon points="24,3 3,24 24,45 45,24" fill="url(#grad_${faces})" />` : ''}`,
+            10: `<polygon points="24,3 42,18 24,45 6,18" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
+                ${isFilled ? `<polygon points="24,3 42,18 24,45 6,18" fill="url(#grad_${faces})" />` : ''}`,
+            12: `<polygon points="24,3 43.5,15 36,42 12,42 4.5,15" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
+                ${isFilled ? `<polygon points="24,3 43.5,15 36,42 12,42 4.5,15" fill="url(#grad_${faces})" />` : ''}`,
+            20: `<polygon points="24,3 45,15 45,33 24,45 3,33 3,15" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
+                ${isFilled ? `<polygon points="24,3 45,15 45,33 24,45 3,33 3,15" fill="url(#grad_${faces})" />` : ''}`
+        };
+
+        return `<svg viewBox="0 0 48 48" style="${svgStyle}">${filters}${shapes[faces] || shapes[6]}</svg>`;
+    }
+
+    /**
      * Add a dice pool display (Fury, Judgment, etc.)
      */
-    addDicePool(dice, label, faces, rollFn, clearFn, toggleFn, maxDice = 0) {
+    addDicePool(dice, label, faces, stateKey, maxDice = 99, options = {}) {
         let diceHtml = "";
+        const facesNum = parseInt(faces.replace(/\D/g, '')) || 6;
+        const isStaticPool = options.static || false;
+        const rollAll = options.rollAll || false;
         
-        if (dice && dice.length > 0) {
-            dice.forEach((die, idx) => {
-                const exploded = die.detail && die.detail.includes('!');
-                diceHtml += `
-                    <div onclick="event.stopPropagation(); ${toggleFn}(${idx})"
-                         title="${die.detail} (Right-click to Maximize)"
-                         style="background: rgba(239, 68, 68, 0.15); border: 1px solid ${exploded ? 'var(--gold-light)' : 'var(--class-accent)'}; border-radius: 4px; padding: 3px 6px; min-width: 28px; text-align: center; cursor: pointer;">
-                        <span style="font-family: 'Cinzel', serif; font-weight: bold; color: #fff; font-size: 1.2em;">${die.total}</span>
-                    </div>
+        let indicatorsHtml = "";
+        if (options.indicators) {
+            options.indicators.forEach(ind => {
+                const isActive = ind.active;
+                const glow = isActive ? `box-shadow: 0 0 8px ${ind.color};` : '';
+                const opacity = isActive ? '1' : '0.2';
+                const onClick = ind.toggleKey ? `onclick="updateBgChoice('${ind.toggleKey}', state['${ind.toggleKey}'] === 'BOOM' ? 'OFF' : 'BOOM')"` : '';
+                
+                indicatorsHtml += `
+                    <div ${onClick} title="${ind.label}: ${isActive ? 'ON' : 'OFF'}"
+                         style="width: 8px; height: 8px; border-radius: 50%; background: ${ind.color}; ${glow} opacity: ${opacity}; cursor: ${ind.toggleKey ? 'pointer' : 'default'};"></div>
                 `;
+            });
+        }
+
+        const renderDie = (die, idx, isPlaceholder = false) => {
+            const exploded = die?.detail && die.detail.includes('!');
+            const color = exploded ? 'var(--gold-light)' : 'var(--class-accent)';
+            const shapeSvg = this._getDieShape(facesNum, !isPlaceholder, color);
+            
+            const canRemove = !isPlaceholder && !options.disableRemove;
+            const canMaximize = !isPlaceholder && !options.disableMaximize;
+            
+            return `
+                <div onclick="${canRemove ? `removePoolDie('${stateKey}', ${idx}, ${isStaticPool})` : ''}"
+                     oncontextmenu="event.preventDefault(); ${canMaximize ? `maximizePoolDie('${stateKey}', ${idx}, ${facesNum})` : ''}"
+                     title="${isPlaceholder ? 'Empty Slot' : `${die.detail || die.total}${!canMaximize ? '' : ' (Right-click to Maximize)'}`}"
+                     style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: ${canRemove || canMaximize ? 'pointer' : 'default'}; opacity: ${isPlaceholder ? 0.3 : 1};">
+                    ${shapeSvg}
+                    ${isPlaceholder ? '' : `<span style="position: absolute; font-family: 'Cinzel', serif; font-weight: 900; color: #fff; font-size: 1.4em; text-shadow: 0 0 4px rgba(0,0,0,0.8); pointer-events: none;">${die.total}</span>`}
+                </div>
+            `;
+        };
+
+        if (isStaticPool) {
+            for (let i = 0; i < maxDice; i++) {
+                diceHtml += renderDie(dice[i], i, !dice[i]);
+            }
+        } else if (dice && dice.length > 0) {
+            dice.forEach((die, idx) => {
+                diceHtml += renderDie(die, idx);
             });
         } else {
             diceHtml = `<div style="color: var(--text-muted); font-style: italic; font-size: 0.85em; opacity: 0.5; padding: 5px;">Awaiting ${label}...</div>`;
         }
         
+        const actionBtn = rollAll ? 
+            `<button onclick="rollPool('${stateKey}', ${maxDice}, ${facesNum})" style="background: rgba(255,255,255,0.1); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Roll</button>` :
+            `<button onclick="addPoolDie('${stateKey}', ${maxDice}, ${facesNum})" style="background: rgba(255,255,255,0.1); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">+ Die</button>`;
+
         this.sections.push(`
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding-left: 5px;">
+            <div style="flex: 1.5; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding-left: 5px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 2px;">
-                    <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">${label} (${faces})</label>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">${label} (${faces})</label>
+                        <div style="display: flex; gap: 4px; align-items: center;">${indicatorsHtml}</div>
+                    </div>
                     <div style="display: flex; gap: 6px;">
-                        <button onclick="${rollFn}" style="background: rgba(239,68,68,0.15); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">+ Die</button>
-                        <button onclick="${clearFn}" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-muted); font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Clear</button>
+                        ${actionBtn}
+                        <button onclick="clearPool('${stateKey}')" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-muted); font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Clear</button>
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px; flex: 1; width: 100%; justify-content: center;">
@@ -105,6 +191,71 @@ class MechanicPanelBuilder {
         
         return this;
     }
+
+    /**
+     * Add a large stat display (Total Damage, DC, etc.)
+     */
+    addStatDisplay(value, label, subtext = '', options = {}) {
+        const color = options.color || 'var(--gold-light)';
+        const borderLeft = options.borderLeft ? 'border-left: 1px solid rgba(255,255,255,0.1); padding-left: 12px;' : '';
+        const borderRight = options.borderRight ? 'border-right: 1px solid rgba(255,255,255,0.1); padding-right: 12px;' : '';
+
+        let indicatorsHtml = "";
+        if (options.indicators) {
+            indicatorsHtml = `<div style="display: flex; flex-direction: column; gap: 3px; margin-top: 6px; width: 100%; align-items: center;">`;
+            options.indicators.forEach(ind => {
+                const isActive = ind.active;
+                const glow = isActive ? `box-shadow: 0 0 6px ${ind.color};` : '';
+                const opacity = isActive ? '1' : '0.2';
+                const textColor = isActive ? ind.color : 'var(--text-muted)';
+                const onClick = ind.toggleKey ? `onclick="updateBgChoice('${ind.toggleKey}', state['${ind.toggleKey}'] === 'BOOM' ? 'OFF' : 'BOOM')"` : '';
+                
+                indicatorsHtml += `
+                    <div ${onClick} style="display: flex; align-items: center; gap: 6px; cursor: ${ind.toggleKey ? 'pointer' : 'default'}; opacity: ${opacity};">
+                        <span style="font-size: 0.5em; color: ${textColor}; text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 0.5px;">${ind.label}</span>
+                        <div style="width: 6px; height: 6px; border-radius: 50%; background: ${ind.color}; ${glow}"></div>
+                    </div>
+                `;
+            });
+            indicatorsHtml += `</div>`;
+        }
+
+        this.sections.push(`
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 80px; ${borderLeft} ${borderRight}">
+                <span style="font-size: 2.2em; font-family: 'Cinzel', serif; font-weight: 900; color: ${value > 0 ? color : '#fff'}; line-height: 1;">${value >= 0 ? '+' : ''}${value}</span>
+                <span style="font-size: 0.6em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-top: 4px; white-space: nowrap;">${label}</span>
+                ${subtext ? `<div style="font-size: 0.55em; color: var(--text-muted); font-style: italic; text-align: center; line-height: 1.1; margin-top: 6px;">${subtext}</div>` : ''}
+                ${indicatorsHtml}
+            </div>
+        `);
+        return this;
+    }
+
+    /**
+     * Add a toggle/mode selector display
+     */
+    addToggleDisplay(id, label, options, stateKey) {
+        const current = state[stateKey] || options[0];
+        const buttons = options.map(opt => `
+            <button onclick="updateBgChoice('${stateKey}', '${opt}')" 
+                    style="flex: 1; background: ${current === opt ? 'var(--class-accent)' : 'transparent'}; 
+                           border: 1px solid ${current === opt ? 'var(--class-accent)' : 'rgba(255,255,255,0.2)'}; 
+                           color: ${current === opt ? '#000' : 'var(--text-muted)'}; 
+                           font-size: 0.65em; padding: 4px; border-radius: 4px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">
+                ${opt}
+            </button>
+        `).join('');
+
+        this.sections.push(`
+            <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+                <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">${label}</label>
+                <div style="display: flex; gap: 4px; width: 100%;">
+                    ${buttons}
+                </div>
+            </div>
+        `);
+        return this;
+    }
     
     /**
      * Add custom HTML section
@@ -114,6 +265,21 @@ class MechanicPanelBuilder {
         return this;
     }
     
+    /**
+     * Add a selection display (Form selector, etc.)
+     */
+    addSelectDisplay(id, label, options, current, subtext = '') {
+        const optsHtml = options.map(opt => `<option value="${opt}" ${opt === current ? 'selected' : ''}>${opt}</option>`).join('');
+        this.sections.push(`
+            <div style="flex: 1.6; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-left: 1px dashed rgba(255,255,255,0.15); padding-left: 10px;">
+                <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; margin-bottom: 2px;">${label}</label>
+                <select onchange="updateClassState('${id}', 0, this.value)" style="border-bottom-color: var(--class-accent); font-size: 0.85em; width: 100%;">${optsHtml}</select>
+                ${subtext ? `<div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">${subtext}</div>` : ''}
+            </div>
+        `);
+        return this;
+    }
+
     /**
      * Build final HTML
      * @param {number} minHeight - Minimum height in pixels

@@ -17,13 +17,17 @@ class ShadowmancerClass extends BaseClass {
                 panelBg: "rgba(25, 15, 35, 0.7)",
                 border: "rgba(168, 85, 247, 0.3)"
             },
-            initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
+            initialStats: { baseStr: -1, baseDex: 1, baseInt: 3, baseWil: 0 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "RedDragon", label: "Pact of the Red Dragon", accent: "#ef4444" },
-                { value: "AbyssalDepths", label: "Pact of the Abyssal Depths", accent: "#bae6fd" },
-                { value: "Reaver", label: "Reaver (Extra)", accent: "#94a3b8" }
+                { value: "RedDragon", label: "Pact of the Red Dragon", accent: "#fb923c" },
+                { value: "AbyssalDepths", label: "Pact of the Abyssal Depths", accent: "#38bdf8" },
+                { value: "Reaver", label: "Pact of the Reaver (Extra)", accent: "#be123c" }
             ],
+            scalingStats: {
+                minionReach: { 1: 1, 5: 2, 10: 3, 15: 4, 20: 5 },
+                blastDice: { 1: 1, 5: 2, 10: 3, 15: 4, 20: 5 }
+            },
             spellSchools: ["Necrotic"],
             subclassSchools: { "RedDragon": ["Fire"], "AbyssalDepths": ["Ice"] },
             extraSchoolsKeys: [],
@@ -74,10 +78,10 @@ class ShadowmancerClass extends BaseClass {
         
         core[1] = [
             { id: "conduit", name: "Conduit of Shadow", milestones: [1, 5, 10, 15, 20], desc: (level) => {
-                let blastDice = 1 + Math.floor(level / 5);
-                let summonReach = 1 + Math.floor(level / 5);
+                const blastDice = 1 + Math.floor(level / 5);
+                const summonReach = 1 + Math.floor(level / 5);
                 return FeatureGen.createScalingList(
-                    `Your Patron grants you knowledge of Shadow Blast (<strong>${blastDice}d12+KEY</strong>) and Summon Shadows (Reach <strong>${summonReach}</strong>). You can summon a max of INT or LVL minions, whichever is lower. (1/turn) Command ALL minions to move 6 then attack (Reach 1, 1d12 each).`,
+                    `Your Patron grants you knowledge of Shadow Blast (<strong>${blastDice}d12+KEY</strong>) and Summon Shadows (Reach <strong>${summonReach}</strong>). You can summon a max of INT or character level minions, whichever is lower. (1/turn) Command ALL minions to move 6 then attack (Reach 1, 1d12 each).`,
                     [
                         { level: 5, text: "Shadow Blast increases to 2d12, Summon Reach increases to 2." },
                         { level: 10, text: "Shadow Blast increases to 3d12, Summon Reach increases to 3." },
@@ -92,8 +96,24 @@ class ShadowmancerClass extends BaseClass {
         core[2].push({ id: "master_darkness", name: "Master of Darkness", desc: "You know Necrotic cantrips. You gain INT mana whenever you roll Initiative (this expires if unspent at the end of combat)." });
         core[2].push({ id: "pilfer", name: "Pilfered Power", desc: "You may steal power to cast spells at the highest tier you have unlocked. You can do this DEX times before your patron damages you for half your max HP. Resets on Safe Rest." });
         
-        core[3].push({ id: "lesser", name: "Lesser Invocation", type: "dynamic_choice", collection: "lesserInvocations", stateKey: "selectedLesser", milestones: [3, 8, 11], desc: "Choose Lesser Shadow Invocations as you level up.", getCount: (level) => level >= 11 ? 3 : level >= 8 ? 2 : 1 });
-        core[4].push({ id: "greater", name: "A Gift from the Master", type: "dynamic_choice", collection: "greaterInvocations", stateKey: "selectedGreater", milestones: [4, 6, 9, 14, 18], desc: "Choose Greater Shadow Invocations as you level up.", getCount: (level) => level >= 18 ? 5 : level >= 14 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 });
+        core[3].push({ id: "lesser", name: "Lesser Invocation", type: "dynamic_choice", collection: "lesserInvocations", stateKey: "selectedLesser", milestones: [3, 8, 11], desc: (level) => FeatureGen.createScalingList(
+            "Choose Lesser Shadow Invocations as you level up.",
+            [
+                { level: 8, text: "Learn a 2nd invocation." },
+                { level: 11, text: "Learn a 3rd invocation." }
+            ],
+            level
+        ), getCount: (level) => level >= 11 ? 3 : level >= 8 ? 2 : 1 });
+        core[4].push({ id: "greater", name: "A Gift from the Master", type: "dynamic_choice", collection: "greaterInvocations", stateKey: "selectedGreater", milestones: [4, 6, 9, 14, 18], desc: (level) => FeatureGen.createScalingList(
+            "Choose Greater Shadow Invocations as you level up.",
+            [
+                { level: 6, text: "Learn a 2nd invocation." },
+                { level: 9, text: "Learn a 3rd invocation." },
+                { level: 14, text: "Learn a 4th invocation." },
+                { level: 18, text: "Learn a 5th invocation." }
+            ],
+            level
+        ), getCount: (level) => level >= 18 ? 5 : level >= 14 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 });
         
         core[6].push(FeatureGen.createSpellChoiceFeature({
             id: "shadowmastery",
@@ -104,7 +124,11 @@ class ShadowmancerClass extends BaseClass {
             stateKey: "selectedShadowmastery",
             getCount: (level) => level >= 14 ? 0 : (level >= 8 ? 2 : 1),
             milestones: [6, 8, 14],
-            desc: (level) => level >= 14 ? "You know all Necrotic Utility Spells." : "Choose Necrotic Utility Spells."
+            desc: (level) => FeatureGen.createScalingList(
+                "Choose Necrotic Utility Spells.",
+                [{ level: 14, text: "You know all Necrotic Utility Spells." }],
+                level
+            )
         }));
 
         core[12].push({ id: "greedy_pact", name: "Greedy Pact", desc: "When you would take damage from Pilfer Power, make a STR save: 1-9: Suffer damage as normal. 10-19: Suffer only 10 HP of damage. 20+: Suffer no damage and cast the spell as if it were 1 tier higher." });
@@ -172,15 +196,16 @@ class ShadowmancerClass extends BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
+        const stats = super.getDerivedStats(level, subclass, state);
         const statsMap = getStatsMap(state);
-        let minionMax = Math.max(1, Math.min(statsMap.int, level));
-        if (level >= 20) minionMax *= 2;
+        stats.minionMax = Math.max(1, Math.min(statsMap.int, level));
+        if (level >= 20) stats.minionMax *= 2;
         const greater = state.selectedGreater || [];
         
-        let minionDmg = `${minionMax}d12`;
-        if (greater.includes("Shadow Magus")) minionDmg = `${minionMax}d10`;
+        stats.minionDmg = `${stats.minionMax}d12`;
+        if (greater.includes("Shadow Magus")) stats.minionDmg = `${stats.minionMax}d10`;
 
-        return { speed: 6, woundMax: 6, minionMax, minionDmg };
+        return stats;
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {

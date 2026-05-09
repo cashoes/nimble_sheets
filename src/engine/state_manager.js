@@ -67,7 +67,7 @@ function saveState(newState = null) {
 
 function loadState() {
     state = {
-        version: "1.5.0", charName: '', level: 1, ancestry: 'None', background: 'None', subclass: 'None',
+        version: "1.6.0", charName: '', level: 1, ancestry: 'None', background: 'None', subclass: 'None',
         baseStr: 0, addStr: 0, baseDex: 0, addDex: 0, baseInt: 0, addInt: 0, baseWil: 0, addWil: 0,
         hpCurrent: null, tempHP: 0, hdCurrent: null, wounds: 0,
         skills: {}, activeConditions: [], inventory: [], gold: 0,

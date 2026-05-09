@@ -32,6 +32,7 @@ class BaseClass {
         this.includeTieredSpells = config.includeTieredSpells || []; // Array of state keys that contain individual tiered spell choices
         this.includeCantripSpells = config.includeCantripSpells || []; // Array of state keys that contain individual cantrip choices
         this.spellReplacements = config.spellReplacements || []; // For Oathbreaker-style replacements
+        this.scalingStats = config.scalingStats || {}; // Declarative level scaling for derived stats
         
         // Internal references for default renderers
         this.featuresData = config.featuresData || { core: {}, subclasses: {} };
@@ -42,7 +43,20 @@ class BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
-        return { speed: 6, woundMax: 6 };
+        const stats = { speed: 6, woundMax: 6 };
+        
+        // Process declarative scaling stats
+        Object.entries(this.scalingStats).forEach(([key, milestones]) => {
+            const sortedMilestones = Object.keys(milestones)
+                .map(Number)
+                .sort((a, b) => a - b);
+            
+            sortedMilestones.forEach(m => {
+                if (level >= m) stats[key] = milestones[m];
+            });
+        });
+
+        return stats;
     }
 
     getStatOverrides(level, subclass, state, statsMap) {

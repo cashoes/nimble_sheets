@@ -23,6 +23,10 @@ class BerserkerClass extends BaseClass {
                 { value: "RedMist", label: "Path of the Red Mist", accent: "#fb923c" },
                 { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#4b5563" }
             ],
+            scalingStats: {
+                furyFaces: { 1: 4, 6: 6, 9: 8, 13: 10, 17: 12 },
+                furyText: { 1: "d4", 6: "d6", 9: "d8", 13: "d10", 17: "d12" }
+            },
             featuresData: BerserkerClass.FEATURES,
             optionsData: BerserkerClass.OPTIONS
         });
@@ -92,75 +96,30 @@ class BerserkerClass extends BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
+        const stats = super.getDerivedStats(level, subclass, state);
         const statsMap = getStatsMap(state);
-        const furyMax = Math.max(statsMap.str, statsMap.dex);
-
-        let faces = 4;
-        if (level >= 17) faces = 12;
-        else if (level >= 13) faces = 10;
-        else if (level >= 9) faces = 8;
-        else if (level >= 6) faces = 6;
-
-        return { speed: 6, woundMax: 6, furyMax, furyText: `d${faces}`, furyFaces: faces };
+        stats.furyMax = Math.max(statsMap.str, statsMap.dex);
+        return stats;
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         let totalFury = 0;
-        (state.furyDice || []).forEach(d => totalFury += d.total);
+        (state.furyDice || []).forEach(d => { if (d) totalFury += d.total; });
 
         builder.addDicePool(
             state.furyDice || [],
             'Fury Dice',
-            `d${derived.furyFaces}`,
-            'CLASS_CONFIG.actions.rollFury()',
-            'CLASS_CONFIG.actions.clearFury()',
-            'CLASS_CONFIG.actions.toggleFury'
+            derived.furyText,
+            'furyDice',
+            derived.furyMax,
+            { static: true }
         );
         
-        builder.addCustom(`
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px;">
-                <span style="font-size: 2.2em; font-family: 'Cinzel', serif; font-weight: 900; color: ${totalFury > 0 ? 'var(--gold-light)' : 'var(--text-muted)'}; line-height: 1;">+${totalFury}</span>
-                <span style="font-size: 0.6em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-top: 4px;">Total Damage</span>
-                <div style="font-size: 0.55em; color: var(--text-muted); margin-top: 8px; font-style: italic; text-align: center; line-height: 1.1;">Gain on hit<br>or dmg taken.</div>
-            </div>
-        `);
+        builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.');
 
         return builder.build();
     }
-
-    actions = {
-        maximizeDie: function(idx) {
-            if (!state.furyDice || !state.furyDice[idx]) return;
-            const derived = this.getDerivedStats(state.level, state.subclass, state);
-            state.furyDice[idx].total = derived.furyFaces;
-            saveState(); render();
-        },
-        toggleFury: function(idx) {
-            if (!state.furyDice) state.furyDice = [];
-            if (idx < state.furyDice.length) {
-                state.furyDice.splice(idx, 1);
-            } else {
-                const derived = this.getDerivedStats(state.level, state.subclass, state);
-                const roll = Math.floor(Math.random() * derived.furyFaces) + 1;
-                state.furyDice.push({ total: roll });
-            }
-            saveState(); render();
-        },
-        rollFury: function() {
-            const derived = this.getDerivedStats(state.level, state.subclass, state);
-            if (!state.furyDice) state.furyDice = [];
-            if (state.furyDice.length < derived.furyMax) {
-                const roll = Math.floor(Math.random() * derived.furyFaces) + 1;
-                state.furyDice.push({ total: roll });
-                saveState(); render();
-            }
-        },
-        clearFury: function() {
-            state.furyDice = [];
-            saveState(); render();
-        }
-    };
 }
 
 const CLASS_CONFIG = new BerserkerClass();

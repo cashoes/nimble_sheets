@@ -89,3 +89,82 @@ function handleResPipClick(id, i, max) {
     saveState(); render(); 
 }
 function handleWoundClick(i) { state.wounds = (state.wounds === i + 1) ? i : i + 1; saveState(); render(); }
+
+/**
+ * GLOBAL DICE POOL HELPERS
+ */
+function _rollDie(faces, allowExplode = false) {
+    let total = Math.floor(Math.random() * faces) + 1;
+    let detail = total.toString();
+    
+    if (allowExplode && total === faces) {
+        const next = _rollDie(faces, true);
+        total += next.total;
+        detail = `${detail}! + ${next.detail}`;
+    }
+    return { total, detail };
+}
+
+function addPoolDie(key, max, faces) {
+    if (!state[key]) state[key] = [];
+    
+    const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') || 
+                         (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
+    const roll = _rollDie(faces, allowExplode);
+
+    // Fill first empty slot if exists, otherwise push
+    const emptyIdx = state[key].findIndex(d => d === null);
+    if (emptyIdx !== -1) {
+        state[key][emptyIdx] = roll;
+    } else if (state[key].length < max) {
+        state[key].push(roll);
+    }
+    
+    saveState(); render();
+}
+
+function removePoolDie(key, idx, isStatic = false) {
+    if (!state[key]) return;
+    if (isStatic) {
+        state[key][idx] = null;
+    } else {
+        state[key].splice(idx, 1);
+    }
+    saveState(); render();
+}
+
+function clearPool(key) {
+    state[key] = [];
+    saveState(); render();
+}
+
+function maximizePoolDie(key, idx, faces) {
+    if (!state[key] || !state[key][idx]) return;
+    state[key][idx].total = faces;
+    state[key][idx].detail = `${faces} (Maxed)`;
+    saveState(); render();
+}
+
+function rollPool(key, count, faces) {
+    let finalDice = [];
+    const hasAdv = (key === 'judgmentDice' && state.selectedDecrees?.includes("Reliable Justice"));
+    const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') || 
+                         (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
+    
+    let rollCount = hasAdv ? count + 1 : count;
+
+    for (let i = 0; i < rollCount; i++) {
+        finalDice.push(_rollDie(faces, allowExplode));
+    }
+
+    if (hasAdv) {
+        let minVal = Math.min(...finalDice.map(d => d.total));
+        let minIdx = finalDice.findIndex(d => d.total === minVal);
+        finalDice.splice(minIdx, 1);
+    }
+    
+    state[key] = finalDice;
+    saveState(); render();
+}
+
+

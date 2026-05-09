@@ -17,12 +17,15 @@ class CheatClass extends BaseClass {
                 panelBg: "rgba(35, 40, 45, 0.8)",
                 border: "rgba(203, 213, 225, 0.2)"
             },
-            initialStats: { baseStr: -1, baseDex: 3, baseInt: 1, baseWil: -1 },
+            initialStats: { baseStr: 0, baseDex: 2, baseInt: 3, baseWil: -1 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#0f172a" },
                 { value: "Scoundrel", label: "Tools of the Scoundrel", accent: "#16a34a" }
             ],
+            scalingStats: {
+                saDice: { 1: "None", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
+            },
             featuresData: CheatClass.FEATURES,
             optionsData: CheatClass.OPTIONS
         });
@@ -98,15 +101,7 @@ class CheatClass extends BaseClass {
     }
 
     getDerivedStats(level, subclass, state) {
-        let saDice = "1d6";
-        if (level >= 17) saDice = "3d20";
-        else if (level >= 15) saDice = "2d20";
-        else if (level >= 11) saDice = "2d12";
-        else if (level >= 9) saDice = "2d10";
-        else if (level >= 7) saDice = "2d8";
-        else if (level >= 3) saDice = "1d8";
-
-        return { speed: 6, woundMax: 6, saDice };
+        return super.getDerivedStats(level, subclass, state);
     }
 
     getStatOverrides(level, subclass, state, statsMap) {
@@ -121,22 +116,10 @@ class CheatClass extends BaseClass {
         
         builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, 'On Critical Hit', { type: 'attack', stat: 'dex' });
         
-        builder.addCustom(`
-            <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; text-align: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
-                <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Opportunist</label>
-                <div style="font-size: 1.4em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; text-transform: uppercase; line-height: 1.1; margin: auto 0;">Max Roll</div>
-                <div style="font-size: 0.7em; color: var(--text-muted); margin-top: auto; font-family:'Crimson Text'; font-style:italic;">Vs. Distracted targets</div>
-            </div>
-        `);
+        builder.addStatDisplay('MAX', 'Opportunist', 'Vs. Distracted targets', { borderRight: true });
 
         if (level >= 2) {
-            builder.addCustom(`
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">Cunning</label>
-                    <div style="font-size: 2.0em; color: #fff; font-family: 'Cinzel', serif; font-weight: bold; line-height: 1; margin: auto 0;">10+</div>
-                    <div style="font-size: 0.7em; color: var(--text-muted); margin-top: auto; font-family:'Crimson Text'; font-style:italic;">Init Floor. Free Move/Hide.</div>
-                </div>
-            `);
+            builder.addStatDisplay('10+', 'Cunning', 'Init Floor. Free Move/Hide.');
         }
 
         return builder.build();

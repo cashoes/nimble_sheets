@@ -1,7 +1,7 @@
 # NIMBLE Tracker - Architecture Documentation
 
-**Version**: 1.5.0  
-**Date**: 2026-05-07  
+**Version**: 1.6.0  
+**Date**: 2026-05-08  
 **Status**: Production Ready ✅
 
 ---
@@ -111,32 +111,34 @@ Shared logic lives in engine modules:
 - `spellProgression`: Custom progression array (optional)
 - `spellReplacements`: For Oathbreaker-style replacements
 - `includeUtilitySpells`: Boolean or config object
+- `scalingStats`: Declarative object for level-based stat scaling (e.g., Fury die size)
 - `resources`: Array of resource definitions
 - `customHeaderStats`: Custom header displays (e.g., Aura range)
 
 **Key Methods**:
-- `getAvailableSpells()`: Default spell progression (override only for special cases)
-- `getDerivedStats()`: Calculate speed, wound max, etc.
+- `getAvailableSpells()`: 100% config-driven spell selection (no overrides required!)
+- `getDerivedStats()`: Processes `scalingStats` milestones and calculates speed/wounds.
 - `getStatOverrides()`: Modify armor, init, etc.
 - `getMechanicPanelHTML()`: Build class-specific UI (uses PanelBuilder)
-- `renderFeature()`: Custom feature rendering (optional override)
 
 ### 3.2 PanelBuilder (`src/engine/panel_builder.js`)
 **Purpose**: Fluent API for building mechanic panels
 
 **Methods**:
-- `addResource(id, label, value, max)`: Mana, LoH, etc.
-- `addRollDisplay(notation, label, display, subtext, context)`: Surge, Spirit damage
-- `addDicePool(dice, label, faces, rollFn, clearFn, toggleFn)`: Fury, Judgment
-- `addCustom(html)`: For class-specific UI that doesn't fit other methods
-- `build(minHeight)`: Generate final HTML
+- `addResource(id, label, value, max)`: Mana pool incrementers.
+- `addRollDisplay(notation, label, display, subtext, context)`: Large clickable roll totals.
+- `addDicePool(dice, label, faces, stateKey, max, options)`: 3D SVG dice pool with outlines and explosion support.
+- `addStatDisplay(value, label, subtext, options)`: Standardized display for large totals (DMG, DC).
+- `addToggleDisplay(id, label, options, stateKey)`: Standardized toggle buttons (Mode, Boom).
+- `addSelectDisplay(id, label, options, current, subtext)`: Standardized dropdown selectors (Forms).
+- `build(minHeight)`: Generate final HTML.
 
 **Usage Example**:
 ```javascript
 getMechanicPanelHTML(level, subclass, state, derived) {
     const builder = new PanelBuilder();
     builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
-    builder.addRollDisplay('1d4+INT', 'Sneak Attack', '+1d4', 'On Crit');
+    builder.addStatDisplay(10 + statsMap.str, 'Tactical DC', '10+STR save DC.');
     return builder.build();
 }
 ```
@@ -258,21 +260,20 @@ const CLASS_CONFIG = new XClass();
 | **Half Caster** | Commander (Spellblade) | `spellProgression: [0, 3, 7, 11, 15]` |
 | **Non-Caster** | Berserker, Cheat, Hunter, Zephyr | No spell config |
 
-### 4.3 Custom `getAvailableSpells()` Overrides
+### 4.3. Class Overrides: Zero Required
 
-Only 3 classes need custom overrides (legitimate reasons):
+As of Version 1.5.0, **zero manual logic overrides** are required in Character Class files. All 11 classes are 100% configuration-driven:
 
-| Class | Reason |
-|-------|--------|
-| **Shepherd** | Paired Radiant + Necrotic utility selection (Level 3+) |
-| **Songweaver** | Windbag utility selection (select 1 per school) |
-| **Stormshifter** | Stormcaller utility selection (select 1 per school) |
+| Class | Progression | Features | Mechanic Panel |
+|-------|-------------|----------|----------------|
+| All | `BaseClass` | `FeatureGen` | `PanelBuilder` |
 
-All other casters (8 classes) use the **BaseClass default** via config.
+This achievement ensures that the core engine can be updated or re-themed without ever touching individual class data files.
 
 ---
 
 ## 5. Build Process
+
 
 ### 5.1 Builder UI (`index.html`)
 The builder is a simple HTML page that:
@@ -376,26 +377,15 @@ state = {
 ## 8. Code Health Summary
 
 ### 8.1 What's Good ✅
-- **Deduplication**: No repeated spell logic across 11 classes
-- **Consistency**: All classes use FeatureGen, PanelBuilder, ResourceFactory
-- **Modularity**: Clear separation of engine vs. class data
-- **Documentation**: This file + inline code comments
+- **Deduplication**: No repeated spell logic across 11 classes.
+- **100% Config**: Zero logic overrides in class data files.
+- **Consistency**: All classes use FeatureGen, PanelBuilder, ResourceFactory.
+- **Production Gold**: All `addCustom` calls eliminated.
 
-### 8.2 Remaining `addCustom()` Usage
-9 files use `addCustom()` for class-specific UI (10 total calls):
-
-| Class | Count | Purpose |
-|-------|-------|---------|
-| Berserker | 1 | Total Damage display |
-| Cheat | 2 | Opportunist + Cunning displays |
-| Commander | 1 | Tactical DC display |
-| Hunter | 1 | Gain Charge info |
-| Mage | 2 | Chaos/Control toggles |
-| Oathsworn | 1 | Radiant DMG display |
-| Stormshifter | 1 | Form selector |
-| Zephyr | 1 | Iron Defense (conditional) |
-
-**Optional**: Add `addSummaryDisplay()` and `addStatDisplay()` to PanelBuilder to eliminate these.
+### 8.2 Future Roadmap
+*   Expanding subclass-specific features.
+*   Refining the browser bridge for automated VTT integration.
+*   Adding "Custom Class" support via an external JSON schema.
 
 ---
 

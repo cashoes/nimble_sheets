@@ -25,6 +25,30 @@ function defaultRenderFeature(feat, level, subclass, state, derived, bFeat, iSta
     let finalCssClass = cssClass || "";
     if (feat.minor) finalCssClass += " minor-feature";
 
+    let resourceHtml = "";
+    if (feat.resourceId && configRef && configRef.resources) {
+        const resConfig = configRef.resources.find(r => r.id === feat.resourceId);
+        if (resConfig) {
+            const current = state.resourceValues[feat.resourceId] || 0;
+            const max = typeof resConfig.calcMax === 'function' ? resConfig.calcMax(level, statsMap, state, subclass) : (resConfig.max || 1);
+            
+            resourceHtml = `
+                <div style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid var(--class-border); display: flex; align-items: center; justify-content: space-between;">
+                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold;">Remaining ${resConfig.label}</label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="dark-incrementer">
+                            <button onclick="adjRes('${feat.resourceId}', -1, ${max})">-</button>
+                            <input type="number" value="${current}" onchange="adjRes('${feat.resourceId}', parseInt(this.value), ${max}, true)" style="width: 35px; text-align: center; background: transparent; border: none; color: #fff; font-family: 'Cinzel'; font-weight: bold; font-size: 1em;">
+                            <button onclick="adjRes('${feat.resourceId}', 1, ${max})">+</button>
+                        </div>
+                        <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${max}</div>
+                    </div>
+                </div>`;
+        }
+    }
+
+    desc += resourceHtml;
+
     if (feat.type === "choice" || feat.type === "dynamic_choice" || feat.type === "spell_choice") {
         let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
         let selection = state[feat.stateKey] || [];
