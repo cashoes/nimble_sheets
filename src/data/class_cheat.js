@@ -1,4 +1,12 @@
+/**
+ * Cheat Class
+ * Master of stealth, dirty fighting, & rules.
+ * @extends BaseClass
+ */
 class CheatClass extends BaseClass {
+    /**
+     * Initializes the Cheat class with its core configuration.
+     */
     constructor() {
         super({
             name: "Cheat",
@@ -31,6 +39,10 @@ class CheatClass extends BaseClass {
         });
     }
 
+    /**
+     * Defines choice-based options for the Cheat class (Underhanded Abilities).
+     * @returns {Object} Dictionary of class options.
+     */
     static get OPTIONS() {
         return {
             underhanded: {
@@ -48,12 +60,20 @@ class CheatClass extends BaseClass {
         };
     }
 
+    /**
+     * Defines the core and subclass features for the Cheat class.
+     * @returns {Object} Core and subclass feature data.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or INT', 'WIL or STR', false);
 
         core[1] = [
             {
-                id: "sneak_attack", name: "Sneak Attack", milestones: [1, 3, 7, 9, 11, 15, 17], context: { type: 'attack', stat: 'dex' }, desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
+                id: "sneak_attack",
+                name: "Sneak Attack",
+                milestones: [1, 3, 7, 9, 11, 15, 17],
+                context: { type: 'attack', stat: 'dex' },
+                desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
                     `(1/turn) When you crit, deal <strong>+${derived.saDice}</strong> damage.`,
                     [
                         { level: 3, text: "Deal +1d8 damage." },
@@ -76,7 +96,10 @@ class CheatClass extends BaseClass {
         core[4].push({ id: "underhanded", name: "Underhanded Abilities", type: "dynamic_choice", collection: "underhanded", stateKey: "selectedUnderhanded", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose Underhanded Abilities as you level up.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) });
 
         core[5].push({
-            id: "twist_blade", name: "Twist the Blade", milestones: [5, 13], desc: (level) => FeatureGen.createScalingList(
+            id: "twist_blade",
+            name: "Twist the Blade",
+            milestones: [5, 13],
+            desc: (level) => FeatureGen.createScalingList(
                 "Action: Change one of your Sneak Attack dice to whatever you like.",
                 [{ level: 13, text: "You can Twist the Blade for free (1/turn)." }],
                 level
@@ -89,13 +112,19 @@ class CheatClass extends BaseClass {
         core[20].push({ id: "supreme_exec", name: "Supreme Execution", desc: "+1 to any 2 of your stats. When you attack with a blade, you do not require targets to be Distracted to trigger Vicious Opportunist." });
 
         subclasses["SilentBlade"] = {
-            3: [{ id: "commotion", name: "Amidst All This Commotion…", desc: "If a creature dies while you Sneak Attack them, you may turn Invisible until you attack again or until the beginning of your next turn." }, { id: "no_trace", name: "Leave No Trace", desc: "Advantage on Stealth checks when you are at full health." }],
+            3: [
+                { id: "commotion", name: "Amidst All This Commotion…", desc: "If a creature dies while you Sneak Attack them, you may turn Invisible until you attack again or until the beginning of your next turn." },
+                { id: "no_trace", name: "Leave No Trace", desc: "Advantage on Stealth checks when you are at full health." }
+            ],
             7: [{ id: "cunning_strike", name: "Cunning Strike", desc: "(2/encounter) When you land a Sneak Attack, you may force the target to make a STR save (DC 10+INT). On a failure, instead of rolling your Sneak Attack dice, they deal the maximum amount of damage (if your target saves, regain 1 use)." }],
             11: [{ id: "skulker", name: "Professional Skulker", desc: "Gain a climbing speed and advantage on Stealth checks (replaces Leave No Trace).", replaces: "no_trace" }],
             15: [{ id: "kill", name: "KILL", desc: "When you crit an enemy with fewer max HP than you, it dies." }]
         };
         subclasses["Scoundrel"] = {
-            3: [{ id: "low_blow", name: "Low Blow", desc: "When you Sneak Attack, you may spend 2 additional actions to Incapacitate your target for their next turn on a failed STR save (DC 10+INT). Save or fail, they are Taunted by you until you drop to 0 HP." }, { id: "sweet_talk", name: "Sweet Talk", desc: "You may gain advantage on all Influence checks with NPCs you’ve just met for the first time. This lasts until you fail an Influence check with them or until you meet a 2nd time. You have disadvantage on Influence checks with them after you use this ability (until you get back on their good side)." }],
+            3: [
+                { id: "low_blow", name: "Low Blow", desc: "When you Sneak Attack, you may spend 2 additional actions to Incapacitate your target for their next turn on a failed STR save (DC 10+INT). Save or fail, they are Taunted by you until you drop to 0 HP." },
+                { id: "sweet_talk", name: "Sweet Talk", desc: "You may gain advantage on all Influence checks with NPCs you’ve just met for the first time. This lasts until you fail an Influence check with them or until you meet a 2nd time. You have disadvantage on Influence checks with them after you use this ability (until you get back on their good side)." }
+            ],
             7: [{ id: "pocket_sand", name: "Pocket Sand", desc: "(2/encounter—you’ve got to collect more sand!) When you Defend against a melee attack, Blind the attacker until the start of their next turn and force them to reroll the attack (Blinded creatures attack with disadvantage)." }],
             11: [{ id: "escape_plan", name: "Escape Plan", desc: "(1/Safe Rest) When you would drop to 0 HP or gain a Wound, you don’t. Instead, you turn Invisible for 1 minute or until you attack." }],
             15: [{ id: "heads_i_win", name: "Heads I Win, Tails You Lose", desc: "(1/encounter) Attacks you make this round don’t miss, you crit on 1 less than normally needed, and you gain LVL temp HP." }]
@@ -104,17 +133,44 @@ class CheatClass extends BaseClass {
         return { core, subclasses };
     }
 
+    /**
+     * Calculates Cheat-specific derived statistics.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Derived statistics.
+     */
     getDerivedStats(level, subclass, state) {
         return super.getDerivedStats(level, subclass, state);
     }
 
+    /**
+     * Applies attribute overrides based on Cheat features like Misdirection.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} statsMap - Current attribute map.
+     * @returns {Object} Stat overrides.
+     */
     getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
-        let underhanded = state.selectedUnderhanded || [];
-        if (underhanded.includes("Misdirection")) overrides.armor = (overrides.armor || 0) + statsMap.int;
+        const underhanded = state.selectedUnderhanded || [];
+
+        if (underhanded.includes("Misdirection")) {
+            overrides.armor = (overrides.armor || 0) + statsMap.int;
+        }
+
         return overrides;
     }
 
+    /**
+     * Renders the Sneak Attack and Opportunist displays for the Cheat's mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
 

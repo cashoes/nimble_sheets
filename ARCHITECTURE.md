@@ -1,6 +1,6 @@
 # NIMBLE Tracker - Architecture Documentation
 
-**Version**: 1.6.0  
+**Version**: 2.0.0  
 **Date**: 2026-05-08  
 **Status**: Production Ready ✅
 

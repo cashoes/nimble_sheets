@@ -1,14 +1,24 @@
+/**
+ * Zephyr Class Configuration
+ * A disciplined martial artist with swift hands.
+ * Focuses on speed, unarmored defense, and rapid strikes.
+ */
 class ZephyrClass extends BaseClass {
     constructor() {
         super({
+            // 1. Identity
             name: "Zephyr",
             subtitle: "A disciplined martial artist with swift hands",
+            
+            // 2. Core Stats
             keyStats: ['dex', 'str'],
             saves: { adv: 'dex', dis: 'int' },
             proficiencies: { armor: "None", weapons: "Melee" },
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
+            
+            // 3. Theme
             theme: {
                 accent: "#60a5fa",
                 accentDim: "#2563eb",
@@ -17,30 +27,46 @@ class ZephyrClass extends BaseClass {
                 panelBg: "rgba(15, 23, 42, 0.7)",
                 border: "rgba(96, 165, 251, 0.3)"
             },
+            
+            // 4. Initial Stats
             initialStats: { baseStr: 2, baseDex: 2, baseInt: 0, baseWil: -1 },
+            
+            // 5. Subclasses
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "WayOfPain", label: "Way of Pain", accent: "#991b1b" },
                 { value: "WayOfFlame", label: "Way of Flame", accent: "#ea580c" }
             ],
+            
+            // 6. Scaling Stats
             scalingStats: {
                 speed: { 1: 6, 2: 8, 9: 10 },
                 swiftBonus: { 1: 0, 5: (level) => level }
             },
+            
+            // 7. Automated Roll Triggers
             rollTriggers: [
                 {
+                    // Apply Level bonus to all STR attacks at Level 5+
                     condition: (label, options) => (options.type === 'attack' || /attack|⚔️/i.test(label)) && options.stat === 'str',
                     getMod: (state) => state.level >= 5 ? state.level : 0
                 }
             ],
+            
+            // 8. Resources
             resources: [
                 createSimpleResource('burstSpeed', 'Bursts of Speed', (level, stats) => level >= 2 ? stats.dex : 0)
             ],
+            
+            // 9. Data References
             featuresData: ZephyrClass.FEATURES,
             optionsData: ZephyrClass.OPTIONS
         });
     }
 
+    /**
+     * Definitional options for Martial Arts techniques.
+     */
     static get OPTIONS() {
         return {
             martial: {
@@ -59,28 +85,42 @@ class ZephyrClass extends BaseClass {
         };
     }
 
+    /**
+     * Definitional features across all levels and subclasses.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or STR', 'INT or WIL', false);
 
         core[1] = [
             {
-                id: "iron", name: "Iron Defense", milestones: [1, 13], desc: (level) => FeatureGen.createScalingList(
+                id: "iron", 
+                name: "Iron Defense", 
+                milestones: [1, 13], 
+                desc: (level) => FeatureGen.createScalingList(
                     "Your armor equals DEX+STR as long as you are unarmored.",
                     [{ level: 13, text: "Your armor is doubled while unarmored." }],
                     level
                 )
             },
             {
-                id: "fists", name: "Swift Fists", milestones: [1, 5], context: { type: 'attack', stat: 'str' }, desc: (level) => FeatureGen.createScalingList(
+                id: "fists", 
+                name: "Swift Fists", 
+                milestones: [1, 5], 
+                context: { type: 'attack', stat: 'str' }, 
+                desc: (level) => FeatureGen.createScalingList(
                     "Your unarmed strikes are not subject to disadvantage imposed by Rushed Attacks, and their damage is 1d4+STR.",
                     [{ level: 5, text: `Add +${level} bludgeoning damage to all of your melee attacks.` }],
                     level
                 )
             }
         ];
+        
         core[2] = [
             {
-                id: "feet", name: "Swift Feet", milestones: [2, 9], desc: (level) => FeatureGen.createScalingList(
+                id: "feet", 
+                name: "Swift Feet", 
+                milestones: [2, 9], 
+                desc: (level) => FeatureGen.createScalingList(
                     `While unarmored, gain +LVL Initiative.`,
                     [
                         { level: 2, text: "Speed bonus is +2." },
@@ -91,11 +131,15 @@ class ZephyrClass extends BaseClass {
             },
             { id: "burst", name: "Burst of Speed", desc: "When you roll Initiative, gain DEX Bursts of Speed to use during that encounter. (1/turn) You may spend 1 Burst of Speed for free: <ul><li><strong>Slipstream:</strong> Defend, and the attack misses.</li><li><strong>Whirling Defense:</strong> Defend and apply your armor to every attack this round.</li><li><strong>Swiftstrike:</strong> Attack on your turn, and ignore disadvantage from Rushed Attacks.</li><li><strong>Windstep:</strong> Move on your turn, ignoring difficult terrain.</li></ul>" }
         ];
+        
         core[3].push({ id: "kinetic", name: "Kinetic Momentum", desc: "Whenever you gain a Wound, gain a Burst of Speed." });
         core[3].push({ id: "projection", name: "Ethereal Projection", desc: "(1/day) Meditate 10 mins: Project an ethereal version of yourself up to 30 ft away for 10 mins." });
 
         core[4].push({
-            id: "resolve", name: "Unyielding Resolve", milestones: [4, 10, 17], desc: (level) => FeatureGen.createScalingList(
+            id: "resolve", 
+            name: "Unyielding Resolve", 
+            milestones: [4, 10, 17], 
+            desc: (level) => FeatureGen.createScalingList(
                 "Ignore the first Wound(s) you would suffer each encounter.",
                 [
                     { level: 4, text: "Ignore the first 1 Wound." },
@@ -105,18 +149,31 @@ class ZephyrClass extends BaseClass {
                 level
             )
         });
-        core[4].push({ id: "martial", name: "Martial Master", type: "dynamic_choice", collection: "martial", stateKey: "selectedMartial", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose Martial Arts abilities.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) });
+        
+        core[4].push({ 
+            id: "martial", 
+            name: "Martial Master", 
+            type: "dynamic_choice", 
+            collection: "martial", 
+            stateKey: "selectedMartial", 
+            milestones: [4, 6, 8, 10, 12, 14, 16, 18], 
+            desc: "Choose Martial Arts abilities.", 
+            getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) 
+        });
 
         core[6].push({ id: "infuse", name: "Infuse Strength", desc: "Action: Attack ally to heal them (Hit Dice + STR)." });
 
         core[20].push({ id: "windborne", name: "Windborne", desc: "+1 Burst of Speed when you roll Initiative. Permanently gain 1 action (max 2 while dying)." });
 
+        // Subclass: Way of Pain
         subclasses["WayOfPain"] = {
             3: [{ id: "bring_pain", name: "Bring the Pain", desc: "(1/round) Turn any melee attack against you into a crit. Whenever you are crit, reduce damage by half. Attacker takes same amount you took. Suffer 1 Wound to double the damage the enemy takes." }],
             7: [{ id: "share_pain", name: "Share My Pain", desc: "Your Swiftstrike can also target a 2nd creature within Reach 2." }],
             11: [{ id: "sharpens", name: "Pain Sharpens the Mind", desc: "While Bloodied, gain advantage on the first attack you make each turn, and on all saves." }],
             15: [{ id: "echoed", name: "Echoed Agony", desc: "Your Swiftstrike can also target a 3rd creature within Reach 4." }]
         };
+        
+        // Subclass: Way of Flame
         subclasses["WayOfFlame"] = {
             3: [{ id: "exploding", name: "Exploding Soul", desc: "(1/round) On your turn, you may suffer a Wound. Whenever you gain a Wound, deal STR+Wounds damage within 2 spaces and inflict Smoldering." }],
             7: [{ id: "blazing", name: "Blazing Speed", desc: "Gain +2 speed while using Windstep. After you cease movement, enemies you passed through take STR+DEX fire damage. You may have Smoldering enemies take double, ending the condition." }],
@@ -127,16 +184,26 @@ class ZephyrClass extends BaseClass {
         return { core, subclasses };
     }
 
+    /**
+     * Standard derived stats logic.
+     */
     getDerivedStats(level, subclass, state) {
         return super.getDerivedStats(level, subclass, state);
     }
 
+    /**
+     * Internal helper to calculate Iron Defense Armor Class.
+     * @private
+     */
     _getIronDefenseAC(level, statsMap) {
         let ac = statsMap.dex + statsMap.str;
         if (level >= 13) ac *= 2;
         return ac;
     }
 
+    /**
+     * Situational overrides for Armor and Initiative based on unarmored status.
+     */
     getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
         if (this.isUnarmored(state)) {
@@ -146,6 +213,9 @@ class ZephyrClass extends BaseClass {
         return overrides;
     }
 
+    /**
+     * Builds the Zephyr mechanic panel (Armor display, Bursts, and Swift Fists).
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         const statsMap = getStatsMap(state);
@@ -156,6 +226,7 @@ class ZephyrClass extends BaseClass {
 
         builder.addResource('burstSpeed', 'Bursts', state.resourceValues.burstSpeed, derived.resourceMaxes.burstSpeed);
 
+        // Swift Fists: automated level bonus is handled by the rollTriggers system
         builder.addRollDisplay(`1d4+${statsMap.str}`, 'Swift Fists', `1d4+${statsMap.str}${derived.swiftBonus ? '+' + derived.swiftBonus : ''}`, 'Ignores Rushed DIS', { type: 'attack', stat: 'str' });
 
         return builder.build();

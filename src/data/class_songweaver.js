@@ -1,4 +1,12 @@
+/**
+ * Songweaver Class
+ * Musical mystic who weaves spells through song.
+ * @extends BaseClass
+ */
 class SongweaverClass extends BaseClass {
+    /**
+     * Initializes the Songweaver class with its core configuration.
+     */
     constructor() {
         super({
             name: "Songweaver",
@@ -31,13 +39,21 @@ class SongweaverClass extends BaseClass {
             includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedSubclassSpells"),
             resources: [
                 createManaResource('wil'),
-                createSimpleResource('inspiration', 'Inspiration', (level, stats, state) => (stats.wil * 2) + (state.selectedLyrical?.includes("Heroic Ballad") ? 2 : 0))
+                createSimpleResource('inspiration', 'Inspiration', (level, stats, state) => {
+                    let max = stats.wil * 2;
+                    if (state.selectedLyrical?.includes("Heroic Ballad")) max += 2;
+                    return max;
+                })
             ],
             featuresData: SongweaverClass.FEATURES,
             optionsData: SongweaverClass.OPTIONS
         });
     }
 
+    /**
+     * Defines choice-based options for the Songweaver class (Lyrical Weaponry, Friends).
+     * @returns {Object} Dictionary of class options.
+     */
     static get OPTIONS() {
         return {
             lyricalWeaponry: {
@@ -56,6 +72,10 @@ class SongweaverClass extends BaseClass {
         };
     }
 
+    /**
+     * Defines the core and subclass features for the Songweaver class.
+     * @returns {Object} Core and subclass feature data.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('WIL or INT', 'STR or DEX', true);
 
@@ -70,7 +90,9 @@ class SongweaverClass extends BaseClass {
                 desc: "You know cantrips from the Wind school and 1 other school of your choice."
             }),
             {
-                id: "vicious_mockery", name: "Vicious Mockery", desc: (level) => FeatureGen.createScalingList(
+                id: "vicious_mockery",
+                name: "Vicious Mockery",
+                desc: (level) => FeatureGen.createScalingList(
                     "You know the unique Wind cantrip <strong>Vicious Mockery</strong>. Range: 12. Damage: 1d4+INT psychic (ignoring armor). Taunts on hit.",
                     [
                         { level: 1, text: "Damage is 1d4+INT." },
@@ -85,7 +107,9 @@ class SongweaverClass extends BaseClass {
         ];
         core[2].push({ id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." });
         core[2].push({
-            id: "song_rest", name: "Song of Rest", desc: (level) => FeatureGen.createScalingList(
+            id: "song_rest",
+            name: "Song of Rest",
+            desc: (level) => FeatureGen.createScalingList(
                 "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your WIL.",
                 [{ level: 1, text: "Bonus healing is WIL." }],
                 level
@@ -130,17 +154,34 @@ class SongweaverClass extends BaseClass {
         return { core, subclasses };
     }
 
+    /**
+     * Calculates Songweaver-specific derived statistics, such as Vicious Mockery damage.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Derived statistics.
+     */
     getDerivedStats(level, subclass, state) {
         const stats = super.getDerivedStats(level, subclass, state);
         const statsMap = getStatsMap(state);
         let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
         let vmBonus = statsMap.int + (Math.floor(level / 5) * 2);
-        if (level >= 15 && subclass === "HeraldSnark") vmBonus += statsMap.wil;
+        if (level >= 15 && subclass === "HeraldSnark") {
+            vmBonus += statsMap.wil;
+        }
         stats.vmDisplay = `${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}`;
 
         return stats;
     }
 
+    /**
+     * Renders the Mana, Inspiration, and Vicious Mockery displays for the Songweaver's mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
 

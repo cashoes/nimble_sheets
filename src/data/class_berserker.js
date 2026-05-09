@@ -1,4 +1,12 @@
+/**
+ * Berserker Class
+ * Avatar of rage, fury, and raw power.
+ * @extends BaseClass
+ */
 class BerserkerClass extends BaseClass {
+    /**
+     * Initializes the Berserker class with its core configuration.
+     */
     constructor() {
         super({
             name: "Berserker",
@@ -38,6 +46,10 @@ class BerserkerClass extends BaseClass {
         });
     }
 
+    /**
+     * Defines choice-based options for the Berserker class (Savage Arsenal).
+     * @returns {Object} Dictionary of class options.
+     */
     static get OPTIONS() {
         return {
             arsenal: {
@@ -57,6 +69,10 @@ class BerserkerClass extends BaseClass {
         };
     }
 
+    /**
+     * Defines the core and subclass features for the Berserker class.
+     * @returns {Object} Core and subclass feature data.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or DEX', 'WIL or INT', false);
 
@@ -66,7 +82,10 @@ class BerserkerClass extends BaseClass {
         ];
         core[2] = [
             {
-                id: "intensifying", name: "Intensifying Fury", milestones: [2, 6, 9, 13, 17], desc: (level) => FeatureGen.createScalingList(
+                id: "intensifying",
+                name: "Intensifying Fury",
+                milestones: [2, 6, 9, 13, 17],
+                desc: (level) => FeatureGen.createScalingList(
                     "If you are Raging at the beginning of your turn, roll 1 Fury Die for free.",
                     [
                         { level: 6, text: "Your Fury Dice are now d6s." },
@@ -88,13 +107,19 @@ class BerserkerClass extends BaseClass {
         core[20].push({ id: "boundless_rage", name: "BOUNDLESS RAGE", desc: "+1 to any 2 of your stats. Anytime you roll less than 6 on a Fury Die, change it to 6 instead." });
 
         subclasses["Mountainheart"] = {
-            3: [{ id: "stones_resilience", name: "Stone’s Resilience", desc: "Whenever you expend Fury Dice to reduce incoming damage, add the value of the die to the amount reduced." }, { id: "mountainous_tenacity", name: "Mountainous Tenacity", desc: "Whenever you expend your Hit Dice to recover HP, for every 10 HP you would recover, you may heal 1 Wound instead." }],
+            3: [
+                { id: "stones_resilience", name: "Stone’s Resilience", desc: "Whenever you expend Fury Dice to reduce incoming damage, add the value of the die to the amount reduced." },
+                { id: "mountainous_tenacity", name: "Mountainous Tenacity", desc: "Whenever you expend your Hit Dice to recover HP, for every 10 HP you would recover, you may heal 1 Wound instead." }
+            ],
             7: [{ id: "unbreakable", name: "Unbreakable", desc: "(1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don’t." }],
             11: [{ id: "titans_fury", name: "Titan’s Fury", desc: "After you miss an attack or are crit by an enemy, Rage for free." }],
             15: [{ id: "mountains_endurance", name: "Mountain’s Endurance", desc: "While Dying, if an attack against you would be a crit, the attack is rerolled instead (when-crit abilities, such as Titan’s Fury, still trigger)." }]
         };
         subclasses["RedMist"] = {
-            3: [{ id: "blood_frenzy", name: "Blood Frenzy", desc: "(1/turn) While Raging, whenever you crit or kill an enemy, change 1 Fury Die to the maximum." }, { id: "savage_awareness", name: "Savage Awareness", desc: "Advantage on Perception checks to notice or track down blood. Blindsight 2 while Raging: you ignore the Blinded condition and can see through darkness and Invisibility within that Range." }],
+            3: [
+                { id: "blood_frenzy", name: "Blood Frenzy", desc: "(1/turn) While Raging, whenever you crit or kill an enemy, change 1 Fury Die to the maximum." },
+                { id: "savage_awareness", name: "Savage Awareness", desc: "Advantage on Perception checks to notice or track down blood. Blindsight 2 while Raging: you ignore the Blinded condition and can see through darkness and Invisibility within that Range." }
+            ],
             7: [{ id: "unstoppable_brutality", name: "Unstoppable Brutality", desc: "While Raging, you may gain 1 Wound to reroll any attack or save." }],
             11: [{ id: "opportunistic_frenzy", name: "Opportunistic Frenzy", desc: "While Raging, you can make opportunity attacks without disadvantage, and you may make them whenever an enemy enters your melee weapon’s reach." }],
             15: [{ id: "onslaught", name: "Onslaught", desc: "While Raging, gain +2 speed. (1/round) you may move for free." }]
@@ -103,6 +128,13 @@ class BerserkerClass extends BaseClass {
         return { core, subclasses };
     }
 
+    /**
+     * Calculates Berserker-specific derived statistics, such as Fury Dice limits.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Derived statistics.
+     */
     getDerivedStats(level, subclass, state) {
         const stats = super.getDerivedStats(level, subclass, state);
         const statsMap = getStatsMap(state);
@@ -110,10 +142,45 @@ class BerserkerClass extends BaseClass {
         return stats;
     }
 
+    /**
+     * Applies attribute overrides based on Berserker features like Eager for Battle and Mighty Endurance.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} statsMap - Current attribute map.
+     * @returns {Object} Stat overrides.
+     */
+    getStatOverrides(level, subclass, state, statsMap) {
+        let overrides = {};
+        const arsenal = state.selectedArsenal || [];
+        
+        if (arsenal.includes("Eager for Battle")) {
+            overrides.initAdv = true;
+        }
+        
+        if (arsenal.includes("Mighty Endurance")) {
+            overrides.woundMax = (overrides.woundMax || 0) + 4;
+        }
+        
+        return overrides;
+    }
+
+    /**
+     * Renders the Fury Dice pool and total damage display for the Berserker's mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         let totalFury = 0;
-        (state.furyDice || []).forEach(d => { if (d) totalFury += d.total; });
+        (state.furyDice || []).forEach(d => {
+            if (d) {
+                totalFury += d.total;
+            }
+        });
 
         builder.addDicePool(
             state.furyDice || [],

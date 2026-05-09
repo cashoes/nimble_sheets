@@ -1,25 +1,35 @@
 /**
- * Mechanic Panel Builder
- * Provides a fluent API for building class mechanic panels.
+ * @fileoverview Mechanic Panel Builder
+ * Provides a fluent API for building class-specific mechanic panels in the UI.
+ */
+
+/**
+ * Class for building class mechanic panels with resources, dice pools, and stat displays.
  */
 class MechanicPanelBuilder {
+    /**
+     * Initializes a new instance of MechanicPanelBuilder.
+     */
     constructor() {
         this.sections = [];
     }
 
     /**
      * Add a resource section (mana, LoH, etc.)
-     * @param {string} id - Resource ID
-     * @param {string} label - Display label
-     * @param {number} value - Current value
-     * @param {number} max - Maximum value
-     * @param {boolean} visible - Whether to show (default: true)
+     * @param {string} id - Resource ID.
+     * @param {string} label - Display label.
+     * @param {number} value - Current value.
+     * @param {number} max - Maximum value.
+     * @param {boolean} [visible=true] - Whether the section is visible.
+     * @returns {MechanicPanelBuilder} The builder instance.
      */
     addResource(id, label, value, max, visible = true) {
-        if (!visible || max <= 0) return this;
+        if (!visible || max <= 0) {
+            return this;
+        }
 
         this.sections.push(`
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${label}</label>
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <div class="dark-incrementer">
@@ -37,11 +47,12 @@ class MechanicPanelBuilder {
 
     /**
      * Add a roll link display (Surge, Spirit damage, etc.)
-     * @param {string} notation - Roll notation
-     * @param {string} label - Display label
-     * @param {string} display - Display value
-     * @param {string} subtext - Subtext below (e.g., "Regain on Init")
-     * @param {Object} rollContext - Context for dispatchRoll
+     * @param {string} notation - Roll notation.
+     * @param {string} label - Display label.
+     * @param {string} display - Display value.
+     * @param {string} [subtext=''] - Subtext below (e.g., "Regain on Init").
+     * @param {Object} [rollContext={}] - Context for dispatchRoll.
+     * @returns {MechanicPanelBuilder} The builder instance.
      */
     addRollDisplay(notation, label, display, subtext = '', rollContext = {}) {
         const contextStr = Object.keys(rollContext).length > 0
@@ -49,7 +60,7 @@ class MechanicPanelBuilder {
             : '';
 
         this.sections.push(`
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-left: 1px dashed rgba(255,255,255,0.15); padding-left: 8px;">
                 <label class="roll-link" onclick="dispatchRoll('${notation}', '${label}'${contextStr})" 
                       style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px; cursor: pointer;">
                     ${label}
@@ -66,22 +77,28 @@ class MechanicPanelBuilder {
     }
 
     /**
-     * Internal helper to get die shape SVG
+     * Internal helper to get die shape SVG.
+     * @param {number|string} faces - Number of faces on the die.
+     * @param {boolean} [isFilled=true] - Whether the shape is filled.
+     * @param {string} [color='currentColor'] - The color of the shape.
+     * @returns {string} SVG string.
+     * @private
      */
     _getDieShape(faces, isFilled = true, color = 'currentColor') {
         const svgStyle = `width: 48px; height: 48px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));`;
         const fill = isFilled ? color : 'transparent';
         const stroke = color;
         const strokeWidth = 2.0;
+        const facesNum = parseInt(faces);
 
         // Shared filters for depth and inner shading
         const filters = `
             <defs>
-                <linearGradient id="grad_${faces}" x1="0%" y1="0%" x2="0%" y2="100%">
+                <linearGradient id="grad_${facesNum}" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" style="stop-color:rgba(255,255,255,0.2);stop-opacity:1" />
                     <stop offset="100%" style="stop-color:rgba(0,0,0,0.2);stop-opacity:1" />
                 </linearGradient>
-                <filter id="shadow_${faces}">
+                <filter id="shadow_${facesNum}">
                     <feOffset dx="0" dy="1" />
                     <feGaussianBlur stdDeviation="1" result="offset-blur" />
                     <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
@@ -93,47 +110,61 @@ class MechanicPanelBuilder {
         `;
 
         const shapes = {
-            4: `<polygon points="24,3 3,42 45,42" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
-                ${isFilled ? `<polygon points="24,3 3,42 45,42" fill="url(#grad_${faces})" />` : ''}`,
-            6: `<rect x="6" y="6" width="36" height="36" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
-                ${isFilled ? `<rect x="6" y="6" width="36" height="36" rx="3" fill="url(#grad_${faces})" />` : ''}`,
-            8: `<polygon points="24,3 3,24 24,45 45,24" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
-                ${isFilled ? `<polygon points="24,3 3,24 24,45 45,24" fill="url(#grad_${faces})" />` : ''}`,
-            10: `<polygon points="24,3 42,18 24,45 6,18" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
-                ${isFilled ? `<polygon points="24,3 42,18 24,45 6,18" fill="url(#grad_${faces})" />` : ''}`,
-            12: `<polygon points="24,3 43.5,15 36,42 12,42 4.5,15" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
-                ${isFilled ? `<polygon points="24,3 43.5,15 36,42 12,42 4.5,15" fill="url(#grad_${faces})" />` : ''}`,
-            20: `<polygon points="24,3 45,15 45,33 24,45 3,33 3,15" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${faces})" />
-                ${isFilled ? `<polygon points="24,3 45,15 45,33 24,45 3,33 3,15" fill="url(#grad_${faces})" />` : ''}`
+            4: `<polygon points="24,3 3,42 45,42" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${facesNum})" />
+                ${isFilled ? `<polygon points="24,3 3,42 45,42" fill="url(#grad_${facesNum})" />` : ''}`,
+            6: `<rect x="6" y="6" width="36" height="36" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${facesNum})" />
+                ${isFilled ? `<rect x="6" y="6" width="36" height="36" rx="3" fill="url(#grad_${facesNum})" />` : ''}`,
+            8: `<polygon points="24,3 3,24 24,45 45,24" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${facesNum})" />
+                ${isFilled ? `<polygon points="24,3 3,24 24,45 45,24" fill="url(#grad_${facesNum})" />` : ''}`,
+            10: `<polygon points="24,3 42,18 24,45 6,18" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${facesNum})" />
+                ${isFilled ? `<polygon points="24,3 42,18 24,45 6,18" fill="url(#grad_${facesNum})" />` : ''}`,
+            12: `<polygon points="24,3 43.5,15 36,42 12,42 4.5,15" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${facesNum})" />
+                ${isFilled ? `<polygon points="24,3 43.5,15 36,42 12,42 4.5,15" fill="url(#grad_${facesNum})" />` : ''}`,
+            20: `<polygon points="24,3 45,15 45,33 24,45 3,33 3,15" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" filter="url(#shadow_${facesNum})" />
+                ${isFilled ? `<polygon points="24,3 45,15 45,33 24,45 3,33 3,15" fill="url(#grad_${facesNum})" />` : ''}`
         };
 
-        return `<svg viewBox="0 0 48 48" style="${svgStyle}">${filters}${shapes[faces] || shapes[6]}</svg>`;
+        return `<svg viewBox="0 0 48 48" style="${svgStyle}">${filters}${shapes[facesNum] || shapes[6]}</svg>`;
     }
 
     /**
      * Add a dice pool display (Fury, Judgment, etc.)
+     * @param {Array} dice - Current dice in the pool.
+     * @param {string} label - Display label.
+     * @param {string|number} faces - Number of faces for dice in the pool.
+     * @param {string} stateKey - Key in the state object where pool is stored.
+     * @param {number} [maxDice=99] - Maximum number of dice allowed in the pool.
+     * @param {Object} [options={}] - Additional display options.
+     * @returns {MechanicPanelBuilder} The builder instance.
      */
     addDicePool(dice, label, faces, stateKey, maxDice = 99, options = {}) {
         let diceHtml = "";
-        const facesNum = parseInt(faces.replace(/\D/g, '')) || 6;
+        const facesNum = parseInt(faces.toString().replace(/\D/g, '')) || 6;
         const isStaticPool = options.static || false;
         const rollAll = options.rollAll || false;
 
         let indicatorsHtml = "";
         if (options.indicators) {
-            options.indicators.forEach(ind => {
-                const isActive = ind.active;
-                const glow = isActive ? `box-shadow: 0 0 8px ${ind.color};` : '';
+            options.indicators.forEach(indicator => {
+                const isActive = indicator.active;
+                const glow = isActive ? `box-shadow: 0 0 8px ${indicator.color};` : '';
                 const opacity = isActive ? '1' : '0.2';
-                const onClick = ind.toggleKey ? `onclick="updateBgChoice('${ind.toggleKey}', state['${ind.toggleKey}'] === 'BOOM' ? 'OFF' : 'BOOM')"` : '';
+                const onClick = indicator.toggleKey ? `onclick="updateBgChoice('${indicator.toggleKey}', state['${indicator.toggleKey}'] === 'BOOM' ? 'OFF' : 'BOOM')"` : '';
 
                 indicatorsHtml += `
-                    <div ${onClick} title="${ind.label}: ${isActive ? 'ON' : 'OFF'}"
-                         style="width: 8px; height: 8px; border-radius: 50%; background: ${ind.color}; ${glow} opacity: ${opacity}; cursor: ${ind.toggleKey ? 'pointer' : 'default'};"></div>
+                    <div ${onClick} title="${indicator.label}: ${isActive ? 'ON' : 'OFF'}"
+                         style="width: 8px; height: 8px; border-radius: 50%; background: ${indicator.color}; ${glow} opacity: ${opacity}; cursor: ${indicator.toggleKey ? 'pointer' : 'default'};"></div>
                 `;
             });
         }
 
+        /**
+         * Renders an individual die within the pool.
+         * @param {Object} die - Die data.
+         * @param {number} idx - Index in the pool.
+         * @param {boolean} [isPlaceholder=false] - Whether to render a placeholder.
+         * @returns {string} HTML string for the die.
+         */
         const renderDie = (die, idx, isPlaceholder = false) => {
             const exploded = die?.detail && die.detail.includes('!');
             const color = exploded ? 'var(--gold-light)' : 'var(--class-accent)';
@@ -194,6 +225,11 @@ class MechanicPanelBuilder {
 
     /**
      * Add a large stat display (Total Damage, DC, etc.)
+     * @param {number} value - Stat value.
+     * @param {string} label - Stat label.
+     * @param {string} [subtext=''] - Optional descriptive subtext.
+     * @param {Object} [options={}] - Additional display options.
+     * @returns {MechanicPanelBuilder} The builder instance.
      */
     addStatDisplay(value, label, subtext = '', options = {}) {
         const color = options.color || 'var(--gold-light)';
@@ -203,17 +239,17 @@ class MechanicPanelBuilder {
         let indicatorsHtml = "";
         if (options.indicators) {
             indicatorsHtml = `<div style="display: flex; flex-direction: column; gap: 3px; margin-top: 6px; width: 100%; align-items: center;">`;
-            options.indicators.forEach(ind => {
-                const isActive = ind.active;
-                const glow = isActive ? `box-shadow: 0 0 6px ${ind.color};` : '';
+            options.indicators.forEach(indicator => {
+                const isActive = indicator.active;
+                const glow = isActive ? `box-shadow: 0 0 6px ${indicator.color};` : '';
                 const opacity = isActive ? '1' : '0.2';
-                const textColor = isActive ? ind.color : 'var(--text-muted)';
-                const onClick = ind.toggleKey ? `onclick="updateBgChoice('${ind.toggleKey}', state['${ind.toggleKey}'] === 'BOOM' ? 'OFF' : 'BOOM')"` : '';
+                const textColor = isActive ? indicator.color : 'var(--text-muted)';
+                const onClick = indicator.toggleKey ? `onclick="updateBgChoice('${indicator.toggleKey}', state['${indicator.toggleKey}'] === 'BOOM' ? 'OFF' : 'BOOM')"` : '';
 
                 indicatorsHtml += `
-                    <div ${onClick} style="display: flex; align-items: center; gap: 6px; cursor: ${ind.toggleKey ? 'pointer' : 'default'}; opacity: ${opacity};">
-                        <span style="font-size: 0.5em; color: ${textColor}; text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 0.5px;">${ind.label}</span>
-                        <div style="width: 6px; height: 6px; border-radius: 50%; background: ${ind.color}; ${glow}"></div>
+                    <div ${onClick} style="display: flex; align-items: center; gap: 6px; cursor: ${indicator.toggleKey ? 'pointer' : 'default'}; opacity: ${opacity};">
+                        <span style="font-size: 0.5em; color: ${textColor}; text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 0.5px;">${indicator.label}</span>
+                        <div style="width: 6px; height: 6px; border-radius: 50%; background: ${indicator.color}; ${glow}"></div>
                     </div>
                 `;
             });
@@ -232,7 +268,12 @@ class MechanicPanelBuilder {
     }
 
     /**
-     * Add a toggle/mode selector display
+     * Add a toggle/mode selector display.
+     * @param {string} id - Identifier for the toggle.
+     * @param {string} label - Display label.
+     * @param {string[]} options - List of toggle options.
+     * @param {string} stateKey - Key in state object for the toggle.
+     * @returns {MechanicPanelBuilder} The builder instance.
      */
     addToggleDisplay(id, label, options, stateKey) {
         const current = state[stateKey] || options[0];
@@ -247,7 +288,7 @@ class MechanicPanelBuilder {
         `).join('');
 
         this.sections.push(`
-            <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 10px;">
+            <div style="flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px dashed rgba(255,255,255,0.15); padding-left: 10px;">
                 <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">${label}</label>
                 <div style="display: flex; gap: 4px; width: 100%;">
                     ${buttons}
@@ -259,6 +300,12 @@ class MechanicPanelBuilder {
 
     /**
      * Add a selection display (Form selector, etc.)
+     * @param {string} id - Identifier for the select.
+     * @param {string} label - Display label.
+     * @param {string[]} options - List of select options.
+     * @param {string} current - Current selected value.
+     * @param {string} [subtext=''] - Optional subtext.
+     * @returns {MechanicPanelBuilder} The builder instance.
      */
     addSelectDisplay(id, label, options, current, subtext = '') {
         const optsHtml = options.map(opt => `<option value="${opt}" ${opt === current ? 'selected' : ''}>${opt}</option>`).join('');
@@ -273,9 +320,9 @@ class MechanicPanelBuilder {
     }
 
     /**
-     * Build final HTML
-     * @param {number} minHeight - Minimum height in pixels
-     * @returns {string} Complete mechanic panel HTML
+     * Build final HTML.
+     * @param {number} [minHeight=100] - Minimum height in pixels.
+     * @returns {string} Complete mechanic panel HTML.
      */
     build(minHeight = 100) {
         return `

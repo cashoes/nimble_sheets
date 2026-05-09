@@ -1,4 +1,12 @@
+/**
+ * Mage Class
+ * Master of elemental forces & spellshaping.
+ * @extends BaseClass
+ */
 class MageClass extends BaseClass {
+    /**
+     * Initializes the Mage class with its core configuration.
+     */
     constructor() {
         super({
             name: "Mage",
@@ -44,6 +52,10 @@ class MageClass extends BaseClass {
         });
     }
 
+    /**
+     * Defines choice-based options for the Mage class (Spellshapers, Mastery Schools).
+     * @returns {Object} Dictionary of class options.
+     */
     static get OPTIONS() {
         return {
             spellshapers: {
@@ -64,12 +76,16 @@ class MageClass extends BaseClass {
         };
     }
 
+    /**
+     * Defines the core and subclass features for the Mage class.
+     * @returns {Object} Core and subclass feature data.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('INT or WIL', 'STR or DEX', true);
-        
+
         core[1] = [{ id: "spellcasting", name: "Elemental Spellcasting", desc: "You know Fire, Ice, and Lightning cantrips." }];
         core[2].push({ id: "researcher", name: "Talented Researcher", desc: "Gain advantage on Arcana or Lore checks when you have access to a large amount of books and time to study them." });
-        
+
         core[3] = [FeatureGen.createSpellChoiceFeature({
             id: "master_utility",
             name: "Elemental Mastery",
@@ -77,7 +93,7 @@ class MageClass extends BaseClass {
             spellType: "school",
             schools: ["Fire", "Ice", "Lightning"],
             stateKey: "selectedMastery",
-            getCount: FeatureGen.createStandardCount([3, 6, 14], 14), // Specialist logic handled by 0 if >= 14
+            getCount: (level) => level >= 14 ? 0 : (level >= 6 ? 2 : 1),
             filterKnown: true,
             milestones: [3, 6, 14],
             desc: (level) => FeatureGen.createScalingList(
@@ -86,20 +102,23 @@ class MageClass extends BaseClass {
                 level
             )
         })];
-        // Fix specialists manually since getCount needs to return 0 for all-utility at 14
-        core[3][0].getCount = (level) => level >= 14 ? 0 : (level >= 6 ? 2 : 1);
 
         core[4].push({ id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", milestones: [4, 9, 13], desc: "Choose Spellshaper abilities as you level up. You may use 1/turn.", getCount: FeatureGen.createStandardCount([4, 9, 13]) });
 
-        core[5].push({ id: "surge", name: "Elemental Surge", context: { type: 'surge' }, desc: (level) => FeatureGen.createScalingList(
-            "When you roll Initiative, regain <strong>WIL</strong> mana (this expires at the end of combat if unused).",
-            [
-                { level: 10, text: "Regain WIL+1d4 mana." },
-                { level: 17, text: "Regain WIL+2d4 mana." }
-            ],
-            level
-        )});
-        
+        core[5].push({
+            id: "surge",
+            name: "Elemental Surge",
+            context: { type: 'surge' },
+            desc: (level) => FeatureGen.createScalingList(
+                "When you roll Initiative, regain <strong>WIL</strong> mana (this expires at the end of combat if unused).",
+                [
+                    { level: 10, text: "Regain WIL+1d4 mana." },
+                    { level: 17, text: "Regain WIL+2d4 mana." }
+                ],
+                level
+            )
+        });
+
         core[20].push({ id: "archmage", name: "Archmage", desc: "+1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana." });
 
         subclasses["Control"] = {
@@ -154,10 +173,18 @@ class MageClass extends BaseClass {
             11: [{ id: "thrive", name: "Thrive in Chaos", desc: "Whenever you Invoke Chaos, you may roll twice and cause both effects. (1/Safe Rest) You may choose which roll to use instead." }],
             15: [{ id: "master_chaos", name: "Master of Chaos", desc: "Whenever you Invoke Chaos, roll with advantage." }]
         };
-        
+
         return { core, subclasses };
     }
 
+    /**
+     * Renders the Mana Pool and Elemental Surge displays for the Mage's mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         const statsMap = getStatsMap(state);

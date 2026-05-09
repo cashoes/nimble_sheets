@@ -48,44 +48,43 @@
         }
 
         select {
-            background: #070a0e;
-            color: #e2e8f0;
-            border: 1px solid #3a4a5e;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: #38bdf8;
+            background: #2d3748;
+            color: white;
+            border: 1px solid #4a5568;
+            margin-bottom: 15px;
         }
 
         button {
             background: #38bdf8;
-            color: #000;
+            color: #0f172a;
             border: none;
-            cursor: pointer;
             font-weight: bold;
+            cursor: pointer;
             transition: background 0.2s;
         }
 
         button:hover {
-            background: #0284c7;
-            color: #fff;
+            background: #7dd3fc;
         }
 
         button:disabled {
-            background: #3a4a5e;
-            color: #94a3b8;
+            background: #1e293b;
+            color: #475569;
             cursor: not-allowed;
         }
 
-        .status {
+        #status {
             margin-top: 20px;
             font-size: 14px;
             text-align: center;
             min-height: 20px;
-            font-weight: 500;
+        }
+
+        .version {
+            text-align: center;
+            font-size: 12px;
+            color: #475569;
+            margin-top: 30px;
         }
     </style>
 </head>
@@ -93,7 +92,7 @@
 <body>
     <div class="container">
         <h1>NIMBLE Builder</h1>
-        <p>Select a class below to generate and download its self-contained digital character tracker.</p>
+        <p>Select your character class to generate a self-contained character tracker file.</p>
 
         <select id="classSelect">
             <option value="berserker">Berserker</option>
@@ -109,45 +108,34 @@
             <option value="zephyr">Zephyr</option>
         </select>
 
-        <button id="buildBtn" onclick="buildTracker()">Download Tracker</button>
-        <div id="status" class="status">Ready.</div>
-
-        <!-- Debug Section -->
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #3a4a5e; text-align: center;">
-            <button onclick="buildAll()"
-                style="background: transparent; border: 1px solid #3a4a5e; color: #94a3b8; font-size: 12px; width: auto; padding: 8px 15px;">Debug:
-                Build All Classes</button>
-        </div>
+        <button id="buildBtn" onclick="buildTracker()">Generate Tracker</button>
+        <div id="status"></div>
     </div>
 
+    <div class="version">NIMBLE Character Tracker v2.0.0</div>
+
     <script>
-        const VERSION = '1.6.0';
+        /**
+         * Master Build Logic for NIMBLE Trackers.
+         * Concatenates raw data, engine modules, and class-specific code into a single HTML blob.
+         */
+        const VERSION = '2.0.0';
 
+        /**
+         * Helper to fetch a local file as text.
+         * @param {string} path - Relative path to the file.
+         * @returns {Promise<string>} File content.
+         */
         async function fetchFile(path) {
-            const response = await fetch(`${path}?t=${Date.now()}`);
-            if (!response.ok) throw new Error(`Failed to load ${path}`);
-            return await response.text();
+            const r = await fetch(path);
+            if (!r.ok) throw new Error(`Could not load ${path}`);
+            return await r.text();
         }
 
-        async function buildAll() {
-            const select = document.getElementById('classSelect');
-            const options = Array.from(select.options).map(opt => opt.value);
-            const statusEl = document.getElementById('status');
-
-            for (const className of options) {
-                try {
-                    statusEl.innerText = `Building ${className}...`;
-                    await buildTracker(className);
-                    // Small delay to prevent browser download throttling
-                    await new Promise(r => setTimeout(r, 300));
-                } catch (e) {
-                    console.error(`Failed to build ${className}:`, e);
-                }
-            }
-            statusEl.innerText = "All classes downloaded.";
-            statusEl.style.color = '#22c55e';
-        }
-
+        /**
+         * Main build sequence.
+         * @param {string|null} classNameOverride - Optional class name to build.
+         */
         async function buildTracker(classNameOverride = null) {
             const className = classNameOverride || document.getElementById('classSelect').value;
             const statusEl = document.getElementById('status');
@@ -158,7 +146,7 @@
                 statusEl.innerText = `Fetching files for ${className}...`;
                 statusEl.style.color = '#94a3b8';
 
-                // 1. Fetch all necessary files in parallel
+                // 1. Define Engine Modules to include
                 const engineModules = [
                     'roll_engine.js',
                     'feat_helpers.js',
@@ -173,6 +161,7 @@
                     'main.js'
                 ];
 
+                // 2. Parallel fetch of all required sources
                 const [
                     template,
                     itemsJson,
@@ -197,12 +186,12 @@
 
                 statusEl.innerText = 'Stitching files together...';
 
-                // 2. Combine JS content
+                // 3. Parse and re-serialize JSON data for constant injection
                 const ancestries = JSON.parse(ancestriesJson);
                 const backgrounds = JSON.parse(backgroundsJson);
                 const spells = JSON.parse(spellsJson);
 
-                // Extract engine parts by index based on engineModules array
+                // Map engine parts to readable variables
                 const rollEngine = engineParts[0];
                 const featHelpers = engineParts[1];
                 const panelBuilder = engineParts[2];
@@ -215,6 +204,7 @@
                 const stateManager = engineParts[9];
                 const main = engineParts[10];
 
+                // 4. Construct final JavaScript blob
                 let jsContent = `// --- Generated Core Data ---\n`;
                 jsContent += `const ITEM_TEMPLATES = ${itemsJson};\n`;
                 jsContent += `const SKILL_LIST = ${skillsJson};\n`;
@@ -225,6 +215,7 @@
                 jsContent += `const BACKGROUND_FEATURES = ${JSON.stringify(backgrounds.features)};\n`;
                 jsContent += `const UTILITY_SPELLS = ${JSON.stringify(spells.utility)};\n`;
                 jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
+                
                 jsContent += `// --- Engine Helpers & Base ---\n${rollEngine}\n${featHelpers}\n${panelBuilder}\n${featureGen}\n${resourceFactory}\n${baseClass}\n\n`;
                 jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
                 jsContent += `// --- Engine Logic ---\n${renderingEngine}\n${logic}\n${uiHelpers}\n${stateManager}\n\n`;
@@ -232,10 +223,10 @@
 
                 const fullScript = `<script>\n${jsContent}<\/script>`;
 
-                // 3. Inject into template
+                // 5. Inject scripts into the HTML Template
                 const finalHtml = template.replace('<!-- INJECT_SCRIPTS -->', fullScript);
 
-                // 4. Create Blob and Download
+                // 6. Generate Downloadable Blob
                 statusEl.innerText = 'Generating download...';
                 const blob = new Blob([finalHtml], { type: 'text/html' });
                 const url = URL.createObjectURL(blob);
@@ -246,7 +237,7 @@
                 document.body.appendChild(a);
                 a.click();
 
-                // Cleanup
+                // 7. Cleanup
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 

@@ -1,13 +1,18 @@
 /**
- * BaseClass definition for NIMBLE trackers.
- * Individual classes should extend this to provide specific logic.
- * 
- * Spell progression is handled automatically via constructor config:
- * - spellSchools: Array of default schools to include
- * - subclassSchools: Object mapping subclass -> additional schools
- * - includeUtilitySpells: Boolean or object config for utility spell inclusion
+ * @fileoverview BaseClass definition for NIMBLE trackers.
+ * Individual class definitions should extend this to provide specific logic
+ * for features, resources, and spell progression.
+ */
+
+/**
+ * Base class for all character class trackers.
+ * Handles core attributes, feature rendering, and automated spell progression.
  */
 class BaseClass {
+    /**
+     * Initializes a new instance of BaseClass.
+     * @param {Object} config - Configuration object for the class.
+     */
     constructor(config) {
         this.name = config.name;
         this.subtitle = config.subtitle;
@@ -24,14 +29,14 @@ class BaseClass {
         this.spellProgression = config.spellProgression || null;
         this.customHeaderStats = config.customHeaderStats || [];
         
-        // NEW: Spell configuration
+        // Spell configuration
         this.spellSchools = config.spellSchools || []; // e.g., ["Fire", "Ice", "Lightning"]
         this.subclassSchools = config.subclassSchools || {}; // e.g., { "Control": ["Necrotic"], "Chaos": ["Wind"] }
-        this.extraSchoolsKeys = config.extraSchoolsKeys || []; // Keys in state that might contain a school choice (e.g. ["selectedStudy"])
+        this.extraSchoolsKeys = config.extraSchoolsKeys || []; // Keys in state that might contain a school choice
         this.includeUtilitySpells = config.includeUtilitySpells || false; // Boolean or config object
-        this.includeTieredSpells = config.includeTieredSpells || []; // Array of state keys that contain individual tiered spell choices
-        this.includeCantripSpells = config.includeCantripSpells || []; // Array of state keys that contain individual cantrip choices
-        this.spellReplacements = config.spellReplacements || []; // For Oathbreaker-style replacements
+        this.includeTieredSpells = config.includeTieredSpells || []; // Array of state keys for tiered spell choices
+        this.includeCantripSpells = config.includeCantripSpells || []; // Array of state keys for cantrip choices
+        this.spellReplacements = config.spellReplacements || []; // For subclass-specific spell replacements
         this.scalingStats = config.scalingStats || {}; // Declarative level scaling for derived stats
         this.rollTriggers = config.rollTriggers || []; // Automated roll modifiers/effects
         
@@ -43,6 +48,13 @@ class BaseClass {
         this.isCaster = this.spellSchools.length > 0 || !!this.spellProgression;
     }
 
+    /**
+     * Calculates derived statistics for the character.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Derived statistics object.
+     */
     getDerivedStats(level, subclass, state) {
         const stats = { speed: 6, woundMax: 6 };
         
@@ -63,28 +75,82 @@ class BaseClass {
         return stats;
     }
 
+    /**
+     * Gets attribute overrides for the current state.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} statsMap - Current attribute map.
+     * @returns {Object} Stat overrides.
+     */
     getStatOverrides(level, subclass, state, statsMap) {
         return {};
     }
 
+    /**
+     * Calculates current shield bonus.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} statsMap - Current attribute map.
+     * @returns {number} Shield bonus value.
+     */
     getShieldBonus(level, subclass, statsMap) {
         return 0;
     }
 
+    /**
+     * Generates HTML for the class mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         return `<div class="panel mechanic-panel" style="min-height: 80px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-style: italic;">Standard Resource Hub</div>`;
     }
 
-    getFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC) {
-        return defaultGetFeaturesHTML(level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, this.featuresData, this.optionsData, this);
-    }
-
-    renderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef) {
-        return defaultRenderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, this);
+    /**
+     * Generates HTML for all class features.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived character data.
+     * @param {Function} buildFeatureHtml - Callback to build feature HTML.
+     * @param {Function} iStats - Callback to parse stat tokens.
+     * @param {Function} formatPips - Callback to format spell pips.
+     * @param {Function} renderSingleSpellCard - Callback to render a spell card.
+     * @returns {string} HTML string for all features.
+     */
+    getFeaturesHTML(level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard) {
+        return defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, this.featuresData, this.optionsData, this);
     }
 
     /**
-     * Gather all active features for the current level and subclass
+     * Renders an individual feature.
+     * @param {Object} feat - Feature definition.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived character data.
+     * @param {Function} buildFeatureHtml - Callback to build feature HTML.
+     * @param {Function} iStats - Callback to parse stat tokens.
+     * @param {Function} formatPips - Callback to format spell pips.
+     * @param {Function} renderSingleSpellCard - Callback to render a spell card.
+     * @param {string} cssClass - Additional CSS classes.
+     * @param {Object} optionsRef - Reference to feature options.
+     * @returns {string} HTML string for the feature.
+     */
+    renderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, cssClass, optionsRef) {
+        return defaultRenderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, cssClass, optionsRef, this);
+    }
+
+    /**
+     * Gather all active features for the current level and subclass.
+     * @param {number} level - Current level.
+     * @param {string} subclass - Selected subclass.
+     * @returns {Array} List of active features.
+     * @private
      */
     _getActiveFeatures(level, subclass) {
         const features = [];
@@ -93,10 +159,13 @@ class BaseClass {
 
         // 1. Identify replacements first
         Object.values(subData).forEach(lvlFeats => {
-            lvlFeats.forEach(f => {
-                if (f.replaces) {
-                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
-                    else replacedIds.add(f.replaces);
+            lvlFeats.forEach(feat => {
+                if (feat.replaces) {
+                    if (Array.isArray(feat.replaces)) {
+                        feat.replaces.forEach(id => replacedIds.add(id));
+                    } else {
+                        replacedIds.add(feat.replaces);
+                    }
                 }
             });
         });
@@ -104,51 +173,73 @@ class BaseClass {
         // 2. Add Core features (if not replaced)
         for (let i = 1; i <= level; i++) {
             if (this.featuresData.core[i]) {
-                this.featuresData.core[i].forEach(f => {
-                    if (!replacedIds.has(f.id)) features.push(f);
+                this.featuresData.core[i].forEach(feat => {
+                    if (!replacedIds.has(feat.id)) {
+                        features.push(feat);
+                    }
                 });
             }
         }
 
         // 3. Add Subclass features
         for (let i = 1; i <= level; i++) {
-            if (subData[i]) features.push(...subData[i]);
+            if (subData[i]) {
+                features.push(...subData[i]);
+            }
         }
 
         return features;
     }
 
     /**
-     * Identify active state keys and their allowed budgets
+     * Identify active state keys and their allowed selection budgets.
+     * This ensures that only the correct number of selections (spells, options)
+     * are rendered based on character level and features.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Map of stateKey to selection count.
+     * @private
      */
     _getActiveStateKeyLimits(level, subclass, state) {
         const limits = {};
         const features = this._getActiveFeatures(level, subclass);
 
         // Pass 1: Handle non-perSchool features (including school choices)
-        features.forEach(f => {
-            if (f.stateKey && !f.perSchool) {
-                const count = typeof f.getCount === 'function' ? f.getCount(level, subclass, state) : (f.count || 1);
-                const mult = typeof f.multiplier === 'function' ? f.multiplier(level, subclass, state) : (f.multiplier || 1);
-                limits[f.stateKey] = (limits[f.stateKey] || 0) + (count * mult);
+        // This calculates basic budgets for fixed choices.
+        features.forEach(feat => {
+            if (feat.stateKey && !feat.perSchool) {
+                const count = typeof feat.getCount === 'function' ? feat.getCount(level, subclass, state) : (feat.count || 1);
+                const mult = typeof feat.multiplier === 'function' ? feat.multiplier(level, subclass, state) : (feat.multiplier || 1);
+                limits[feat.stateKey] = (limits[feat.stateKey] || 0) + (count * mult);
             }
         });
 
         // Resolve active schools using Pass 1 limits
+        // We need to know which schools are active to calculate budgets for per-school features.
         const schools = this.getKnownSchools(level, subclass, state, limits);
 
         // Pass 2: Handle perSchool features (dependent on schools)
-        features.forEach(f => {
-            if (f.stateKey && f.perSchool) {
-                const count = typeof f.getCount === 'function' ? f.getCount(level, subclass, state) : (f.count || 1);
-                const mult = typeof f.multiplier === 'function' ? f.multiplier(level, subclass, state) : (f.multiplier || 1);
-                limits[f.stateKey] = (limits[f.stateKey] || 0) + (schools.length * count * mult);
+        // This scales budgets based on the number of magic schools the character knows.
+        features.forEach(feat => {
+            if (feat.stateKey && feat.perSchool) {
+                const count = typeof feat.getCount === 'function' ? feat.getCount(level, subclass, state) : (feat.count || 1);
+                const mult = typeof feat.multiplier === 'function' ? feat.multiplier(level, subclass, state) : (feat.multiplier || 1);
+                limits[feat.stateKey] = (limits[feat.stateKey] || 0) + (schools.length * count * mult);
             }
         });
 
         return limits;
     }
 
+    /**
+     * Gets the list of magic schools known by the character.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} [limits=null] - Budget limits to filter choices.
+     * @returns {string[]} List of school names.
+     */
     getKnownSchools(level, subclass, state, limits = null) {
         const schools = new Set(this.spellSchools);
         if (subclass && this.subclassSchools[subclass]) {
@@ -159,7 +250,9 @@ class BaseClass {
         this.extraSchoolsKeys.forEach(key => {
             // Strict check: if limits is provided, budget must be > 0. 
             // If limits is null, it includes everything (legacy compatibility).
-            if (limits && (limits[key] || 0) <= 0) return;
+            if (limits && (limits[key] || 0) <= 0) {
+                return;
+            }
             
             const val = state[key];
             if (val) {
@@ -168,7 +261,9 @@ class BaseClass {
                 const activeVals = (limits && limits[key]) ? vals.slice(0, limits[key]) : vals;
                 activeVals.forEach(v => {
                     if (v && v !== "None") {
-                        if (SPELL_REGISTRY[v] || UTILITY_SPELLS[v]) schools.add(v);
+                        if (SPELL_REGISTRY[v] || UTILITY_SPELLS[v]) {
+                            schools.add(v);
+                        }
                     }
                 });
             }
@@ -178,10 +273,17 @@ class BaseClass {
     }
 
     /**
-     * Default spell progression logic
+     * Gets all available spells for the character based on schools, tiers, and level.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived character data.
+     * @returns {Array} List of spell objects.
      */
     getAvailableSpells(level, subclass, state, derived) {
-        if (!this.isCaster) return [];
+        if (!this.isCaster) {
+            return [];
+        }
         
         const progression = this.spellProgression || [1, 2, 4, 6, 8, 10, 12, 14, 16, 18];
         const limits = this._getActiveStateKeyLimits(level, subclass, state);
@@ -190,13 +292,17 @@ class BaseClass {
         
         // 1. Add tiered spells from each active school
         schools.forEach(school => {
-            if (!SPELL_REGISTRY[school]) return;
+            if (!SPELL_REGISTRY[school]) {
+                return;
+            }
             Object.entries(SPELL_REGISTRY[school]).forEach(([name, data]) => {
                 const tierNum = this._parseTierNumber(data.tier);
                 const isCantrip = data.tier.toLowerCase().includes('cantrip');
                 const requiredLevel = isCantrip ? (progression[0] || 1) : (progression[tierNum] || 99);
                 if (level >= requiredLevel) {
-                    if (this._isReplaced(name, subclass)) return;
+                    if (this._isReplaced(name, subclass)) {
+                        return;
+                    }
                     spells.push({ name, ...data, school });
                 }
             });
@@ -205,12 +311,16 @@ class BaseClass {
         // 2. Handle spell replacements
         if (this.spellReplacements.length > 0) {
             this.spellReplacements.forEach(replacement => {
-                if (replacement.subclass && replacement.subclass !== subclass) return;
+                if (replacement.subclass && replacement.subclass !== subclass) {
+                    return;
+                }
                 if (replacement.replace) {
                     const replaceList = Array.isArray(replacement.replace) ? replacement.replace : [replacement.replace];
                     replaceList.forEach(name => {
                         const idx = spells.findIndex(s => s.name === name);
-                        if (idx !== -1) spells.splice(idx, 1);
+                        if (idx !== -1) {
+                            spells.splice(idx, 1);
+                        }
                     });
                 }
                 if (replacement.add) {
@@ -232,10 +342,14 @@ class BaseClass {
             const budget = limits[key] || 0;
             const selections = (state[key] || []).slice(0, budget);
             selections.forEach(val => {
-                if (val === "None") return;
+                if (val === "None") {
+                    return;
+                }
                 for (const [sch, spellsList] of Object.entries(SPELL_REGISTRY)) {
                     if (spellsList[val]) {
-                        if (!spells.find(s => s.name === val)) spells.push({ name: val, ...spellsList[val], school: sch });
+                        if (!spells.find(s => s.name === val)) {
+                            spells.push({ name: val, ...spellsList[val], school: sch });
+                        }
                         break;
                     }
                 }
@@ -245,6 +359,10 @@ class BaseClass {
         return spells;
     }
     
+    /**
+     * Internal helper to add utility spells to the character's list.
+     * @private
+     */
     _addUtilitySpells(spells, level, subclass, state, limits) {
         const schools = this.getKnownSchools(level, subclass, state, limits);
         const shouldAddAll = typeof this.includeUtilitySpells.all === "function" ? 
@@ -255,7 +373,9 @@ class BaseClass {
             schools.forEach(school => {
                 if (UTILITY_SPELLS[school]) {
                     Object.entries(UTILITY_SPELLS[school]).forEach(([name, desc]) => {
-                        if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school });
+                        if (!spells.find(s => s.name === name)) {
+                            spells.push({ name, desc, tier: "Utility", school });
+                        }
                     });
                 }
             });
@@ -267,15 +387,21 @@ class BaseClass {
                 const budget = limits[key] || 0;
                 const selections = (state[key] || []).slice(0, budget);
                 selections.forEach(val => {
-                    if (val === "None") return;
+                    if (val === "None") {
+                        return;
+                    }
                     if (UTILITY_SPELLS[val]) { // School selection
                         Object.entries(UTILITY_SPELLS[val]).forEach(([name, desc]) => {
-                            if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school: val });
+                            if (!spells.find(s => s.name === name)) {
+                                spells.push({ name, desc, tier: "Utility", school: val });
+                            }
                         });
                     } else { // Individual selection
                         for (const [sch, spellsList] of Object.entries(UTILITY_SPELLS)) {
                             if (spellsList[val]) {
-                                if (!spells.find(s => s.name === val)) spells.push({ name: val, desc: spellsList[val], tier: "Utility", school: sch });
+                                if (!spells.find(s => s.name === val)) {
+                                    spells.push({ name: val, desc: spellsList[val], tier: "Utility", school: sch });
+                                }
                                 break;
                             }
                         }
@@ -285,33 +411,73 @@ class BaseClass {
         }
     }
     
+    /**
+     * Parses a tier string into its numerical value.
+     * @param {string} tierStr - Tier string (e.g., "Tier 1").
+     * @returns {number} The tier number.
+     * @private
+     */
     _parseTierNumber(tierStr) {
-        if (!tierStr) return 0;
-        if (tierStr.toLowerCase().includes('cantrip')) return 0;
+        if (!tierStr) {
+            return 0;
+        }
+        if (tierStr.toLowerCase().includes('cantrip')) {
+            return 0;
+        }
         return parseInt(tierStr.replace(/\D/g, '')) || 0;
     }
     
+    /**
+     * Checks if a spell has been replaced by a subclass feature.
+     * @param {string} spellName - Name of the spell.
+     * @param {string} subclass - Selected subclass.
+     * @returns {boolean} True if replaced.
+     * @private
+     */
     _isReplaced(spellName, subclass) {
         return this.spellReplacements.some(r => {
-            if (r.subclass && r.subclass !== subclass) return false;
+            if (r.subclass && r.subclass !== subclass) {
+                return false;
+            }
             const replaceList = Array.isArray(r.replace) ? r.replace : [r.replace];
             return replaceList.includes(spellName);
         });
     }
 
+    /**
+     * Checks if the character is currently unarmored.
+     * @param {Object} state - Current character state.
+     * @returns {boolean} True if unarmored.
+     */
     isUnarmored(state) {
         let unarmored = true;
         (state.inventory || []).forEach(item => { 
-            if (item.type === 'armor' && item.equipped) unarmored = false; 
+            if (item.type === 'armor' && item.equipped) {
+                unarmored = false;
+            }
         });
         return unarmored;
     }
 }
 
+/**
+ * Creates a spell replacement configuration.
+ * @param {string|string[]} replace - Spell(s) to replace.
+ * @param {string} add - Spell to add.
+ * @param {string} school - School of the added spell.
+ * @param {string} [subclass=null] - Optional subclass restriction.
+ * @returns {Object} Replacement config.
+ */
 function createSpellReplacement(replace, add, school, subclass = null) {
     return { replace, add, school, subclass };
 }
 
+/**
+ * Creates utility spell inclusion configuration.
+ * @param {boolean|Function} [all=false] - Whether to include all utility spells for known schools.
+ * @param {string|string[]} [selectKey=null] - State keys for individual utility selections.
+ * @returns {Object} Utility config.
+ */
 function createUtilityConfig(all = false, selectKey = null) {
     return { all, selectKey };
 }

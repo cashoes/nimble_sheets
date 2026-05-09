@@ -1,83 +1,203 @@
 /**
- * UI RENDERING ENGINE MODULE
+ * @fileoverview UI RENDERING ENGINE MODULE
+ * Handles the generation and updates of the tracker's HTML interface
+ * based on the current character state and class configuration.
+ */
+
+/**
+ * Renders the top identity header including Armor, Size, Speed, and Initiative.
+ * @param {Object} derived - Derived character data.
+ * @param {number} armorVal - Calculated armor value.
+ * @param {number} init - Initiative modifier.
  */
 function renderHeader(derived, armorVal, init) {
-    let lStats = `<div class="header-stat"><label style="color:var(--gold-light)">Armor</label><div class="header-stat-val" style="color:var(--gold-light)">${armorVal}</div></div>`;
-    CLASS_CONFIG.customHeaderStats?.filter(s=>s.position==='left').forEach(s => { 
-        if(s.isVisible(state.level, state.subclass)) lStats += `<div class="header-stat"><label style="color:${s.color}">${s.label}</label><div class="header-stat-val" style="color:${s.color}">${s.getValue(derived)}</div></div>`; 
-    });
-    const hl = document.getElementById('headerLeftStats'); if(hl) hl.innerHTML = lStats;
-    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
-    const hasInitAdv = (ancFeat && ancFeat.modInitAdv);
+    let leftStats = `<div class="header-stat"><label style="color:var(--gold-light)">Armor</label><div class="header-stat-val" style="color:var(--gold-light)">${armorVal}</div></div>`;
+    
+    if (CLASS_CONFIG.customHeaderStats) {
+        CLASS_CONFIG.customHeaderStats
+            .filter(stat => stat.position === 'left')
+            .forEach(stat => { 
+                if (stat.isVisible(state.level, state.subclass)) {
+                    leftStats += `<div class="header-stat"><label style="color:${stat.color}">${stat.label}</label><div class="header-stat-val" style="color:${stat.color}">${stat.getValue(derived)}</div></div>`; 
+                }
+            });
+    }
+
+    const headerLeft = document.getElementById('headerLeftStats');
+    if (headerLeft) {
+        headerLeft.innerHTML = leftStats;
+    }
+
+    const ancestryFeat = ANCESTRY_FEATURES[state.ancestry];
+    const hasInitAdv = (ancestryFeat && ancestryFeat.modInitAdv) || derived.initAdv;
     const initAdvIcon = hasInitAdv ? '<span style="font-size:0.5em; vertical-align:middle; color:var(--save-adv); margin-left:2px;">▲</span>' : '';
     const initNotation = `1d20${init >= 0 ? '+' : ''}${init}`;
-    const hr = document.getElementById('headerRightStats');
-    if(hr) hr.innerHTML = `<div class="header-stat"><label>Size</label><div class="header-stat-val">${derived.size}</div></div><div class="header-stat"><label>Speed</label><div class="header-stat-val">${derived.speed}</div></div><div class="header-stat"><label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">Init</label><div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${hasInitAdv} })">${init >= 0 ? "+" : ""}${init}${initAdvIcon}</div></div>`;
+    
+    const headerRight = document.getElementById('headerRightStats');
+    if (headerRight) {
+        headerRight.innerHTML = `
+            <div class="header-stat"><label>Size</label><div class="header-stat-val">${derived.size}</div></div>
+            <div class="header-stat"><label>Speed</label><div class="header-stat-val">${derived.speed}</div></div>
+            <div class="header-stat"><label class="roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${!!hasInitAdv} })">Init</label>
+                <div class="header-stat-val roll-link" onclick="dispatchRoll('${initNotation}', 'Initiative', { forceAdv: ${!!hasInitAdv} })">
+                    ${init >= 0 ? "+" : ""}${init}${initAdvIcon}
+                </div>
+            </div>`;
+    }
+    
     renderModField();
 }
 
+/**
+ * Renders the core attribute cards and handles point-buy overspent checks.
+ * @param {number} level - Current character level.
+ * @param {Object} statsMap - Current attribute map.
+ */
 function renderAttributes(level, statsMap) {
     ['str', 'dex', 'int', 'wil'].forEach(stat => {
         const card = document.getElementById(`statCard_${stat}`);
         if (card) {
-            if (CLASS_CONFIG.keyStats.includes(stat)) card.classList.add('key-stat'); else card.classList.remove('key-stat');
+            if (CLASS_CONFIG.keyStats.includes(stat)) {
+                card.classList.add('key-stat');
+            } else {
+                card.classList.remove('key-stat');
+            }
+            
             card.classList.remove('save-adv', 'save-dis');
             let inherentAdv = 0;
-            if (CLASS_CONFIG.saves.adv === stat) { card.classList.add('save-adv'); inherentAdv = 1; }
-            if (CLASS_CONFIG.saves.dis === stat) { card.classList.add('save-dis'); inherentAdv = -1; }
+            if (CLASS_CONFIG.saves.adv === stat) {
+                card.classList.add('save-adv');
+                inherentAdv = 1;
+            }
+            if (CLASS_CONFIG.saves.dis === stat) {
+                card.classList.add('save-dis');
+                inherentAdv = -1;
+            }
+            
             card.setAttribute('onclick', `dispatchRoll('1d20+${statsMap[stat]}', '${stat.toUpperCase()} Save', { inherentAdv: ${inherentAdv} })`);
             card.style.cursor = 'pointer';
         }
     });
-    if(document.getElementById('displayStr')) document.getElementById('displayStr').innerText = statsMap.str; 
-    if(document.getElementById('displayDex')) document.getElementById('displayDex').innerText = statsMap.dex; 
-    if(document.getElementById('displayInt')) document.getElementById('displayInt').innerText = statsMap.int; 
-    if(document.getElementById('displayWil')) document.getElementById('displayWil').innerText = statsMap.wil;
+
+    if (document.getElementById('displayStr')) {
+        document.getElementById('displayStr').innerText = statsMap.str;
+    }
+    if (document.getElementById('displayDex')) {
+        document.getElementById('displayDex').innerText = statsMap.dex;
+    }
+    if (document.getElementById('displayInt')) {
+        document.getElementById('displayInt').innerText = statsMap.int;
+    }
+    if (document.getElementById('displayWil')) {
+        document.getElementById('displayWil').innerText = statsMap.wil;
+    }
     
-    let keyAllowed = Math.min(4, Math.floor(level/4)); let secAllowed = Math.min(4, Math.floor((level-1)/4)); let flexAllowed = (level >= 20) ? 2 : 0; let keySpent = 0; let secSpent = 0;
-    CLASS_CONFIG.keyStats.forEach(s => keySpent += state[`add${s.charAt(0).toUpperCase()+s.slice(1)}`]);
-    ['str', 'dex', 'int', 'wil'].filter(s => !CLASS_CONFIG.keyStats.includes(s)).forEach(s => secSpent += state[`add${s.charAt(0).toUpperCase()+s.slice(1)}`]);
-    let flexSpent = Math.max(0, keySpent - keyAllowed) + Math.max(0, secSpent - secAllowed);
+    let keyAllowed = Math.min(4, Math.floor(level / 4));
+    let secondaryAllowed = Math.min(4, Math.floor((level - 1) / 4));
+    let flexAllowed = (level >= 20) ? 2 : 0;
+    
+    let keySpent = 0;
+    let secondarySpent = 0;
+    
+    CLASS_CONFIG.keyStats.forEach(stat => {
+        keySpent += state[`add${stat.charAt(0).toUpperCase() + stat.slice(1)}`];
+    });
+    
+    ['str', 'dex', 'int', 'wil']
+        .filter(stat => !CLASS_CONFIG.keyStats.includes(stat))
+        .forEach(stat => {
+            secondarySpent += state[`add${stat.charAt(0).toUpperCase() + stat.slice(1)}`];
+        });
+        
+    let flexSpent = Math.max(0, keySpent - keyAllowed) + Math.max(0, secondarySpent - secondaryAllowed);
+    
     document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.remove('error-glow'));
-    const us = document.getElementById('unspentStats');
-    if(us) {
+    
+    const unspentLabel = document.getElementById('unspentStats');
+    if (unspentLabel) {
         if (flexSpent > flexAllowed) { 
-            us.innerHTML = `<span style='color:var(--save-dis)'>OVERSPENT: ${flexAllowed - flexSpent} Pts</span>`; 
+            unspentLabel.innerHTML = `<span style='color:var(--save-dis)'>OVERSPENT: ${flexAllowed - flexSpent} Pts</span>`; 
             document.querySelectorAll('.core-stat-inputs input[id^="add"]').forEach(el => el.classList.add('error-glow')); 
         } else { 
-            us.innerHTML = `<span style='color:var(--class-accent)'>UNSPENT: ${Math.max(0, keyAllowed - keySpent)} Key, ${Math.max(0, secAllowed - secSpent)} Sec${level >= 20 ? `, ${flexAllowed - flexSpent} Flex` : ''}</span>`; 
+            unspentLabel.innerHTML = `<span style='color:var(--class-accent)'>UNSPENT: ${Math.max(0, keyAllowed - keySpent)} Key, ${Math.max(0, secondaryAllowed - secondarySpent)} Sec${level >= 20 ? `, ${flexAllowed - flexSpent} Flex` : ''}</span>`; 
         }
     }
 }
 
+/**
+ * Renders resource rows including Wounds, Hit Dice, and class-specific resources.
+ * @param {number} level - Current level.
+ * @param {Object} derived - Derived statistics.
+ * @param {Object} statsMap - Current attribute map.
+ * @param {number} hdFace - Hit Die faces (e.g., 10 for d10).
+ */
 function renderResources(level, derived, statsMap, hdFace) {
-    const hl = document.getElementById('hitDiceLabel');
-    if(hl) hl.innerHTML = `<span class="roll-link" onclick="dispatchRoll('1d${hdFace}${statsMap.str >= 0 ? '+' : ''}${statsMap.str}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
-    let wHtml = ""; for(let i=0; i<derived.woundMax; i++) wHtml += `<input type="checkbox" class="pip wound" ${i<state.wounds?'checked':''} onclick="handleWoundClick(${i})">`;
-    const wc = document.getElementById('woundsContainer'); if(wc) wc.innerHTML = wHtml;
-    let resHtml = "";
-    (CLASS_CONFIG.resources || []).forEach(r => { 
-        if (r.manual) return; 
-        let max = derived.resourceMaxes[r.id];
-        if (max <= 0) return; 
-        resHtml += `<div class="res-row"><label>${r.label}</label><div style="display: flex; align-items: center; gap: 8px;"><div class="res-val dark-incrementer"><button onclick="adjRes('${r.id}', -1)">-</button><input type="number" id="res_${r.id}" value="${state.resourceValues[r.id]}" onchange="adjRes('${r.id}', parseInt(this.value), ${max}, true)"><button onclick="adjRes('${r.id}', 1, ${max})">+</button></div><div class="max-text">/ <span style="color:var(--text-main);">${max}</span></div></div></div>`; 
+    const hitDieLabel = document.getElementById('hitDiceLabel');
+    if (hitDieLabel) {
+        hitDieLabel.innerHTML = `<span class="roll-link" onclick="dispatchRoll('1d${hdFace}${statsMap.str >= 0 ? '+' : ''}${statsMap.str}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
+    }
+    
+    let woundsHtml = "";
+    for (let i = 0; i < derived.woundMax; i++) {
+        woundsHtml += `<input type="checkbox" class="pip wound" ${i < state.wounds ? 'checked' : ''} onclick="handleWoundClick(${i})">`;
+    }
+    
+    const woundsContainer = document.getElementById('woundsContainer');
+    if (woundsContainer) {
+        woundsContainer.innerHTML = woundsHtml;
+    }
+    
+    let resourcesHtml = "";
+    (CLASS_CONFIG.resources || []).forEach(resource => { 
+        if (resource.manual) {
+            return;
+        }
+        
+        let max = derived.resourceMaxes[resource.id];
+        if (max <= 0) {
+            return;
+        }
+        
+        resourcesHtml += `
+            <div class="res-row">
+                <label>${resource.label}</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="res-val dark-incrementer">
+                        <button onclick="adjRes('${resource.id}', -1)">-</button>
+                        <input type="number" id="res_${resource.id}" value="${state.resourceValues[resource.id]}" onchange="adjRes('${resource.id}', parseInt(this.value), ${max}, true)">
+                        <button onclick="adjRes('${resource.id}', 1, ${max})">+</button>
+                    </div>
+                    <div class="max-text">/ <span style="color:var(--text-main);">${max}</span></div>
+                </div>
+            </div>`; 
     });
-    const drc = document.getElementById('dynamicResourcesContainer'); if(drc) drc.innerHTML = resHtml;
+    
+    const dynamicResources = document.getElementById('dynamicResourcesContainer');
+    if (dynamicResources) {
+        dynamicResources.innerHTML = resourcesHtml;
+    }
 }
 
-function renderInventoryRow(item, statsMap, iStatsBound) {
-    let eH = '-';
+/**
+ * Renders an individual inventory row.
+ * @param {Object} item - Item data object.
+ * @param {Object} statsMap - Current attribute map.
+ * @param {Function} iStats - Callback to parse stat tokens.
+ * @returns {string} HTML string for the row.
+ */
+function renderInventoryRow(item, statsMap, iStats) {
+    let effectHtml = '-';
     if (item.type === 'weapon' && item.equipped) {
-        const tMod = statsMap[item.stat];
-        const notation = `${item.dmgDice}${tMod >= 0 ? '+' : ''}${tMod}`;
+        const totalMod = statsMap[item.stat];
+        const notation = `${item.dmgDice}${totalMod >= 0 ? '+' : ''}${totalMod}`;
         const label = item.name.replace(/'/g, "\\'");
-        eH = `<span class="roll-link" onclick="dispatchRoll('${notation}', '${label}', { stat: '${item.stat}', type: 'attack' })">⚔️ ${notation}</span>`;
+        effectHtml = `<span class="roll-link" onclick="dispatchRoll('${notation}', '${label}', { stat: '${item.stat}', type: 'attack' })">⚔️ ${notation}</span>`;
     } else if (item.type === 'armor' && item.equipped) {
-        const dMax = item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0);
-        const finalAC = (parseInt(item.armor) || 0) + Math.min(statsMap.dex, dMax);
-        eH = `🛡️ ${finalAC} AC`;
+        const dexMax = item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0);
+        const finalAC = (parseInt(item.armor) || 0) + Math.min(statsMap.dex, dexMax);
+        effectHtml = `🛡️ ${finalAC} AC`;
     } else if (item.type === 'shield' && item.equipped) {
-        eH = `🛡️ +${item.armor} AC`;
+        effectHtml = `🛡️ +${item.armor} AC`;
     }
 
     let typeCell = `<div style="font-size:0.9em; color:var(--text-muted); text-transform:capitalize; text-align:left; min-height:26px; display:flex; align-items:center; padding:2px 0; line-height:1.2;">${item.type === 'armor' ? (item.armorType || '') + ' ' : ''}${item.type}</div>`;
@@ -85,12 +205,16 @@ function renderInventoryRow(item, statsMap, iStatsBound) {
     let statsContent = '-';
     
     if (item.type === 'weapon') {
-        const sVal = statsMap[item.stat];
-        statsContent = `${item.dmgDice} (<span class="stat-hl">${sVal >= 0 ? '+' : ''}${sVal}</span> ${item.stat.toUpperCase()})`;
+        const statVal = statsMap[item.stat];
+        statsContent = `${item.dmgDice} (<span class="stat-hl">${statVal >= 0 ? '+' : ''}${statVal}</span> ${item.stat.toUpperCase()})`;
     } else if (item.type === 'armor') {
-        if (item.armorType === 'light') statsContent = `+${item.armor} (${dexDisplay})`;
-        else if (item.armorType === 'medium') statsContent = `+${item.armor} max(${dexDisplay}, 2)`;
-        else statsContent = `+${item.armor}`;
+        if (item.armorType === 'light') {
+            statsContent = `+${item.armor} (${dexDisplay})`;
+        } else if (item.armorType === 'medium') {
+            statsContent = `+${item.armor} max(${dexDisplay}, 2)`;
+        } else {
+            statsContent = `+${item.armor}`;
+        }
     }
     let statsCell = `<div style="text-align:center; font-size:0.9em; min-height:26px; display:flex; align-items:center; justify-content:center; padding:2px 0; line-height:1.2;">${statsContent}</div>`;
 
@@ -137,124 +261,288 @@ function renderInventoryRow(item, statsMap, iStatsBound) {
         <div style="display:flex; justify-content:center; align-items:center; min-height:26px;"><input type="number" class="inv-input" value="${item.cost || 0}" onchange="updateItem(${item.id}, 'cost', this.value)"></div>
         <div style="display:flex; justify-content:center; align-items:center; min-height:26px;"><input type="number" class="inv-input" value="${item.slots}" onchange="updateItem(${item.id}, 'slots', this.value)"></div>
         ${statsCell}
-        <div style="font-weight:bold; color:var(--class-accent); display:flex; justify-content:center; align-items:center; min-height:26px;">${eH}</div>
+        <div style="font-weight:bold; color:var(--class-accent); display:flex; justify-content:center; align-items:center; min-height:26px;">${effectHtml}</div>
         <div style="display:flex; justify-content:center; align-items:center; min-height:26px;"><button onclick="deleteItem(${item.id})" style="background:none; border:none; color:var(--save-dis); cursor:pointer;">×</button></div>
     </div>`;
 }
 
+/**
+ * Renders the inventory table and slot counter.
+ * @param {Object} statsMap - Current attribute map.
+ * @param {number} armorVal - Calculated armor value.
+ * @param {number} str - Strength value for slot calculation.
+ * @param {Function} iStats - Callback to parse stat tokens.
+ */
 function renderInventory(statsMap, armorVal, str, iStats) {
     let maxSlots = 10 + str;
     let slotsUsed = 0;
-    state.inventory.forEach(item => slotsUsed += (parseFloat(item.slots) || 0));
+    state.inventory.forEach(item => {
+        slotsUsed += (parseFloat(item.slots) || 0);
+    });
 
-    let html = `<div class="inv-header"><div></div><div>Item</div><div>Type</div><div>Description</div><div style="text-align:center;">GP</div><div style="text-align:center;">Wt</div><div style="text-align:center;">Stats</div><div style="text-align:center;">Effect</div><div></div></div>`;
+    let html = `
+        <div class="inv-header">
+            <div></div>
+            <div>Item</div>
+            <div>Type</div>
+            <div>Description</div>
+            <div style="text-align:center;">GP</div>
+            <div style="text-align:center;">Wt</div>
+            <div style="text-align:center;">Stats</div>
+            <div style="text-align:center;">Effect</div>
+            <div></div>
+        </div>`;
+        
     html += state.inventory.map(item => renderInventoryRow(item, statsMap, iStats)).join('');
 
-    const ic = document.getElementById('inventoryContainer'); if(ic) ic.innerHTML = html;
-    document.querySelectorAll('#inventoryContainer textarea').forEach(ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
-    const is = document.getElementById('inventorySlots'); if(is) is.innerHTML = `SLOTS: <span style="color:${slotsUsed > maxSlots ? 'var(--save-dis)' : 'var(--class-accent)'}">${slotsUsed} / ${maxSlots}</span>`;
+    const inventoryContainer = document.getElementById('inventoryContainer');
+    if (inventoryContainer) {
+        inventoryContainer.innerHTML = html;
+    }
+    
+    document.querySelectorAll('#inventoryContainer textarea').forEach(textarea => { 
+        textarea.style.height = 'auto'; 
+        textarea.style.height = textarea.scrollHeight + 'px'; 
+    });
+    
+    const slotIndicator = document.getElementById('inventorySlots');
+    if (slotIndicator) {
+        slotIndicator.innerHTML = `SLOTS: <span style="color:${slotsUsed > maxSlots ? 'var(--save-dis)' : 'var(--class-accent)'}">${slotsUsed} / ${maxSlots}</span>`;
+    }
 }
 
+/**
+ * Renders the skills grid and calculates available points.
+ * @param {number} level - Current level.
+ * @param {Object} statsMap - Current attribute map.
+ * @param {Object} passMods - Passive skill modifiers.
+ */
 function renderSkills(level, statsMap, passMods) {
-    let totalPts = 3 + level; let spent = 0; SKILL_LIST.forEach(s => { let pts = state.skills[s.id] || 0; let base = statsMap[s.stat] + passMods[s.id]; pts = Math.min(12 - base, Math.max(Math.min(0, -base), pts)); state.skills[s.id] = pts; spent += pts; });
-    let sHtml = `<div class="skill-header"><span>SKILLS</span><span style="color:${(totalPts - spent) < 0 ? 'var(--save-dis)' : 'var(--class-accent)'}">UNSPENT: ${totalPts - spent}</span></div><div class="skills-grid">`;
-    SKILL_LIST.forEach(s => { let t = statsMap[s.stat] + (state.skills[s.id]||0) + passMods[s.id]; sHtml += `<div class="skill-row"><div class="skill-name">${s.name} <span class="skill-stat">${s.stat.toUpperCase()}</span></div><div class="skill-pts"><input type="number" value="${state.skills[s.id]||0}" onchange="updateSkill('${s.id}', this.value)"></div><div class="skill-total roll-link" onclick="dispatchRoll('1d20${t >= 0 ? '+' : ''}${t}', '${s.name} Skill Check')">${t >= 0 ? '+' : ''}${t}</div></div>`; });
-    const sc = document.getElementById('skillsContainer'); if(sc) sc.innerHTML = sHtml + `</div>`;
+    let totalPoints = 3 + level;
+    let spentPoints = 0;
+    
+    SKILL_LIST.forEach(skill => { 
+        let points = state.skills[skill.id] || 0; 
+        let base = statsMap[skill.stat] + passMods[skill.id]; 
+        points = Math.min(12 - base, Math.max(Math.min(0, -base), points)); 
+        state.skills[skill.id] = points; 
+        spentPoints += points; 
+    });
+    
+    let skillsHtml = `
+        <div class="skill-header">
+            <span>SKILLS</span>
+            <span style="color:${(totalPoints - spentPoints) < 0 ? 'var(--save-dis)' : 'var(--class-accent)'}">UNSPENT: ${totalPoints - spentPoints}</span>
+        </div>
+        <div class="skills-grid">`;
+        
+    SKILL_LIST.forEach(skill => { 
+        let totalMod = statsMap[skill.stat] + (state.skills[skill.id] || 0) + passMods[skill.id]; 
+        skillsHtml += `
+            <div class="skill-row">
+                <div class="skill-name">${skill.name} <span class="skill-stat">${skill.stat.toUpperCase()}</span></div>
+                <div class="skill-pts"><input type="number" value="${state.skills[skill.id] || 0}" onchange="updateSkill('${skill.id}', this.value)"></div>
+                <div class="skill-total roll-link" onclick="dispatchRoll('1d20${totalMod >= 0 ? '+' : ''}${totalMod}', '${skill.name} Skill Check')">${totalMod >= 0 ? '+' : ''}${totalMod}</div>
+            </div>`; 
+    });
+    
+    const skillsContainer = document.getElementById('skillsContainer');
+    if (skillsContainer) {
+        skillsContainer.innerHTML = skillsHtml + `</div>`;
+    }
 }
 
-function renderConditions() { let cHtml = ""; CONDITIONS_LIST.forEach(c => cHtml += `<div class="condition-btn ${c.type} ${state.activeConditions.includes(c.id)?'active':''}" title="${c.desc}" onclick="toggleCondition('${c.id}')">${c.name}</div>`); const cc = document.getElementById('conditionsContainer'); if(cc) cc.innerHTML = cHtml; }
-
-function renderSingleSpellCard(s, level, statsMap, contextOverride = null) { 
-    const schoolClass = (s.school || "").toLowerCase(); 
-    const isCantrip = (s.tier || "").toLowerCase().includes("cantrip") || s.name === "Vicious Mockery";
-    const context = contextOverride || (isCantrip ? { type: 'cantrip', name: s.name, school: s.school } : { name: s.name });
-    const desc = s.customHtml ? s.customHtml : (s.desc ? iStats(s.desc, level, statsMap, context) : ""); 
-    return `<div class="spell-card ${schoolClass}" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);"><h4>${s.name ? `${s.name} ` : ""}<span class="tier-tag">${formatPips(s.tier, s.school)}</span></h4><div class="spell-desc" style="font-size: 0.85em;">${desc}</div></div>`; 
+/**
+ * Renders condition toggle buttons.
+ */
+function renderConditions() { 
+    let conditionsHtml = ""; 
+    CONDITIONS_LIST.forEach(condition => {
+        conditionsHtml += `<div class="condition-btn ${condition.type} ${state.activeConditions.includes(condition.id) ? 'active' : ''}" title="${condition.desc}" onclick="toggleCondition('${condition.id}')">${condition.name}</div>`;
+    });
+    
+    const container = document.getElementById('conditionsContainer');
+    if (container) {
+        container.innerHTML = conditionsHtml;
+    }
 }
 
-function renderSpells(level, subclass, state, derived, iStatsBound) {
-    let spells = []; if (CLASS_CONFIG.getAvailableSpells) { spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived); }
-    if (!spells || spells.length === 0) return "";
+/**
+ * Renders a single spell card HTML.
+ * @param {Object} spell - Spell data.
+ * @param {number} level - Current character level.
+ * @param {Object} statsMap - Current attribute map.
+ * @param {Object} [contextOverride=null] - Optional roll context.
+ * @returns {string} HTML string for the card.
+ */
+function renderSingleSpellCard(spell, level, statsMap, contextOverride = null) { 
+    const schoolClass = (spell.school || "").toLowerCase(); 
+    const isCantrip = (spell.tier || "").toLowerCase().includes("cantrip") || spell.name === "Vicious Mockery";
+    const context = contextOverride || (isCantrip ? { type: 'cantrip', name: spell.name, school: spell.school } : { name: spell.name });
+    const description = spell.customHtml ? spell.customHtml : (spell.desc ? iStats(spell.desc, level, statsMap, context) : ""); 
+    
+    return `
+        <div class="spell-card ${schoolClass}" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+            <h4>${spell.name ? `${spell.name} ` : ""}<span class="tier-tag">${formatPips(spell.tier, spell.school)}</span></h4>
+            <div class="spell-desc" style="font-size: 0.85em;">${description}</div>
+        </div>`; 
+}
+
+/**
+ * Renders the complete spells section.
+ * @param {number} level - Current level.
+ * @param {string} subclass - Selected subclass.
+ * @param {Object} state - Current character state.
+ * @param {Object} derived - Derived statistics.
+ * @param {Function} iStats - Callback to parse stat tokens.
+ * @returns {string} HTML string for the spells column.
+ */
+function renderSpells(level, subclass, state, derived, iStats) {
+    let spells = []; 
+    if (CLASS_CONFIG.getAvailableSpells) { 
+        spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived); 
+    }
+    
+    if (!spells || spells.length === 0) {
+        return "";
+    }
+    
     const tierOrder = { "Utility": 0, "Cantrip": 1, "Tier 1": 2, "Tier 2": 3, "Tier 3": 4, "Tier 4": 5, "Tier 5": 6, "Tier 6": 7, "Tier 7": 8, "Tier 8": 9, "Tier 9": 10 };
 
-    spells.sort((a, b) => { let aOrder = tierOrder[a.tier] ?? 99; let bOrder = tierOrder[b.tier] ?? 99; if (aOrder !== bOrder) return aOrder - bOrder; if (a.school !== b.school) return (a.school || "").localeCompare(b.school || ""); return (a.name || "").localeCompare(b.name || ""); });
-    return spells.map(s => renderSingleSpellCard(s, level, derived.statsMap)).join("");
+    spells.sort((a, b) => { 
+        let aOrder = tierOrder[a.tier] ?? 99; 
+        let bOrder = tierOrder[b.tier] ?? 99; 
+        if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+        }
+        if (a.school !== b.school) {
+            return (a.school || "").localeCompare(b.school || "");
+        }
+        return (a.name || "").localeCompare(b.name || ""); 
+    });
+    
+    return spells.map(spell => renderSingleSpellCard(spell, level, derived.statsMap)).join("");
 }
 
+/**
+ * Master render function that updates the entire UI based on current state.
+ */
 function render() {
     const derived = computeDerived(state);
     const { level, statsMap, armor, initiative, speed, hdFace, maxHP, hdMax, woundMax, maxActions, maxTier, passMods } = derived;
 
     const subclassSelect = document.getElementById('subclass');
     if (level < 3) {
-        if (subclassSelect && subclassSelect.value !== "None") { subclassSelect.value = "None"; state.subclass = "None"; }
-        if (subclassSelect) subclassSelect.disabled = true;
+        if (subclassSelect && subclassSelect.value !== "None") { 
+            subclassSelect.value = "None"; 
+            state.subclass = "None"; 
+        }
+        if (subclassSelect) {
+            subclassSelect.disabled = true;
+        }
     } else {
-        if (subclassSelect) subclassSelect.disabled = false;
+        if (subclassSelect) {
+            subclassSelect.disabled = false;
+        }
     }
 
     const subConfig = CLASS_CONFIG.subclasses.find(s => s.value === state.subclass);
     document.documentElement.style.setProperty('--subclass-accent', (subConfig && subConfig.accent) ? subConfig.accent : 'var(--class-accent)');
-    const cmp = document.getElementById('classMechanicPanel');
-    if (CLASS_CONFIG.getMechanicPanelHTML && cmp) {
-        cmp.innerHTML = CLASS_CONFIG.getMechanicPanelHTML(level, state.subclass, state, derived);
+    
+    const mechanicPanel = document.getElementById('classMechanicPanel');
+    if (CLASS_CONFIG.getMechanicPanelHTML && mechanicPanel) {
+        mechanicPanel.innerHTML = CLASS_CONFIG.getMechanicPanelHTML(level, state.subclass, state, derived);
     }
 
     for (let i = 0; i < 3; i++) {
-        const pip = document.getElementById(`action${i+1}`);
+        const pip = document.getElementById(`action${i + 1}`);
         if (pip) {
             pip.disabled = (i >= maxActions);
             pip.style.opacity = (i >= maxActions) ? '0.2' : '1';
             pip.style.cursor = (i >= maxActions) ? 'not-allowed' : 'pointer';
             if (i >= maxActions && pip.checked) {
                 pip.checked = false;
-                if (state.actionsSpent > i) state.actionsSpent = i;
+                if (state.actionsSpent > i) {
+                    state.actionsSpent = i;
+                }
             }
         }
     }
 
-    const hpEl = document.getElementById('displayCurrentHP');
-    const thpEl = document.getElementById('displayTempHP');
-    const hdEl = document.getElementById('displayHD');
-    if (hpEl && document.activeElement !== hpEl) hpEl.value = state.hpCurrent;
-    if (thpEl && document.activeElement !== thpEl) thpEl.value = state.tempHP || 0;
-    if (hdEl && document.activeElement !== hdEl) hdEl.value = state.hdCurrent;
-    const dmh = document.getElementById('displayMaxHP'); if(dmh) dmh.innerText = maxHP;
-    const mhd = document.getElementById('maxHD'); if(mhd) mhd.innerText = hdMax;
+    const currentHPEl = document.getElementById('displayCurrentHP');
+    const tempHPEl = document.getElementById('displayTempHP');
+    const currentHDEl = document.getElementById('displayHD');
+    
+    if (currentHPEl && document.activeElement !== currentHPEl) {
+        currentHPEl.value = state.hpCurrent;
+    }
+    if (tempHPEl && document.activeElement !== tempHPEl) {
+        tempHPEl.value = state.tempHP || 0;
+    }
+    if (currentHDEl && document.activeElement !== currentHDEl) {
+        currentHDEl.value = state.hdCurrent;
+    }
+    
+    const maxHPEl = document.getElementById('displayMaxHP'); 
+    if (maxHPEl) {
+        maxHPEl.innerText = maxHP;
+    }
+    const maxHDEl = document.getElementById('maxHD'); 
+    if (maxHDEl) {
+        maxHDEl.innerText = hdMax;
+    }
 
-    const iStatsBound = (txt, l, sm, ctx) => iStats(txt, l || level, sm || statsMap, ctx || {});
-    const bFeatBound = (t, l, d, theme = "", skip = false, l2, sm, ctx) => bFeat(t, l, d, theme, skip, l2 || level, sm || statsMap, ctx || {});
+    const parseStatsBound = (txt, l, sm, ctx) => iStats(txt, l || level, sm || statsMap, ctx || {});
+    const buildFeatureHtmlBound = (title, lTag, desc, theme = "", skip = false, l2, sm, ctx) => buildFeatureHtml(title, lTag, desc, theme, skip, l2 || level, sm || statsMap, ctx || {});
 
     renderHeader(derived, armor, initiative);
     renderAttributes(level, statsMap);
     renderResources(level, derived, statsMap, hdFace);
-    renderInventory(statsMap, armor, statsMap.str, iStatsBound);
+    renderInventory(statsMap, armor, statsMap.str, parseStatsBound);
     renderSkills(level, statsMap, passMods);
     renderConditions();
 
-    const tmf = document.getElementById('toggleMinorFeatures');
-    if (tmf) tmf.checked = state.showMinor || false;
+    const minorToggle = document.getElementById('toggleMinorFeatures');
+    if (minorToggle) {
+        minorToggle.checked = state.showMinor || false;
+    }
     document.body.classList.toggle('show-minor', state.showMinor);
 
-    let fHtml = CLASS_CONFIG.getFeaturesHTML(level, state.subclass, state, derived, bFeatBound, iStatsBound, formatPips, renderSingleSpellCard);
+    let featuresHtml = CLASS_CONFIG.getFeaturesHTML(level, state.subclass, state, derived, buildFeatureHtmlBound, parseStatsBound, formatPips, renderSingleSpellCard);
     
-    // Cleanly append background and ancestry features
-    fHtml = renderBackgroundFeature(state, level, statsMap, iStatsBound, bFeatBound, renderSingleSpellCard) + fHtml;
-    fHtml = renderAncestryFeature(state, bFeatBound) + fHtml;
+    // Add background and ancestry features to the top
+    featuresHtml = renderBackgroundFeature(state, level, statsMap, parseStatsBound, buildFeatureHtmlBound, renderSingleSpellCard) + featuresHtml;
+    featuresHtml = renderAncestryFeature(state, buildFeatureHtmlBound) + featuresHtml;
 
-    const fc = document.getElementById('featuresContainer'); if(fc) fc.innerHTML = fHtml;
+    const featuresContainer = document.getElementById('featuresContainer');
+    if (featuresContainer) {
+        featuresContainer.innerHTML = featuresHtml;
+    }
 
-    const mtEl = document.getElementById('maxTierDisplay');
-    if (mtEl) mtEl.innerText = maxTier > 0 ? `(Max Tier: ${maxTier})` : "";
+    const maxTierEl = document.getElementById('maxTierDisplay');
+    if (maxTierEl) {
+        maxTierEl.innerText = maxTier > 0 ? `(Max Tier: ${maxTier})` : "";
+    }
 
-    let sHtml = renderSpells(level, state.subclass, state, derived, iStatsBound);
-    const sWrapper = document.getElementById('spellsColWrapper');
-    if (sHtml && sHtml.trim().length > 0) {
-        if(document.getElementById('featuresSpellsLayout')) document.getElementById('featuresSpellsLayout').className = 'layout-2col';
-        if(sWrapper) sWrapper.style.display = 'block';
-        const sc = document.getElementById('spellsContainer'); if(sc) sc.innerHTML = sHtml;
+    let spellsHtml = renderSpells(level, state.subclass, state, derived, parseStatsBound);
+    const spellsWrapper = document.getElementById('spellsColWrapper');
+    if (spellsHtml && spellsHtml.trim().length > 0) {
+        if (document.getElementById('featuresSpellsLayout')) {
+            document.getElementById('featuresSpellsLayout').className = 'layout-2col';
+        }
+        if (spellsWrapper) {
+            spellsWrapper.style.display = 'block';
+        }
+        const spellsContainer = document.getElementById('spellsContainer');
+        if (spellsContainer) {
+            spellsContainer.innerHTML = spellsHtml;
+        }
     } else {
-        if(document.getElementById('featuresSpellsLayout')) document.getElementById('featuresSpellsLayout').className = 'layout-1col';
-        if(sWrapper) sWrapper.style.display = 'none';
+        if (document.getElementById('featuresSpellsLayout')) {
+            document.getElementById('featuresSpellsLayout').className = 'layout-1col';
+        }
+        if (spellsWrapper) {
+            spellsWrapper.style.display = 'none';
+        }
     }
 }

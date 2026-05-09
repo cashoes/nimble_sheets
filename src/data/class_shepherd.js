@@ -1,4 +1,12 @@
+/**
+ * Shepherd Class
+ * Master of life and death, leader of spirits.
+ * @extends BaseClass
+ */
 class ShepherdClass extends BaseClass {
+    /**
+     * Initializes the Shepherd class with its core configuration.
+     */
     constructor() {
         super({
             name: "Shepherd",
@@ -23,9 +31,6 @@ class ShepherdClass extends BaseClass {
                 { value: "Mercy", label: "Luminary of Mercy", accent: "#f0f9ff" },
                 { value: "Malice", label: "Luminary of Malice", accent: "#312e81" }
             ],
-            scalingStats: {
-                spiritDmg: { 1: "1d6", 5: "1d8", 10: "1d10", 15: "1d12" }
-            },
             spellSchools: ["Radiant", "Necrotic"],
             includeUtilitySpells: createUtilityConfig((level) => level >= 11, "selectedTwilight"),
             resources: [
@@ -37,6 +42,10 @@ class ShepherdClass extends BaseClass {
         });
     }
 
+    /**
+     * Defines choice-based options for the Shepherd class (Sacred Graces).
+     * @returns {Object} Dictionary of class options.
+     */
     static get OPTIONS() {
         return {
             graces: {
@@ -52,19 +61,28 @@ class ShepherdClass extends BaseClass {
         };
     }
 
+    /**
+     * Defines the core and subclass features for the Shepherd class.
+     * @returns {Object} Core and subclass feature data.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('WIL or STR', 'INT or DEX', true);
-        
+
         core[1] = [
             { id: "keeper", name: "Keeper of Life & Death", desc: "You know Radiant and Necrotic cantrips." },
-            { id: "searing", name: "Searing Light", context: { type: 'attack', stat: 'wil' }, desc: (level) => FeatureGen.createScalingList(
-                "(WIL times/Safe Rest) Action: Heal or Inflict grievous injuries: <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>",
-                [{ level: 1, text: "Healing and damage are WIL d8." }],
-                level
-            )}
+            {
+                id: "searing",
+                name: "Searing Light",
+                context: { type: 'attack', stat: 'wil' },
+                desc: (level) => FeatureGen.createScalingList(
+                    "(WIL times/Safe Rest) Action: Heal or Inflict grievous injuries: <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>",
+                    [{ level: 1, text: "Healing and damage are WIL d8." }],
+                    level
+                )
+            }
         ];
         core[2].push({ id: "spirit", name: "Lifebinding Spirit", context: { isMinion: true }, desc: "You know the unique Radiant spell <strong>Lifebinding Spirit</strong> (Tier 1). Action: Summon spirit (ignores harm, lasts until cast again or healing spent). Action: Attack/Heal within Reach 4 for 1d6+WIL radiant. Upcasting: +1 die size (max d12), +1 use." });
-        
+
         core[3] = [FeatureGen.createSpellChoiceFeature({
             id: "master_spirits",
             name: "Master of Twilight",
@@ -83,41 +101,70 @@ class ShepherdClass extends BaseClass {
                 level
             )
         })];
-        
+
         core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", milestones: [5, 9, 13, 17], desc: "Choose modular graces.", getCount: FeatureGen.createStandardCount([5, 9, 13, 17]) });
-        
+
         core[17] = [{ id: "revitalizing", name: "Revitalizing Blessing", desc: "(1/round) Whenever you roll a 6 or higher on one or more healing die, the target may recover one Wound." }];
         core[20].push({ id: "sage", name: "Twilight Sage", desc: "+1 to any 2 of your stats. Your Lifebinding Spirit rolls twice as many dice." });
 
-                subclasses["Mercy"] = {
-            3: [{ id: "merciful", name: "Merciful Healing", desc: "When an effect caused by you heals a Dying creature, they are healed for twice as much. (1/round) Your Lifebinding Spirit can act for free while you are Dying." }, { id: "beautiful", name: "Life is Beautiful", desc: "Harmless and lovely creatures follow you. Flowers bloom more vibrantly in your presence." }],
+        subclasses["Mercy"] = {
+            3: [
+                { id: "merciful", name: "Merciful Healing", desc: "When an effect caused by you heals a Dying creature, they are healed for twice as much. (1/round) Your Lifebinding Spirit can act for free while you are Dying." },
+                { id: "beautiful", name: "Life is Beautiful", desc: "Harmless and lovely creatures follow you. Flowers bloom more vibrantly in your presence." }
+            ],
             7: [{ id: "conduit", name: "Conduit of Light", desc: "When an effect caused by you would heal HP, you may expend 1 use of Searing Light to heal (or damage, ignoring armor) another target within 6 spaces of yourself for the same amount." }],
             11: [{ id: "powerful", name: "Powerful Healer", desc: "(WIL times/Safe Rest) Whenever you would roll dice to heal damage, you may instead heal the max amount you could roll, or give that many temp HP." }],
             15: [{ id: "empowered", name: "Empowered Conduit", desc: "Your Conduit of Light may target 1 additional creature. Regain 1 charge of Searing Light when you roll Initiative." }]
         };
         subclasses["Malice"] = {
-            3: [{ id: "reaper", name: "Soul Reaper", desc: "When you use Searing Light to harm an enemy, make a 2nd enemy within range take the same amount of damage (ignoring armor)." }, { id: "decay", name: "Harbinger of Decay", desc: "Foods spoil more rapidly in your presence. You may have your Lifebinding Spirit shift into a deathly version of itself and have its damage type become necrotic." }],
+            3: [
+                { id: "reaper", name: "Soul Reaper", desc: "When you use Searing Light to harm an enemy, make a 2nd enemy within range take the same amount of damage (ignoring armor)." },
+                { id: "decay", name: "Harbinger of Decay", desc: "Foods spoil more rapidly in your presence. You may have your Lifebinding Spirit shift into a deathly version of itself and have its damage type become necrotic." }
+            ],
             7: [{ id: "veilwalker", name: "Veilwalker’s Blessing", desc: "(1/Safe Rest) Reaction (when you would drop to 0 HP): Drop to 1 HP instead and force an enemy within 6 spaces to make a STR save. On a failure, they become Bloodied, or if they are already Bloodied, they drop to 0 HP." }],
             11: [{ id: "deathbringer", name: "Deathbringer’s Touch", desc: "Your first melee attack each round against a Bloodied creature is an automatic critical hit. Your Lifebinding Spirit deals additional damage equal to your STR." }],
             15: [{ id: "conduit_death", name: "Conduit of Death", desc: "Your Veilwalker’s Blessing ability recharges when you roll Initiative." }]
         };
-        
+
         return { core, subclasses };
     }
 
+    /**
+     * Calculates Shepherd-specific derived statistics, such as Spirit damage die size.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Derived statistics.
+     */
     getDerivedStats(level, subclass, state) {
         const stats = super.getDerivedStats(level, subclass, state);
         const statsMap = getStatsMap(state);
 
-        let maxTier = Math.max(1, Math.floor(level / 2));
-        let effectiveTier = maxTier + (state.selectedGraces?.includes("Empowered Companion") ? 1 : 0);
+        let baseTier = Math.max(1, Math.floor(level / 2));
+        const hasEmpowered = state.selectedGraces?.includes("Empowered Companion");
+        
+        let effectiveTier = hasEmpowered ? baseTier + 1 : baseTier;
+        // Cap based on feature presence: Tier 4 (1d12) or Tier 5 (1d20)
+        let finalTier = hasEmpowered ? Math.min(5, effectiveTier) : Math.min(4, effectiveTier);
+        
         let dieSizes = ['1d6', '1d8', '1d10', '1d12', '1d20'];
-        stats.spiritDmg = dieSizes[Math.min(dieSizes.length - 1, effectiveTier - 1)];
-        if (level >= 20) stats.spiritDmg = stats.spiritDmg.replace('1', '2');
+        stats.spiritDmg = dieSizes[finalTier - 1];
+        
+        if (level >= 20) {
+            stats.spiritDmg = stats.spiritDmg.replace('1', '2');
+        }
 
         return stats;
     }
 
+    /**
+     * Renders the Mana, Searing Light, and Spirit displays for the Shepherd's mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         const statsMap = getStatsMap(state);
@@ -128,7 +175,7 @@ class ShepherdClass extends BaseClass {
         builder.addResource('searingLight', 'Searing Light', state.resourceValues.searingLight, derived.resourceMaxes.searingLight);
 
         let spiritType = subclass === "Malice" ? "Deadly" : "Lifebinding";
-        builder.addRollDisplay(`${derived.spiritDmg}+${statsMap.wil}`, `${spiritType} Spirit`, `${derived.spiritDmg}+${statsMap.wil}`, `Reach 4 | T${Math.max(1, Math.floor(level/2))} uses`, { isMinion: true });
+        builder.addRollDisplay(`${derived.spiritDmg}+${statsMap.wil}`, `${spiritType} Spirit`, `${derived.spiritDmg}+${statsMap.wil}`, `Reach 4 | T${Math.max(1, Math.floor(level / 2))} uses`, { isMinion: true });
 
         return builder.build();
     }

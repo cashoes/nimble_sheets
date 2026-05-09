@@ -1,4 +1,12 @@
+/**
+ * Oathsworn Class
+ * Faithful guardian, protector, and avenger.
+ * @extends BaseClass
+ */
 class OathswornClass extends BaseClass {
+    /**
+     * Initializes the Oathsworn class with its core configuration.
+     */
     constructor() {
         super({
             name: "Oathsworn",
@@ -33,15 +41,20 @@ class OathswornClass extends BaseClass {
                     condition: (label, options) => options.type === 'attack' || /attack|⚔️/i.test(label),
                     getMod: (state, options) => {
                         const jdSum = (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
-                        if (jdSum > 0) return jdSum;
-                        if (state.level >= 18 && ['str', 'dex', 'wil'].includes(options.stat)) return 5;
+                        if (jdSum > 0) {
+                            return jdSum;
+                        }
+                        if (state.level >= 18 && ['str', 'dex', 'wil'].includes(options.stat)) {
+                            return 5;
+                        }
                         return 0;
                     },
                     onRoll: (state) => {
                         const jdSum = (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
                         if (jdSum > 0) {
                             state.judgmentDice = null;
-                            saveState(); render();
+                            saveState();
+                            render();
                         }
                     }
                 }
@@ -68,6 +81,10 @@ class OathswornClass extends BaseClass {
         });
     }
 
+    /**
+     * Defines choice-based options for the Oathsworn class (Sacred Decrees).
+     * @returns {Object} Dictionary of class options.
+     */
     static get OPTIONS() {
         return {
             decrees: {
@@ -85,27 +102,42 @@ class OathswornClass extends BaseClass {
         };
     }
 
+    /**
+     * Defines the core and subclass features for the Oathsworn class.
+     * @returns {Object} Core and subclass feature data.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or WIL', 'DEX or INT', true, [2, 2, 4, 6, 8, 10, 13, 17, 19, 21]);
 
         core[1] = [
-            { id: "judgment", name: "Radiant Judgment", milestones: [1, 3, 5, 8, 10, 14], context: { type: 'attack', stat: 'str' }, desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
-                `Whenever an enemy attacks you, if you have no Judgment Dice, roll your Judgment dice (<strong>${derived.jdText}</strong>). On your next melee attack this encounter, if you hit, deal that much additional radiant damage. The dice are expended whether you hit or miss.`,
-                [
-                    { level: 1, text: "Roll 2 Judgment Dice. Your Judgment Dice are d6s." },
-                    { level: 3, text: "Your Judgment Dice are now d8s." },
-                    { level: 5, text: "Your Judgment Dice are now d10s." },
-                    { level: 8, text: "Your Judgment Dice are now d12s." },
-                    { level: 10, text: "Your Judgment Dice are now d20s." },
-                    { level: 14, text: "Roll 3 Judgment Dice." }
-                ],
-                level
-            )},
-            { id: "loh", name: "Lay on Hands", resourceId: "loh", desc: (level) => FeatureGen.createScalingList(
-                "Gain a magical pool of healing power. Action: Touch a target and spend any amount of remaining healing power to restore that many HP. Recharges on a Safe Rest.",
-                [{ level: 1, text: `Pool maximum is <strong>${5 * level}</strong>.` }],
-                level
-            )}
+            {
+                id: "judgment",
+                name: "Radiant Judgment",
+                milestones: [1, 3, 5, 8, 10, 14],
+                context: { type: 'attack', stat: 'str' },
+                desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
+                    `Whenever an enemy attacks you, if you have no Judgment Dice, roll your Judgment dice (<strong>${derived.jdText}</strong>). On your next melee attack this encounter, if you hit, deal that much additional radiant damage. The dice are expended whether you hit or miss.`,
+                    [
+                        { level: 1, text: "Roll 2 Judgment Dice. Your Judgment Dice are d6s." },
+                        { level: 3, text: "Your Judgment Dice are now d8s." },
+                        { level: 5, text: "Your Judgment Dice are now d10s." },
+                        { level: 8, text: "Your Judgment Dice are now d12s." },
+                        { level: 10, text: "Your Judgment Dice are now d20s." },
+                        { level: 14, text: "Roll 3 Judgment Dice." }
+                    ],
+                    level
+                )
+            },
+            {
+                id: "loh",
+                name: "Lay on Hands",
+                resourceId: "loh",
+                desc: (level) => FeatureGen.createScalingList(
+                    "Gain a magical pool of healing power. Action: Touch a target and spend any amount of remaining healing power to restore that many HP. Recharges on a Safe Rest.",
+                    [{ level: 1, text: `Pool maximum is <strong>${5 * level}</strong>.` }],
+                    level
+                )
+            }
         ];
         core[2].push({ id: "zealot", name: "Zealot", context: { type: 'attack', stat: 'str' }, desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target's armor by 1 step for this attack.</li></ul>" });
         core[2].push({ id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." });
@@ -113,9 +145,9 @@ class OathswornClass extends BaseClass {
         core[3].push({ id: "decrees", name: "Sacred Decree", type: "dynamic_choice", collection: "decrees", stateKey: "selectedDecrees", milestones: [3, 6, 9, 12, 14, 16], desc: "Learn Sacred Decrees.", getCount: FeatureGen.createStandardCount([3, 6, 9, 12, 14, 16]) });
 
 
-            core[4].push({ id: "life", name: "My Life, for My Friends", desc: "You can Interpose for free." });
+        core[4].push({ id: "life", name: "My Life, for My Friends", desc: "You can Interpose for free." });
 
-            core[7].push(FeatureGen.createSpellChoiceFeature({
+        core[7].push(FeatureGen.createSpellChoiceFeature({
             id: "master_radiance",
             name: "Master of Radiance",
             level: 7,
@@ -129,24 +161,24 @@ class OathswornClass extends BaseClass {
                 [{ level: 11, text: "Learn a 2nd Radiant Utility Spell." }],
                 level
             )
-            }));
+        }));
 
-            core[18] = [{ id: "unending", name: "Unending Judgment", desc: "While you have no Judgment Dice, gain +5 damage to melee attacks." }];
-            core[20].push({ id: "glorious_paragon", name: "Glorious Paragon", desc: "+1 to any 2 of your stats. Defend for free whenever you Interpose." });
+        core[18] = [{ id: "unending", name: "Unending Judgment", desc: "While you have no Judgment Dice, gain +5 damage to melee attacks." }];
+        core[20].push({ id: "glorious_paragon", name: "Glorious Paragon", desc: "+1 to any 2 of your stats. Defend for free whenever you Interpose." });
 
-            subclasses["Vengeance"] = {
+        subclasses["Vengeance"] = {
             3: [{ id: "aura_zeal", name: "Aura of Zeal", desc: (level, subclass, state, derived) => `Whenever you roll Judgment Dice, roll 1 more. Gain an aura with a Reach of 4. Your Radiant Judgment also triggers when an ally within your aura is attacked while you have no Judgment Dice.` }],
             7: [{ id: "avenger", name: "Avenger", desc: "Whenever you or an ally within your aura gain any Wounds, change up to that many Judgment Dice to their max. Then, move up to half your speed for free." }],
             11: [{ id: "unerring", name: "Unerring Judgment", desc: "Increase your primary die rolls on melee attacks by 1 whenever you have Judgment Dice." }],
             15: [{ id: "max_judgment", name: "Maximum Judgment", desc: "Whenever you are attacked, set a Judgment Die to its max." }]
-            };
-            subclasses["Refuge"] = {
+        };
+        subclasses["Refuge"] = {
             3: [{ id: "aura_refuge", name: "Aura of Refuge", desc: "Your shields gain +WIL armor and count as your spellcasting focus. Gain an aura with a Reach of 4; you can Interpose for an ally anywhere within your aura." }],
             7: [{ id: "face_me", name: "Face Me, Foul Creature!", desc: "When you Interpose, the attacking enemy is also Taunted by you until the end of their next turn." }],
             11: [{ id: "reprieve", name: "Glorious Reprieve", desc: "You and allies in your aura cannot drop below 1 HP. Whenever this triggers, they gain 1 Wound instead (heroes still die at max Wounds)." }],
             15: [{ id: "grace", name: "Divine Grace", desc: "You are resistant to all damage while Interposing." }]
-            };
-            subclasses["Oathbreaker"] = {
+        };
+        subclasses["Oathbreaker"] = {
             1: [
                 { id: "judgment", replaces: "judgment", name: "Aura of Suffering", desc: "You gain an aura with a Reach of 4 and can Interpose for an ally anywhere within your aura; however, your Radiant Judgment ability no longer triggers when attacked. Instead, it triggers whenever you could Interpose but don’t." }
             ],
@@ -175,7 +207,8 @@ class OathswornClass extends BaseClass {
                         level
                     )
                 })
-            ],            7: [
+            ],
+            7: [
                 { id: "torment", name: "Torment", desc: "Your Lay on Hands heals you for twice as much, and others for half as much. When you deal damage, you can expend healing power from your Lay on Hands pool to increase the damage dealt by an amount equal to the points spent (ignoring armor)." }
             ],
             11: [
@@ -189,29 +222,82 @@ class OathswornClass extends BaseClass {
         return { core, subclasses };
     }
 
+    /**
+     * Calculates Oathsworn-specific derived statistics, such as Aura Reach and Judgment Dice count.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Derived statistics.
+     */
     getDerivedStats(level, subclass, state) {
         const stats = super.getDerivedStats(level, subclass, state);
         stats.auraReach = 4;
         stats.jdCount = level >= 14 ? 3 : 2;
-        if (subclass === "Vengeance") stats.jdCount++;
-        if (state.selectedDecrees?.includes("Improved Aura")) stats.auraReach += 2;
-        if (subclass === "Oathbreaker") stats.woundMax += 2;
+        if (subclass === "Vengeance") {
+            stats.jdCount++;
+        }
+        if (state.selectedDecrees?.includes("Improved Aura")) {
+            stats.auraReach += 2;
+        }
+        if (subclass === "Oathbreaker") {
+            stats.woundMax += 2;
+        }
 
         const decrees = state.selectedDecrees || [];
-        if (decrees.includes("Reliable Justice")) stats.jdText += " (Adv)";
+        if (decrees.includes("Reliable Justice")) {
+            stats.jdText += " (Adv)";
+        }
 
         return stats;
     }
 
+    /**
+     * Applies attribute overrides based on Oathsworn features like Unstoppable Protector.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} statsMap - Current attribute map.
+     * @returns {Object} Stat overrides.
+     */
+    getStatOverrides(level, subclass, state, statsMap) {
+        let overrides = {};
+        const decrees = state.selectedDecrees || [];
+        
+        if (decrees.includes("Unstoppable Protector")) {
+            overrides.speed = (overrides.speed || 0) + 1;
+        }
+        
+        return overrides;
+    }
+
+    /**
+     * Calculates current shield bonus for the Oathsworn class.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} stats - Current attribute map.
+     * @returns {number} Shield bonus value.
+     */
     getShieldBonus(level, subclass, stats) {
         return (subclass === 'Refuge' && level >= 3) ? stats.wil : 0;
     }
 
+    /**
+     * Renders the Mana, Lay on Hands, and Judgment Dice pool for the Oathsworn's mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         const hasAdv = state.selectedDecrees?.includes("Reliable Justice");
         let totalJD = 0;
-        (state.judgmentDice || []).forEach(d => { if (d) totalJD += d.total; });
+        (state.judgmentDice || []).forEach(d => {
+            if (d) {
+                totalJD += d.total;
+            }
+        });
 
         builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana, level >= 2);
 
@@ -221,16 +307,16 @@ class OathswornClass extends BaseClass {
             `d${derived.jdFaces}`,
             'judgmentDice',
             derived.jdCount,
-            { 
-                rollAll: true, 
+            {
+                rollAll: true,
                 static: true,
                 disableRemove: true
             }
         );
 
         const isBoomMode = state.judgmentMode === 'BOOM';
-        builder.addStatDisplay(totalJD, isBoomMode ? 'Explosive DMG' : 'Radiant DMG', isBoomMode ? 'Hits All in Aura' : '', { 
-            borderLeft: true, 
+        builder.addStatDisplay(totalJD, isBoomMode ? 'Explosive DMG' : 'Radiant DMG', isBoomMode ? 'Hits All in Aura' : '', {
+            borderLeft: true,
             color: isBoomMode ? '#f59e0b' : 'var(--gold-light)',
             indicators: [
                 { label: 'Advantage', color: '#22c55e', active: hasAdv },

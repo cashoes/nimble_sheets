@@ -1,10 +1,13 @@
 /**
- * Feature Generator Helpers
- * Simplifies level-up feature definitions.
+ * @fileoverview Feature Generator Helpers
+ * Simplifies level-up feature definitions and standardizes class progression features.
  */
 
 /**
- * Create a key stat increase feature
+ * Create a key stat increase feature.
+ * @param {number} level - Level at which the increase occurs.
+ * @param {string} stats - The stats to increase.
+ * @returns {Object} Feature object.
  */
 function createKeyStatFeature(level, stats) {
     const count = [4, 8, 12, 16].indexOf(level) + 1;
@@ -18,7 +21,10 @@ function createKeyStatFeature(level, stats) {
 }
 
 /**
- * Create a secondary stat increase feature
+ * Create a secondary stat increase feature.
+ * @param {number} level - Level at which the increase occurs.
+ * @param {string} stats - The stats to increase.
+ * @returns {Object} Feature object.
  */
 function createSecondaryStatFeature(level, stats) {
     const count = [5, 9, 13, 17].indexOf(level) + 1;
@@ -32,7 +38,10 @@ function createSecondaryStatFeature(level, stats) {
 }
 
 /**
- * Create a tier unlock feature
+ * Create a tier unlock feature for casters.
+ * @param {number} tier - The spell tier being unlocked.
+ * @param {number} [level=null] - Optional level override.
+ * @returns {Object} Feature object.
  */
 function createTierFeature(tier, level = null) {
     return {
@@ -45,7 +54,9 @@ function createTierFeature(tier, level = null) {
 }
 
 /**
- * Create a cantrip upgrade feature
+ * Create a cantrip upgrade feature.
+ * @param {number} stage - The stage of upgrade (1-4).
+ * @returns {Object} Feature object.
  */
 function createCantripFeature(stage) {
     const level = [5, 10, 15, 20][stage - 1];
@@ -59,7 +70,8 @@ function createCantripFeature(stage) {
 }
 
 /**
- * Create an epic boon feature
+ * Create an epic boon feature for level 19.
+ * @returns {Object} Feature object.
  */
 function createEpicBoonFeature() {
     return {
@@ -71,7 +83,9 @@ function createEpicBoonFeature() {
 }
 
 /**
- * Create a subclass choice feature
+ * Create a subclass choice feature.
+ * @param {number} [level=3] - Level at which subclass is chosen.
+ * @returns {Object} Feature object.
  */
 function createSubclassFeature(level = 3) {
     return {
@@ -84,19 +98,40 @@ function createSubclassFeature(level = 3) {
 }
 
 /**
- * Create a spell choice feature
+ * Create a spell choice feature with complex configuration.
+ * @param {Object} config - Configuration for the spell choice.
+ * @returns {Object} Feature object.
  */
-function createSpellChoiceFeature({ id, name, level, spellType, schools, stateKey, getCount, desc, minor = false, filterKnown = false, tier = null, tiers = null, milestones = [], perSchool = false, multiplier = 1, replaces = null }) {
+function createSpellChoiceFeature({
+    id,
+    name,
+    level,
+    spellType,
+    schools,
+    stateKey,
+    getCount,
+    getSlots,
+    desc,
+    minor = false,
+    filterKnown = false,
+    tier = null,
+    tiers = null,
+    milestones = [],
+    perSchool = false,
+    multiplier = 1,
+    replaces = null
+}) {
     return {
         id,
         name,
         level,
         replaces,
         type: "spell_choice",
-        spellType, // "utility" or "tiered" or "school" or "cantrip" or "paired"
+        spellType, // "utility", "tiered", "school", "cantrip", or "paired"
         schools,   // string or array of strings
         stateKey,
         getCount: typeof getCount === "function" ? getCount : () => (getCount || 1),
+        getSlots,
         desc,
         minor,
         filterKnown,
@@ -109,13 +144,17 @@ function createSpellChoiceFeature({ id, name, level, spellType, schools, stateKe
 }
 
 /**
- * Helper to create a growing point-form list for scaling descriptions
+ * Helper to create a growing point-form list for scaling descriptions based on level.
+ * @param {string} base - Base description text.
+ * @param {Array} upgrades - List of upgrade objects {level, text}.
+ * @param {number} level - Current character level.
+ * @returns {string} HTML string with base text and applicable upgrades.
  */
 function createScalingList(base, upgrades, level) {
     let text = base;
     const items = upgrades
-        .filter(u => level >= u.level)
-        .map(u => `<li><span style="color: #fff; font-weight: bold;">Level${u.level}+:</span> ${u.text}</li>`);
+        .filter(upgrade => level >= upgrade.level)
+        .map(upgrade => `<li><span style="color: #fff; font-weight: bold;">Level ${upgrade.level}+:</span> ${upgrade.text}</li>`);
     
     if (items.length > 0) {
         text += `<ul style="margin-top: 5px; margin-bottom: 0; padding-left: 20px;">${items.join('')}</ul>`;
@@ -124,50 +163,67 @@ function createScalingList(base, upgrades, level) {
 }
 
 /**
- * Standard count generator for dynamic choice features.
- * Milestones should be in ascending order.
- * Example: [4, 6, 8, 10, 12, 14, 16] -> returns count based on how many milestones reached.
+ * Standard count generator for dynamic choice features based on level milestones.
+ * @param {number[]} milestones - Level milestones to check against.
+ * @returns {Function} Function taking (level) and returning (count).
  */
 function createStandardCount(milestones) {
     return (level) => {
         let count = 0;
-        milestones.forEach(m => { if (level >= m) count++; });
-        return Math.max(1, count);
+        milestones.forEach(m => {
+            if (level >= m) {
+                count++;
+            }
+        });
+        return count;
     };
 }
 
 /**
- * Generate all standard progression features for a class
+ * Generate all standard progression features for a class (stats, tiers, boons).
+ * @param {string} keyStats - Description of key stats.
+ * @param {string} secStats - Description of secondary stats.
+ * @param {boolean} [isCaster=false] - Whether the class is a spellcaster.
+ * @param {number[]} [customTierProgression=null] - Optional custom tier unlock levels.
+ * @returns {Object} Core features object.
  */
 function generateStandardFeatures(keyStats, secStats, isCaster = false, customTierProgression = null) {
     const core = {};
-    for (let i = 1; i <= 20; i++) core[i] = [];
+    for (let i = 1; i <= 20; i++) {
+        core[i] = [];
+    }
     
-    const addFeature = (f) => {
-        if (!core[f.level]) core[f.level] = [];
-        core[f.level].push(f);
+    /**
+     * Internal helper to add a feature to the core registry.
+     * @param {Object} feature - Feature object to add.
+     */
+    const addFeature = (feature) => {
+        if (!core[feature.level]) {
+            core[feature.level] = [];
+        }
+        core[feature.level].push(feature);
     };
     
     // Key stat increases
-    [4, 8, 12, 16].forEach(l => addFeature(createKeyStatFeature(l, keyStats)));
+    [4, 8, 12, 16].forEach(level => addFeature(createKeyStatFeature(level, keyStats)));
     
     // Secondary stat increases
-    [5, 9, 13, 17].forEach(l => addFeature(createSecondaryStatFeature(l, secStats)));
+    [5, 9, 13, 17].forEach(level => addFeature(createSecondaryStatFeature(level, secStats)));
     
     // Epic boon
     addFeature(createEpicBoonFeature());
     
     // Cantrip upgrades & Tiers (if caster)
     if (isCaster) {
-        [5, 10, 15, 20].forEach((l, idx) => addFeature(createCantripFeature(idx + 1)));
+        [5, 10, 15, 20].forEach((level, idx) => addFeature(createCantripFeature(idx + 1)));
         
         const tiers = customTierProgression || [1, 2, 4, 6, 8, 10, 12, 14, 16, 18];
-        tiers.forEach((l, idx) => {
-            if (l > 0) {
+        tiers.forEach((level, idx) => {
+            if (level > 0) {
                 if (idx === 0) {
                     // This is the cantrip level, usually 1
                 } else {
-                    addFeature(createTierFeature(idx, l));
+                    addFeature(createTierFeature(idx, level));
                 }
             }
         });

@@ -1,4 +1,12 @@
+/**
+ * Hunter Class
+ * Resourceful survivalist, bowmaster, and skilled tracker.
+ * @extends BaseClass
+ */
 class HunterClass extends BaseClass {
+    /**
+     * Initializes the Hunter class with its core configuration.
+     */
     constructor() {
         super({
             name: "Hunter",
@@ -35,6 +43,10 @@ class HunterClass extends BaseClass {
         });
     }
 
+    /**
+     * Defines choice-based options for the Hunter class (TotH Abilities, Companion Sizes).
+     * @returns {Object} Dictionary of class options.
+     */
     static get OPTIONS() {
         return {
             tothAbilities: {
@@ -55,46 +67,62 @@ class HunterClass extends BaseClass {
             },
             companionSizes: {
                 "None": { desc: "No companion selected." },
-                "Small": { desc: (level) => FeatureGen.createScalingList(
-                    "You have a small, agile animal companion. Gain the following abilities:<ul><li><strong>Keen Eyes:</strong> Mark a target for free (1/encounter).</li><li><strong>Protect Me!:</strong> (1/encounter) Whenever you Defend, your companion distracts the attacker, causing the attack to miss, and you move up to half your speed away.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d4+LVL damage for free (ignoring armor).</li></ul>",
-                    [
-                        { level: 7, text: "Keen Eyes (2/enc), Protect Me! (2/enc)." },
-                        { level: 11, text: "Keen Eyes (3/enc), Go for the Throat! (2/enc, 1/round)." },
-                        { level: 15, text: "Go for the Throat! (3/enc, 1/round)." }
-                    ],
-                    level
-                )},
-                "Medium": { desc: (level) => FeatureGen.createScalingList(
-                    "You have a medium, ferocious animal companion. Gain the following abilities:<ul><li><strong>Ferocious:</strong> Whenever you or your companion crit your quarry, your companion attacks again for LVL damage (ignoring armor), and you can move up to 2 spaces for free.</li><li><strong>Protect Me!:</strong> When you Defend, your companion may first attack that creature for 1d4+LVL damage.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d8+3x LVL damage (ignoring armor).</li></ul>",
-                    [
-                        { level: 7, text: "Ferocious move increases to 4 spaces." },
-                        { level: 11, text: "Go for the Throat! (2/encounter)." },
-                        { level: 15, text: "Ferocious move increases to 6 spaces." }
-                    ],
-                    level
-                )},
-                "Large": { desc: (level) => FeatureGen.createScalingList(
-                    "You have a large, powerful animal companion. Gain the following abilities:<ul><li><strong>Alpha Protector:</strong> Damage from the first attack against you each round is halved.</li><li><strong>Protect Me!:</strong> (1/encounter) After you gain a Wound, your companion can whisk you away to safety up to 12 spaces.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 2 TotH charges, 2 actions: Your companion attacks your quarry for 1d12+4x LVL damage (ignoring armor).</li></ul>",
-                    [
-                        { level: 7, text: "Protect Me! now whisks you away <em>before</em> the Wound." },
-                        { level: 11, text: "Go for the Throat! (2/encounter)." },
-                        { level: 15, text: "Protect Me! (2/encounter)." }
-                    ],
-                    level
-                )}
+                "Small": {
+                    desc: (level) => FeatureGen.createScalingList(
+                        "You have a small, agile animal companion. Gain the following abilities:<ul><li><strong>Keen Eyes:</strong> Mark a target for free (1/encounter).</li><li><strong>Protect Me!:</strong> (1/encounter) Whenever you Defend, your companion distracts the attacker, causing the attack to miss, and you move up to half your speed away.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d4+LVL damage for free (ignoring armor).</li></ul>",
+                        [
+                            { level: 7, text: "Keen Eyes (2/enc), Protect Me! (2/enc)." },
+                            { level: 11, text: "Keen Eyes (3/enc), Go for the Throat! (2/enc, 1/round)." },
+                            { level: 15, text: "Go for the Throat! (3/enc, 1/round)." }
+                        ],
+                        level
+                    )
+                },
+                "Medium": {
+                    desc: (level) => FeatureGen.createScalingList(
+                        "You have a medium, ferocious animal companion. Gain the following abilities:<ul><li><strong>Ferocious:</strong> Whenever you or your companion crit your quarry, your companion attacks again for LVL damage (ignoring armor), and you can move up to 2 spaces for free.</li><li><strong>Protect Me!:</strong> When you Defend, your companion may first attack that creature for 1d4+LVL damage.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 1 TotH charge: Your companion attacks your quarry for 1d8+3x LVL damage (ignoring armor).</li></ul>",
+                        [
+                            { level: 7, text: "Ferocious move increases to 4 spaces." },
+                            { level: 11, text: "Go for the Throat! (2/encounter)." },
+                            { level: 15, text: "Ferocious move increases to 6 spaces." }
+                        ],
+                        level
+                    )
+                },
+                "Large": {
+                    desc: (level) => FeatureGen.createScalingList(
+                        "You have a large, powerful animal companion. Gain the following abilities:<ul><li><strong>Alpha Protector:</strong> Damage from the first attack against you each round is halved.</li><li><strong>Protect Me!:</strong> (1/encounter) After you gain a Wound, your companion can whisk you away to safety up to 12 spaces.</li><li><strong>Go for the Throat!:</strong> (1/encounter) Costs 2 TotH charges, 2 actions: Your companion attacks your quarry for 1d12+4x LVL damage (ignoring armor).</li></ul>",
+                        [
+                            { level: 7, text: "Protect Me! now whisks you away <em>before</em> the Wound." },
+                            { level: 11, text: "Go for the Throat! (2/encounter)." },
+                            { level: 15, text: "Protect Me! (2/encounter)." }
+                        ],
+                        level
+                    )
+                }
             }
         };
     }
 
+    /**
+     * Defines the core and subclass features for the Hunter class.
+     * @returns {Object} Core and subclass feature data.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or WIL', 'STR or INT', false);
-        
+
         core[1] = [
-            { id: "mark", name: "Hunter's Mark", milestones: [1], context: { type: 'attack', stat: 'dex' }, desc: (level) => FeatureGen.createScalingList(
-                "Action: A creature you can see is marked as your quarry for 1 day (or until you mark another creature). It can’t be hidden from you, and your attacks against it gain your choice of advantage OR +LVL damage (choose before each attack).",
-                [{ level: 1, text: `Bonus damage is +${level}.` }],
-                level
-            )},
+            {
+                id: "mark",
+                name: "Hunter's Mark",
+                milestones: [1],
+                context: { type: 'attack', stat: 'dex' },
+                desc: (level) => FeatureGen.createScalingList(
+                    "Action: A creature you can see is marked as your quarry for 1 day (or until you mark another creature). It can’t be hidden from you, and your attacks against it gain your choice of advantage OR +LVL damage (choose before each attack).",
+                    [{ level: 1, text: `Bonus damage is +${level}.` }],
+                    level
+                )
+            },
             { id: "forager", name: "Forager", desc: "Gain advantage on skill checks to find food and water in the wild." }
         ];
         core[2] = [
@@ -116,13 +144,20 @@ class HunterClass extends BaseClass {
         core[20].push({ id: "nemesis", name: "Nemesis", desc: "+1 to any 2 of your stats. Your Hunter’s Mark can target any number of creatures simultaneously." });
 
         subclasses["Shadowpath"] = {
-            3: [{ id: "ambusher", name: "Ambusher", desc: "When you roll Initiative, you may use Hunter’s Mark for free. Gain advantage on the first attack you make each encounter." }, { id: "track", name: "Skilled Tracker", desc: "You have advantage on skill checks to track creatures." }, { id: "navigator", name: "Skilled Navigator", desc: "You cannot become lost by nonmagical means." }],
+            3: [
+                { id: "ambusher", name: "Ambusher", desc: "When you roll Initiative, you may use Hunter’s Mark for free. Gain advantage on the first attack you make each encounter." },
+                { id: "track", name: "Skilled Tracker", desc: "You have advantage on skill checks to track creatures." },
+                { id: "navigator", name: "Skilled Navigator", desc: "You cannot become lost by nonmagical means." }
+            ],
             7: [{ id: "primal", name: "Primal Predator", desc: "(1/encounter) Your weapon attacks ignore cover and armor this turn." }],
             11: [{ id: "pack", name: "Pack Hunter", desc: "Whenever you mark a creature, you may also mark another creature within 6 spaces of them for free." }],
             15: [{ id: "apex", name: "Apex Predator", desc: "You may use your Primal Predator ability twice each encounter. Gain 1 Thrill of the Hunt charge when you roll Initiative." }]
         };
         subclasses["WildHeart"] = {
-            3: [{ id: "form", name: "Impressive Form", desc: "+5 max HP. Upgrade your Hit Dice to d10s." }, { id: "high_ground", name: "I Have the High Ground", desc: "When you roll Initiative or gain one or more Thrill of the Hunt charges, move up to half your speed for free, ignoring difficult terrain." }],
+            3: [
+                { id: "form", name: "Impressive Form", desc: "+5 max HP. Upgrade your Hit Dice to d10s." },
+                { id: "high_ground", name: "I Have the High Ground", desc: "When you roll Initiative or gain one or more Thrill of the Hunt charges, move up to half your speed for free, ignoring difficult terrain." }
+            ],
             7: [{ id: "herbalist", name: "Resourceful Herbalist", desc: "Whenever you Safe Rest in a location near where plants or fungi can grow, you may spend a day collecting healing herbs to craft a number of Healing Salves equal to your WIL. <strong>Healing Salve:</strong> Action: Heal yourself or an adjacent creature WIL d6 HP. Only you or another experienced Herbalist may administer these, and they expire whenever you Safe Rest." }],
             11: [{ id: "here", name: "Ha! I’m Over Here!", desc: "(1/Safe Rest) If an attack would cause you to drop to 0 HP, you instead move up to your speed away and take no damage." }],
             15: [{ id: "survivalist", name: "Unparalleled Survivalist", desc: "Gain +WIL armor. When you attack with a ranged weapon, you may first move half your speed for free." }]
@@ -130,10 +165,17 @@ class HunterClass extends BaseClass {
         subclasses["Beastmaster"] = {
             3: [{ id: "companion", name: "Animal Companion", type: "choice", collection: "companionSizes", stateKey: "selectedCompanion", desc: "Choose a Small, Medium, or Large animal as your companion. No stats or actions to track. Your companion's attacks count as your own for TotH." }]
         };
-        
+
         return { core, subclasses };
     }
 
+    /**
+     * Calculates Hunter-specific derived statistics, such as Hit Die and Base HP for WildHeart.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Derived statistics.
+     */
     getDerivedStats(level, subclass, state) {
         const stats = super.getDerivedStats(level, subclass, state);
         stats.hdFace = (subclass === "WildHeart" && level >= 3) ? 10 : 8;
@@ -141,15 +183,32 @@ class HunterClass extends BaseClass {
         return stats;
     }
 
+    /**
+     * Applies attribute overrides based on Hunter features like Unparalleled Survivalist.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} statsMap - Current attribute map.
+     * @returns {Object} Stat overrides.
+     */
     getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
-        if (subclass === "WildHeart" && level >= 15) overrides.armor = (overrides.armor || 0) + statsMap.wil;
+        if (subclass === "WildHeart" && level >= 15) {
+            overrides.armor = (overrides.armor || 0) + statsMap.wil;
+        }
         return overrides;
     }
 
+    /**
+     * Renders the Hunter's Mark and Thrill of the Hunt charges for the Hunter's mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
-        const statsMap = getStatsMap(state);
 
         builder.addRollDisplay('1d20', 'Hunter\'s Mark', `+${level}`, 'Advantage OR Bonus Dmg', { type: 'attack', stat: 'dex' });
         builder.addResource('tothCharges', 'TotH Charges', state.resourceValues.tothCharges, derived.resourceMaxes.tothCharges);

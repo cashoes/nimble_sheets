@@ -1,4 +1,12 @@
+/**
+ * Shadowmancer Class
+ * Dark mystic who commands spirits & shadows.
+ * @extends BaseClass
+ */
 class ShadowmancerClass extends BaseClass {
+    /**
+     * Initializes the Shadowmancer class with its core configuration.
+     */
     constructor() {
         super({
             name: "Shadowmancer",
@@ -43,6 +51,10 @@ class ShadowmancerClass extends BaseClass {
         });
     }
 
+    /**
+     * Defines choice-based options for the Shadowmancer class (Invocations).
+     * @returns {Object} Dictionary of class options.
+     */
     static get OPTIONS() {
         return {
             lesserInvocations: {
@@ -73,48 +85,76 @@ class ShadowmancerClass extends BaseClass {
         };
     }
 
+    /**
+     * Defines the core and subclass features for the Shadowmancer class.
+     * @returns {Object} Core and subclass feature data.
+     */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('INT or DEX', 'STR or WIL', true, [2, 2, 5, 7, 10, 13, 16, 19, 21, 23]);
-        
+
         core[1] = [
-            { id: "conduit", name: "Conduit of Shadow", milestones: [1, 5, 10, 15, 20], context: { type: 'attack', stat: 'int' }, desc: (level) => {
-                const blastDice = 1 + Math.floor(level / 5);
-                const summonReach = 1 + Math.floor(level / 5);
-                return FeatureGen.createScalingList(
-                    `Your Patron grants you knowledge of Shadow Blast (<strong>${blastDice}d12+KEY</strong>) and Summon Shadows (Reach <strong>${summonReach}</strong>). You can summon a max of INT or character level minions, whichever is lower. (1/turn) Command ALL minions to move 6 then attack (Reach 1, 1d12 each).`,
-                    [
-                        { level: 5, text: "Shadow Blast increases to 2d12, Summon Reach increases to 2." },
-                        { level: 10, text: "Shadow Blast increases to 3d12, Summon Reach increases to 3." },
-                        { level: 15, text: "Shadow Blast increases to 4d12, Summon Reach increases to 4." },
-                        { level: 20, text: "Shadow Blast increases to 5d12, Summon Reach increases to 5." }
-                    ],
-                    level
-                );
-            }},
+            {
+                id: "conduit",
+                name: "Conduit of Shadow",
+                milestones: [1, 5, 10, 15, 20],
+                context: { type: 'attack', stat: 'int' },
+                desc: (level) => {
+                    const blastDice = 1 + Math.floor(level / 5);
+                    const summonReach = 1 + Math.floor(level / 5);
+                    return FeatureGen.createScalingList(
+                        `Your Patron grants you knowledge of Shadow Blast (<strong>${blastDice}d12+KEY</strong>) and Summon Shadows (Reach <strong>${summonReach}</strong>). You can summon a max of INT or character level minions, whichever is lower. (1/turn) Command ALL minions to move 6 then attack (Reach 1, 1d12 each).`,
+                        [
+                            { level: 5, text: "Shadow Blast increases to 2d12, Summon Reach increases to 2." },
+                            { level: 10, text: "Shadow Blast increases to 3d12, Summon Reach increases to 3." },
+                            { level: 15, text: "Shadow Blast increases to 4d12, Summon Reach increases to 4." },
+                            { level: 20, text: "Shadow Blast increases to 5d12, Summon Reach increases to 5." }
+                        ],
+                        level
+                    );
+                }
+            },
             { id: "minions", name: "Shadow Minions", context: { isMinion: true }, desc: "They have 1 HP, no damage bonus, and do not crit. They abandon you immediately outside of combat. You and your minions count as different creatures." }
         ];
         core[2].push({ id: "master_darkness", name: "Master of Darkness", desc: "You know Necrotic cantrips. You gain INT mana whenever you roll Initiative (this expires if unspent at the end of combat)." });
         core[2].push({ id: "pilfer", name: "Pilfered Power", desc: "You may steal power to cast spells at the highest tier you have unlocked. You can do this DEX times before your patron damages you for half your max HP. Resets on Safe Rest." });
-        
-        core[3].push({ id: "lesser", name: "Lesser Invocation", type: "dynamic_choice", collection: "lesserInvocations", stateKey: "selectedLesser", milestones: [3, 8, 11], desc: (level) => FeatureGen.createScalingList(
-            "Choose Lesser Shadow Invocations as you level up.",
-            [
-                { level: 8, text: "Learn a 2nd invocation." },
-                { level: 11, text: "Learn a 3rd invocation." }
-            ],
-            level
-        ), getCount: FeatureGen.createStandardCount([3, 8, 11]) });
-        core[4].push({ id: "greater", name: "A Gift from the Master", type: "dynamic_choice", collection: "greaterInvocations", stateKey: "selectedGreater", milestones: [4, 6, 9, 14, 18], desc: (level) => FeatureGen.createScalingList(
-            "Choose Greater Shadow Invocations as you level up.",
-            [
-                { level: 6, text: "Learn a 2nd invocation." },
-                { level: 9, text: "Learn a 3rd invocation." },
-                { level: 14, text: "Learn a 4th invocation." },
-                { level: 18, text: "Learn a 5th invocation." }
-            ],
-            level
-        ), getCount: FeatureGen.createStandardCount([4, 6, 9, 14, 18]) });
-        
+
+        core[3].push({
+            id: "lesser",
+            name: "Lesser Invocation",
+            type: "dynamic_choice",
+            collection: "lesserInvocations",
+            stateKey: "selectedLesser",
+            milestones: [3, 8, 11],
+            desc: (level) => FeatureGen.createScalingList(
+                "Choose Lesser Shadow Invocations as you level up.",
+                [
+                    { level: 8, text: "Learn a 2nd invocation." },
+                    { level: 11, text: "Learn a 3rd invocation." }
+                ],
+                level
+            ),
+            getCount: FeatureGen.createStandardCount([3, 8, 11])
+        });
+        core[4].push({
+            id: "greater",
+            name: "A Gift from the Master",
+            type: "dynamic_choice",
+            collection: "greaterInvocations",
+            stateKey: "selectedGreater",
+            milestones: [4, 6, 9, 14, 18],
+            desc: (level) => FeatureGen.createScalingList(
+                "Choose Greater Shadow Invocations as you level up.",
+                [
+                    { level: 6, text: "Learn a 2nd invocation." },
+                    { level: 9, text: "Learn a 3rd invocation." },
+                    { level: 14, text: "Learn a 4th invocation." },
+                    { level: 18, text: "Learn a 5th invocation." }
+                ],
+                level
+            ),
+            getCount: FeatureGen.createStandardCount([4, 6, 9, 14, 18])
+        });
+
         core[6].push(FeatureGen.createSpellChoiceFeature({
             id: "shadowmastery",
             name: "Shadowmastery",
@@ -136,7 +176,7 @@ class ShadowmancerClass extends BaseClass {
 
         core[12].push({ id: "greedy_pact", name: "Greedy Pact", desc: "When you would take damage from Pilfer Power, make a STR save: 1-9: Suffer damage as normal. 10-19: Suffer only 10 HP of damage. 20+: Suffer no damage and cast the spell as if it were 1 tier higher." });
         core[17].push({ id: "dire_shadows", name: "Dire Shadows", desc: "Attacks against your shadow minions are made with disadvantage. They take no damage from successful saves." });
-        
+
         core[20].push({ id: "eldritch_usurper", name: "Eldritch Usurper", desc: "+1 to any 2 of your stats. Whenever you summon a single shadow minion, summon 2 instead. They die only when they receive 12 or more damage at one time." });
 
         subclasses["RedDragon"] = {
@@ -194,23 +234,61 @@ class ShadowmancerClass extends BaseClass {
                 { id: "patron_now", name: "I’m the Patron Now!", desc: "Summon 2 shadow minions for free when you roll Initiative." }
             ]
         };
-        
+
         return { core, subclasses };
     }
 
+    /**
+     * Calculates Shadowmancer-specific derived statistics, such as Minion limit and damage.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @returns {Object} Derived statistics.
+     */
     getDerivedStats(level, subclass, state) {
         const stats = super.getDerivedStats(level, subclass, state);
         const statsMap = getStatsMap(state);
         stats.minionMax = Math.max(1, Math.min(statsMap.int, level));
-        if (level >= 20) stats.minionMax *= 2;
+        if (level >= 20) {
+            stats.minionMax *= 2;
+        }
         const greater = state.selectedGreater || [];
-        
+
         stats.minionDmg = `${stats.minionMax}d12`;
-        if (greater.includes("Shadow Magus")) stats.minionDmg = `${stats.minionMax}d10`;
+        if (greater.includes("Shadow Magus")) {
+            stats.minionDmg = `${stats.minionMax}d10`;
+        }
 
         return stats;
     }
 
+    /**
+     * Applies attribute overrides based on Shadowmancer features like Fiendish Boon.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} statsMap - Current attribute map.
+     * @returns {Object} Stat overrides.
+     */
+    getStatOverrides(level, subclass, state, statsMap) {
+        let overrides = {};
+        const greater = state.selectedGreater || [];
+        
+        if (greater.includes("Fiendish Boon")) {
+            overrides.hdMax = -1; // Reduce max hit dice by 1
+        }
+        
+        return overrides;
+    }
+
+    /**
+     * Renders the Mana, Pilfer, and Shadow Blast/Minion displays for the Shadowmancer's mechanic panel.
+     * @param {number} level - Current character level.
+     * @param {string} subclass - Selected subclass.
+     * @param {Object} state - Current character state.
+     * @param {Object} derived - Derived statistics.
+     * @returns {string} HTML string.
+     */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         const statsMap = getStatsMap(state);
@@ -223,10 +301,12 @@ class ShadowmancerClass extends BaseClass {
         let primaryName = subclass === 'Reaver' ? 'Bonescythe' : 'Shadow Blast';
         let primaryDice = (subclass === 'Reaver' ? 2 : 1) + Math.floor(level / 5);
         let primaryDmg = `${primaryDice}d12${statsMap.int >= 0 ? "+" : ""}${statsMap.int}`;
-        if (subclass === 'Reaver') primaryDmg = `${primaryDice}d12+${primaryDice * statsMap.dex}`;
+        if (subclass === 'Reaver') {
+            primaryDmg = `${primaryDice}d12+${primaryDice * statsMap.dex}`;
+        }
 
         builder.addRollDisplay(primaryDmg, primaryName, primaryDmg, subclass === 'Reaver' ? 'REACH 2' : 'RANGE 8', { type: 'attack', stat: subclass === 'Reaver' ? 'dex' : 'int' });
-        
+
         builder.addRollDisplay(derived.minionDmg, 'Minions', derived.minionDmg, `MAX ${derived.minionMax}`, { isMinion: true });
 
         return builder.build();
