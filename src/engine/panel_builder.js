@@ -6,7 +6,7 @@ class MechanicPanelBuilder {
     constructor() {
         this.sections = [];
     }
-    
+
     /**
      * Add a resource section (mana, LoH, etc.)
      * @param {string} id - Resource ID
@@ -17,7 +17,7 @@ class MechanicPanelBuilder {
      */
     addResource(id, label, value, max, visible = true) {
         if (!visible || max <= 0) return this;
-        
+
         this.sections.push(`
             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px; justify-content: center;">
                 <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${label}</label>
@@ -31,10 +31,10 @@ class MechanicPanelBuilder {
                 </div>
             </div>
         `);
-        
+
         return this;
     }
-    
+
     /**
      * Add a roll link display (Surge, Spirit damage, etc.)
      * @param {string} notation - Roll notation
@@ -44,10 +44,10 @@ class MechanicPanelBuilder {
      * @param {Object} rollContext - Context for dispatchRoll
      */
     addRollDisplay(notation, label, display, subtext = '', rollContext = {}) {
-        const contextStr = Object.keys(rollContext).length > 0 
-            ? `, ${JSON.stringify(rollContext).replace(/"/g, '&quot;')}` 
+        const contextStr = Object.keys(rollContext).length > 0
+            ? `, ${JSON.stringify(rollContext).replace(/"/g, '&quot;')}`
             : '';
-        
+
         this.sections.push(`
             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-right: 1px dashed rgba(255,255,255,0.15); padding-right: 8px;">
                 <label class="roll-link" onclick="dispatchRoll('${notation}', '${label}'${contextStr})" 
@@ -61,10 +61,10 @@ class MechanicPanelBuilder {
                 ${subtext ? `<div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic;">${subtext}</div>` : ''}
             </div>
         `);
-        
+
         return this;
     }
-    
+
     /**
      * Internal helper to get die shape SVG
      */
@@ -118,7 +118,7 @@ class MechanicPanelBuilder {
         const facesNum = parseInt(faces.replace(/\D/g, '')) || 6;
         const isStaticPool = options.static || false;
         const rollAll = options.rollAll || false;
-        
+
         let indicatorsHtml = "";
         if (options.indicators) {
             options.indicators.forEach(ind => {
@@ -126,7 +126,7 @@ class MechanicPanelBuilder {
                 const glow = isActive ? `box-shadow: 0 0 8px ${ind.color};` : '';
                 const opacity = isActive ? '1' : '0.2';
                 const onClick = ind.toggleKey ? `onclick="updateBgChoice('${ind.toggleKey}', state['${ind.toggleKey}'] === 'BOOM' ? 'OFF' : 'BOOM')"` : '';
-                
+
                 indicatorsHtml += `
                     <div ${onClick} title="${ind.label}: ${isActive ? 'ON' : 'OFF'}"
                          style="width: 8px; height: 8px; border-radius: 50%; background: ${ind.color}; ${glow} opacity: ${opacity}; cursor: ${ind.toggleKey ? 'pointer' : 'default'};"></div>
@@ -138,10 +138,10 @@ class MechanicPanelBuilder {
             const exploded = die?.detail && die.detail.includes('!');
             const color = exploded ? 'var(--gold-light)' : 'var(--class-accent)';
             const shapeSvg = this._getDieShape(facesNum, !isPlaceholder, color);
-            
+
             const canRemove = !isPlaceholder && !options.disableRemove;
             const canMaximize = !isPlaceholder && !options.disableMaximize;
-            
+
             return `
                 <div onclick="${canRemove ? `removePoolDie('${stateKey}', ${idx}, ${isStaticPool})` : ''}"
                      oncontextmenu="event.preventDefault(); ${canMaximize ? `maximizePoolDie('${stateKey}', ${idx}, ${facesNum})` : ''}"
@@ -164,8 +164,8 @@ class MechanicPanelBuilder {
         } else {
             diceHtml = `<div style="color: var(--text-muted); font-style: italic; font-size: 0.85em; opacity: 0.5; padding: 5px;">Awaiting ${label}...</div>`;
         }
-        
-        const actionBtn = rollAll ? 
+
+        const actionBtn = rollAll ?
             `<button onclick="rollPool('${stateKey}', ${maxDice}, ${facesNum})" style="background: rgba(255,255,255,0.1); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Roll</button>` :
             `<button onclick="addPoolDie('${stateKey}', ${maxDice}, ${facesNum})" style="background: rgba(255,255,255,0.1); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">+ Die</button>`;
 
@@ -188,7 +188,7 @@ class MechanicPanelBuilder {
                 </div>
             </div>
         `);
-        
+
         return this;
     }
 
@@ -209,7 +209,7 @@ class MechanicPanelBuilder {
                 const opacity = isActive ? '1' : '0.2';
                 const textColor = isActive ? ind.color : 'var(--text-muted)';
                 const onClick = ind.toggleKey ? `onclick="updateBgChoice('${ind.toggleKey}', state['${ind.toggleKey}'] === 'BOOM' ? 'OFF' : 'BOOM')"` : '';
-                
+
                 indicatorsHtml += `
                     <div ${onClick} style="display: flex; align-items: center; gap: 6px; cursor: ${ind.toggleKey ? 'pointer' : 'default'}; opacity: ${opacity};">
                         <span style="font-size: 0.5em; color: ${textColor}; text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 0.5px;">${ind.label}</span>
@@ -256,15 +256,7 @@ class MechanicPanelBuilder {
         `);
         return this;
     }
-    
-    /**
-     * Add custom HTML section
-     */
-    addCustom(html) {
-        this.sections.push(html);
-        return this;
-    }
-    
+
     /**
      * Add a selection display (Form selector, etc.)
      */

@@ -8,7 +8,7 @@ function renderModField() {
 }
 
 function adjAdv(amt) { state.advantage = Math.min(3, Math.max(-3, state.advantage + amt)); renderModField(); saveState(); }
-function toggleAction(idx) { state.actionsSpent = (state.actionsSpent > idx) ? idx : idx + 1; for (let i = 0; i < 3; i++) { const ap = document.getElementById(`action${i+1}`); if(ap) ap.checked = (state.actionsSpent > i); } saveState(); }
+function toggleAction(idx) { state.actionsSpent = (state.actionsSpent > idx) ? idx : idx + 1; for (let i = 0; i < 3; i++) { const ap = document.getElementById(`action${i + 1}`); if (ap) ap.checked = (state.actionsSpent > i); } saveState(); }
 
 function applyTheme(theme) {
     if (!theme) return;
@@ -26,27 +26,27 @@ function updateClassState(key, index, value) { if (!state[key]) state[key] = [];
 function toggleBgPip(key, idx) { const val = state[key] || 0; state[key] = (val === idx + 1) ? idx : idx + 1; saveState(); render(); }
 function updateBgChoice(key, val) { state[key] = val; saveState(); render(); }
 function updateBgSpell(val) { state.bgSpell = val; saveState(); render(); }
-function adjRes(id, amt, max, isAbsolute = false) { let oldVal = state.resourceValues[id] || 0; state.resourceValues[id] = Math.min(max||999, Math.max(0, isAbsolute ? amt : oldVal + amt)); saveState(); render(); }
+function adjRes(id, amt, max, isAbsolute = false) { let oldVal = state.resourceValues[id] || 0; state.resourceValues[id] = Math.min(max || 999, Math.max(0, isAbsolute ? amt : oldVal + amt)); saveState(); render(); }
 
-function addQuickItem(cat, key) { 
-    let t = ITEM_TEMPLATES.data[key]; 
-    if (!t) return; 
-    state.gold -= (t.cost || 0); 
+function addQuickItem(cat, key) {
+    let t = ITEM_TEMPLATES.data[key];
+    if (!t) return;
+    state.gold -= (t.cost || 0);
     if (document.getElementById('gold')) document.getElementById('gold').value = state.gold;
-    state.inventory.push({ id: Date.now(), name: t.name, type: t.type, slots: t.slots, equipped: t.equipped, dmgDice: t.dmgDice||'1d6', stat: t.stat||'str', props: t.props||'', armor: t.armor||0, armorType: t.armorType || (t.type === 'armor' ? 'light' : ''), cost: t.cost || 0 }); 
-    saveState(); render(); 
+    state.inventory.push({ id: Date.now(), name: t.name, type: t.type, slots: t.slots, equipped: t.equipped, dmgDice: t.dmgDice || '1d6', stat: t.stat || 'str', props: t.props || '', armor: t.armor || 0, armorType: t.armorType || (t.type === 'armor' ? 'light' : ''), cost: t.cost || 0 });
+    saveState(); render();
 }
 function addItem() { state.inventory.push({ id: Date.now(), name: 'New Item', type: 'misc', slots: 1, equipped: false, dmgDice: '1d6', stat: 'str', props: '', armor: 1, armorType: '', cost: 0, isCustom: true }); saveState(); render(); }
-function deleteItem(id) { 
-    let item = state.inventory.find(i => i.id === id); 
-    if(item) {
-        state.gold += (item.cost || 0); 
+function deleteItem(id) {
+    let item = state.inventory.find(i => i.id === id);
+    if (item) {
+        state.gold += (item.cost || 0);
         if (document.getElementById('gold')) document.getElementById('gold').value = state.gold;
     }
-    state.inventory = state.inventory.filter(i => i.id !== id); 
-    saveState(); render(); 
+    state.inventory = state.inventory.filter(i => i.id !== id);
+    saveState(); render();
 }
-function updateItem(id, field, val, check = false) { let item = state.inventory.find(i => i.id === id); if(item) { item[field] = check ? val : (field==='slots'||field==='armor'||field==='cost'?parseFloat(val):val); saveState(); render(); } }
+function updateItem(id, field, val, check = false) { let item = state.inventory.find(i => i.id === id); if (item) { item[field] = check ? val : (field === 'slots' || field === 'armor' || field === 'cost' ? parseFloat(val) : val); saveState(); render(); } }
 function toggleCondition(id) { if (state.activeConditions.includes(id)) state.activeConditions = state.activeConditions.filter(c => c !== id); else state.activeConditions.push(id); saveState(); render(); }
 function updateSkill(id, val) { state.skills[id] = parseInt(val) || 0; saveState(); render(); }
 
@@ -83,11 +83,6 @@ function adjHD(a, isAbsolute = false) {
     saveState(); render();
 }
 
-function handleResPipClick(id, i, max) { 
-    const current = state.resourceValues[id] || 0;
-    state.resourceValues[id] = (current === i + 1) ? i : i + 1;
-    saveState(); render(); 
-}
 function handleWoundClick(i) { state.wounds = (state.wounds === i + 1) ? i : i + 1; saveState(); render(); }
 
 /**
@@ -96,7 +91,7 @@ function handleWoundClick(i) { state.wounds = (state.wounds === i + 1) ? i : i +
 function _rollDie(faces, allowExplode = false) {
     let total = Math.floor(Math.random() * faces) + 1;
     let detail = total.toString();
-    
+
     if (allowExplode && total === faces) {
         const next = _rollDie(faces, true);
         total += next.total;
@@ -107,9 +102,9 @@ function _rollDie(faces, allowExplode = false) {
 
 function addPoolDie(key, max, faces) {
     if (!state[key]) state[key] = [];
-    
-    const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') || 
-                         (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
+
+    const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') ||
+        (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
     const roll = _rollDie(faces, allowExplode);
 
     // Fill first empty slot if exists, otherwise push
@@ -119,7 +114,7 @@ function addPoolDie(key, max, faces) {
     } else if (state[key].length < max) {
         state[key].push(roll);
     }
-    
+
     saveState(); render();
 }
 
@@ -148,9 +143,9 @@ function maximizePoolDie(key, idx, faces) {
 function rollPool(key, count, faces) {
     let finalDice = [];
     const hasAdv = (key === 'judgmentDice' && state.selectedDecrees?.includes("Reliable Justice"));
-    const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') || 
-                         (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
-    
+    const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') ||
+        (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
+
     let rollCount = hasAdv ? count + 1 : count;
 
     for (let i = 0; i < rollCount; i++) {
@@ -162,7 +157,7 @@ function rollPool(key, count, faces) {
         let minIdx = finalDice.findIndex(d => d.total === minVal);
         finalDice.splice(minIdx, 1);
     }
-    
+
     state[key] = finalDice;
     saveState(); render();
 }

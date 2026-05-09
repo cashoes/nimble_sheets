@@ -29,7 +29,7 @@ class StormshifterClass extends BaseClass {
             spellSchools: ["Lightning", "Wind"],
             subclassSchools: { "SkyStorm": [] }, // Handled by study choice
             extraSchoolsKeys: ["selectedStudy"],
-            includeUtilitySpells: createUtilityConfig(false, ["selectedStormcaller"]),
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14, ["selectedSubclassSpells"]),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('shiftUses', 'Beastshift', (level, stats) => stats.dex + (level >= 6 ? 1 : 0) + (level >= 9 ? 1 : 0) + (level >= 12 ? 1 : 0) + (level >= 15 ? 2 : 0))
@@ -89,16 +89,19 @@ class StormshifterClass extends BaseClass {
             spellType: "utility",
             stateKey: "selectedSubclassSpells",
             perSchool: true,
-            multiplier: (level) => level >= 14 ? 0 : 1,
-            milestones: [4, 14],
+            multiplier: (level) => level >= 14 ? 0 : (level >= 7 ? 2 : 1),
+            milestones: [4, 7, 14],
             desc: (level) => FeatureGen.createScalingList(
                 "Learn a Utility Spell from each spell school you know.",
-                [{ level: 14, text: "You know all Utility Spells from the spell schools you know." }],
+                [
+                    { level: 7, text: "Learn a 2nd Utility Spell from each spell school you know." },
+                    { level: 14, text: "You know all Utility Spells from the spell schools you know." }
+                ],
                 level
             )
         }));
         
-        core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", milestones: [6, 9, 12, 17], desc: "Choose Chimeric Boons. Whenever you shapeshift into a Direbeast form, you may modify it with 1 Chimeric Boon you know.", getCount: (level) => level >= 17 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : 2 });
+        core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "chimericBoons", stateKey: "selectedBoons", milestones: [6, 9, 12, 17], desc: "Choose Chimeric Boons. Whenever you shapeshift into a Direbeast form, you may modify it with 1 Chimeric Boon you know.", getCount: FeatureGen.createStandardCount([6, 9, 12, 17]) });
         core[6].push({ id: "expert", name: "Expert Shifter", desc: "Gain 1 additional use of Beastshift per Safe Rest." });
         
         core[8].push({ id: "stormborn", name: "Stormborn", desc: (level) => FeatureGen.createScalingList(
@@ -128,7 +131,7 @@ class StormshifterClass extends BaseClass {
             11: [{ id: "primordial", name: "Primordial Force", desc: "Spending 2+ mana on a spell grants an additional effect based on school: <ul><li><strong>Ice:</strong> Gain WIL temp HP.</li><li><strong>Lightning:</strong> Deal additional damage equal to your WIL.</li><li><strong>Radiant:</strong> You may heal a creature within 6 spaces WIL HP.</li><li><strong>Wind:</strong> Gain a flying speed this turn. Move up to 6 spaces for free.</li></ul>" }],
             15: [{ id: "master_storm", name: "Master of Storm", desc: "Concentrate on 1 lightning and 1 wind spell at the same time. (1/Safe Rest) Cast Ride the Lightning for 0 mana." }]
         };
-        subclasses["FangClaw"] = {
+        subclasses["StormClaw"] = {
             3: [{ id: "swiftshift", name: "Swiftshift", desc: "Init: Beastshift or move for free. While transformed, you may shift between different Direbeast forms for free (Reaction for 1 mana)." }, { id: "windborne", name: "Windborne Protector", desc: "(1/encounter) Reaction: When an enemy attacks, spend 2 mana to shift into a Fearsome Beast, Interpose from 12 reach, and Defend for free." }, { id: "friend", name: "Friend of Beasts", desc: "Beasts will not attack you until you first harm them. Transform into harmless beasts without spending a charge." }],
             7: [{ id: "unleash", name: "Unleash the Beast", desc: "(1/encounter) When you miss, you can crit instead." }, { id: "wake", name: "Storm Wake", desc: "(1/encounter) Action: Spend 3 mana to shift into a Beast of the Pack, teleport 12 reach in a line, and deal WIL d8 lightning dmg to targets in path." }],
             11: [{ id: "master_forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." }, { id: "gaze", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into Beast of Nightmares, pull enemy within 12 reach closer by 2x WIL, and Sting for free on contact." }],

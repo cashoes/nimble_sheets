@@ -237,74 +237,11 @@ function render() {
     document.body.classList.toggle('show-minor', state.showMinor);
 
     let fHtml = CLASS_CONFIG.getFeaturesHTML(level, state.subclass, state, derived, bFeatBound, iStatsBound, formatPips, renderSingleSpellCard);
-    const bgFeat = BACKGROUND_FEATURES[state.background];
-    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
+    
+    // Cleanly append background and ancestry features
+    fHtml = renderBackgroundFeature(state, level, statsMap, iStatsBound, bFeatBound, renderSingleSpellCard) + fHtml;
+    fHtml = renderAncestryFeature(state, bFeatBound) + fHtml;
 
-    if (bgFeat) {
-        let bgDesc = bgFeat.desc;
-        let bgSelectedOpt = (bgFeat.options && state[bgFeat.stateKey]) ? bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === state[bgFeat.stateKey]) : null;
-
-        if (bgFeat.type === "choice") {
-            let choiceHtml = "";
-            if (bgFeat.collection === "utility") {
-                let opts = `<option value="None">-- Select Spell --</option>`;
-                Object.keys(UTILITY_SPELLS).forEach(school => {
-                    opts += `<optgroup label="${school}">`;
-                    Object.keys(UTILITY_SPELLS[school]).forEach(sName => {
-                        opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`;
-                    });
-                    opts += `</optgroup>`;
-                });
-                let school = "Radiant";
-                if (state.bgSpell && state.bgSpell !== "None") {
-                    for (const [sch, spells] of Object.entries(UTILITY_SPELLS)) { if (spells[state.bgSpell]) { school = sch; break; } }
-                }
-                choiceHtml = renderSingleSpellCard({
-                    name: state.bgSpell !== "None" ? state.bgSpell : state.background,
-                    tier: "Utility",
-                    school: school,
-                    customHtml: `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)">${opts}</select></div><div style="font-weight:bold; color:var(--text-muted); font-size:0.85em; margin-bottom:4px;">1 Action</div><div>${state.bgSpell !== "None" ? iStatsBound(UTILITY_SPELLS[school][state.bgSpell]) : ''}</div>`
-                }, level, statsMap);
-            } else if (bgFeat.collection === "ancestry") {
-                let opts = `<option value="None">-- Select Ancestry --</option>`;
-                Object.keys(ANCESTRIES).forEach(group => {
-                    opts += `<optgroup label="${group}">`;
-                    ANCESTRIES[group].forEach(a => opts += `<option value="${a}" ${state[bgFeat.stateKey] === a ? 'selected' : ''}>${a}</option>`);
-                    opts += `</optgroup>`;
-                });
-                choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
-            } else if (bgFeat.options && bgFeat.stateKey) {
-                let opts = `<option value="None">-- Select Option --</option>`;
-                bgFeat.options.forEach(opt => {
-                    const label = typeof opt === 'string' ? opt : opt.label;
-                    opts += `<option value="${label}" ${state[bgFeat.stateKey] === label ? 'selected' : ''}>${label}</option>`;
-                });
-                let optDesc = "";
-                if (bgSelectedOpt && bgSelectedOpt.desc) {
-                    optDesc = `<div style="margin-top:8px; font-size:0.9em; color:var(--text-main); border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">${iStatsBound(bgSelectedOpt.desc)}</div>`;
-                }
-                choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select>${optDesc}</div>`;
-            }
-            bgDesc += choiceHtml;
-        }
-        if (bgFeat.uses || (bgSelectedOpt && bgSelectedOpt.uses)) {
-            let usesHtml = '<div style="margin-top:10px; display:flex; flex-direction:column; gap:6px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">';
-            const allUses = [...(bgFeat.uses || []), ...(bgSelectedOpt?.uses || [])];
-            allUses.forEach(u => {
-                let pips = "";
-                for (let i = 0; i < u.max; i++) {
-                    const checked = (state[u.stateKey] || 0) > i;
-                    pips += `<input type="checkbox" class="pip" ${checked ? 'checked' : ''} onclick="toggleBgPip('${u.stateKey}', ${i})">`;
-                }
-                usesHtml += `<div style="display:flex; align-items:center; justify-content:space-between; font-size:0.85em; color:var(--text-muted);"><span style="color:var(--text-main); font-weight:bold;">• ${u.label}</span><div style="display:flex; gap:4px;">${pips}</div></div>`;
-            });
-            usesHtml += '</div>';
-            bgDesc += usesHtml;
-        }
-        fHtml = bFeatBound(`Background: ${state.background}`, "", bgDesc, "", false) + fHtml;
-    }
-
-    if (ancFeat) fHtml = bFeatBound(`Ancestry: ${state.ancestry}`, "", ancFeat.desc, "", false) + fHtml;
     const fc = document.getElementById('featuresContainer'); if(fc) fc.innerHTML = fHtml;
 
     const mtEl = document.getElementById('maxTierDisplay');

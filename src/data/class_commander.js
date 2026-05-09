@@ -28,7 +28,7 @@ class CommanderClass extends BaseClass {
                 cdType: { 1: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" }
             },
             spellProgression: [0, 3, 7, 11, 15],
-            extraSchoolsKeys: ["selectedDeepKnowledge"],
+            extraSchoolsKeys: [],
             includeUtilitySpells: createUtilityConfig(null, ["selectedDeepKnowledge"]),
             includeTieredSpells: ["selectedDeepKnowledge"],
             resources: [
@@ -88,7 +88,7 @@ class CommanderClass extends BaseClass {
             { id: "medic", name: "Field Medic", desc: "Roll 1 additional die for any health potion you administer. Whenever you or an ally spends any number of Hit Dice to recover HP, if you spent at least ten minutes examining their wounds, they can add your Examination bonus to the HP recovered." }
         ];
         core[4].push({
-            id: "tactics", name: "Fit for Any Battlefield", type: "dynamic_choice", collection: "tactics", stateKey: "selectedTactics", milestones: [4, 6, 8, 10, 12, 14, 16, 17], desc: (level) => FeatureGen.createScalingList(
+            id: "tactics", name: "Fit for Any Battlefield", type: "dynamic_choice", collection: "tactics", stateKey: "selectedTactics", milestones: [4, 6, 8, 10, 12, 14, 16], context: { type: 'attack', stat: 'str' }, desc: (level) => FeatureGen.createScalingList(
                 "Choose a Combat Tactic. When you roll Initiative, gain STR Combat Dice. (1/attack) You may expend a Combat Die to perform a special maneuver. Combat Dice are lost when combat ends.",
                 [
                     { level: 4, text: "Your Combat Dice are d6s." },
@@ -98,11 +98,11 @@ class CommanderClass extends BaseClass {
                     { level: 17, text: "Your Combat Dice are now d20s." }
                 ],
                 level
-            ), getCount: (level) => level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1
+            ), getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16])
         });
 
         core[5].push({ id: "master_commander", name: "Master Commander", desc: "When you roll Initiative, regain 1 spent use of Coordinated Strike (it is lost if not spent during that encounter). Attacks made from your Coordinated Strikes also now ignore disadvantage." });
-        core[6].push({ id: "mastery", name: "Weapon Mastery", type: "dynamic_choice", collection: "masteries", stateKey: "selectedMastery", milestones: [6, 10, 14], desc: "You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in.", getCount: (level) => level >= 14 ? 3 : level >= 10 ? 2 : 1 });
+        core[6].push({ id: "mastery", name: "Weapon Mastery", type: "dynamic_choice", collection: "masteries", stateKey: "selectedMastery", milestones: [6, 10, 14], desc: "You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in.", getCount: FeatureGen.createStandardCount([6, 10, 14]) });
 
         core[18] = [{ id: "unparalleled_tactics", name: "Unparalleled Tactics", desc: "The first time each encounter you use Coordinated Strike, an ally who can hear you also gains 1 action to use on their next turn." }];
         core[20].push({ id: "captain_of_legions", name: "Captain of Legions", desc: "+1 to any 2 of your stats. The first time each encounter you use Coordinated Strike, EVERY ally within 12 spaces gains +1 action (replaces Unparalleled Tactics)." });
@@ -131,7 +131,7 @@ class CommanderClass extends BaseClass {
                     tiers: [1, 2, 3, 4],
                     schools: ["Fire", "Ice", "Lightning", "Radiant", "Necrotic", "Wind"],
                     stateKey: "selectedDeepKnowledge",
-                    getCount: (level) => level >= 15 ? 8 : (level >= 11 ? 6 : (level >= 7 ? 4 : 2)),
+                    getCount: (level) => FeatureGen.createStandardCount([3, 7, 11, 15])(level) * 2,
                     milestones: [3, 7, 11, 15],
                     desc: (level) => FeatureGen.createScalingList(
                         "Choose 1 utility and 1 tiered spell for every level of Deep Knowledge you have unlocked.",

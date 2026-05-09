@@ -27,6 +27,12 @@ class BerserkerClass extends BaseClass {
                 furyFaces: { 1: 4, 6: 6, 9: 8, 13: 10, 17: 12 },
                 furyText: { 1: "d4", 6: "d6", 9: "d8", 13: "d10", 17: "d12" }
             },
+            rollTriggers: [
+                {
+                    condition: (label, options) => (options.type === 'attack' || /attack|⚔️/i.test(label)) && options.stat === 'str',
+                    getMod: (state) => (state.furyDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0)
+                }
+            ],
             featuresData: BerserkerClass.FEATURES,
             optionsData: BerserkerClass.OPTIONS
         });
@@ -53,29 +59,31 @@ class BerserkerClass extends BaseClass {
 
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or DEX', 'WIL or INT', false);
-        
+
         core[1] = [
-            { id: "rage", name: "Rage", desc: "(1/turn) Action: Roll a Fury Die (1d4) and set it aside. Add it to every STR attack you make. You can have a max of KEY Fury Dice; they are lost when your Rage ends." },
+            { id: "rage", name: "Rage", context: { type: 'attack', stat: 'str' }, desc: "(1/turn) Action: Roll a Fury Die (1d4) and set it aside. Add it to every STR attack you make. You can have a max of KEY Fury Dice; they are lost when your Rage ends." },
             { id: "got", name: "That all you got?!", desc: "When you are attacked, you may expend 1 or more Fury Dice to reduce the damage taken by STR+DEX for each die spent." }
         ];
         core[2] = [
-            { id: "intensifying", name: "Intensifying Fury", milestones: [2, 6, 9, 13, 17], desc: (level) => FeatureGen.createScalingList(
-                "If you are Raging at the beginning of your turn, roll 1 Fury Die for free.",
-                [
-                    { level: 6, text: "Your Fury Dice are now d6s." },
-                    { level: 9, text: "Your Fury Dice are now d8s." },
-                    { level: 13, text: "Your Fury Dice are now d10s." },
-                    { level: 17, text: "Your Fury Dice are now d12s." }
-                ],
-                level
-            )},
+            {
+                id: "intensifying", name: "Intensifying Fury", milestones: [2, 6, 9, 13, 17], desc: (level) => FeatureGen.createScalingList(
+                    "If you are Raging at the beginning of your turn, roll 1 Fury Die for free.",
+                    [
+                        { level: 6, text: "Your Fury Dice are now d6s." },
+                        { level: 9, text: "Your Fury Dice are now d8s." },
+                        { level: 13, text: "Your Fury Dice are now d10s." },
+                        { level: 17, text: "Your Fury Dice are now d12s." }
+                    ],
+                    level
+                )
+            },
             { id: "one_ancients", name: "One with the Ancients", desc: "(1/Safe Rest) When faced with a decision about which direction or course of action to take, you can call upon your ancestors to guide you toward the most dangerous or challenging path." }
         ];
         core[3].push({ id: "bloodlust", name: "Bloodlust", desc: "Expend 1 or more Fury Dice on your turn, move DEX spaces per die spent for free." });
-        
+
         core[4].push({ id: "enduring_rage", name: "Enduring Rage", desc: "While Dying, you Rage automatically for free at the beginning of your turn, have a max of 2 actions instead of 1, and ignore the STR saves to make attacks." });
-        core[4].push({ id: "arsenal", name: "Savage Arsenal", type: "dynamic_choice", collection: "arsenal", stateKey: "selectedArsenal", milestones: [4, 6, 8, 10, 12, 14, 16], desc: "Choose abilities from the Savage Arsenal as you level up.", getCount: (level) => level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 });
-        
+        core[4].push({ id: "arsenal", name: "Savage Arsenal", type: "dynamic_choice", collection: "arsenal", stateKey: "selectedArsenal", milestones: [4, 6, 8, 10, 12, 14, 16], desc: "Choose abilities from the Savage Arsenal as you level up.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16]) });
+
         core[18] = [{ id: "deep_rage", name: "DEEP RAGE", desc: "Dropping to 0 HP does not cause your Rage to end." }];
         core[20].push({ id: "boundless_rage", name: "BOUNDLESS RAGE", desc: "+1 to any 2 of your stats. Anytime you roll less than 6 on a Fury Die, change it to 6 instead." });
 
@@ -91,7 +99,7 @@ class BerserkerClass extends BaseClass {
             11: [{ id: "opportunistic_frenzy", name: "Opportunistic Frenzy", desc: "While Raging, you can make opportunity attacks without disadvantage, and you may make them whenever an enemy enters your melee weapon’s reach." }],
             15: [{ id: "onslaught", name: "Onslaught", desc: "While Raging, gain +2 speed. (1/round) you may move for free." }]
         };
-        
+
         return { core, subclasses };
     }
 
@@ -115,7 +123,7 @@ class BerserkerClass extends BaseClass {
             derived.furyMax,
             { static: true }
         );
-        
+
         builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.');
 
         return builder.build();

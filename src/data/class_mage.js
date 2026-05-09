@@ -77,7 +77,7 @@ class MageClass extends BaseClass {
             spellType: "school",
             schools: ["Fire", "Ice", "Lightning"],
             stateKey: "selectedMastery",
-            getCount: (level) => level >= 14 ? 0 : (level >= 6 ? 2 : 1),
+            getCount: FeatureGen.createStandardCount([3, 6, 14], 14), // Specialist logic handled by 0 if >= 14
             filterKnown: true,
             milestones: [3, 6, 14],
             desc: (level) => FeatureGen.createScalingList(
@@ -86,10 +86,12 @@ class MageClass extends BaseClass {
                 level
             )
         })];
+        // Fix specialists manually since getCount needs to return 0 for all-utility at 14
+        core[3][0].getCount = (level) => level >= 14 ? 0 : (level >= 6 ? 2 : 1);
 
-        core[4].push({ id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", milestones: [4, 9, 13], desc: "Choose Spellshaper abilities as you level up. You may use 1/turn.", getCount: (level) => level >= 13 ? 3 : level >= 9 ? 2 : 1 });
+        core[4].push({ id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", milestones: [4, 9, 13], desc: "Choose Spellshaper abilities as you level up. You may use 1/turn.", getCount: FeatureGen.createStandardCount([4, 9, 13]) });
 
-        core[5].push({ id: "surge", name: "Elemental Surge", desc: (level) => FeatureGen.createScalingList(
+        core[5].push({ id: "surge", name: "Elemental Surge", context: { type: 'surge' }, desc: (level) => FeatureGen.createScalingList(
             "When you roll Initiative, regain <strong>WIL</strong> mana (this expires at the end of combat if unused).",
             [
                 { level: 10, text: "Regain WIL+1d4 mana." },

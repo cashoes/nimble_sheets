@@ -17,7 +17,7 @@ class ZephyrClass extends BaseClass {
                 panelBg: "rgba(15, 23, 42, 0.7)",
                 border: "rgba(96, 165, 251, 0.3)"
             },
-            initialStats: { baseStr: 1, baseDex: 3, baseInt: 0, baseWil: -1 },
+            initialStats: { baseStr: 2, baseDex: 2, baseInt: 0, baseWil: -1 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "WayOfPain", label: "Way of Pain", accent: "#991b1b" },
@@ -27,6 +27,12 @@ class ZephyrClass extends BaseClass {
                 speed: { 1: 6, 2: 8, 9: 10 },
                 swiftBonus: { 1: 0, 5: (level) => level }
             },
+            rollTriggers: [
+                {
+                    condition: (label, options) => (options.type === 'attack' || /attack|⚔️/i.test(label)) && options.stat === 'str',
+                    getMod: (state) => state.level >= 5 ? state.level : 0
+                }
+            ],
             resources: [
                 createSimpleResource('burstSpeed', 'Bursts of Speed', (level, stats) => level >= 2 ? stats.dex : 0)
             ],
@@ -55,46 +61,54 @@ class ZephyrClass extends BaseClass {
 
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or STR', 'INT or WIL', false);
-        
+
         core[1] = [
-            { id: "iron", name: "Iron Defense", milestones: [1, 13], desc: (level) => FeatureGen.createScalingList(
-                "Your armor equals DEX+STR as long as you are unarmored.",
-                [{ level: 13, text: "Your armor is doubled while unarmored." }],
-                level
-            )},
-            { id: "fists", name: "Swift Fists", milestones: [1, 5], desc: (level) => FeatureGen.createScalingList(
-                "Your unarmed strikes are not subject to disadvantage imposed by Rushed Attacks, and their damage is 1d4+STR.",
-                [{ level: 5, text: `Add +${level} bludgeoning damage to all of your melee attacks.` }],
-                level
-            )}
+            {
+                id: "iron", name: "Iron Defense", milestones: [1, 13], desc: (level) => FeatureGen.createScalingList(
+                    "Your armor equals DEX+STR as long as you are unarmored.",
+                    [{ level: 13, text: "Your armor is doubled while unarmored." }],
+                    level
+                )
+            },
+            {
+                id: "fists", name: "Swift Fists", milestones: [1, 5], context: { type: 'attack', stat: 'str' }, desc: (level) => FeatureGen.createScalingList(
+                    "Your unarmed strikes are not subject to disadvantage imposed by Rushed Attacks, and their damage is 1d4+STR.",
+                    [{ level: 5, text: `Add +${level} bludgeoning damage to all of your melee attacks.` }],
+                    level
+                )
+            }
         ];
         core[2] = [
-            { id: "feet", name: "Swift Feet", milestones: [2, 9], desc: (level) => FeatureGen.createScalingList(
-                `While unarmored, gain +LVL Initiative.`,
-                [
-                    { level: 2, text: "Speed bonus is +2." },
-                    { level: 9, text: "Speed bonus increases to +4." }
-                ],
-                level
-            )},
+            {
+                id: "feet", name: "Swift Feet", milestones: [2, 9], desc: (level) => FeatureGen.createScalingList(
+                    `While unarmored, gain +LVL Initiative.`,
+                    [
+                        { level: 2, text: "Speed bonus is +2." },
+                        { level: 9, text: "Speed bonus increases to +4." }
+                    ],
+                    level
+                )
+            },
             { id: "burst", name: "Burst of Speed", desc: "When you roll Initiative, gain DEX Bursts of Speed to use during that encounter. (1/turn) You may spend 1 Burst of Speed for free: <ul><li><strong>Slipstream:</strong> Defend, and the attack misses.</li><li><strong>Whirling Defense:</strong> Defend and apply your armor to every attack this round.</li><li><strong>Swiftstrike:</strong> Attack on your turn, and ignore disadvantage from Rushed Attacks.</li><li><strong>Windstep:</strong> Move on your turn, ignoring difficult terrain.</li></ul>" }
         ];
         core[3].push({ id: "kinetic", name: "Kinetic Momentum", desc: "Whenever you gain a Wound, gain a Burst of Speed." });
         core[3].push({ id: "projection", name: "Ethereal Projection", desc: "(1/day) Meditate 10 mins: Project an ethereal version of yourself up to 30 ft away for 10 mins." });
-        
-        core[4].push({ id: "resolve", name: "Unyielding Resolve", milestones: [4, 10, 17], desc: (level) => FeatureGen.createScalingList(
-            "Ignore the first Wound(s) you would suffer each encounter.",
-            [
-                { level: 4, text: "Ignore the first 1 Wound." },
-                { level: 10, text: "Ignore the first 2 Wounds." },
-                { level: 17, text: "Ignore the first 3 Wounds. Advantage on STR saves while Dying." }
-            ],
-            level
-        )});
-        core[4].push({ id: "martial", name: "Martial Master", type: "dynamic_choice", collection: "martial", stateKey: "selectedMartial", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose Martial Arts abilities.", getCount: (level) => level >= 18 ? 8 : level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 });
-        
+
+        core[4].push({
+            id: "resolve", name: "Unyielding Resolve", milestones: [4, 10, 17], desc: (level) => FeatureGen.createScalingList(
+                "Ignore the first Wound(s) you would suffer each encounter.",
+                [
+                    { level: 4, text: "Ignore the first 1 Wound." },
+                    { level: 10, text: "Ignore the first 2 Wounds." },
+                    { level: 17, text: "Ignore the first 3 Wounds. Advantage on STR saves while Dying." }
+                ],
+                level
+            )
+        });
+        core[4].push({ id: "martial", name: "Martial Master", type: "dynamic_choice", collection: "martial", stateKey: "selectedMartial", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose Martial Arts abilities.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) });
+
         core[6].push({ id: "infuse", name: "Infuse Strength", desc: "Action: Attack ally to heal them (Hit Dice + STR)." });
-        
+
         core[20].push({ id: "windborne", name: "Windborne", desc: "+1 Burst of Speed when you roll Initiative. Permanently gain 1 action (max 2 while dying)." });
 
         subclasses["WayOfPain"] = {
@@ -109,7 +123,7 @@ class ZephyrClass extends BaseClass {
             11: [{ id: "chain", name: "Chain Reaction", desc: "(1/turn) When you crit, deal fire damage equal to your STR+Wounds to creatures within 2 spaces. Can repeat to adjacent targets." }],
             15: [{ id: "burning", name: "Burning Soul", desc: "Double any fire damage you deal." }]
         };
-        
+
         return { core, subclasses };
     }
 
@@ -117,34 +131,32 @@ class ZephyrClass extends BaseClass {
         return super.getDerivedStats(level, subclass, state);
     }
 
+    _getIronDefenseAC(level, statsMap) {
+        let ac = statsMap.dex + statsMap.str;
+        if (level >= 13) ac *= 2;
+        return ac;
+    }
+
     getStatOverrides(level, subclass, state, statsMap) {
         let overrides = {};
-        let isUnarmored = true;
-        state.inventory.forEach(item => { if(item.type==='armor' && item.equipped) isUnarmored = false; });
-
-        if (isUnarmored) {
-            overrides.armorBase = statsMap.dex + statsMap.str;
-            if (level >= 13) overrides.armorBase *= 2;
+        if (this.isUnarmored(state)) {
+            overrides.armorBase = this._getIronDefenseAC(level, statsMap);
             if (level >= 2) overrides.init = level;
         }
-
         return overrides;
     }
 
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         const statsMap = getStatsMap(state);
-
-        let acVal = statsMap.dex + statsMap.str;
-        if (level >= 13) acVal *= 2;
-        let isUnarmored = true;
-        state.inventory.forEach(item => { if(item.type==='armor' && item.equipped) isUnarmored = false; });
+        const isUnarmored = this.isUnarmored(state);
+        const acVal = this._getIronDefenseAC(level, statsMap);
 
         builder.addStatDisplay(isUnarmored ? acVal : '--', 'Armor', isUnarmored ? 'Iron Defense' : 'Armored', { borderRight: true });
 
         builder.addResource('burstSpeed', 'Bursts', state.resourceValues.burstSpeed, derived.resourceMaxes.burstSpeed);
 
-        builder.addRollDisplay(`1d4+${statsMap.str}${derived.swiftBonus ? '+'+derived.swiftBonus : ''}`, 'Swift Fists', `1d4+${statsMap.str}${derived.swiftBonus ? '+'+derived.swiftBonus : ''}`, 'Ignores Rushed DIS', { type: 'attack', stat: 'str' });
+        builder.addRollDisplay(`1d4+${statsMap.str}`, 'Swift Fists', `1d4+${statsMap.str}${derived.swiftBonus ? '+' + derived.swiftBonus : ''}`, 'Ignores Rushed DIS', { type: 'attack', stat: 'str' });
 
         return builder.build();
     }

@@ -33,6 +33,7 @@ class BaseClass {
         this.includeCantripSpells = config.includeCantripSpells || []; // Array of state keys that contain individual cantrip choices
         this.spellReplacements = config.spellReplacements || []; // For Oathbreaker-style replacements
         this.scalingStats = config.scalingStats || {}; // Declarative level scaling for derived stats
+        this.rollTriggers = config.rollTriggers || []; // Automated roll modifiers/effects
         
         // Internal references for default renderers
         this.featuresData = config.featuresData || { core: {}, subclasses: {} };
@@ -52,7 +53,10 @@ class BaseClass {
                 .sort((a, b) => a - b);
             
             sortedMilestones.forEach(m => {
-                if (level >= m) stats[key] = milestones[m];
+                if (level >= m) {
+                    const val = milestones[m];
+                    stats[key] = (typeof val === 'function') ? val(level, subclass) : val;
+                }
             });
         });
 
@@ -79,18 +83,90 @@ class BaseClass {
         return defaultRenderFeature(feat, level, subclass, state, derived, bFeat, iStats, formatPips, rSSC, cssClass, optionsRef, this);
     }
 
-    getKnownSchools(level, subclass, state) {
+    /**
+     * Gather all active features for the current level and subclass
+     */
+    _getActiveFeatures(level, subclass) {
+        const features = [];
+        const replacedIds = new Set();
+        const subData = this.featuresData.subclasses[subclass] || {};
+
+        // 1. Identify replacements first
+        Object.values(subData).forEach(lvlFeats => {
+            lvlFeats.forEach(f => {
+                if (f.replaces) {
+                    if (Array.isArray(f.replaces)) f.replaces.forEach(id => replacedIds.add(id));
+                    else replacedIds.add(f.replaces);
+                }
+            });
+        });
+
+        // 2. Add Core features (if not replaced)
+        for (let i = 1; i <= level; i++) {
+            if (this.featuresData.core[i]) {
+                this.featuresData.core[i].forEach(f => {
+                    if (!replacedIds.has(f.id)) features.push(f);
+                });
+            }
+        }
+
+        // 3. Add Subclass features
+        for (let i = 1; i <= level; i++) {
+            if (subData[i]) features.push(...subData[i]);
+        }
+
+        return features;
+    }
+
+    /**
+     * Identify active state keys and their allowed budgets
+     */
+    _getActiveStateKeyLimits(level, subclass, state) {
+        const limits = {};
+        const features = this._getActiveFeatures(level, subclass);
+
+        // Pass 1: Handle non-perSchool features (including school choices)
+        features.forEach(f => {
+            if (f.stateKey && !f.perSchool) {
+                const count = typeof f.getCount === 'function' ? f.getCount(level, subclass, state) : (f.count || 1);
+                const mult = typeof f.multiplier === 'function' ? f.multiplier(level, subclass, state) : (f.multiplier || 1);
+                limits[f.stateKey] = (limits[f.stateKey] || 0) + (count * mult);
+            }
+        });
+
+        // Resolve active schools using Pass 1 limits
+        const schools = this.getKnownSchools(level, subclass, state, limits);
+
+        // Pass 2: Handle perSchool features (dependent on schools)
+        features.forEach(f => {
+            if (f.stateKey && f.perSchool) {
+                const count = typeof f.getCount === 'function' ? f.getCount(level, subclass, state) : (f.count || 1);
+                const mult = typeof f.multiplier === 'function' ? f.multiplier(level, subclass, state) : (f.multiplier || 1);
+                limits[f.stateKey] = (limits[f.stateKey] || 0) + (schools.length * count * mult);
+            }
+        });
+
+        return limits;
+    }
+
+    getKnownSchools(level, subclass, state, limits = null) {
         const schools = new Set(this.spellSchools);
         if (subclass && this.subclassSchools[subclass]) {
             this.subclassSchools[subclass].forEach(s => schools.add(s));
         }
         
-        // Add schools from dynamic school choices
+        // Add schools from dynamic school choices (only if active feature exists)
         this.extraSchoolsKeys.forEach(key => {
+            // Strict check: if limits is provided, budget must be > 0. 
+            // If limits is null, it includes everything (legacy compatibility).
+            if (limits && (limits[key] || 0) <= 0) return;
+            
             const val = state[key];
             if (val) {
                 const vals = Array.isArray(val) ? val : [val];
-                vals.forEach(v => {
+                // Slice based on budget
+                const activeVals = (limits && limits[key]) ? vals.slice(0, limits[key]) : vals;
+                activeVals.forEach(v => {
                     if (v && v !== "None") {
                         if (SPELL_REGISTRY[v] || UTILITY_SPELLS[v]) schools.add(v);
                     }
@@ -98,67 +174,38 @@ class BaseClass {
             }
         });
 
-        // Add schools from individual spell choices (cantrips or tiered)
-        const spellKeys = [...this.includeTieredSpells, ...this.includeCantripSpells];
-        spellKeys.forEach(key => {
-            const selections = state[key] || [];
-            selections.forEach(spellName => {
-                if (spellName === "None") return;
-                // Find school for this spell
-                for (const [sch, spells] of Object.entries(SPELL_REGISTRY)) {
-                    if (spells[spellName]) { schools.add(sch); break; }
-                }
-                for (const [sch, spells] of Object.entries(UTILITY_SPELLS)) {
-                    if (spells[spellName]) { schools.add(sch); break; }
-                }
-            });
-        });
-
         return Array.from(schools);
     }
 
     /**
      * Default spell progression logic
-     * Override this ONLY if you need custom behavior (Oathbreaker replacements, Shepherd's paired utilities, etc.)
-     * 
-     * @param {number} level - Character level
-     * @param {string} subclass - Current subclass
-     * @param {Object} state - Character state
-     * @param {Object} derived - Derived stats
-     * @returns {Object[]} Array of spell objects
      */
     getAvailableSpells(level, subclass, state, derived) {
         if (!this.isCaster) return [];
         
-        const spells = [];
         const progression = this.spellProgression || [1, 2, 4, 6, 8, 10, 12, 14, 16, 18];
+        const limits = this._getActiveStateKeyLimits(level, subclass, state);
+        const schools = this.getKnownSchools(level, subclass, state, limits);
+        const spells = [];
         
-        // 1. Gather all schools for this character
-        const schools = this.getKnownSchools(level, subclass, state);
-        
-        // 2. Add tiered spells from each school
+        // 1. Add tiered spells from each active school
         schools.forEach(school => {
             if (!SPELL_REGISTRY[school]) return;
-            
             Object.entries(SPELL_REGISTRY[school]).forEach(([name, data]) => {
                 const tierNum = this._parseTierNumber(data.tier);
                 const isCantrip = data.tier.toLowerCase().includes('cantrip');
                 const requiredLevel = isCantrip ? (progression[0] || 1) : (progression[tierNum] || 99);
-                
                 if (level >= requiredLevel) {
-                    // Check if this spell should be replaced
                     if (this._isReplaced(name, subclass)) return;
                     spells.push({ name, ...data, school });
                 }
             });
         });
         
-        // 3. Handle spell replacements (Oathbreaker pattern)
+        // 2. Handle spell replacements
         if (this.spellReplacements.length > 0) {
             this.spellReplacements.forEach(replacement => {
                 if (replacement.subclass && replacement.subclass !== subclass) return;
-                
-                // Remove replaced spells
                 if (replacement.replace) {
                     const replaceList = Array.isArray(replacement.replace) ? replacement.replace : [replacement.replace];
                     replaceList.forEach(name => {
@@ -166,48 +213,29 @@ class BaseClass {
                         if (idx !== -1) spells.splice(idx, 1);
                     });
                 }
-                
-                // Add new spells
                 if (replacement.add) {
-                    const spellData = SPELL_REGISTRY[replacement.school]?.[replacement.add];
-                    if (spellData) {
+                    const spellData = SPELL_REGISTRY[replacement.school]?.[replacement.add] || (UTILITY_SPELLS[replacement.school] ? { desc: UTILITY_SPELLS[replacement.school][replacement.add], tier: "Utility" } : null);
+                    if (spellData && !spells.find(s => s.name === replacement.add)) {
                         spells.push({ name: replacement.add, ...spellData, school: replacement.school });
                     }
                 }
             });
         }
         
-        // 4. Add utility spells if configured
+        // 3. Add utility spells (filtered by budget)
         if (this.includeUtilitySpells) {
-            this._addUtilitySpells(spells, level, subclass, state);
+            this._addUtilitySpells(spells, level, subclass, state, limits);
         }
         
-        // 5. Add individual tiered spells if configured
-        this.includeTieredSpells.forEach(key => {
-            const selections = state[key] || [];
+        // 4. Add individual tiered/cantrip spells (filtered by budget)
+        [...this.includeTieredSpells, ...this.includeCantripSpells].forEach(key => {
+            const budget = limits[key] || 0;
+            const selections = (state[key] || []).slice(0, budget);
             selections.forEach(val => {
                 if (val === "None") return;
                 for (const [sch, spellsList] of Object.entries(SPELL_REGISTRY)) {
                     if (spellsList[val]) {
-                        if (!spells.find(s => s.name === val)) {
-                            spells.push({ name: val, ...spellsList[val], school: sch });
-                        }
-                        break;
-                    }
-                }
-            });
-        });
-
-        // 6. Add individual cantrip spells if configured
-        this.includeCantripSpells.forEach(key => {
-            const selections = state[key] || [];
-            selections.forEach(val => {
-                if (val === "None") return;
-                for (const [sch, spellsList] of Object.entries(SPELL_REGISTRY)) {
-                    if (spellsList[val]) {
-                        if (!spells.find(s => s.name === val)) {
-                            spells.push({ name: val, ...spellsList[val], school: sch });
-                        }
+                        if (!spells.find(s => s.name === val)) spells.push({ name: val, ...spellsList[val], school: sch });
                         break;
                     }
                 }
@@ -217,16 +245,8 @@ class BaseClass {
         return spells;
     }
     
-    /**
-     * Add utility spells based on configuration
-     * Override this for custom utility handling (Shepherd's paired pattern, etc.)
-     */
-    _addUtilitySpells(spells, level, subclass, state) {
-        if (!this.includeUtilitySpells) return;
-        
-        const schools = this.getKnownSchools(level, subclass, state);
-        
-        // 1. Handle "All" from base schools (can be a boolean or a function)
+    _addUtilitySpells(spells, level, subclass, state, limits) {
+        const schools = this.getKnownSchools(level, subclass, state, limits);
         const shouldAddAll = typeof this.includeUtilitySpells.all === "function" ? 
             this.includeUtilitySpells.all(level, subclass, state) : 
             this.includeUtilitySpells.all;
@@ -235,35 +255,27 @@ class BaseClass {
             schools.forEach(school => {
                 if (UTILITY_SPELLS[school]) {
                     Object.entries(UTILITY_SPELLS[school]).forEach(([name, desc]) => {
-                        spells.push({ name, desc, tier: "Utility", school });
+                        if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school });
                     });
                 }
             });
         }
         
-        // 2. Handle selection-based utility
         if (this.includeUtilitySpells.selectKey) {
             const keys = Array.isArray(this.includeUtilitySpells.selectKey) ? this.includeUtilitySpells.selectKey : [this.includeUtilitySpells.selectKey];
             keys.forEach(key => {
-                const selections = state[key] || [];
+                const budget = limits[key] || 0;
+                const selections = (state[key] || []).slice(0, budget);
                 selections.forEach(val => {
                     if (val === "None") return;
-                    
-                    // Is it a school selection? (Mage pattern)
-                    if (UTILITY_SPELLS[val]) {
+                    if (UTILITY_SPELLS[val]) { // School selection
                         Object.entries(UTILITY_SPELLS[val]).forEach(([name, desc]) => {
-                            // Avoid duplicates if 'all' already added them
-                            if (!spells.find(s => s.name === name)) {
-                                spells.push({ name, desc, tier: "Utility", school: val });
-                            }
+                            if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school: val });
                         });
-                    } else {
-                        // Is it an individual spell selection? (Oathsworn/Shadowmancer pattern)
+                    } else { // Individual selection
                         for (const [sch, spellsList] of Object.entries(UTILITY_SPELLS)) {
                             if (spellsList[val]) {
-                                if (!spells.find(s => s.name === val)) {
-                                    spells.push({ name: val, desc: spellsList[val], tier: "Utility", school: sch });
-                                }
+                                if (!spells.find(s => s.name === val)) spells.push({ name: val, desc: spellsList[val], tier: "Utility", school: sch });
                                 break;
                             }
                         }
@@ -273,18 +285,12 @@ class BaseClass {
         }
     }
     
-    /**
-     * Parse tier number from tier string
-     */
     _parseTierNumber(tierStr) {
         if (!tierStr) return 0;
         if (tierStr.toLowerCase().includes('cantrip')) return 0;
         return parseInt(tierStr.replace(/\D/g, '')) || 0;
     }
     
-    /**
-     * Check if a spell should be replaced
-     */
     _isReplaced(spellName, subclass) {
         return this.spellReplacements.some(r => {
             if (r.subclass && r.subclass !== subclass) return false;
@@ -292,18 +298,20 @@ class BaseClass {
             return replaceList.includes(spellName);
         });
     }
+
+    isUnarmored(state) {
+        let unarmored = true;
+        (state.inventory || []).forEach(item => { 
+            if (item.type === 'armor' && item.equipped) unarmored = false; 
+        });
+        return unarmored;
+    }
 }
 
-/**
- * Helper function to create spell replacement configs (Oathbreaker pattern)
- */
 function createSpellReplacement(replace, add, school, subclass = null) {
     return { replace, add, school, subclass };
 }
 
-/**
- * Helper to create utility spell config
- */
 function createUtilityConfig(all = false, selectKey = null) {
     return { all, selectKey };
 }

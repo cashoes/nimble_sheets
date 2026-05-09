@@ -28,6 +28,24 @@ class OathswornClass extends BaseClass {
                 jdFaces: { 1: 6, 3: 8, 5: 10, 8: 12, 10: 20 },
                 jdText: { 1: "2d6", 3: "2d8", 5: "2d10", 8: "2d12", 10: "2d20", 14: "3d20" }
             },
+            rollTriggers: [
+                {
+                    condition: (label, options) => options.type === 'attack' || /attack|⚔️/i.test(label),
+                    getMod: (state, options) => {
+                        const jdSum = (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
+                        if (jdSum > 0) return jdSum;
+                        if (state.level >= 18 && ['str', 'dex', 'wil'].includes(options.stat)) return 5;
+                        return 0;
+                    },
+                    onRoll: (state) => {
+                        const jdSum = (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
+                        if (jdSum > 0) {
+                            state.judgmentDice = null;
+                            saveState(); render();
+                        }
+                    }
+                }
+            ],
             spellSchools: ["Radiant"],
             subclassSchools: { "Oathbreaker": ["Necrotic"] },
             extraSchoolsKeys: ["selectedBenediction"],
@@ -37,7 +55,7 @@ class OathswornClass extends BaseClass {
                 createSpellReplacement("Heal", "Shadow Trap", "Necrotic", "Oathbreaker"),
                 createSpellReplacement("Warding Bond", "Dread Visage", "Necrotic", "Oathbreaker")
             ],
-            includeUtilitySpells: createUtilityConfig(null, ["selectedSpells", "selectedBenediction"]),
+            includeUtilitySpells: createUtilityConfig(false, ["selectedSpells", "selectedBenediction"]),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('loh', 'Lay on Hands', (level, subclass, stats) => 5 * level)
@@ -71,30 +89,29 @@ class OathswornClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or WIL', 'DEX or INT', true, [2, 2, 4, 6, 8, 10, 13, 17, 19, 21]);
 
         core[1] = [
-            {
-                id: "judgment", name: "Radiant Judgment", milestones: [1, 3, 5, 8, 10, 14], desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
-                    `Whenever an enemy attacks you, if you have no Judgment Dice, roll your Judgment dice (<strong>${derived.jdText}</strong>). On your next melee attack this encounter, if you hit, deal that much additional radiant damage. The dice are expended whether you hit or miss.`,
-                    [
-                        { level: 1, text: "Roll 2 Judgment Dice. Your Judgment Dice are d6s." },
-                        { level: 3, text: "Your Judgment Dice are now d8s." },
-                        { level: 5, text: "Your Judgment Dice are now d10s." },
-                        { level: 8, text: "Your Judgment Dice are now d12s." },
-                        { level: 10, text: "Your Judgment Dice are now d20s." },
-                        { level: 14, text: "Roll 3 Judgment Dice." }
-                    ],
-                    level
-                )
-            },
+            { id: "judgment", name: "Radiant Judgment", milestones: [1, 3, 5, 8, 10, 14], context: { type: 'attack', stat: 'str' }, desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
+                `Whenever an enemy attacks you, if you have no Judgment Dice, roll your Judgment dice (<strong>${derived.jdText}</strong>). On your next melee attack this encounter, if you hit, deal that much additional radiant damage. The dice are expended whether you hit or miss.`,
+                [
+                    { level: 1, text: "Roll 2 Judgment Dice. Your Judgment Dice are d6s." },
+                    { level: 3, text: "Your Judgment Dice are now d8s." },
+                    { level: 5, text: "Your Judgment Dice are now d10s." },
+                    { level: 8, text: "Your Judgment Dice are now d12s." },
+                    { level: 10, text: "Your Judgment Dice are now d20s." },
+                    { level: 14, text: "Roll 3 Judgment Dice." }
+                ],
+                level
+            )},
             { id: "loh", name: "Lay on Hands", resourceId: "loh", desc: (level) => FeatureGen.createScalingList(
                 "Gain a magical pool of healing power. Action: Touch a target and spend any amount of remaining healing power to restore that many HP. Recharges on a Safe Rest.",
                 [{ level: 1, text: `Pool maximum is <strong>${5 * level}</strong>.` }],
                 level
             )}
-            ];
-            core[2].push({ id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target's armor by 1 step for this attack.</li></ul>" });
-            core[2].push({ id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." });
+        ];
+        core[2].push({ id: "zealot", name: "Zealot", context: { type: 'attack', stat: 'str' }, desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target's armor by 1 step for this attack.</li></ul>" });
+        core[2].push({ id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." });
 
-            core[3].push({ id: "decrees", name: "Sacred Decree", type: "dynamic_choice", collection: "decrees", stateKey: "selectedDecrees", milestones: [3, 6, 9, 12, 14, 16], desc: "Learn Sacred Decrees.", getCount: (level) => level >= 16 ? 6 : level >= 14 ? 5 : level >= 12 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 });
+        core[3].push({ id: "decrees", name: "Sacred Decree", type: "dynamic_choice", collection: "decrees", stateKey: "selectedDecrees", milestones: [3, 6, 9, 12, 14, 16], desc: "Learn Sacred Decrees.", getCount: FeatureGen.createStandardCount([3, 6, 9, 12, 14, 16]) });
+
 
             core[4].push({ id: "life", name: "My Life, for My Friends", desc: "You can Interpose for free." });
 
@@ -109,7 +126,7 @@ class OathswornClass extends BaseClass {
             milestones: [7, 11],
             desc: (level) => FeatureGen.createScalingList(
                 "Choose Radiant Utility Spells.",
-                [{ level: 11, text: "You know all Radiant Utility Spells." }],
+                [{ level: 11, text: "Learn a 2nd Radiant Utility Spell." }],
                 level
             )
             }));
@@ -141,16 +158,20 @@ class OathswornClass extends BaseClass {
                 { id: "bring_pain", name: "Bring Me Your Pain", desc: "Reaction (When a willing ally within your aura would drop to 0 HP): Switch HP with them (if your current HP is higher than their max HP, they gain Temp HP equal to the difference), dropping to 0 hp and gaining the Wound instead." },
                 FeatureGen.createSpellChoiceFeature({
                     id: "dark_benediction",
+                    replaces: "master_radiance",
                     name: "Dark Benediction",
                     level: 3,
                     spellType: "utility",
                     schools: ["Necrotic"],
                     stateKey: "selectedBenediction",
-                    getCount: (level) => level >= 11 ? 0 : (level >= 7 ? 2 : 1),
+                    getCount: (level) => level >= 11 ? 2 : (level >= 7 ? 1 : 0),
                     milestones: [3, 7, 11],
                     desc: (level) => FeatureGen.createScalingList(
-                        "Choose Necrotic Utility Spells.",
-                        [{ level: 11, text: "You know all Necrotic Utility Spells." }],
+                        "Fallen from the light, but not entirely. You lose access to the following Radiant spells: True Strike, Heal, and Warding Bond; and gain access to the following Necrotic spells: Entice, Shadowtrap, and Dread Visage.",
+                        [
+                            { level: 7, text: "Learn a Necrotic Utility Spell." },
+                            { level: 11, text: "Learn a 2nd Necrotic Utility Spell." }
+                        ],
                         level
                     )
                 })

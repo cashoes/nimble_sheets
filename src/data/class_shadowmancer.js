@@ -77,7 +77,7 @@ class ShadowmancerClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('INT or DEX', 'STR or WIL', true, [2, 2, 5, 7, 10, 13, 16, 19, 21, 23]);
         
         core[1] = [
-            { id: "conduit", name: "Conduit of Shadow", milestones: [1, 5, 10, 15, 20], desc: (level) => {
+            { id: "conduit", name: "Conduit of Shadow", milestones: [1, 5, 10, 15, 20], context: { type: 'attack', stat: 'int' }, desc: (level) => {
                 const blastDice = 1 + Math.floor(level / 5);
                 const summonReach = 1 + Math.floor(level / 5);
                 return FeatureGen.createScalingList(
@@ -91,7 +91,7 @@ class ShadowmancerClass extends BaseClass {
                     level
                 );
             }},
-            { id: "minions", name: "Shadow Minions", desc: "They have 1 HP, no damage bonus, and do not crit. They abandon you immediately outside of combat. You and your minions count as different creatures." }
+            { id: "minions", name: "Shadow Minions", context: { isMinion: true }, desc: "They have 1 HP, no damage bonus, and do not crit. They abandon you immediately outside of combat. You and your minions count as different creatures." }
         ];
         core[2].push({ id: "master_darkness", name: "Master of Darkness", desc: "You know Necrotic cantrips. You gain INT mana whenever you roll Initiative (this expires if unspent at the end of combat)." });
         core[2].push({ id: "pilfer", name: "Pilfered Power", desc: "You may steal power to cast spells at the highest tier you have unlocked. You can do this DEX times before your patron damages you for half your max HP. Resets on Safe Rest." });
@@ -103,7 +103,7 @@ class ShadowmancerClass extends BaseClass {
                 { level: 11, text: "Learn a 3rd invocation." }
             ],
             level
-        ), getCount: (level) => level >= 11 ? 3 : level >= 8 ? 2 : 1 });
+        ), getCount: FeatureGen.createStandardCount([3, 8, 11]) });
         core[4].push({ id: "greater", name: "A Gift from the Master", type: "dynamic_choice", collection: "greaterInvocations", stateKey: "selectedGreater", milestones: [4, 6, 9, 14, 18], desc: (level) => FeatureGen.createScalingList(
             "Choose Greater Shadow Invocations as you level up.",
             [
@@ -113,7 +113,7 @@ class ShadowmancerClass extends BaseClass {
                 { level: 18, text: "Learn a 5th invocation." }
             ],
             level
-        ), getCount: (level) => level >= 18 ? 5 : level >= 14 ? 4 : level >= 9 ? 3 : level >= 6 ? 2 : 1 });
+        ), getCount: FeatureGen.createStandardCount([4, 6, 9, 14, 18]) });
         
         core[6].push(FeatureGen.createSpellChoiceFeature({
             id: "shadowmastery",
@@ -126,7 +126,10 @@ class ShadowmancerClass extends BaseClass {
             milestones: [6, 8, 14],
             desc: (level) => FeatureGen.createScalingList(
                 "Choose Necrotic Utility Spells.",
-                [{ level: 14, text: "You know all Necrotic Utility Spells." }],
+                [
+                    { level: 8, text: "Learn a 2nd Necrotic Utility Spell." },
+                    { level: 14, text: "You know all Necrotic Utility Spells." }
+                ],
                 level
             )
         }));

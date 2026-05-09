@@ -24,7 +24,7 @@ class CheatClass extends BaseClass {
                 { value: "Scoundrel", label: "Tools of the Scoundrel", accent: "#16a34a" }
             ],
             scalingStats: {
-                saDice: { 1: "None", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
+                saDice: { 1: "1d6", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
             },
             featuresData: CheatClass.FEATURES,
             optionsData: CheatClass.OPTIONS
@@ -50,38 +50,42 @@ class CheatClass extends BaseClass {
 
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or INT', 'WIL or STR', false);
-        
+
         core[1] = [
-            { id: "sneak_attack", name: "Sneak Attack", milestones: [1, 3, 7, 9, 11, 15, 17], desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
-                `(1/turn) When you crit, deal <strong>+${derived.saDice}</strong> damage.`,
-                [
-                    { level: 3, text: "Deal +1d8 damage." },
-                    { level: 7, text: "Deal +2d8 damage." },
-                    { level: 9, text: "Deal +2d10 damage." },
-                    { level: 11, text: "Deal +2d12 damage." },
-                    { level: 15, text: "Deal +2d20 damage." },
-                    { level: 17, text: "Deal +3d20 damage." }
-                ],
-                level
-            )},
+            {
+                id: "sneak_attack", name: "Sneak Attack", milestones: [1, 3, 7, 9, 11, 15, 17], context: { type: 'attack', stat: 'dex' }, desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
+                    `(1/turn) When you crit, deal <strong>+${derived.saDice}</strong> damage.`,
+                    [
+                        { level: 3, text: "Deal +1d8 damage." },
+                        { level: 7, text: "Deal +2d8 damage." },
+                        { level: 9, text: "Deal +2d10 damage." },
+                        { level: 11, text: "Deal +2d12 damage." },
+                        { level: 15, text: "Deal +2d20 damage." },
+                        { level: 17, text: "Deal +3d20 damage." }
+                    ],
+                    level
+                )
+            },
             { id: "vicious_opp", name: "Vicious Opportunist", desc: "(1/turn) When you hit a Distracted target with a melee attack, you may change the Primary Die roll to whatever you like (changing it to the max value counts as a crit)." }
         ];
         core[2] = [
             { id: "cheat", name: "Cheat", desc: "You’re a well-rounded cheater. Gain the following abilities:<ul><li>(1/round) You may either Move or Hide for free.</li><li>(1/day) You may change any skill check to 10+INT.</li><li>If you roll less than 10 on Initiative, you may change it to 10 instead.</li><li>You may gain advantage on skill checks while playing any games, competitions, or placing wagers.</li></ul>" }
         ];
         core[3].push({ id: "thieves_cant", name: "Thieves’ Cant", desc: "You learn the secret language of rogues and scoundrels." });
-        
-        core[4].push({ id: "underhanded", name: "Underhanded Abilities", type: "dynamic_choice", collection: "underhanded", stateKey: "selectedUnderhanded", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose Underhanded Abilities as you level up.", getCount: (level) => level >= 18 ? 8 : level >= 16 ? 7 : level >= 14 ? 6 : level >= 12 ? 5 : level >= 10 ? 4 : level >= 8 ? 3 : level >= 6 ? 2 : 1 });
-        
-        core[5].push({ id: "twist_blade", name: "Twist the Blade", milestones: [5, 13], desc: (level) => FeatureGen.createScalingList(
-            "Action: Change one of your Sneak Attack dice to whatever you like.",
-            [{ level: 13, text: "You can Twist the Blade for free (1/turn)." }],
-            level
-        )});
+
+        core[4].push({ id: "underhanded", name: "Underhanded Abilities", type: "dynamic_choice", collection: "underhanded", stateKey: "selectedUnderhanded", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose Underhanded Abilities as you level up.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) });
+
+        core[5].push({
+            id: "twist_blade", name: "Twist the Blade", milestones: [5, 13], desc: (level) => FeatureGen.createScalingList(
+                "Action: Change one of your Sneak Attack dice to whatever you like.",
+                [{ level: 13, text: "You can Twist the Blade for free (1/turn)." }],
+                level
+            )
+        });
         core[5].push({ id: "quick_read", name: "Quick Read", desc: "Gain advantage on an Assess check (1/encounter) and an Examination check (1/day)." });
-        
+
         core[6].push({ id: "not_happened", name: "THAT'S Not What Happened!", desc: "(1/Safe Rest) Action: After a Distracted enemy attacks you, you may change the Primary Die roll to whatever you like (changing the die to the minimum value counts as a miss)." });
-        
+
         core[20].push({ id: "supreme_exec", name: "Supreme Execution", desc: "+1 to any 2 of your stats. When you attack with a blade, you do not require targets to be Distracted to trigger Vicious Opportunist." });
 
         subclasses["SilentBlade"] = {
@@ -96,7 +100,7 @@ class CheatClass extends BaseClass {
             11: [{ id: "escape_plan", name: "Escape Plan", desc: "(1/Safe Rest) When you would drop to 0 HP or gain a Wound, you don’t. Instead, you turn Invisible for 1 minute or until you attack." }],
             15: [{ id: "heads_i_win", name: "Heads I Win, Tails You Lose", desc: "(1/encounter) Attacks you make this round don’t miss, you crit on 1 less than normally needed, and you gain LVL temp HP." }]
         };
-        
+
         return { core, subclasses };
     }
 
@@ -113,9 +117,9 @@ class CheatClass extends BaseClass {
 
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
-        
+
         builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, 'On Critical Hit', { type: 'attack', stat: 'dex' });
-        
+
         builder.addStatDisplay('MAX', 'Opportunist', 'Vs. Distracted targets', { borderRight: true });
 
         if (level >= 2) {

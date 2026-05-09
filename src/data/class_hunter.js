@@ -90,7 +90,7 @@ class HunterClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or WIL', 'STR or INT', false);
         
         core[1] = [
-            { id: "mark", name: "Hunter's Mark", milestones: [1], desc: (level) => FeatureGen.createScalingList(
+            { id: "mark", name: "Hunter's Mark", milestones: [1], context: { type: 'attack', stat: 'dex' }, desc: (level) => FeatureGen.createScalingList(
                 "Action: A creature you can see is marked as your quarry for 1 day (or until you mark another creature). It can’t be hidden from you, and your attacks against it gain your choice of advantage OR +LVL damage (choose before each attack).",
                 [{ level: 1, text: `Bonus damage is +${level}.` }],
                 level
@@ -100,7 +100,7 @@ class HunterClass extends BaseClass {
         core[2] = [
             { id: "toth", name: "Thrill of the Hunt", desc: "Choose 2 Thrill of the Hunt (TotH) abilities. Gain a charge to use these abilities during that encounter whenever:<ul><li>Your quarry dies.</li><li>You hit your quarry in melee or crit your quarry at range.</li></ul>" },
             { id: "roll_strike", name: "Roll & Strike", desc: "Action: If you have no Thrill of the Hunt charges, move up to your speed toward your quarry. If you end adjacent to them, make a melee attack against them for free." },
-            { id: "toth_abilities", name: "Thrill of the Hunt Abilities", type: "dynamic_choice", collection: "tothAbilities", stateKey: "selectedToth", milestones: [2, 4, 6, 8, 12, 14], desc: "Choose TotH abilities as you level up.", getCount: (level) => level >= 14 ? 7 : level >= 12 ? 6 : level >= 8 ? 5 : level >= 6 ? 4 : level >= 4 ? 3 : 2 }
+            { id: "toth_abilities", name: "Thrill of the Hunt Abilities", type: "dynamic_choice", collection: "tothAbilities", stateKey: "selectedToth", milestones: [2, 4, 6, 8, 12, 14], desc: "Choose TotH abilities as you level up.", getCount: (level) => FeatureGen.createStandardCount([0, 2, 4, 6, 8, 12, 14])(level) + 1 }
         ];
         core[3].push({ id: "intuition", name: "Tracker's Intuition", desc: "You can discern the events of a past encounter by studying tracks and other subtle environmental clues, accurately determining the kind and amount of creatures, their direction, key actions, and passage of time." });
         core[4].push({ id: "explorer", name: "Explorer of the Wilds", desc: "+2 speed; gain a climbing speed." });

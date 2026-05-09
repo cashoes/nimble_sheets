@@ -13,17 +13,9 @@ function defaultRenderFeature(feat, level, subclass, state, derived, bFeat, iSta
     let collection = feat.collection;
     let context = feat.context || {};
     
-    // Auto-detect attack context for certain common IDs if not specified
-    if (!feat.context && (feat.id === "zealot" || feat.id === "torment" || feat.id === "tactics" || feat.id === "rage" || feat.id?.startsWith("sneak_attack") || feat.id === "minions" || feat.id === "conduit")) {
-        if (feat.id === "minions") context = { isMinion: true };
-        else if (feat.id === "conduit") context = { type: 'attack', stat: 'int' };
-        else context = { type: 'attack', stat: (feat.id === 'zealot' || feat.id === 'torment' || feat.id === 'rage') ? 'str' : (feat.id?.startsWith("sneak_attack") ? 'dex' : undefined) };
-    }
-
     let desc = (typeof feat.desc === "function") ? feat.desc(level, subclass, state, derived, rSSC) : (feat.desc || "");
 
-    let finalCssClass = cssClass || "";
-    if (feat.minor) finalCssClass += " minor-feature";
+    let finalCssClass = (cssClass || "") + (feat.minor ? " minor-feature" : "");
 
     let resourceHtml = "";
     if (feat.resourceId && configRef && configRef.resources) {
@@ -69,7 +61,8 @@ function defaultRenderFeature(feat, level, subclass, state, derived, bFeat, iSta
             
             if (feat.perSchool && configRef && configRef.getKnownSchools) {
                 // SPECIAL MODE: One (or more) dropdowns PER school known
-                const known = configRef.getKnownSchools(level, subclass, state);
+                const limits = configRef._getActiveStateKeyLimits(level, subclass, state);
+                const known = configRef.getKnownSchools(level, subclass, state, limits);
                 const multiplier = typeof feat.multiplier === 'function' ? feat.multiplier(level, subclass, state) : (feat.multiplier || 1);
                 
                 if (multiplier > 0) {
@@ -225,3 +218,79 @@ function formatPips(tier, school = null) {
 
     return `${tStr} <span style="letter-spacing:2px; color:${color}; margin-left:8px;">${pips}</span>`; 
 }
+
+function renderBackgroundFeature(state, level, statsMap, iStats, bFeat, renderSingleSpellCard) {
+    const bgFeat = BACKGROUND_FEATURES[state.background];
+    if (!bgFeat) return "";
+
+    let bgDesc = bgFeat.desc;
+    let bgSelectedOpt = (bgFeat.options && state[bgFeat.stateKey]) ? bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === state[bgFeat.stateKey]) : null;
+
+    if (bgFeat.type === "choice") {
+        let choiceHtml = "";
+        if (bgFeat.collection === "utility") {
+            let opts = `<option value="None">-- Select Spell --</option>`;
+            Object.keys(UTILITY_SPELLS).forEach(school => {
+                opts += `<optgroup label="${school}">`;
+                Object.keys(UTILITY_SPELLS[school]).forEach(sName => {
+                    opts += `<option value="${sName}" ${state.bgSpell === sName ? 'selected' : ''}>${sName}</option>`;
+                });
+                opts += `</optgroup>`;
+            });
+            let school = "Radiant";
+            if (state.bgSpell && state.bgSpell !== "None") {
+                for (const [sch, spells] of Object.entries(UTILITY_SPELLS)) { if (spells[state.bgSpell]) { school = sch; break; } }
+            }
+            choiceHtml = renderSingleSpellCard({
+                name: state.bgSpell !== "None" ? state.bgSpell : state.background,
+                tier: "Utility",
+                school: school,
+                customHtml: `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)">${opts}</select></div><div style="font-weight:bold; color:var(--text-muted); font-size:0.85em; margin-bottom:4px;">1 Action</div><div>${state.bgSpell !== "None" ? iStats(UTILITY_SPELLS[school][state.bgSpell]) : ''}</div>`
+            }, level, statsMap);
+        } else if (bgFeat.collection === "ancestry") {
+            let opts = `<option value="None">-- Select Ancestry --</option>`;
+            Object.keys(ANCESTRIES).forEach(group => {
+                opts += `<optgroup label="${group}">`;
+                ANCESTRIES[group].forEach(a => opts += `<option value="${a}" ${state[bgFeat.stateKey] === a ? 'selected' : ''}>${a}</option>`);
+                opts += `</optgroup>`;
+            });
+            choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
+        } else if (bgFeat.options && bgFeat.stateKey) {
+            let opts = `<option value="None">-- Select Option --</option>`;
+            bgFeat.options.forEach(opt => {
+                const label = typeof opt === 'string' ? opt : opt.label;
+                opts += `<option value="${label}" ${state[bgFeat.stateKey] === label ? 'selected' : ''}>${label}</option>`;
+            });
+            let optDesc = "";
+            if (bgSelectedOpt && bgSelectedOpt.desc) {
+                optDesc = `<div style="margin-top:8px; font-size:0.9em; color:var(--text-main); border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">${iStats(bgSelectedOpt.desc)}</div>`;
+            }
+            choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select>${optDesc}</div>`;
+        }
+        bgDesc += choiceHtml;
+    }
+    
+    if (bgFeat.uses || (bgSelectedOpt && bgSelectedOpt.uses)) {
+        let usesHtml = '<div style="margin-top:10px; display:flex; flex-direction:column; gap:6px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">';
+        const allUses = [...(bgFeat.uses || []), ...(bgSelectedOpt?.uses || [])];
+        allUses.forEach(u => {
+            let pips = "";
+            for (let i = 0; i < u.max; i++) {
+                const checked = (state[u.stateKey] || 0) > i;
+                pips += `<input type="checkbox" class="pip" ${checked ? 'checked' : ''} onclick="toggleBgPip('${u.stateKey}', ${i})">`;
+            }
+            usesHtml += `<div style="display:flex; align-items:center; justify-content:space-between; font-size:0.85em; color:var(--text-muted);"><span style="color:var(--text-main); font-weight:bold;">• ${u.label}</span><div style="display:flex; gap:4px;">${pips}</div></div>`;
+        });
+        usesHtml += '</div>';
+        bgDesc += usesHtml;
+    }
+
+    return bFeat(`Background: ${state.background}`, "", bgDesc, "", false);
+}
+
+function renderAncestryFeature(state, bFeat) {
+    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
+    if (!ancFeat) return "";
+    return bFeat(`Ancestry: ${state.ancestry}`, "", ancFeat.desc, "", false);
+}
+

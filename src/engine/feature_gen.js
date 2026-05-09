@@ -86,11 +86,12 @@ function createSubclassFeature(level = 3) {
 /**
  * Create a spell choice feature
  */
-function createSpellChoiceFeature({ id, name, level, spellType, schools, stateKey, getCount, desc, minor = false, filterKnown = false, tier = null, tiers = null, milestones = [], perSchool = false, multiplier = 1 }) {
+function createSpellChoiceFeature({ id, name, level, spellType, schools, stateKey, getCount, desc, minor = false, filterKnown = false, tier = null, tiers = null, milestones = [], perSchool = false, multiplier = 1, replaces = null }) {
     return {
         id,
         name,
         level,
+        replaces,
         type: "spell_choice",
         spellType, // "utility" or "tiered" or "school" or "cantrip" or "paired"
         schools,   // string or array of strings
@@ -120,6 +121,19 @@ function createScalingList(base, upgrades, level) {
         text += `<ul style="margin-top: 5px; margin-bottom: 0; padding-left: 20px;">${items.join('')}</ul>`;
     }
     return text;
+}
+
+/**
+ * Standard count generator for dynamic choice features.
+ * Milestones should be in ascending order.
+ * Example: [4, 6, 8, 10, 12, 14, 16] -> returns count based on how many milestones reached.
+ */
+function createStandardCount(milestones) {
+    return (level) => {
+        let count = 0;
+        milestones.forEach(m => { if (level >= m) count++; });
+        return Math.max(1, count);
+    };
 }
 
 /**
@@ -171,5 +185,6 @@ const FeatureGen = {
     createSubclassFeature,
     createSpellChoiceFeature,
     createScalingList,
+    createStandardCount,
     generateStandardFeatures
 };

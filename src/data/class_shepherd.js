@@ -57,13 +57,13 @@ class ShepherdClass extends BaseClass {
         
         core[1] = [
             { id: "keeper", name: "Keeper of Life & Death", desc: "You know Radiant and Necrotic cantrips." },
-            { id: "searing", name: "Searing Light", desc: (level) => FeatureGen.createScalingList(
+            { id: "searing", name: "Searing Light", context: { type: 'attack', stat: 'wil' }, desc: (level) => FeatureGen.createScalingList(
                 "(WIL times/Safe Rest) Action: Heal or Inflict grievous injuries: <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>",
                 [{ level: 1, text: "Healing and damage are WIL d8." }],
                 level
             )}
         ];
-        core[2].push({ id: "spirit", name: "Lifebinding Spirit", desc: "You know the unique Radiant spell <strong>Lifebinding Spirit</strong> (Tier 1). Action: Summon spirit (ignores harm, lasts until cast again or healing spent). Action: Attack/Heal within Reach 4 for 1d6+WIL radiant. Upcasting: +1 die size (max d12), +1 use." });
+        core[2].push({ id: "spirit", name: "Lifebinding Spirit", context: { isMinion: true }, desc: "You know the unique Radiant spell <strong>Lifebinding Spirit</strong> (Tier 1). Action: Summon spirit (ignores harm, lasts until cast again or healing spent). Action: Attack/Heal within Reach 4 for 1d6+WIL radiant. Upcasting: +1 die size (max d12), +1 use." });
         
         core[3] = [FeatureGen.createSpellChoiceFeature({
             id: "master_spirits",
@@ -76,12 +76,15 @@ class ShepherdClass extends BaseClass {
             milestones: [3, 6, 11],
             desc: (level) => FeatureGen.createScalingList(
                 "Choose Necrotic and Radiant Utility Spells.",
-                [{ level: 11, text: "You know all Necrotic and Radiant Utility Spells." }],
+                [
+                    { level: 6, text: "Learn a 2nd Necrotic and 2nd Radiant Utility Spell." },
+                    { level: 11, text: "You know all Necrotic and Radiant Utility Spells." }
+                ],
                 level
             )
         })];
         
-        core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", milestones: [5, 9, 13, 17], desc: "Choose modular graces.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
+        core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", milestones: [5, 9, 13, 17], desc: "Choose modular graces.", getCount: FeatureGen.createStandardCount([5, 9, 13, 17]) });
         
         core[17] = [{ id: "revitalizing", name: "Revitalizing Blessing", desc: "(1/round) Whenever you roll a 6 or higher on one or more healing die, the target may recover one Wound." }];
         core[20].push({ id: "sage", name: "Twilight Sage", desc: "+1 to any 2 of your stats. Your Lifebinding Spirit rolls twice as many dice." });

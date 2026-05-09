@@ -9,27 +9,16 @@ function dispatchRoll(notation, label, options = {}) {
     let autoMod = 0;
     const isAttack = /attack|⚔️/i.test(label) || options.type === 'attack';
 
-    if (CLASS_CONFIG.name === 'Berserker') {
-        if (isAttack && options.stat === 'str') {
-            const furySum = (state.furyDice || []).reduce((a, b) => a + b.total, 0);
-            if (furySum > 0) autoMod += furySum;
-        }
-    } else if (CLASS_CONFIG.name === 'Oathsworn') {
-        if (isAttack) {
-            const jdSum = (state.judgmentDice || []).reduce((a, b) => a + b.total, 0);
-            if (jdSum > 0) {
-                autoMod += jdSum;
-                state.judgmentDice = null;
-                saveState();
-                render();
-            } else if (state.level >= 18 && (options.stat === 'str' || options.stat === 'dex' || options.stat === 'wil')) {
-                autoMod += 5;
+    if (CLASS_CONFIG.rollTriggers) {
+        CLASS_CONFIG.rollTriggers.forEach(trigger => {
+            if (trigger.condition(label, options, state)) {
+                const mod = trigger.getMod(state, options);
+                if (mod) {
+                    autoMod += mod;
+                    if (trigger.onRoll) trigger.onRoll(state);
+                }
             }
-        }
-    } else if (CLASS_CONFIG.name === 'Zephyr') {
-        if (label === 'Swift Fists' && state.level >= 5) {
-            autoMod += state.level;
-        }
+        });
     }
 
     if (autoMod !== 0) finalNotation += (autoMod >= 0 ? '+' : '') + autoMod;
@@ -68,6 +57,9 @@ function dispatchRoll(notation, label, options = {}) {
         let tablePart = (totalAdv > 0) ? `2t${faces}kh1` : (totalAdv < 0) ? `2t${faces}kl1` : `t${faces}`;
         finalNotation = tablePart + rest;
     }
+
+    console.log(`🎲 NIMBLE Roll: [${label}] => ${finalNotation}`, { options, autoMod });
+    
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", { detail: { notation: finalNotation, label: label, playerName: state.charName || "Adventurer", rollTarget: 'everyone', timestamp: Date.now() } }));
 }
 
@@ -77,24 +69,18 @@ function applyCantripScaling(notation, name, school, level) {
 
     if (name === "Entice") {
         const steps = ["d4", "d6", "d8", "d10", "d12"];
-        const step = Math.min(4, levelMod);
-        return notation.replace(/d4/i, steps[step]);
+        return notation.replace(/d4/i, steps[Math.min(4, levelMod)]);
     }
 
-    let bonus = 0;
-    if (school === "Fire") bonus = 5 * levelMod;
-    else if (school === "Ice") bonus = 3 * levelMod;
-    else if (school === "Lightning") {
-        if (name === "Zap") bonus = 6 * levelMod;
-        else if (name === "Overload") bonus = 4 * levelMod;
-        else bonus = 4 * levelMod;
-    }
-    else if (school === "Wind" || name === "Vicious Mockery") bonus = 2 * levelMod;
-    else if (school === "Radiant") bonus = 2 * levelMod;
-    else if (name === "Withering Touch") bonus = 6 * levelMod;
+    const scalingMap = {
+        "Fire": 5, "Ice": 3, "Radiant": 2, "Wind": 2,
+        "Withering Touch": 6, "Zap": 6, "Overload": 4, "Vicious Mockery": 2
+    };
 
-    if (bonus === 0) return notation;
-    return notation + "+" + bonus;
+    const bonusPerMod = scalingMap[name] || scalingMap[school] || 0;
+    if (bonusPerMod === 0) return notation;
+
+    return notation + "+" + (bonusPerMod * levelMod);
 }
 
 /**

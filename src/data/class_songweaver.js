@@ -28,7 +28,7 @@ class SongweaverClass extends BaseClass {
             },
             spellSchools: ["Wind"],
             extraSchoolsKeys: ["secondarySchool"],
-            includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedWindbag"),
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedSubclassSpells"),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('inspiration', 'Inspiration', (level, stats, state) => (stats.wil * 2) + (state.selectedLyrical?.includes("Heroic Ballad") ? 2 : 0))
@@ -58,36 +58,40 @@ class SongweaverClass extends BaseClass {
 
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('WIL or INT', 'STR or DEX', true);
-        
+
         core[1] = [
             FeatureGen.createSpellChoiceFeature({
                 id: "school_choice",
-                name: "Secondary School",
+                name: "Wind Spellcasting and…",
                 level: 1,
                 spellType: "school",
-                schools: ["Fire", "Ice", "Lightning"],
+                schools: ["Fire", "Ice", "Lightning", "Radiant", "Necrotic"],
                 stateKey: "secondarySchool",
-                desc: "Master a second elemental school (Fire, Ice, or Lightning)."
+                desc: "You know cantrips from the Wind school and 1 other school of your choice."
             }),
-            { id: "vicious_mockery", name: "Vicious Mockery", desc: (level) => FeatureGen.createScalingList(
-                "You know the unique Wind cantrip <strong>Vicious Mockery</strong>. Range: 12. Damage: 1d4+INT psychic (ignoring armor). Taunts on hit.",
-                [
-                    { level: 1, text: "Damage is 1d4+INT." },
-                    { level: 5, text: "Damage bonus increases by +2." },
-                    { level: 10, text: "Damage bonus increases by +4." },
-                    { level: 15, text: "Damage bonus increases by +6." }
-                ],
-                level
-            )},
+            {
+                id: "vicious_mockery", name: "Vicious Mockery", desc: (level) => FeatureGen.createScalingList(
+                    "You know the unique Wind cantrip <strong>Vicious Mockery</strong>. Range: 12. Damage: 1d4+INT psychic (ignoring armor). Taunts on hit.",
+                    [
+                        { level: 1, text: "Damage is 1d4+INT." },
+                        { level: 5, text: "Damage bonus increases by +2." },
+                        { level: 10, text: "Damage bonus increases by +4." },
+                        { level: 15, text: "Damage bonus increases by +6." }
+                    ],
+                    level
+                )
+            },
             { id: "inspiration", name: "Songweaver’s Inspiration", desc: (level, subclass, state, derived) => `(<strong>${derived.resourceMaxes.inspiration}</strong> uses/Safe Rest) Free Reaction: Allow an ally to reroll a single die related to an attack or save.` }
         ];
         core[2].push({ id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." });
-        core[2].push({ id: "song_rest", name: "Song of Rest", desc: (level) => FeatureGen.createScalingList(
-            "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your WIL.",
-            [{ level: 1, text: "Bonus healing is WIL." }],
-            level
-        )});
-        
+        core[2].push({
+            id: "song_rest", name: "Song of Rest", desc: (level) => FeatureGen.createScalingList(
+                "(1/day) Whenever you Field Rest, allow anyone spending HD to heal extra HP equal to your WIL.",
+                [{ level: 1, text: "Bonus healing is WIL." }],
+                level
+            )
+        });
+
         core[3].push({ id: "quick_wit", name: "Quick Wit", desc: "When you roll Initiative, regain 2 spent uses of Inspiration (expire end of combat)." });
         core[3] = [FeatureGen.createSpellChoiceFeature({
             id: "windbag",
@@ -104,10 +108,10 @@ class SongweaverClass extends BaseClass {
                 level
             )
         })];
-        
+
         core[4].push({ id: "lyrical", name: "Lyrical Weaponry", type: "dynamic_choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", milestones: [4, 9, 13, 17], desc: "Choose abilities from the Lyrical Weaponry list as you level up.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
         core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "Choose friends you can temporarily summon via song (1/Safe Rest each).", getCount: (level) => 2 });
-        
+
         core[20].push({ id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 of your stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." });
 
         subclasses["HeraldSnark"] = {
@@ -122,7 +126,7 @@ class SongweaverClass extends BaseClass {
             11: [{ id: "bones", name: "Fire in my Bones", desc: "Your Songweaver’s Inspiration also grants your target 1 additional action." }],
             15: [{ id: "chorus", name: "Chorus of Champions", desc: "(1/encounter) Free Reaction: Give all party members 1 action." }]
         };
-        
+
         return { core, subclasses };
     }
 
@@ -139,10 +143,10 @@ class SongweaverClass extends BaseClass {
 
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
-        
+
         builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
         builder.addResource('inspiration', 'Inspiration', state.resourceValues.inspiration, derived.resourceMaxes.inspiration);
-        
+
         builder.addRollDisplay(derived.vmDisplay, 'Vicious Mockery', derived.vmDisplay, 'Range 12 | Taunts', { type: 'cantrip', school: 'Wind' });
 
         return builder.build();
