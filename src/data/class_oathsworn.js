@@ -34,8 +34,28 @@ class OathswornClass extends BaseClass {
             ],
             scalingStats: {
                 jdFaces: { 1: 6, 3: 8, 5: 10, 8: 12, 10: 20 },
-                jdText: { 1: "2d6", 3: "2d8", 5: "2d10", 8: "2d12", 10: "2d20", 14: "3d20" }
+                jdCount: (level, subclass) => (level >= 14 ? 3 : 2) + (subclass === "Vengeance" ? 1 : 0),
+                jdText: (level, subclass, state) => {
+                    const count = (level >= 14 ? 3 : 2) + (subclass === "Vengeance" ? 1 : 0);
+                    const facesMilestones = [1, 3, 5, 8, 10];
+                    const facesValues = [6, 8, 10, 12, 20];
+                    let f = 6;
+                    for (let i = 0; i < facesMilestones.length; i++) {
+                        if (level >= facesMilestones[i]) f = facesValues[i];
+                    }
+                    return `${count}d${f}`;
+                },
+                auraReach: { 1: 0, 3: 4 }
             },
+            statModifiers: [
+                { id: "unstoppable_speed", stat: "speed", value: 1, condition: (l, s, state) => (state.selectedDecrees || []).includes("Unstoppable Protector") },
+                { id: "improved_aura", stat: "auraReach", value: 2, condition: (l, s, state) => (state.selectedDecrees || []).includes("Improved Aura") },
+                { id: "oathbreaker_wounds", stat: "woundMax", value: 2, subclass: "Oathbreaker", level: 3 },
+                { id: "refuge_shield", stat: "shieldBonus", subclass: "Refuge", level: 3, getMod: (stats) => stats.wil }
+            ],
+            grantedSpells: [
+                { subclass: "Oathbreaker", level: 3, spells: ["Entice", "Shadow Trap", "Dread Visage"] }
+            ],
             rollTriggers: [
                 {
                     condition: (label, options) => options.type === 'attack' || /attack|⚔️/i.test(label),
@@ -220,65 +240,6 @@ class OathswornClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Calculates Oathsworn-specific derived statistics, such as Aura Reach and Judgment Dice count.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @returns {Object} Derived statistics.
-     */
-    getDerivedStats(level, subclass, state) {
-        const stats = super.getDerivedStats(level, subclass, state);
-        stats.auraReach = 4;
-        stats.jdCount = level >= 14 ? 3 : 2;
-        if (subclass === "Vengeance") {
-            stats.jdCount++;
-        }
-        if (state.selectedDecrees?.includes("Improved Aura")) {
-            stats.auraReach += 2;
-        }
-        if (subclass === "Oathbreaker") {
-            stats.woundMax += 2;
-        }
-
-        const decrees = state.selectedDecrees || [];
-        if (decrees.includes("Reliable Justice")) {
-            stats.jdText += " (Adv)";
-        }
-
-        return stats;
-    }
-
-    /**
-     * Applies attribute overrides based on Oathsworn features like Unstoppable Protector.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} statsMap - Current attribute map.
-     * @returns {Object} Stat overrides.
-     */
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        const decrees = state.selectedDecrees || [];
-        
-        if (decrees.includes("Unstoppable Protector")) {
-            overrides.speed = (overrides.speed || 0) + 1;
-        }
-        
-        return overrides;
-    }
-
-    /**
-     * Calculates current shield bonus for the Oathsworn class.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} stats - Current attribute map.
-     * @returns {number} Shield bonus value.
-     */
-    getShieldBonus(level, subclass, stats) {
-        return (subclass === 'Refuge' && level >= 3) ? stats.wil : 0;
     }
 
     /**

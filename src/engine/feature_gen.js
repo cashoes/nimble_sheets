@@ -164,17 +164,32 @@ function createScalingList(base, upgrades, level) {
 
 /**
  * Standard count generator for dynamic choice features based on level milestones.
+ * Supports linkedBudgets for cross-feature slot expansion (v2.1).
  * @param {number[]} milestones - Level milestones to check against.
- * @returns {Function} Function taking (level) and returning (count).
+ * @param {Object[]} [linkedBudgets=[]] - Array of {stateKey, match} to add to count.
+ * @returns {Function} Function taking (level, subclass, state) and returning (count).
  */
-function createStandardCount(milestones) {
-    return (level) => {
+function createStandardCount(milestones, linkedBudgets = []) {
+    return (level, subclass, state) => {
         let count = 0;
         milestones.forEach(m => {
             if (level >= m) {
                 count++;
             }
         });
+        
+        // Add linked budget choices
+        if (state) {
+            linkedBudgets.forEach(link => {
+                const selections = state[link.stateKey] || [];
+                selections.forEach(choice => {
+                    if (choice === link.match) {
+                        count++;
+                    }
+                });
+            });
+        }
+        
         return count;
     };
 }

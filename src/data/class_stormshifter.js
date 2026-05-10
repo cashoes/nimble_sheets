@@ -42,8 +42,17 @@ class StormshifterClass extends BaseClass {
             scalingStats: {
                 shiftFaces: { 1: 4, 3: 6, 5: 8 }
             },
-
-            // 7. Spell Configuration
+            
+            // 7. Stat Modifiers (v2.1)
+            statModifiers: [
+                { id: "nightmare_speed", stat: "speedBase", value: 2, condition: (l, s, state) => state.currentForm?.[0] === "Beast of Nightmares" },
+                { id: "pack_speed", stat: "speed", getMod: (stats, state) => state.currentForm?.[0] === "Beast of the Pack" ? stats.dex : 0 },
+                { id: "fleet_footed_speed", stat: "speed", value: 2, condition: (l, s, state) => (state.selectedBoons || []).includes("Fleet Footed") },
+                { id: "earthwalker_armor", stat: "armor", value: 2, condition: (l, s, state) => (state.selectedBoons || []).includes("Earthwalker") },
+                { id: "winged_fly", stat: "modFlySpeed", value: true, condition: (l, s, state) => (state.selectedBoons || []).includes("Winged") }
+            ],
+            
+            // 8. Spell Configuration
             spellSchools: ["Lightning", "Wind"],
             subclassSchools: { "SkyStorm": [] }, // Handled by dynamic study choice
             extraSchoolsKeys: ["selectedStudy"],
@@ -191,41 +200,6 @@ class StormshifterClass extends BaseClass {
         return { core, subclasses };
     }
 
-    /**
-     * Calculates class-specific derived stats like Speed based on form.
-     */
-    getDerivedStats(level, subclass, state) {
-        const activeForm = (state.currentForm || [])[0] || "Normal";
-        let speed = activeForm === "Beast of Nightmares" ? 2 : 6;
-        return { speed, woundMax: 6 };
-    }
-
-    /**
-     * Calculates situational stat overrides based on form and boons.
-     */
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        const activeForm = (state.currentForm || [])[0] || "Normal";
-        const boons = state.selectedBoons || [];
-
-        if (activeForm === "Beast of the Pack") {
-            overrides.speed = statsMap.dex;
-        }
-
-        if (boons.includes("Earthwalker")) {
-            overrides.armor = (overrides.armor || 0) + 2;
-        }
-
-        if (boons.includes("Fleet Footed")) {
-            overrides.speed = (overrides.speed || 0) + 2;
-        }
-
-        if (boons.includes("Winged")) {
-            overrides.modFlySpeed = true;
-        }
-
-        return overrides;
-    }
     /**
      * Builds the Stormshifter mechanic panel (Mana, Beastshift, and Form selector).
      */

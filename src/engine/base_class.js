@@ -29,6 +29,11 @@ class BaseClass {
         this.spellProgression = config.spellProgression || null;
         this.customHeaderStats = config.customHeaderStats || [];
         
+        // Declarative Extensions (v2.1)
+        this.optionExtensions = config.optionExtensions || {}; // e.g., { "Spellblade": { "orders": { ... } } }
+        this.grantedSpells = config.grantedSpells || [];      // e.g., [{ level: 3, subclass: "Spellblade", spells: [...] }]
+        this.statModifiers = config.statModifiers || [];      // e.g., [{ level: 15, subclass: "WildHeart", stat: "armor", getMod: ... }]
+
         // Spell configuration
         this.spellSchools = config.spellSchools || []; // e.g., ["Fire", "Ice", "Lightning"]
         this.subclassSchools = config.subclassSchools || {}; // e.g., { "Control": ["Necrotic"], "Chaos": ["Wind"] }
@@ -58,18 +63,25 @@ class BaseClass {
     getDerivedStats(level, subclass, state) {
         const stats = { speed: 6, woundMax: 6 };
         
-        // Process declarative scaling stats
-        Object.entries(this.scalingStats).forEach(([key, milestones]) => {
-            const sortedMilestones = Object.keys(milestones)
-                .map(Number)
-                .sort((a, b) => a - b);
-            
-            sortedMilestones.forEach(m => {
-                if (level >= m) {
-                    const val = milestones[m];
-                    stats[key] = (typeof val === 'function') ? val(level, subclass) : val;
-                }
-            });
+        // 1. Process declarative scaling stats (Milestones or Functions)
+        Object.entries(this.scalingStats).forEach(([key, val]) => {
+            if (typeof val === 'function') {
+                stats[key] = val(level, subclass, state);
+            } else if (typeof val === 'object' && val !== null) {
+                // Handle milestone objects { 1: val, 5: val }
+                const sortedMilestones = Object.keys(val)
+                    .map(Number)
+                    .sort((a, b) => a - b);
+                
+                sortedMilestones.forEach(m => {
+                    if (level >= m) {
+                        const milestoneVal = val[m];
+                        stats[key] = (typeof milestoneVal === 'function') ? milestoneVal(level, subclass) : milestoneVal;
+                    }
+                });
+            } else {
+                stats[key] = val;
+            }
         });
 
         return stats;
@@ -84,7 +96,25 @@ class BaseClass {
      * @returns {Object} Stat overrides.
      */
     getStatOverrides(level, subclass, state, statsMap) {
-        return {};
+        const overrides = {};
+
+        // Process declarative stat modifiers (v2.1)
+        this.statModifiers.forEach(mod => {
+            const levelMatch = level >= (mod.level || 0);
+            const subclassMatch = !mod.subclass || mod.subclass === subclass;
+            const conditionMatch = !mod.condition || mod.condition(level, subclass, state);
+
+            if (levelMatch && subclassMatch && conditionMatch) {
+                const val = typeof mod.getMod === 'function' ? mod.getMod(statsMap, state, level) : (mod.value || 0);
+                if (mod.stat === 'initAdv' || mod.stat === 'modFlySpeed') {
+                    overrides[mod.stat] = val || true;
+                } else {
+                    overrides[mod.stat] = (overrides[mod.stat] || 0) + val;
+                }
+            }
+        });
+
+        return overrides;
     }
 
     /**
@@ -332,7 +362,43 @@ class BaseClass {
             });
         }
         
-        // 3. Add utility spells (filtered by budget)
+        // 3. Handle declaratively granted spells (v2.1)
+        this.grantedSpells.forEach(grant => {
+            const levelMatch = level >= (grant.level || 0);
+            const subclassMatch = !grant.subclass || grant.subclass === subclass;
+            const conditionMatch = !grant.condition || grant.condition(level, subclass, state);
+
+            if (levelMatch && subclassMatch && conditionMatch) {
+                (grant.spells || []).forEach(sGrant => {
+                    const name = typeof sGrant === 'string' ? sGrant : sGrant.name;
+                    const school = typeof sGrant === 'string' ? null : sGrant.school;
+                    
+                    // Lookup in registries if school/data not provided
+                    let spellData = null;
+                    let foundSchool = school;
+                    
+                    if (school) {
+                        spellData = SPELL_REGISTRY[school]?.[name] || (UTILITY_SPELLS[school] ? { desc: UTILITY_SPELLS[school][name], tier: "Utility" } : null);
+                    } else {
+                        // Global lookup
+                        for (const [sch, list] of Object.entries(SPELL_REGISTRY)) {
+                            if (list[name]) { spellData = list[name]; foundSchool = sch; break; }
+                        }
+                        if (!spellData) {
+                            for (const [sch, list] of Object.entries(UTILITY_SPELLS)) {
+                                if (list[name]) { spellData = { desc: list[name], tier: "Utility" }; foundSchool = sch; break; }
+                            }
+                        }
+                    }
+
+                    if (spellData && !spells.find(s => s.name === name)) {
+                        spells.push({ name, ...spellData, school: foundSchool });
+                    }
+                });
+            }
+        });
+
+        // 4. Add utility spells (filtered by budget)
         if (this.includeUtilitySpells) {
             this._addUtilitySpells(spells, level, subclass, state, limits);
         }

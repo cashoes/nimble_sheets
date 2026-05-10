@@ -111,6 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 window.addEventListener('wheel', (e) => { 
     if (e.target.type === 'number') { 
+        if (e.target.disabled) return;
+        
         e.preventDefault(); 
         const delta = e.deltaY < 0 ? 1 : -1; 
         

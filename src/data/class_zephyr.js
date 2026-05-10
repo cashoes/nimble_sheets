@@ -44,7 +44,17 @@ class ZephyrClass extends BaseClass {
                 swiftBonus: { 1: 0, 5: (level) => level }
             },
             
-            // 7. Automated Roll Triggers
+            // 7. Stat Modifiers (v2.1)
+            statModifiers: [
+                { id: "iron_defense", stat: "armorBase", condition: (l, s, state) => (!state.armor || state.armor === "None"), getMod: (stats, state, level) => {
+                    let ac = stats.dex + stats.str;
+                    if (level >= 13) ac *= 2;
+                    return ac;
+                }},
+                { id: "swift_feet_init", stat: "init", level: 2, condition: (l, s, state) => (!state.armor || state.armor === "None"), getMod: (stats, state, level) => level }
+            ],
+            
+            // 8. Automated Roll Triggers
             rollTriggers: [
                 {
                     // Apply Level bonus to all STR attacks at Level 5+
@@ -185,42 +195,13 @@ class ZephyrClass extends BaseClass {
     }
 
     /**
-     * Standard derived stats logic.
-     */
-    getDerivedStats(level, subclass, state) {
-        return super.getDerivedStats(level, subclass, state);
-    }
-
-    /**
-     * Internal helper to calculate Iron Defense Armor Class.
-     * @private
-     */
-    _getIronDefenseAC(level, statsMap) {
-        let ac = statsMap.dex + statsMap.str;
-        if (level >= 13) ac *= 2;
-        return ac;
-    }
-
-    /**
-     * Situational overrides for Armor and Initiative based on unarmored status.
-     */
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        if (this.isUnarmored(state)) {
-            overrides.armorBase = this._getIronDefenseAC(level, statsMap);
-            if (level >= 2) overrides.init = level;
-        }
-        return overrides;
-    }
-
-    /**
      * Builds the Zephyr mechanic panel (Armor display, Bursts, and Swift Fists).
      */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         const statsMap = getStatsMap(state);
         const isUnarmored = this.isUnarmored(state);
-        const acVal = this._getIronDefenseAC(level, statsMap);
+        const acVal = (isUnarmored ? (statsMap.dex + statsMap.str) : 0) * (level >= 13 ? 2 : 1);
 
         builder.addStatDisplay(isUnarmored ? acVal : '--', 'Armor', isUnarmored ? 'Iron Defense' : 'Armored', { borderRight: true });
 

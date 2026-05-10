@@ -33,7 +33,9 @@ class MageClass extends BaseClass {
             ],
             scalingStats: {
                 surgeNotation: { 5: "WIL", 10: "WIL+1d4", 17: "WIL+2d4" },
-                surgeDisplay: { 5: "WIL", 10: "WIL+1d4", 17: "2d4+WIL" }
+                surgeDisplay: { 5: "WIL", 10: "WIL+1d4", 17: "2d4+WIL" },
+                chaosLabel: { 3: (l, s) => s === "Chaos" ? "1d20" : "" },
+                controlLabel: { 3: (l, s, state) => s === "Control" ? `10+${getStatsMap(state).int}` : "" }
             },
             spellSchools: ["Fire", "Ice", "Lightning"],
             subclassSchools: {
@@ -187,7 +189,6 @@ class MageClass extends BaseClass {
      */
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
-        const statsMap = getStatsMap(state);
 
         if (level >= 2) {
             builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
@@ -198,9 +199,9 @@ class MageClass extends BaseClass {
         }
 
         if (subclass === "Chaos") {
-            builder.addStatDisplay('1d20', 'Invoke Chaos', 'Roll on Chaos Table', { borderLeft: true, color: '#f59e0b' });
+            builder.addStatDisplay(derived.chaosLabel, 'Invoke Chaos', 'Roll on Chaos Table', { borderLeft: true, color: '#f59e0b' });
         } else if (subclass === "Control") {
-            builder.addStatDisplay('10+' + statsMap.int, 'Demand Control', '1/round or on miss', { borderLeft: true, color: '#3b82f6' });
+            builder.addStatDisplay(derived.controlLabel, 'Demand Control', '1/round or on miss', { borderLeft: true, color: '#3b82f6' });
         }
 
         return builder.build();

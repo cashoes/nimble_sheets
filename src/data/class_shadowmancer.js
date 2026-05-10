@@ -36,6 +36,16 @@ class ShadowmancerClass extends BaseClass {
                 minionReach: { 1: 1, 5: 2, 10: 3, 15: 4, 20: 5 },
                 blastDice: { 1: 1, 5: 2, 10: 3, 15: 4, 20: 5 }
             },
+            statModifiers: [
+                { id: "fiendish_boon_stats", stat: "addDex", value: 1, condition: (l, s, state) => (state.selectedGreater || []).includes("Fiendish Boon") },
+                { id: "fiendish_boon_hd", stat: "hdMax", value: -1, condition: (l, s, state) => (state.selectedGreater || []).includes("Fiendish Boon") }
+            ],
+            grantedSpells: [
+                { level: 1, spells: ["Shadow Blast", "Summon Shadows"] }
+            ],
+            spellReplacements: [
+                createSpellReplacement("Shadow Blast", "Bonescythe", "Necrotic", "Reaver")
+            ],
             spellSchools: ["Necrotic"],
             subclassSchools: { "RedDragon": ["Fire"], "AbyssalDepths": ["Ice"] },
             extraSchoolsKeys: [],
@@ -260,25 +270,6 @@ class ShadowmancerClass extends BaseClass {
         }
 
         return stats;
-    }
-
-    /**
-     * Applies attribute overrides based on Shadowmancer features like Fiendish Boon.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} statsMap - Current attribute map.
-     * @returns {Object} Stat overrides.
-     */
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        const greater = state.selectedGreater || [];
-        
-        if (greater.includes("Fiendish Boon")) {
-            overrides.hdMax = -1; // Reduce max hit dice by 1
-        }
-        
-        return overrides;
     }
 
     /**

@@ -32,18 +32,25 @@ class SongweaverClass extends BaseClass {
                 { value: "HeraldCourage", label: "Herald of Courage", accent: "#4338ca" }
             ],
             scalingStats: {
-                vmDisplay: { 1: "1d4+INT", 5: "1d4+INT+2", 10: "1d4+INT+4", 15: "1d4+INT+6" }
+                vmDisplay: (level, subclass, state) => {
+                    const statsMap = getStatsMap(state);
+                    const die = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
+                    let bonus = statsMap.int + (Math.floor(level / 5) * 2);
+                    if (level >= 15 && subclass === "HeraldSnark") bonus += statsMap.wil;
+                    return `${die}${bonus >= 0 ? "+" : ""}${bonus}`;
+                }
             },
+            statModifiers: [
+                { id: "heroic_ballad_max", stat: "inspirationBonus", value: 2, condition: (l, s, state) => (state.selectedLyrical || []).includes("Heroic Ballad") }
+            ],
             spellSchools: ["Wind"],
             extraSchoolsKeys: ["secondarySchool"],
-            includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedSubclassSpells"),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('inspiration', 'Inspiration', (level, stats, state) => {
                     let max = stats.wil * 2;
-                    if (state.selectedLyrical?.includes("Heroic Ballad")) max += 2;
                     return max;
-                })
+                }, { bonusKey: 'inspirationBonus' })
             ],
             featuresData: SongweaverClass.FEATURES,
             optionsData: SongweaverClass.OPTIONS
@@ -117,7 +124,7 @@ class SongweaverClass extends BaseClass {
         });
 
         core[3].push({ id: "quick_wit", name: "Quick Wit", desc: "When you roll Initiative, regain 2 spent uses of Inspiration (expire end of combat)." });
-        core[3] = [FeatureGen.createSpellChoiceFeature({
+        core[3].push(FeatureGen.createSpellChoiceFeature({
             id: "windbag",
             name: "Master of Verse",
             level: 3,
@@ -131,7 +138,7 @@ class SongweaverClass extends BaseClass {
                 [{ level: 14, text: "You know all Utility Spells from the spell schools you know." }],
                 level
             )
-        })];
+        }));
 
         core[4].push({ id: "lyrical", name: "Lyrical Weaponry", type: "dynamic_choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", milestones: [4, 9, 13, 17], desc: "Choose abilities from the Lyrical Weaponry list as you level up.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
         core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "Choose friends you can temporarily summon via song (1/Safe Rest each).", getCount: (level) => 2 });
@@ -152,26 +159,6 @@ class SongweaverClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Calculates Songweaver-specific derived statistics, such as Vicious Mockery damage.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @returns {Object} Derived statistics.
-     */
-    getDerivedStats(level, subclass, state) {
-        const stats = super.getDerivedStats(level, subclass, state);
-        const statsMap = getStatsMap(state);
-        let vmDie = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
-        let vmBonus = statsMap.int + (Math.floor(level / 5) * 2);
-        if (level >= 15 && subclass === "HeraldSnark") {
-            vmBonus += statsMap.wil;
-        }
-        stats.vmDisplay = `${vmDie}${vmBonus >= 0 ? "+" : ""}${vmBonus}`;
-
-        return stats;
     }
 
     /**

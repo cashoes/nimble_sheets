@@ -35,6 +35,49 @@ class CommanderClass extends BaseClass {
             scalingStats: {
                 cdType: { 1: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" }
             },
+            statModifiers: [
+                {
+                    id: "move_it_bonus",
+                    stat: "initAdv",
+                    condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!")
+                },
+                {
+                    id: "move_it_speed",
+                    stat: "speed",
+                    value: 3,
+                    condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!")
+                },
+                {
+                    id: "spellblade_fly",
+                    stat: "modFlySpeed",
+                    subclass: "Spellblade",
+                    condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!")
+                }
+            ],
+            grantedSpells: [
+                { subclass: "Spellblade", level: 3, spells: ["Enchant Weapon"] }
+            ],
+            optionExtensions: {
+                "Spellblade": {
+                    orders: {
+                        "Face Me!": {
+                            empowered: "(Glimmering Decree) That enemy additionally takes STR d8 radiant damage (ignoring armor), is pulled up to 4 spaces toward you."
+                        },
+                        "Hold the Line!": {
+                            empowered: "(Crystalline Armor) Additionally, they gain 3x LVL temp HP. Enemies who reduce this temp HP in melee have their speed halved until the end of their next turn."
+                        },
+                        "I Can Do This ALL DAY!": {
+                            empowered: "(Rising Phoenix) Deal fire damage to each enemy within 2 spaces equal to the total value of the (HD) expended. They gain the Smoldering condition."
+                        },
+                        "Move it! Move it!": {
+                            empowered: "(Borne upon the Wind) You additionally gain the ability to fly for 1 round. Then, you both can also move for free."
+                        },
+                        "Reposition!": {
+                            empowered: "(Flashstep) You may exchange places with one of them."
+                        }
+                    }
+                }
+            },
             spellProgression: [0, 3, 7, 11, 15],
             extraSchoolsKeys: [],
             includeUtilitySpells: createUtilityConfig(null, ["selectedDeepKnowledge"]),

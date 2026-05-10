@@ -32,8 +32,11 @@ class CheatClass extends BaseClass {
                 { value: "Scoundrel", label: "Tools of the Scoundrel", accent: "#16a34a" }
             ],
             scalingStats: {
-                saDice: { 1: "1d6", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
+                saDice: { 1: "None", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
             },
+            statModifiers: [
+                { id: "misdirection_armor", stat: "armor", getMod: (statsMap, state) => (state.selectedUnderhanded || []).includes("Misdirection") ? statsMap.int : 0 }
+            ],
             featuresData: CheatClass.FEATURES,
             optionsData: CheatClass.OPTIONS
         });
@@ -142,25 +145,6 @@ class CheatClass extends BaseClass {
      */
     getDerivedStats(level, subclass, state) {
         return super.getDerivedStats(level, subclass, state);
-    }
-
-    /**
-     * Applies attribute overrides based on Cheat features like Misdirection.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} statsMap - Current attribute map.
-     * @returns {Object} Stat overrides.
-     */
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        const underhanded = state.selectedUnderhanded || [];
-
-        if (underhanded.includes("Misdirection")) {
-            overrides.armor = (overrides.armor || 0) + statsMap.int;
-        }
-
-        return overrides;
     }
 
     /**

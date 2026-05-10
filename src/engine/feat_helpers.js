@@ -181,16 +181,23 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
             for (let i = 0; i < count; i++) {
                 let idx = (feat.startIndex || 0) + i;
                 let val = selection[idx] || "None";
-                let opt = (val !== "None" && optionsRef[collection][val]) ? optionsRef[collection][val] : null;
+                
+                // --- OPTION EXTENSIONS (v2.1) ---
+                let opt = (val !== "None" && optionsRef[collection][val]) ? { ...optionsRef[collection][val] } : null;
+                if (opt && configRef.optionExtensions?.[subclass]?.[collection]?.[val]) {
+                    Object.assign(opt, configRef.optionExtensions[subclass][collection][val]);
+                }
+                // --------------------------------
+
                 let d = opt ? opt.desc : "";
                 
-                // --- EMPOWERED COMMANDER ORDERS ---
-                if (subclass === "Spellblade" && opt && opt.empowered) {
-                    d += `<div style="margin-top:8px; padding:6px; background:rgba(139, 92, 246, 0.15); border-left: 2px solid var(--subclass-accent); font-style: italic; font-size: 0.95em; color: #fff;">
-                        <strong>Empowered:</strong> ${opt.empowered}
+                // Append empowered text if it exists (from base or extension)
+                if (opt && opt.empowered) {
+                    const empText = typeof opt.empowered === 'function' ? opt.empowered(level, subclass, state, derived, renderSingleSpellCard) : opt.empowered;
+                    d += `<div style="margin-top:8px; padding:6px; background:rgba(139, 92, 246, 0.15); border-left: 2px solid var(--subclass-accent, var(--class-accent)); font-style: italic; font-size: 0.95em; color: #fff;">
+                        <strong>Empowered:</strong> ${empText}
                     </div>`;
                 }
-                // ----------------------------------
 
                 if (typeof d === "function") {
                     d = d(level, subclass, state, derived, renderSingleSpellCard);

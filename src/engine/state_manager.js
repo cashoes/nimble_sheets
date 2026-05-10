@@ -54,6 +54,7 @@ function saveState(newState = null) {
         }
 
         // 3. Sync primary attributes (Base + Level Ups)
+        const isLevel1 = state.level === 1;
         ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
             const baseEl = document.getElementById(`base${s}`);
             const addEl = document.getElementById(`add${s}`);
@@ -68,7 +69,9 @@ function saveState(newState = null) {
                 }
                 
                 addEl.max = Math.max(0, 5 - b);
-                state[`base${s}`] = b;
+                if (isLevel1) {
+                    state[`base${s}`] = b;
+                }
                 state[`add${s}`] = a;
             }
         });
@@ -115,9 +118,8 @@ function saveState(newState = null) {
 function loadState() {
     // 1. Define standard state schema and defaults
     state = {
-        version: "2.0.0", 
-        charName: '', 
-        level: 1, 
+        version: "2.1.0",
+        charName: '',        level: 1, 
         ancestry: 'None', 
         background: 'None', 
         subclass: 'None',
@@ -263,10 +265,16 @@ function syncStateToDOM() {
     if (document.getElementById('gold')) document.getElementById('gold').value = state.gold || 0;
     
     // 5. Attributes and Limits
+    const isLevel1 = (state.level || 1) === 1;
     ['Str', 'Dex', 'Int', 'Wil'].forEach(s => { 
         const bEl = document.getElementById(`base${s}`);
         const aEl = document.getElementById(`add${s}`);
-        if (bEl) bEl.value = state[`base${s}`]; 
+        if (bEl) {
+            bEl.value = state[`base${s}`]; 
+            bEl.disabled = !isLevel1;
+            bEl.style.opacity = isLevel1 ? '1' : '0.6';
+            bEl.style.cursor = isLevel1 ? 'text' : 'not-allowed';
+        }
         if (aEl) { 
             aEl.value = state[`add${s}`]; 
             aEl.max = Math.max(0, 5 - state[`base${s}`]); 

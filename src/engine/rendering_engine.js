@@ -92,6 +92,19 @@ function renderAttributes(level, statsMap) {
         document.getElementById('displayWil').innerText = statsMap.wil;
     }
     
+    // 1. Base Attribute Locking (Level 1 only)
+    const isLevel1 = level === 1;
+    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
+        const bEl = document.getElementById(`base${s}`);
+        if (bEl) {
+            bEl.disabled = !isLevel1;
+            bEl.style.opacity = isLevel1 ? '1' : '0.6';
+            bEl.style.cursor = isLevel1 ? 'text' : 'not-allowed';
+            bEl.title = isLevel1 ? '' : 'Base stats can only be modified at Level 1.';
+        }
+    });
+
+    // 2. Bonus Attribute Budgets
     let keyAllowed = Math.min(4, Math.floor(level / 4));
     let secondaryAllowed = Math.min(4, Math.floor((level - 1) / 4));
     let flexAllowed = (level >= 20) ? 2 : 0;

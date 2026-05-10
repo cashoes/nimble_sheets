@@ -35,6 +35,10 @@ class BerserkerClass extends BaseClass {
                 furyFaces: { 1: 4, 6: 6, 9: 8, 13: 10, 17: 12 },
                 furyText: { 1: "d4", 6: "d6", 9: "d8", 13: "d10", 17: "d12" }
             },
+            statModifiers: [
+                { id: "eager_init", stat: "initAdv", condition: (l, s, state) => (state.selectedArsenal || []).includes("Eager for Battle") },
+                { id: "mighty_wounds", stat: "woundMax", value: 4, condition: (l, s, state) => (state.selectedArsenal || []).includes("Mighty Endurance") }
+            ],
             rollTriggers: [
                 {
                     condition: (label, options) => (options.type === 'attack' || /attack|⚔️/i.test(label)) && options.stat === 'str',
@@ -140,29 +144,6 @@ class BerserkerClass extends BaseClass {
         const statsMap = getStatsMap(state);
         stats.furyMax = Math.max(statsMap.str, statsMap.dex);
         return stats;
-    }
-
-    /**
-     * Applies attribute overrides based on Berserker features like Eager for Battle and Mighty Endurance.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} statsMap - Current attribute map.
-     * @returns {Object} Stat overrides.
-     */
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        const arsenal = state.selectedArsenal || [];
-        
-        if (arsenal.includes("Eager for Battle")) {
-            overrides.initAdv = true;
-        }
-        
-        if (arsenal.includes("Mighty Endurance")) {
-            overrides.woundMax = (overrides.woundMax || 0) + 4;
-        }
-        
-        return overrides;
     }
 
     /**

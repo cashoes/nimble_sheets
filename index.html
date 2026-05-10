@@ -112,14 +112,23 @@
         <div id="status"></div>
     </div>
 
-    <div class="version">NIMBLE Character Tracker v2.0.0</div>
+    <div class="version" onclick="handleVersionClick()">NIMBLE Character Tracker v2.1.0</div>
 
     <script>
         /**
          * Master Build Logic for NIMBLE Trackers.
          * Concatenates raw data, engine modules, and class-specific code into a single HTML blob.
          */
-        const VERSION = '2.0.0';
+        const VERSION = '2.1.0';
+        let clickCount = 0;
+
+        function handleVersionClick() {
+            clickCount++;
+            if (clickCount >= 3) {
+                clickCount = 0;
+                buildAll();
+            }
+        }
 
         /**
          * Helper to fetch a local file as text.
@@ -133,124 +142,139 @@
         }
 
         /**
-         * Main build sequence.
-         * @param {string|null} classNameOverride - Optional class name to build.
+         * Fetches all core files (shared by all classes).
          */
-        async function buildTracker(classNameOverride = null) {
-            const className = classNameOverride || document.getElementById('classSelect').value;
+        async function fetchCore() {
+            const engineModules = [
+                'roll_engine.js', 'feat_helpers.js', 'panel_builder.js', 'feature_gen.js',
+                'resource_factory.js', 'base_class.js', 'rendering_engine.js', 'logic.js',
+                'ui_helpers.js', 'state_manager.js', 'main.js'
+            ];
+
+            const [
+                template, itemsJson, skillsJson, conditionsJson,
+                ancestriesJson, backgroundsJson, spellsJson,
+                ...engineParts
+            ] = await Promise.all([
+                fetchFile('src/base_template.html'),
+                fetchFile('src/data/json/items.json'),
+                fetchFile('src/data/json/skills.json'),
+                fetchFile('src/data/json/conditions.json'),
+                fetchFile('src/data/json/ancestries.json'),
+                fetchFile('src/data/json/backgrounds.json'),
+                fetchFile('src/data/json/spells.json'),
+                ...engineModules.map(m => fetchFile(`src/engine/${m}`))
+            ]);
+
+            return {
+                template, itemsJson, skillsJson, conditionsJson,
+                ancestriesJson, backgroundsJson, spellsJson,
+                engineParts
+            };
+        }
+
+        /**
+         * Builds a single tracker from fetched core data and a specific class.
+         */
+        function assembleTracker(core, className, classData) {
+            const ancestries = JSON.parse(core.ancestriesJson);
+            const backgrounds = JSON.parse(core.backgroundsJson);
+            const spells = JSON.parse(core.spellsJson);
+
+            let jsContent = `// --- Generated Core Data ---\n`;
+            jsContent += `const ITEM_TEMPLATES = ${core.itemsJson};\n`;
+            jsContent += `const SKILL_LIST = ${core.skillsJson};\n`;
+            jsContent += `const CONDITIONS_LIST = ${core.conditionsJson};\n`;
+            jsContent += `const ANCESTRIES = ${JSON.stringify(ancestries.categories)};\n`;
+            jsContent += `const ANCESTRY_FEATURES = ${JSON.stringify(ancestries.features)};\n`;
+            jsContent += `const BACKGROUNDS = ${JSON.stringify(backgrounds.categories)};\n`;
+            jsContent += `const BACKGROUND_FEATURES = ${JSON.stringify(backgrounds.features)};\n`;
+            jsContent += `const UTILITY_SPELLS = ${JSON.stringify(spells.utility)};\n`;
+            jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
+
+            // Map engine parts (ordered by fetchCore)
+            const [roll, feat, panel, gen, res, base, render, logic, ui, state, main] = core.engineParts;
+
+            jsContent += `// --- Engine Helpers & Base ---\n${roll}\n${feat}\n${panel}\n${gen}\n${res}\n${base}\n\n`;
+            jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
+            jsContent += `// --- Engine Logic ---\n${render}\n${logic}\n${ui}\n${state}\n\n`;
+            jsContent += `// --- Main Entry ---\n${main}\n\n`;
+
+            const fullScript = `<script>\n${jsContent}<\/script>`;
+            return core.template.replace('<!-- INJECT_SCRIPTS -->', fullScript);
+        }
+
+        /**
+         * Main build sequence for a single tracker.
+         */
+        async function buildTracker() {
+            const className = document.getElementById('classSelect').value;
             const statusEl = document.getElementById('status');
             const btn = document.getElementById('buildBtn');
 
             try {
-                if (!classNameOverride) btn.disabled = true;
-                statusEl.innerText = `Fetching files for ${className}...`;
+                btn.disabled = true;
+                statusEl.innerText = `Generating ${className}...`;
                 statusEl.style.color = '#94a3b8';
 
-                // 1. Define Engine Modules to include
-                const engineModules = [
-                    'roll_engine.js',
-                    'feat_helpers.js',
-                    'panel_builder.js',
-                    'feature_gen.js',
-                    'resource_factory.js',
-                    'base_class.js',
-                    'rendering_engine.js',
-                    'logic.js',
-                    'ui_helpers.js',
-                    'state_manager.js',
-                    'main.js'
-                ];
+                const core = await fetchCore();
+                const classData = await fetchFile(`src/data/class_${className}.js`);
+                const finalHtml = assembleTracker(core, className, classData);
 
-                // 2. Parallel fetch of all required sources
-                const [
-                    template,
-                    itemsJson,
-                    skillsJson,
-                    conditionsJson,
-                    ancestriesJson,
-                    backgroundsJson,
-                    spellsJson,
-                    classData,
-                    ...engineParts
-                ] = await Promise.all([
-                    fetchFile('src/base_template.html'),
-                    fetchFile('src/data/json/items.json'),
-                    fetchFile('src/data/json/skills.json'),
-                    fetchFile('src/data/json/conditions.json'),
-                    fetchFile('src/data/json/ancestries.json'),
-                    fetchFile('src/data/json/backgrounds.json'),
-                    fetchFile('src/data/json/spells.json'),
-                    fetchFile(`src/data/class_${className}.js`),
-                    ...engineModules.map(m => fetchFile(`src/engine/${m}`))
-                ]);
+                downloadBlob(finalHtml, `nimble_tracker_${className}_v${VERSION}.html`);
 
-                statusEl.innerText = 'Stitching files together...';
-
-                // 3. Parse and re-serialize JSON data for constant injection
-                const ancestries = JSON.parse(ancestriesJson);
-                const backgrounds = JSON.parse(backgroundsJson);
-                const spells = JSON.parse(spellsJson);
-
-                // Map engine parts to readable variables
-                const rollEngine = engineParts[0];
-                const featHelpers = engineParts[1];
-                const panelBuilder = engineParts[2];
-                const featureGen = engineParts[3];
-                const resourceFactory = engineParts[4];
-                const baseClass = engineParts[5];
-                const renderingEngine = engineParts[6];
-                const logic = engineParts[7];
-                const uiHelpers = engineParts[8];
-                const stateManager = engineParts[9];
-                const main = engineParts[10];
-
-                // 4. Construct final JavaScript blob
-                let jsContent = `// --- Generated Core Data ---\n`;
-                jsContent += `const ITEM_TEMPLATES = ${itemsJson};\n`;
-                jsContent += `const SKILL_LIST = ${skillsJson};\n`;
-                jsContent += `const CONDITIONS_LIST = ${conditionsJson};\n`;
-                jsContent += `const ANCESTRIES = ${JSON.stringify(ancestries.categories)};\n`;
-                jsContent += `const ANCESTRY_FEATURES = ${JSON.stringify(ancestries.features)};\n`;
-                jsContent += `const BACKGROUNDS = ${JSON.stringify(backgrounds.categories)};\n`;
-                jsContent += `const BACKGROUND_FEATURES = ${JSON.stringify(backgrounds.features)};\n`;
-                jsContent += `const UTILITY_SPELLS = ${JSON.stringify(spells.utility)};\n`;
-                jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
-                
-                jsContent += `// --- Engine Helpers & Base ---\n${rollEngine}\n${featHelpers}\n${panelBuilder}\n${featureGen}\n${resourceFactory}\n${baseClass}\n\n`;
-                jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
-                jsContent += `// --- Engine Logic ---\n${renderingEngine}\n${logic}\n${uiHelpers}\n${stateManager}\n\n`;
-                jsContent += `// --- Main Entry ---\n${main}\n\n`;
-
-                const fullScript = `<script>\n${jsContent}<\/script>`;
-
-                // 5. Inject scripts into the HTML Template
-                const finalHtml = template.replace('<!-- INJECT_SCRIPTS -->', fullScript);
-
-                // 6. Generate Downloadable Blob
-                statusEl.innerText = 'Generating download...';
-                const blob = new Blob([finalHtml], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `nimble_tracker_${className}_v${VERSION}.html`;
-                document.body.appendChild(a);
-                a.click();
-
-                // 7. Cleanup
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                statusEl.innerText = `Success! ${className} tracker downloaded.`;
-                statusEl.style.color = '#22c55e'; // green
-
+                statusEl.innerText = `Success! ${className} downloaded.`;
+                statusEl.style.color = '#22c55e';
             } catch (error) {
                 console.error(error);
                 statusEl.innerText = `Error: ${error.message}`;
-                statusEl.style.color = '#ef4444'; // red
+                statusEl.style.color = '#ef4444';
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        /**
+         * Hidden Debug: Builds and downloads ALL trackers.
+         */
+        async function buildAll() {
+            const statusEl = document.getElementById('status');
+            const classes = Array.from(document.getElementById('classSelect').options).map(o => o.value);
+
+            try {
+                statusEl.innerText = `Starting batch build of ${classes.length} classes...`;
+                statusEl.style.color = '#38bdf8';
+
+                const core = await fetchCore();
+
+                for (const className of classes) {
+                    statusEl.innerText = `Building ${className}...`;
+                    const classData = await fetchFile(`src/data/class_${className}.js`);
+                    const finalHtml = assembleTracker(core, className, classData);
+                    downloadBlob(finalHtml, `nimble_tracker_${className}_v${VERSION}.html`);
+                    // Small delay to prevent browser congestion
+                    await new Promise(r => setTimeout(r, 200));
+                }
+
+                statusEl.innerText = `Batch complete! ${classes.length} trackers downloaded.`;
+                statusEl.style.color = '#22c55e';
+            } catch (error) {
+                console.error(error);
+                statusEl.innerText = `Batch Error: ${error.message}`;
+                statusEl.style.color = '#ef4444';
+            }
+        }
+
+        function downloadBlob(content, filename) {
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>

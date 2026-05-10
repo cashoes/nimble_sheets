@@ -25,7 +25,7 @@ class HunterClass extends BaseClass {
                 panelBg: "rgba(20, 35, 25, 0.8)",
                 border: "rgba(74, 222, 128, 0.2)"
             },
-            initialStats: { baseStr: 0, baseDex: 3, baseInt: -1, baseWil: 2 },
+            initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Shadowpath", label: "Keeper of the Shadowpath", accent: "#1e1b4b" },
@@ -35,6 +35,14 @@ class HunterClass extends BaseClass {
             scalingStats: {
                 saDice: { 1: "None", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
             },
+            statModifiers: [
+                { id: "wildheart_hd", stat: "hdFace", value: 2, subclass: "WildHeart", level: 3 },
+                { id: "wildheart_hp", stat: "baseHp", value: 5, subclass: "WildHeart", level: 3 },
+                { id: "wildheart_armor", stat: "armor", subclass: "WildHeart", level: 15, getMod: (stats) => stats.wil }
+            ],
+            grantedSpells: [
+                { level: 1, spells: ["Hunter's Mark"] }
+            ],
             featuresData: HunterClass.FEATURES,
             optionsData: HunterClass.OPTIONS,
             resources: [
@@ -167,36 +175,6 @@ class HunterClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Calculates Hunter-specific derived statistics, such as Hit Die and Base HP for WildHeart.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @returns {Object} Derived statistics.
-     */
-    getDerivedStats(level, subclass, state) {
-        const stats = super.getDerivedStats(level, subclass, state);
-        stats.hdFace = (subclass === "WildHeart" && level >= 3) ? 10 : 8;
-        this.baseHp = (subclass === "WildHeart" && level >= 3) ? 18 : 13;
-        return stats;
-    }
-
-    /**
-     * Applies attribute overrides based on Hunter features like Unparalleled Survivalist.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} statsMap - Current attribute map.
-     * @returns {Object} Stat overrides.
-     */
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        if (subclass === "WildHeart" && level >= 15) {
-            overrides.armor = (overrides.armor || 0) + statsMap.wil;
-        }
-        return overrides;
     }
 
     /**

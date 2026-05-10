@@ -31,6 +31,22 @@ class ShepherdClass extends BaseClass {
                 { value: "Mercy", label: "Luminary of Mercy", accent: "#f0f9ff" },
                 { value: "Malice", label: "Luminary of Malice", accent: "#312e81" }
             ],
+            scalingStats: {
+                spiritDie: (level, subclass, state) => {
+                    let baseTier = Math.max(1, Math.floor(level / 2));
+                    if ((state.selectedGraces || []).includes("Empowered Companion")) baseTier++;
+                    const sizes = ["d6", "d8", "d10", "d12", "d20"];
+                    return sizes[Math.min(sizes.length, baseTier) - 1];
+                }
+            },
+            grantedSpells: [
+                { level: 1, spells: ["Lifebinding Spirit"] }
+            ],
+            optionExtensions: {
+                "Malice": {
+                    "spirit": { name: "Deadly Spirit", desc: (l, s, state) => (state.spiritDesc || "").replace("Lifebinding", "Deadly").replace("Radiant", "Necrotic") }
+                }
+            },
             spellSchools: ["Radiant", "Necrotic"],
             includeUtilitySpells: createUtilityConfig((level) => level >= 11, "selectedTwilight"),
             resources: [
@@ -127,34 +143,6 @@ class ShepherdClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Calculates Shepherd-specific derived statistics, such as Spirit damage die size.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @returns {Object} Derived statistics.
-     */
-    getDerivedStats(level, subclass, state) {
-        const stats = super.getDerivedStats(level, subclass, state);
-        const statsMap = getStatsMap(state);
-
-        let baseTier = Math.max(1, Math.floor(level / 2));
-        const hasEmpowered = state.selectedGraces?.includes("Empowered Companion");
-        
-        let effectiveTier = hasEmpowered ? baseTier + 1 : baseTier;
-        // Cap based on feature presence: Tier 4 (1d12) or Tier 5 (1d20)
-        let finalTier = hasEmpowered ? Math.min(5, effectiveTier) : Math.min(4, effectiveTier);
-        
-        let dieSizes = ['1d6', '1d8', '1d10', '1d12', '1d20'];
-        stats.spiritDmg = dieSizes[finalTier - 1];
-        
-        if (level >= 20) {
-            stats.spiritDmg = stats.spiritDmg.replace('1', '2');
-        }
-
-        return stats;
     }
 
     /**
