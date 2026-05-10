@@ -14,38 +14,55 @@ class MageClass extends BaseClass {
             keyStats: ['int', 'wil'],
             saves: { adv: 'int', dis: 'str' },
             proficiencies: { armor: "Cloth", weapons: "Blades, Staves, Wands" },
-            baseHp: 10,
-            hpPerLevel: 5,
-            hitDie: 6,
+            baseHp: 13,
+            hpPerLevel: 6,
+            hitDie: 8,
             theme: {
-                accent: "#818cf8",
-                accentDim: "#4f46e5",
-                bodyBg: "#05070a",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(129, 140, 248, 0.08) 0%, transparent 100%), linear-gradient(180deg, #0f111a 0%, #05070a 100%)",
-                panelBg: "rgba(20, 22, 35, 0.7)",
-                border: "rgba(129, 140, 248, 0.3)"
+                accent: "#3b82f6",
+                accentDim: "#1d4ed8",
+                bodyBg: "#05060a",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 100%), linear-gradient(180deg, #0a0c1a 0%, #05060a 100%)",
+                panelBg: "rgba(15, 20, 35, 0.7)",
+                border: "rgba(59, 130, 246, 0.3)"
             },
             initialStats: { baseStr: -1, baseDex: 0, baseInt: 3, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "Control", label: "Master of Control", accent: "#3b82f6" },
-                { value: "Chaos", label: "Master of Chaos", accent: "#f59e0b" }
+                { 
+                    value: "Chaos", 
+                    label: "Avatar of Chaos", 
+                    accent: "#f59e0b",
+                    config: {
+                        mechanicPanelExtension: (builder) => {
+                            builder.addStatDisplay('1d20', 'Invoke Chaos', 'Roll on Chaos Table', { borderLeft: true, color: '#f59e0b' });
+                        }
+                    }
+                },
+                { 
+                    value: "Control", 
+                    label: "Avatar of Control", 
+                    accent: "#3b82f6",
+                    config: {
+                        mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                            builder.addStatDisplay('10+' + statsMap.int, 'Demand Control', '1/round or on miss', { borderLeft: true, color: '#3b82f6' });
+                        }
+                    }
+                }
             ],
             scalingStats: {
                 surgeNotation: { 5: "WIL", 10: "WIL+1d4", 17: "WIL+2d4" },
-                surgeDisplay: { 5: "WIL", 10: "WIL+1d4", 17: "2d4+WIL" },
-                chaosLabel: { 3: (l, s) => s === "Chaos" ? "1d20" : "" },
-                controlLabel: { 3: (l, s, state) => s === "Control" ? `10+${getStatsMap(state).int}` : "" }
+                surgeDisplay: { 5: "WIL", 10: "WIL+1d4", 17: "2d4+WIL" }
+            },
+            mechanicPanelExtension: (builder, level, state, derived) => {
+                if (level >= 5) {
+                    builder.addRollDisplay(derived.surgeNotation, 'Surge', derived.surgeDisplay, 'Regain on Init', { type: 'surge' });
+                }
             },
             spellSchools: ["Fire", "Ice", "Lightning"],
-            subclassSchools: {
-                "Control": [],
-                "Chaos": []
-            },
-            extraSchoolsKeys: ["selectedSubclassCantrip", "selectedSubclassTiered"],
-            includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedMastery"),
-            includeCantripSpells: ["selectedSubclassCantrip"],
-            includeTieredSpells: ["selectedSubclassTiered"],
+            extraSchoolsKeys: ["selectedStudy"],
+            spellProgression: [1, 2, 4, 6, 8, 10, 13, 17, 19, 21],
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedSubclassSpells"),
+            includeTieredSpells: ["selectedStudy"],
             resources: [
                 createManaResource('int')
             ],
@@ -55,25 +72,22 @@ class MageClass extends BaseClass {
     }
 
     /**
-     * Defines choice-based options for the Mage class (Spellshapers, Mastery Schools).
+     * Defines choice-based options for the Mage class (Spellshaping, Studies).
      * @returns {Object} Dictionary of class options.
      */
     static get OPTIONS() {
         return {
-            spellshapers: {
-                "Dimensional Compression": { desc: "+4 range to a spell for each additional mana spent." },
-                "Echo Casting": { desc: "(2x mana, min 1 mana) When you cast a tiered, single-target spell, you may cast a copy of that spell on a 2nd target for free." },
-                "Elemental Destruction": { desc: "(1 or more mana) After you hit with a spell, you may spend 1 or more mana (up to your WIL) to reroll 1 die per mana spent." },
-                "Elemental Transmutation": { desc: "(1 mana) Change the damage type of a spell to: Fire, Ice, Lightning, Necrotic, or Radiant." },
-                "Extra-Dimensional Vision": { desc: "(2 mana) You may ignore the line of sight requirement of a spell. Your spell will phase though barriers and obstacles to reach a target you know of within range." },
-                "Methodical Spellweaver": { desc: "(–2 mana) Spend 1 additional action to reduce the mana cost of a spell by 2 (min 1)." },
-                "Precise Casting": { desc: "(1+ mana) Choose 1 creature per mana spent to be unaffected by a spell you cast." },
-                "Stretch Time": { desc: "(2 mana) Reduce the action cost of a spell by 1 (min 1)." }
+            spellshaping: {
+                "Careful Spell": { desc: "When you cast a spell that forces creatures to make a save, you can choose a number of creatures equal to your INT to automatically succeed on their save." },
+                "Distant Spell": { desc: "When you cast a spell with a range of 4 spaces or greater, double the range. If the range is Touch, it becomes 6 spaces." },
+                "Empowered Spell": { desc: "When you roll damage for a spell, you can reroll a number of damage dice up to your INT (minimum of 1). You must use the new rolls." },
+                "Quickened Spell": { desc: "When you cast a spell that costs 2 actions, you can expend 2 extra mana to cast it for 1 action instead." },
+                "Subtle Spell": { desc: "You can cast a spell without any somatic or verbal components." }
             },
-            masterySchools: {
-                "Fire": { desc: "Gain access to all Fire utility spells." },
-                "Ice": { desc: "Gain access to all Ice utility spells." },
-                "Lightning": { desc: "Gain access to all Lightning utility spells." }
+            studies: {
+                "Study of Radiant": { desc: "You learn the Radiant school of magic.", school: "Radiant" },
+                "Study of Necrotic": { desc: "You learn the Necrotic school of magic.", school: "Necrotic" },
+                "Study of Wind": { desc: "You learn the Wind school of magic.", school: "Wind" }
             }
         };
     }
@@ -85,126 +99,56 @@ class MageClass extends BaseClass {
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('INT or WIL', 'STR or DEX', true);
 
-        core[1] = [{ id: "spellcasting", name: "Elemental Spellcasting", desc: "You know Fire, Ice, and Lightning cantrips." }];
-        core[2].push({ id: "researcher", name: "Talented Researcher", desc: "Gain advantage on Arcana or Lore checks when you have access to a large amount of books and time to study them." });
+        core[1] = [
+            { id: "recovery", name: "Arcane Recovery", desc: "Once per day when you take a Field Rest, you can regain mana equal to half your Level (round up)." },
+            { id: "sculpt", name: "Elemental Sculptor", desc: "You know all Cantrips from the Fire, Ice, and Lightning schools." }
+        ];
 
-        core[3] = [FeatureGen.createSpellChoiceFeature({
-            id: "master_utility",
-            name: "Elemental Mastery",
+        core[3].push(FeatureGen.createSpellChoiceFeature({
+            id: "study",
+            name: "Deepening Study",
             level: 3,
             spellType: "school",
-            schools: ["Fire", "Ice", "Lightning"],
-            stateKey: "selectedMastery",
-            getCount: (level) => level >= 14 ? 0 : (level >= 6 ? 2 : 1),
-            filterKnown: true,
-            milestones: [3, 6, 14],
+            schools: ["Radiant", "Necrotic", "Wind"],
+            stateKey: "selectedStudy",
+            desc: "Choose an additional school of magic to master."
+        }));
+
+        core[5].push({ id: "surge", name: "Elemental Surge", desc: (level, subclass, state, derived) => `When you roll Initiative, gain <strong>${derived.surgeDisplay}</strong> temporary mana. This mana is lost when combat ends.` });
+        core[5].push({ id: "shaping", name: "Spellshaping", type: "dynamic_choice", collection: "spellshaping", stateKey: "selectedShaping", milestones: [5, 11, 17], desc: "Choose a Spellshaping technique as you level up.", getCount: createStandardCount([5, 11, 17]) });
+
+        core[6].push(FeatureGen.createSpellChoiceFeature({
+            id: "mastery",
+            name: "Elemental Mastery",
+            level: 6,
+            spellType: "utility",
+            stateKey: "selectedSubclassSpells",
+            perSchool: true,
+            multiplier: (level) => level >= 14 ? 0 : 1,
+            milestones: [6, 14],
             desc: (level) => FeatureGen.createScalingList(
-                "Learn the Utility Spells from a spell school you know.",
+                "Choose 1 Utility Spell from each spell school you know.",
                 [{ level: 14, text: "You know all Utility Spells from the spell schools you know." }],
                 level
             )
-        })];
+        }));
 
-        core[4].push({ id: "spellshaper", name: "Spellshaper", type: "dynamic_choice", collection: "spellshapers", stateKey: "selectedShapers", milestones: [4, 9, 13], desc: "Choose Spellshaper abilities as you level up. You may use 1/turn.", getCount: FeatureGen.createStandardCount([4, 9, 13]) });
+        core[20].push({ id: "archmage", name: "Archmage", desc: "+1 to any 2 stats. When you drop to 0 mana, you can cast one Tier 1 or Tier 2 spell for free (1/Safe Rest)." });
 
-        core[5].push({
-            id: "surge",
-            name: "Elemental Surge",
-            context: { type: 'surge' },
-            desc: (level) => FeatureGen.createScalingList(
-                "When you roll Initiative, regain <strong>WIL</strong> mana (this expires at the end of combat if unused).",
-                [
-                    { level: 10, text: "Regain WIL+1d4 mana." },
-                    { level: 17, text: "Regain WIL+2d4 mana." }
-                ],
-                level
-            )
-        });
-
-        core[20].push({ id: "archmage", name: "Archmage", desc: "+1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 action less and 5 fewer mana." });
-
-        subclasses["Control"] = {
-            3: [{ id: "force_will", name: "Force of Will", desc: "(1/round) On your turn, you may Demand Control: Choose 1 option from the Control Table which you haven't chosen yet; resets when you roll Initiative, or when you have chosen all options once. <strong>Deny Fate:</strong> Whenever you miss with a spell or an effect you cause is saved against, you MUST Demand Control." }],
-            7: [
-                FeatureGen.createSpellChoiceFeature({
-                    id: "cost_cantrip",
-                    name: "At Any Cost (Cantrip)",
-                    level: 7,
-                    spellType: "cantrip",
-                    schools: ["Necrotic"],
-                    stateKey: "selectedSubclassCantrip",
-                    desc: "Learn 1 cantrip from the Necrotic school."
-                }),
-                FeatureGen.createSpellChoiceFeature({
-                    id: "cost_tiered",
-                    name: "At Any Cost (Tiered)",
-                    level: 7,
-                    spellType: "tiered",
-                    schools: ["Necrotic"],
-                    stateKey: "selectedSubclassTiered",
-                    desc: "Learn 1 tiered spell from the Necrotic school."
-                }),
-                { id: "nullify", name: "Nullify", desc: "(1/encounter) Ignore all disadvantage and other negative effects on your next action this turn, then Demand Control." }
-            ],
-            11: [{ id: "steel_will", name: "Steel Will", desc: "(1/Safe Rest) Whenever you would fail a save, you may succeed instead. Whenever you roll a 1 on an Elemental Surge die, you may reroll it once." }],
-            15: [{ id: "supreme_control", name: "Supreme Control", desc: "Whenever you Demand Control, you may choose to trigger the selected option twice. You may Demand Control as a Reaction." }]
-        };
         subclasses["Chaos"] = {
-            3: [{ id: "force_chaos", name: "Force of Chaos", desc: "Whenever you cast a spell, you can choose to spend 1 less mana. Whenever you do this and whenever you crit, Invoke Chaos: Roll on the Chaos Table." }],
-            7: [
-                FeatureGen.createSpellChoiceFeature({
-                    id: "tempest_cantrip",
-                    name: "Tempest Mage (Cantrip)",
-                    level: 7,
-                    spellType: "cantrip",
-                    schools: ["Wind"],
-                    stateKey: "selectedSubclassCantrip",
-                    desc: "Learn 1 cantrip from the Wind school."
-                }),
-                FeatureGen.createSpellChoiceFeature({
-                    id: "tempest_tiered",
-                    name: "Tempest Mage (Tiered)",
-                    level: 7,
-                    spellType: "tiered",
-                    schools: ["Wind"],
-                    stateKey: "selectedSubclassTiered",
-                    desc: "Learn 1 tiered spell from the Wind school."
-                }),
-                { id: "chaos_lash", name: "Chaos Lash", desc: "(1/encounter) Reaction (when an enemy moves adjacent to you): They are pushed back 2 spaces, and on a failed WIL save, knocked Prone as well. Invoke Chaos." }
-            ],
-            11: [{ id: "thrive", name: "Thrive in Chaos", desc: "Whenever you Invoke Chaos, you may roll twice and cause both effects. (1/Safe Rest) You may choose which roll to use instead." }],
-            15: [{ id: "master_chaos", name: "Master of Chaos", desc: "Whenever you Invoke Chaos, roll with advantage." }]
+            3: [{ id: "unstable", name: "Unstable Power", desc: "Whenever you roll a max result on a spell's damage die, the spell deals an additional 1d6 damage of that same type." }],
+            7: [{ id: "chaos_bolt", name: "Chaos Bolt", desc: "(1 mana) Action: Hurl a bolt of shifting energy at a target within 12 spaces. Roll 1d20 to determine the damage type on the Chaos Table." }],
+            11: [{ id: "shift", name: "Planar Shift", desc: "Bonus Action: Teleport up to 6 spaces. After teleporting, you have resistance to all damage until the start of your next turn." }],
+            15: [{ id: "overload", name: "Overload", desc: "(1/encounter) Action: Release a wave of raw energy. All enemies within 6 spaces take 10d6 damage (roll for type)." }]
+        };
+        subclasses["Control"] = {
+            3: [{ id: "sculpt_spells", name: "Sculpt Spells", desc: "When you cast an area-of-effect spell, you can choose to exclude any number of allies from the spell's effects." }],
+            7: [{ id: "potent", name: "Potent Cantrip", desc: "When a creature succeeds on a save against one of your cantrips, they still take half damage." }],
+            11: [{ id: "slow", name: "Time Warp", desc: "(1/Safe Rest) Action: Choose a target within 12 spaces. On a failed WIL save, they are Stunned for 1 round." }],
+            15: [{ id: "dominate", name: "Mind Control", desc: "(1/Safe Rest) 2 actions: Choose a creature within 12 spaces. On a failed WIL save, they are Charmed and obey your commands for 1 minute." }]
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Renders the Mana Pool and Elemental Surge displays for the Mage's mechanic panel.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} derived - Derived statistics.
-     * @returns {string} HTML string.
-     */
-    getMechanicPanelHTML(level, subclass, state, derived) {
-        const builder = new PanelBuilder();
-
-        if (level >= 2) {
-            builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
-        }
-
-        if (level >= 5) {
-            builder.addRollDisplay(derived.surgeNotation, 'Surge', derived.surgeDisplay, 'Regain on Init', { type: 'surge' });
-        }
-
-        if (subclass === "Chaos") {
-            builder.addStatDisplay(derived.chaosLabel, 'Invoke Chaos', 'Roll on Chaos Table', { borderLeft: true, color: '#f59e0b' });
-        } else if (subclass === "Control") {
-            builder.addStatDisplay(derived.controlLabel, 'Demand Control', '1/round or on miss', { borderLeft: true, color: '#3b82f6' });
-        }
-
-        return builder.build();
     }
 }
 

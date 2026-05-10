@@ -29,62 +29,94 @@ class CommanderClass extends BaseClass {
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Bulwark", label: "Champion of the Bulwark", accent: "#334155" },
-                { value: "Vanguard", label: "Champion of the Vanguard", accent: "#dc2626" },
-                { value: "Spellblade", label: "Spellblade", accent: "#8b5cf6" }
-            ],
-            scalingStats: {
-                cdType: { 1: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" }
-            },
-            statModifiers: [
-                {
-                    id: "move_it_bonus",
-                    stat: "initAdv",
-                    condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!")
+                { 
+                    value: "Vanguard", 
+                    label: "Champion of the Vanguard", 
+                    accent: "#dc2626",
+                    config: {
+                        scalingStats: {
+                            bonusCombatDice: (l) => l >= 11 ? 1 : 0,
+                            bonusCoordStrike: (l) => l >= 7 ? 1 : 0
+                        }
+                    }
                 },
-                {
-                    id: "move_it_speed",
-                    stat: "speed",
-                    value: 3,
-                    condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!")
-                },
-                {
-                    id: "spellblade_fly",
-                    stat: "modFlySpeed",
-                    subclass: "Spellblade",
-                    condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!")
-                }
-            ],
-            grantedSpells: [
-                { subclass: "Spellblade", level: 3, spells: ["Enchant Weapon"] }
-            ],
-            optionExtensions: {
-                "Spellblade": {
-                    orders: {
-                        "Face Me!": {
-                            empowered: "(Glimmering Decree) That enemy additionally takes STR d8 radiant damage (ignoring armor), is pulled up to 4 spaces toward you."
+                { 
+                    value: "Spellblade", 
+                    label: "Spellblade", 
+                    accent: "#8b5cf6",
+                    config: {
+                        spellProgression: [0, 3, 7, 11, 15],
+                        useMana: true,
+                        statModifiers: [
+                            {
+                                id: "spellblade_fly",
+                                stat: "modFlySpeed",
+                                condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!")
+                            }
+                        ],
+                        grantedSpells: [
+                            { level: 3, spells: ["Enchant Weapon"] }
+                        ],
+                        optionExtensions: {
+                            orders: {
+                                "Face Me!": {
+                                    empowered: "(Glimmering Decree) That enemy additionally takes STR d8 radiant damage (ignoring armor), is pulled up to 4 spaces toward you."
+                                },
+                                "Hold the Line!": {
+                                    empowered: "(Crystalline Armor) Additionally, they gain 3x LVL temp HP. Enemies who reduce this temp HP in melee have their speed halved until the end of their next turn."
+                                },
+                                "I Can Do This ALL DAY!": {
+                                    empowered: "(Rising Phoenix) Deal fire damage to each enemy within 2 spaces equal to the total value of the (HD) expended. They gain the Smoldering condition."
+                                },
+                                "Move it! Move it!": {
+                                    empowered: "(Borne upon the Wind) You additionally gain the ability to fly for 1 round. Then, you both can also move for free."
+                                },
+                                "Reposition!": {
+                                    empowered: "(Flashstep) You may exchange places with one of them."
+                                }
+                            }
                         },
-                        "Hold the Line!": {
-                            empowered: "(Crystalline Armor) Additionally, they gain 3x LVL temp HP. Enemies who reduce this temp HP in melee have their speed halved until the end of their next turn."
+                        featureExtensions: {
+                            "coord_strike": {
+                                empoweredRules: "(Withering Strike) Any attacks made this way deal additional Necrotic damage equal to the max value of your Combat Die (cdType). An enemy damaged this way is considered undead for 1 round."
+                            },
+                            "deep_knowledge": {
+                                trainingBudgetKey: "selectedTraining",
+                                trainingMatch: "+1 Tier 1 Spell"
+                            }
                         },
-                        "I Can Do This ALL DAY!": {
-                            empowered: "(Rising Phoenix) Deal fire damage to each enemy within 2 spaces equal to the total value of the (HD) expended. They gain the Smoldering condition."
-                        },
-                        "Move it! Move it!": {
-                            empowered: "(Borne upon the Wind) You additionally gain the ability to fly for 1 round. Then, you both can also move for free."
-                        },
-                        "Reposition!": {
-                            empowered: "(Flashstep) You may exchange places with one of them."
+                        mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                            const orders = state.selectedOrders || [];
+                            if (orders.includes("Face Me!")) builder.addRollDisplay(`${statsMap.str}d8`, 'Radiant Order', `${statsMap.str}d8`, 'Radiant / Taunt', { type: 'attack', school: 'Radiant' });
+                            if (orders.includes("I Can Do This ALL DAY!")) builder.addRollDisplay('HD', 'Fire Order', 'Sum HD', 'Fire / Smolder', { type: 'attack', school: 'Fire' });
+                            if (orders.includes("Hold the Line!")) builder.addStatDisplay(3 * level, 'Rally HP', 'Set HP & Temp HP', { borderLeft: true, color: '#22c55e' });
                         }
                     }
                 }
+            ],
+            scalingStats: {
+                cdType: { 1: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" },
+                bonusCombatDice: 0,
+                bonusCoordStrike: 0
             },
-            spellProgression: [0, 3, 7, 11, 15],
+            mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                const subConfig = CLASS_CONFIG.getSubclassConfig(state.subclass, state);
+                if (!subConfig.useMana) {
+                    builder.addRollDisplay('1' + derived.cdType, 'Combat Die', derived.cdType, `${state.resourceValues.combatDice || 0}/${derived.resourceMaxes.combatDice}`, { type: 'attack', stat: 'str' });
+                }
+                builder.addStatDisplay(10 + statsMap.str, 'Tactical DC', '10+STR save DC.', { borderLeft: true });
+            },
+            statModifiers: [
+                { id: "move_it_bonus", stat: "initAdv", condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") },
+                { id: "move_it_speed", stat: "speed", value: 3, condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") }
+            ],
+            spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18], 
             extraSchoolsKeys: [],
             includeUtilitySpells: createUtilityConfig(null, ["selectedDeepKnowledge"]),
             includeTieredSpells: ["selectedDeepKnowledge"],
             resources: [
-                createSimpleResource('combatDice', 'Combat Dice', (level, stats, state, subclass) => stats.str + (level >= 11 && subclass === "Vanguard" ? 1 : 0)),
-                createSimpleResource('coordStrike', 'Coord. Strike', (level, stats, state, subclass) => stats.int + (level >= 9 ? 1 : 0) + (level >= 13 ? 1 : 0) + (level >= 17 ? 1 : 0) + (level >= 7 && subclass === "Vanguard" ? 1 : 0)),
+                createSimpleResource('combatDice', 'Combat Dice', (level, stats, state, subclass, derived) => stats.str + (derived.bonusCombatDice || 0)),
+                createSimpleResource('coordStrike', 'Coord. Strike', (level, stats, state, subclass, derived) => stats.int + (level >= 9 ? 1 : 0) + (level >= 13 ? 1 : 0) + (level >= 17 ? 1 : 0) + (derived.bonusCoordStrike || 0)),
                 createManaResource('int')
             ],
             featuresData: CommanderClass.FEATURES,
@@ -93,75 +125,38 @@ class CommanderClass extends BaseClass {
     }
 
     /**
-     * Defines choice-based options for the Commander class (Orders, Tactics, Masteries, Training).
-     * @returns {Object} Dictionary of class options.
+     * Defines choice-based options for the Commander class.
      */
     static get OPTIONS() {
         return {
             training: {
-                "Order": {
-                    desc: "Gain 1 additional Commander's Order selection."
-                },
-                "Tier 1 Spell": {
-                    desc: "Gain 1 additional Tier 1 Spell selection."
-                }
+                "+1 Order": { desc: "Gain 1 additional Commander's Order selection." },
+                "+1 Tier 1 Spell": { desc: "Gain 1 additional Tier 1 Spell selection." }
             },
             orders: {
-                "Face Me!": {
-                    desc: "Reaction (after an ally is crit within 12 spaces): Taunt that enemy until you drop to 0 HP.",
-                    empowered: "(Glimmering Decree) That enemy additionally takes STR d8 radiant damage (ignoring armor), is pulled up to 4 spaces toward you."
-                },
-                "Hold the Line!": {
-                    desc: "(1/encounter) Reaction (when an ally drops to 0 HP): Command them to continue the fight! Set their HP to 3x LVL.",
-                    empowered: "(Crystalline Armor) Additionally, they gain 3x LVL temp HP. Enemies who reduce this temp HP in melee have their speed halved until the end of their next turn."
-                },
-                "I Can Do This ALL DAY!": {
-                    desc: "(1/encounter) Reaction (when you would drop to 0 HP): You may expend any number of Hit Dice and set your HP to the sum rolled instead (do not add your STR).",
-                    empowered: "(Rising Phoenix) Deal fire damage to each enemy within 2 spaces equal to the total value of the (HD) expended. They gain the Smoldering condition."
-                },
-                "Move it! Move it!": {
-                    desc: "When you roll Initiative you may give yourself and an ally advantage on the roll and +3 speed for 1 round.",
-                    empowered: "(Borne upon the Wind) You additionally gain the ability to fly for 1 round. Then, you both can also move for free."
-                },
-                "Reposition!": {
-                    desc: "Action/Reaction (on an ally’s turn): Command 1 ally to move up to their speed (or 2 allies up to half their speed) for free.",
-                    empowered: "(Flashstep) You may exchange places with one of them."
-                }
+                "Face Me!": { desc: "Reaction (after an ally is crit within 12 spaces): Taunt that enemy until you drop to 0 HP." },
+                "Hold the Line!": { desc: "(1/encounter) Reaction (when an ally drops to 0 HP): Command them to continue the fight! Set their HP to 3x LVL." },
+                "I Can Do This ALL DAY!": { desc: "(1/encounter) Reaction (when you would drop to 0 HP): You may expend any number of Hit Dice and set your HP to the sum rolled instead (do not add your STR)." },
+                "Move it! Move it!": { desc: "When you roll Initiative you may give yourself and an ally advantage on the roll and +3 speed for 1 round." },
+                "Reposition!": { desc: "Action/Reaction (on an ally’s turn): Command 1 ally to move up to their speed (or 2 allies up to half their speed) for free." }
             },
             tactics: {
-                "Commanding Presence": {
-                    desc: "Action: Shout a command up to 2 words long at an enemy. On a failed WIL save (DC 10+STR), they must spend their entire next turn obeying it to the best of their ability, provided it is not obviously harmful to themselves. They then become immune to this effect for 1 day."
-                },
-                "Heavy Strike": {
-                    desc: "When you hit, push a Medium creature STR spaces and deal extra damage equal to a roll of your Combat Die. A Small creature is pushed twice as far; Large, pushed half as far (round down)."
-                },
-                "Inerrant Strike": {
-                    desc: "Reroll a missed attack, add 1 to the Primary Die, and deal extra damage equal to a roll of your Combat Die."
-                },
-                "Lunging Strike": {
-                    desc: "Gain +1 Reach on an attack and deal extra damage equal to 2× a roll of your Combat Die."
-                },
-                "Sweeping Strike": {
-                    desc: "2 actions: Select any contiguous area within your weapon’s Reach and damage ALL targets there. This attack does not miss on a 1."
-                }
+                "Commanding Presence": { desc: "Action: Shout a command up to 2 words long at an enemy. On a failed WIL save (DC 10+STR), they must spend their entire next turn obeying it to the best of their ability, provided it is not obviously harmful to themselves. They then become immune to this effect for 1 day." },
+                "Heavy Strike": { desc: "When you hit, push a Medium creature STR spaces and deal extra damage equal to a roll of your Combat Die. A Small creature is pushed twice as far; Large, pushed half as far (round down)." },
+                "Inerrant Strike": { desc: "Reroll a missed attack, add 1 to the Primary Die, and deal extra damage equal to a roll of your Combat Die." },
+                "Lunging Strike": { desc: "Gain +1 Reach on an attack and deal extra damage equal to 2× a roll of your Combat Die." },
+                "Sweeping Strike": { desc: "2 actions: Select any contiguous area within your weapon’s Reach and damage ALL targets there. This attack does not miss on a 1." }
             },
             masteries: {
-                "Slashing": {
-                    desc: "Your attacks with slashing weapons cannot miss unarmored enemies."
-                },
-                "Bludgeoning": {
-                    desc: "When your primary die rolls a 7 or higher with a bludgeoning weapon, ignore Heavy Armor."
-                },
-                "Piercing": {
-                    desc: "Your attacks with piercing weapons ignore Medium Armor."
-                }
+                "Slashing": { desc: "Your attacks with slashing weapons cannot miss unarmored enemies." },
+                "Bludgeoning": { desc: "When your primary die rolls a 7 or higher with a bludgeoning weapon, ignore Heavy Armor." },
+                "Piercing": { desc: "Your attacks with piercing weapons ignore Medium Armor." }
             }
         };
     }
 
     /**
      * Defines the core and subclass features for the Commander class.
-     * @returns {Object} Core and subclass feature data.
      */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or INT', 'DEX or WIL', false);
@@ -174,12 +169,15 @@ class CommanderClass extends BaseClass {
                 desc: (level, subclass, state, derived, renderSingleSpellCard) => {
                     const cdVal = derived.cdType || "d6";
                     const baseRules = "1/round, Free action: you and an ally within 6 spaces both immediately make a weapon attack or cast a cantrip for free. You can do this INT times/Safe Rest.";
-                    const empoweredRules = `(Withering Strike) Any attacks made this way deal additional Necrotic damage equal to the max value of your Combat Die (1${cdVal}). An enemy damaged this way is considered undead for 1 round.`;
-
+                    
                     let d = baseRules;
-                    if (subclass === "Spellblade") {
+                    const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
+                    const ext = subConfig.featureExtensions?.["coord_strike"];
+                    
+                    if (ext?.empoweredRules) {
+                        const rules = ext.empoweredRules.replace("cdType", cdVal);
                         d += `<div style="margin-top:8px; padding:6px; background:rgba(139, 92, 246, 0.15); border-left: 2px solid var(--subclass-accent); font-style: italic; font-size: 0.95em; color: #fff;">
-                            <strong>Empowered:</strong> ${empoweredRules}
+                            <strong>Empowered:</strong> ${rules}
                         </div>`;
                     }
 
@@ -211,17 +209,7 @@ class CommanderClass extends BaseClass {
                 stateKey: "selectedOrders",
                 milestones: [2],
                 desc: "Choose Commander's Orders.",
-                getCount: (level, subclass, state) => {
-                    let count = 2;
-                    if (subclass === "Spellblade") {
-                        (state.selectedTraining || []).forEach(choice => {
-                            if (choice === "Order") {
-                                count++;
-                            }
-                        });
-                    }
-                    return count;
-                }
+                getCount: (level, subclass, state) => createStandardCount([2], [{ stateKey: "selectedTraining", match: "+1 Order" }])(level, subclass, state)
             },
             { id: "medic", name: "Field Medic", desc: "Roll 1 additional die for any health potion you administer. Whenever you or an ally spends any number of Hit Dice to recover HP, if you spent at least ten minutes examining their wounds, they can add your Examination bonus to the HP recovered." }
         ];
@@ -232,7 +220,7 @@ class CommanderClass extends BaseClass {
             collection: "tactics",
             stateKey: "selectedTactics",
             milestones: [4, 6, 8, 10, 12, 14, 16],
-            context: { type: 'attack', stat: 'str' },
+            getCount: (level, subclass, state) => createStandardCount([4, 6, 8, 10, 12, 14, 16])(level, subclass, state),
             desc: (level) => FeatureGen.createScalingList(
                 "Choose a Combat Tactic. When you roll Initiative, gain STR Combat Dice. (1/attack) You may expend a Combat Die to perform a special maneuver. Combat Dice are lost when combat ends.",
                 [
@@ -243,12 +231,11 @@ class CommanderClass extends BaseClass {
                     { level: 17, text: "Your Combat Dice are now d20s." }
                 ],
                 level
-            ),
-            getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16])
+            )
         });
 
         core[5].push({ id: "master_commander", name: "Master Commander", desc: "When you roll Initiative, regain 1 spent use of Coordinated Strike (it is lost if not spent during that encounter). Attacks made from your Coordinated Strikes also now ignore disadvantage." });
-        core[6].push({ id: "mastery", name: "Weapon Mastery", type: "dynamic_choice", collection: "masteries", stateKey: "selectedMastery", milestones: [6, 10, 14], desc: "You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in.", getCount: FeatureGen.createStandardCount([6, 10, 14]) });
+        core[6].push({ id: "mastery", name: "Weapon Mastery", type: "dynamic_choice", collection: "masteries", stateKey: "selectedMastery", milestones: [6, 10, 14], getCount: (level, subclass, state) => createStandardCount([6, 10, 14])(level, subclass, state), desc: "You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in." });
 
         core[18] = [{ id: "unparalleled_tactics", name: "Unparalleled Tactics", desc: "The first time each encounter you use Coordinated Strike, an ally who can hear you also gains 1 action to use on their next turn." }];
         core[20].push({ id: "captain_of_legions", name: "Captain of Legions", desc: "+1 to any 2 of your stats. The first time each encounter you use Coordinated Strike, EVERY ally within 12 spaces gains +1 action (replaces Unparalleled Tactics)." });
@@ -278,11 +265,7 @@ class CommanderClass extends BaseClass {
                     collection: "training",
                     stateKey: "selectedTraining",
                     milestones: [4, 6, 6, 8, 10, 10, 12, 14, 14, 16],
-                    getCount: (level) => {
-                        const m = [4, 6, 6, 8, 10, 10, 12, 14, 14, 16];
-                        let c = 0; m.forEach(v => { if (level >= v) c++; });
-                        return c;
-                    },
+                    getCount: (level, subclass, state) => createStandardCount([4, 6, 6, 8, 10, 10, 12, 14, 14, 16])(level, subclass, state),
                     desc: "Whenever you could choose a Combat Tactic or Weapon Mastery, instead choose another Commander’s Order or a Tier 1 Spell."
                 },
                 {
@@ -297,33 +280,33 @@ class CommanderClass extends BaseClass {
                     spellType: "paired",
                     stateKey: "selectedDeepKnowledge",
                     getCount: (level, subclass, state) => {
-                        const baseCount = FeatureGen.createStandardCount([3, 7, 11, 15])(level);
+                        const baseCount = createStandardCount([3, 7, 11, 15])(level, subclass, state);
                         let extra = 0;
-                        if (subclass === "Spellblade") {
-                            (state.selectedTraining || []).forEach(choice => {
-                                if (choice === "Tier 1 Spell") {
-                                    extra += 1;
-                                }
+                        const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
+                        const ext = subConfig.featureExtensions?.["deep_knowledge"];
+                        if (ext?.trainingBudgetKey) {
+                            (state[ext.trainingBudgetKey] || []).forEach(choice => {
+                                if (choice === ext.trainingMatch) extra += 1;
                             });
                         }
                         return (baseCount * 2) + extra;
                     },
                     getSlots: (level, subclass, state) => {
                         const slots = [];
-                        const baseCount = FeatureGen.createStandardCount([3, 7, 11, 15])(level);
+                        const baseCount = createStandardCount([3, 7, 11, 15])(level, subclass, state);
                         const tiers = [1, 2, 3, 4];
 
-                        // 1. Base slots (milestones)
                         for (let i = 0; i < baseCount; i++) {
                             slots.push({ type: 'utility', label: 'Utility Selection' });
                             slots.push({ type: 'tiered', tier: tiers[i] || 4, label: 'Tiered Selection' });
                         }
 
-                        // 2. Extra slots from Training
-                        if (subclass === "Spellblade") {
-                            (state.selectedTraining || []).forEach(choice => {
-                                if (choice === "Tier 1 Spell") {
-                                    slots.push({ type: 'tiered', tier: 1, label: 'Tier 1 Spell' });
+                        const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
+                        const ext = subConfig.featureExtensions?.["deep_knowledge"];
+                        if (ext?.trainingBudgetKey) {
+                            (state[ext.trainingBudgetKey] || []).forEach(choice => {
+                                if (choice === ext.trainingMatch) {
+                                    slots.push({ type: 'tiered', tier: 1, label: ext.trainingMatch });
                                 }
                             });
                         }
@@ -346,101 +329,6 @@ class CommanderClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Custom spell availability for Commander to handle Firebrand.
-     */
-    getAvailableSpells(level, subclass, state, derived) {
-        const spells = super.getAvailableSpells(level, subclass, state, derived);
-        if (subclass === "Spellblade") {
-            const firebrand = SPELL_REGISTRY["Fire"]?.["Enchant Weapon"];
-            if (firebrand && !spells.find(s => s.name === "Enchant Weapon")) {
-                spells.push({ name: "Enchant Weapon", ...firebrand, school: "Fire" });
-            }
-        }
-        return spells;
-    }
-
-    /**
-     * Calculates Commander-specific derived statistics.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @returns {Object} Derived statistics.
-     */
-    getDerivedStats(level, subclass, state) {
-        return super.getDerivedStats(level, subclass, state);
-    }
-
-    /**
-     * Applies attribute overrides based on Commander features like Move it! Move it!.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} statsMap - Current attribute map.
-     * @returns {Object} Stat overrides.
-     */
-    getStatOverrides(level, subclass, state, statsMap) {
-        let overrides = {};
-        const orders = state.selectedOrders || [];
-
-        if (orders.includes("Move it! Move it!")) {
-            overrides.initAdv = true;
-            overrides.speed = (overrides.speed || 0) + 3;
-            if (subclass === "Spellblade") {
-                overrides.modFlySpeed = true;
-            }
-        }
-
-        return overrides;
-    }
-
-    /**
-     * Renders the Combat Die/Mana and Coordinated Strike displays for the Commander's mechanic panel.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @returns {string} HTML string.
-     */
-    getMechanicPanelHTML(level, subclass, state, derived) {
-        const builder = new PanelBuilder();
-        const statsMap = getStatsMap(state);
-        const orders = state.selectedOrders || [];
-        const isSpellblade = subclass === "Spellblade";
-
-        // 1. Primary Resource (Combat Dice or Mana)
-        if (!isSpellblade) {
-            builder.addRollDisplay('1' + derived.cdType, 'Combat Die', derived.cdType, `${state.resourceValues.combatDice || 0}/${derived.resourceMaxes.combatDice}`, { type: 'attack', stat: 'str' });
-        } else {
-            builder.addResource('mana', 'INT Mana', state.resourceValues.mana, derived.resourceMaxes.mana);
-        }
-
-        // 2. Coordinated Strike (Base usage)
-        builder.addResource('coordStrike', 'Coord. Strike', state.resourceValues.coordStrike, derived.resourceMaxes.coordStrike);
-
-        // 3. Empowered Order Effects (Spellblade Only)
-        if (isSpellblade) {
-            // --- RADIANT DAMAGE (Face Me!) ---
-            if (orders.includes("Face Me!")) {
-                builder.addRollDisplay(`${statsMap.str}d8`, 'Radiant Order', `${statsMap.str}d8`, 'Radiant / Taunt', { type: 'attack', school: 'Radiant' });
-            }
-
-            // --- FIRE EXPLOSION (I Can Do This ALL DAY!) ---
-            if (orders.includes("I Can Do This ALL DAY!")) {
-                builder.addRollDisplay('HD', 'Fire Order', 'Sum HD', 'Fire / Smolder', { type: 'attack', school: 'Fire' });
-            }
-
-            // --- HP RECOVERY (Hold the Line!) ---
-            if (orders.includes("Hold the Line!")) {
-                builder.addStatDisplay(3 * level, 'Rally HP', 'Set HP & Temp HP', { borderLeft: true, color: '#22c55e' });
-            }
-        }
-
-        // 4. Tactical DC
-        builder.addStatDisplay(10 + statsMap.str, 'Tactical DC', '10+STR save DC.', { borderLeft: true });
-
-        return builder.build();
     }
 }
 

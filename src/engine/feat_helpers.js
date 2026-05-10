@@ -40,7 +40,7 @@ function buildFeatureHtml(title, levelTag, description, theme = "", skip = false
  */
 function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, cssClass, optionsRef, configRef) {
     const statsMap = derived.statsMap;
-    let count = (feat.type === "dynamic_choice" || feat.type === "spell_choice") 
+    const count = (feat.type === "dynamic_choice" || feat.type === "spell_choice") 
         ? (typeof feat.getCount === 'function' ? feat.getCount(level, subclass, state) : (feat.count || 1)) 
         : (feat.count || 1);
     let collection = feat.collection;
@@ -116,7 +116,6 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                     }
                 }
             } else {
-                // Determine list of slots to render
                 const slots = typeof feat.getSlots === 'function' ? feat.getSlots(level, subclass, state) : (feat.slots || []);
                 const renderCount = slots.length > 0 ? slots.length : count;
                 const isPaired = feat.spellType === "paired";
@@ -125,7 +124,6 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                     let idx = (feat.startIndex || 0) + i;
                     let val = selection[idx] || "None";
                     
-                    // Resolve slot type and tier
                     let effectiveType, effectiveTier, customLabel;
                     if (slots.length > 0) {
                         effectiveType = slots[i].type;
@@ -182,16 +180,18 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                 let idx = (feat.startIndex || 0) + i;
                 let val = selection[idx] || "None";
                 
-                // --- OPTION EXTENSIONS (v2.1) ---
+                // --- OPTION EXTENSIONS (v2.2 Subclass Encapsulation) ---
                 let opt = (val !== "None" && optionsRef[collection][val]) ? { ...optionsRef[collection][val] } : null;
-                if (opt && configRef.optionExtensions?.[subclass]?.[collection]?.[val]) {
+                const subConfig = configRef.getSubclassConfig ? configRef.getSubclassConfig(subclass, state) : {};
+                
+                if (opt && subConfig.optionExtensions?.[collection]?.[val]) {
+                    Object.assign(opt, subConfig.optionExtensions[collection][val]);
+                } else if (opt && configRef.optionExtensions?.[subclass]?.[collection]?.[val]) {
                     Object.assign(opt, configRef.optionExtensions[subclass][collection][val]);
                 }
-                // --------------------------------
 
                 let d = opt ? opt.desc : "";
                 
-                // Append empowered text if it exists (from base or extension)
                 if (opt && opt.empowered) {
                     const empText = typeof opt.empowered === 'function' ? opt.empowered(level, subclass, state, derived, renderSingleSpellCard) : opt.empowered;
                     d += `<div style="margin-top:8px; padding:6px; background:rgba(139, 92, 246, 0.15); border-left: 2px solid var(--subclass-accent, var(--class-accent)); font-style: italic; font-size: 0.95em; color: #fff;">
@@ -204,8 +204,8 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                 }
 
                 choiceHtml += `<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid var(--class-border); border-left: 3px solid var(--class-accent);">
-                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); margin-bottom: 5px;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
-                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3;">${iStats(d, level, statsMap, context)}</div>
+                    <select onchange="updateClassState('${feat.stateKey}', ${idx}, this.value)" style="border-bottom-color: var(--class-accent); width: 100%;">${optsHtml.replace(`value="${val}"`, `value="${val}" selected`)}</select>
+                    <div style="font-size: 0.85em; color: var(--text-muted); line-height: 1.3; margin-top: 5px;">${iStats(d, level, statsMap, context)}</div>
                 </div>`;
             }
         }
@@ -241,7 +241,6 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
     const subData = featuresRef.subclasses[subclass] || {};
     const replacedIds = new Set();
 
-    // 1. Identify replaced core features
     Object.values(subData).forEach(lvlFeats => {
         lvlFeats.forEach(f => {
             if (f.replaces) {
@@ -254,7 +253,6 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
         });
     });
 
-    // 2. Render level by level
     const renderFn = configRef.renderFeature ? configRef.renderFeature.bind(configRef) : defaultRenderFeature;
     for (let lvl = 1; lvl <= level; lvl++) {
         if (featuresRef.core[lvl]) {
@@ -355,7 +353,7 @@ function renderBackgroundFeature(state, level, statsMap, iStats, buildFeatureHtm
                 name: state.bgSpell !== "None" ? state.bgSpell : state.background,
                 tier: "Utility",
                 school: school,
-                customHtml: `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)">${opts}</select></div><div style="font-weight:bold; color:var(--text-muted); font-size:0.85em; margin-bottom:4px;">1 Action</div><div>${state.bgSpell !== "None" ? iStats(UTILITY_SPELLS[school][state.bgSpell]) : ''}</div>`
+                customHtml: `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)">${opts}</select></div><div style="font-weight:bold; color:var(--text-muted); font-size:0.85em; margin-bottom:4px;">1 Action</div><div>${state.bgSpell !== "None" ? iStats(UTILITY_SPELLS[school][state.bgSpell], level, statsMap) : ''}</div>`
             }, level, statsMap);
         } else if (bgFeat.collection === "ancestry") {
             let opts = `<option value="None">-- Select Ancestry --</option>`;
@@ -375,7 +373,7 @@ function renderBackgroundFeature(state, level, statsMap, iStats, buildFeatureHtm
             });
             let optDesc = "";
             if (bgSelectedOpt && bgSelectedOpt.desc) {
-                optDesc = `<div style="margin-top:8px; font-size:0.9em; color:var(--text-main); border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">${iStats(bgSelectedOpt.desc)}</div>`;
+                optDesc = `<div style="margin-top:8px; font-size:0.9em; color:var(--text-main); border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">${iStats(bgSelectedOpt.desc, level, statsMap)}</div>`;
             }
             choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;"><select style="width:100%; padding:4px; background:var(--class-panel-bg); color:var(--text-main); border:1px solid var(--class-border);" onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select>${optDesc}</div>`;
         }
@@ -397,7 +395,7 @@ function renderBackgroundFeature(state, level, statsMap, iStats, buildFeatureHtm
         bgDesc += usesHtml;
     }
 
-    return buildFeatureHtml(`Background: ${state.background}`, "", bgDesc, "", false);
+    return buildFeatureHtml(`Background: ${state.background}`, "", bgDesc, "", false, level, statsMap);
 }
 
 /**
@@ -411,5 +409,5 @@ function renderAncestryFeature(state, buildFeatureHtml) {
     if (!ancFeat) {
         return "";
     }
-    return buildFeatureHtml(`Ancestry: ${state.ancestry}`, "", ancFeat.desc, "", false);
+    return buildFeatureHtml(`Ancestry: ${state.ancestry}`, "", ancFeat.desc, "", false, 1, { str: 0, dex: 0, int: 0, wil: 0 });
 }

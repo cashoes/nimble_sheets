@@ -12,31 +12,36 @@ class CheatClass extends BaseClass {
             name: "Cheat",
             subtitle: "Master of stealth, dirty fighting, & rules",
             keyStats: ['dex', 'int'],
-            saves: { adv: 'dex', dis: 'wil' },
-            proficiencies: { armor: "Leather Armor", weapons: "DEX Weapons" },
-            baseHp: 10,
-            hpPerLevel: 5,
-            hitDie: 6,
+            saves: { adv: 'dex', dis: 'str' },
+            proficiencies: { armor: "Mail", weapons: "Blades, Bows, Crossbows" },
+            baseHp: 13,
+            hpPerLevel: 6,
+            hitDie: 8,
             theme: {
-                accent: "#cbd5e1",
-                accentDim: "#64748b",
-                bodyBg: "#0f1115",
-                containerBg: "radial-gradient(circle at 50% 50%, rgba(203, 213, 225, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1e2125 0%, #0f1115 100%)",
-                panelBg: "rgba(35, 40, 45, 0.8)",
-                border: "rgba(203, 213, 225, 0.2)"
+                accent: "#94a3b8",
+                accentDim: "#475569",
+                bodyBg: "#0a0c12",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(148, 163, 184, 0.05) 0%, transparent 100%), linear-gradient(180deg, #0f172a 0%, #0a0c12 100%)",
+                panelBg: "rgba(15, 23, 42, 0.8)",
+                border: "rgba(148, 163, 184, 0.25)"
             },
-            initialStats: { baseStr: 0, baseDex: 2, baseInt: 3, baseWil: -1 },
+            initialStats: { baseStr: -1, baseDex: 3, baseInt: 2, baseWil: 0 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#0f172a" },
-                { value: "Scoundrel", label: "Tools of the Scoundrel", accent: "#16a34a" }
+                { value: "Assassin", label: "Assassin", accent: "#be123c" },
+                { value: "Thief", label: "Thief", accent: "#fbbf24" }
             ],
             scalingStats: {
                 saDice: { 1: "None", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
             },
             statModifiers: [
-                { id: "misdirection_armor", stat: "armor", getMod: (statsMap, state) => (state.selectedUnderhanded || []).includes("Misdirection") ? statsMap.int : 0 }
+                { id: "misdirection_armor", stat: "armor", getMod: (stats, state) => {
+                    const hasMisdirection = (state.selectedUnderhanded || []).includes("Misdirection");
+                    if (!hasMisdirection) return 0;
+                    return CLASS_CONFIG.isHeavyArmored(state) ? 0 : stats.int;
+                }}
             ],
+            resources: [],
             featuresData: CheatClass.FEATURES,
             optionsData: CheatClass.OPTIONS
         });
@@ -48,17 +53,12 @@ class CheatClass extends BaseClass {
      */
     static get OPTIONS() {
         return {
-            underhanded: {
-                "Creative Accounting": { desc: "Steal up to INT actions from your next turn (Gain up to INT actions now. The next time you would gain actions, subtract the number stolen). You cannot use this 2 turns in a row." },
-                "Exploit Weakness": { desc: "Action: Make a contested INT check against an enemy. If you win, you can use Vicious Opportunist against them, even if they are not Distracted. This lasts for 1 minute or until you use this ability against another target." },
-                "Feinting Attack": { desc: "If you miss for the 2nd time in a single round, you may change the primary die roll to any result instead." },
-                "How'd YOU get here?!": { desc: "2 actions: “Teleport” up to 4 spaces away, adjacent to a Distracted target, and make a melee attack against them. If you crit, you may \"teleport\" again." },
-                "I’m Outta Here!": { desc: "When an ally within 4 spaces is crit, you may turn invisible until the end of your next turn and then move up to half your speed for free." },
-                "Misdirection": { desc: "Gain INT armor. Whenever you Defend, you may halve the damage instead." },
-                "Steal Tempo": { desc: "When you land a critical hit for the second time on a turn, your target loses 1 action and you gain 1 action." },
-                "Sunder Armor (Medium)": { desc: "Action: When you crit an enemy with medium armor, sunder their armor. Until the start of your next turn, ALL melee attacks against that target ignore its armor." },
-                "Sunder Armor (Heavy)": { desc: "Req. Sunder Armor (Medium). Your Sunder Armor ability now also applies to enemies wearing heavy armor." },
-                "Trickshot": { desc: "When you throw a dagger, it returns back to your hand at the end of your turn. On a hit, it ricochets to another creature within 2 spaces, dealing half as much damage to them." }
+            underhandedAbilities: {
+                "Fast Hands": { desc: "Bonus Action: Use an item, make a Sleight of Hand check, or use your thieves’ tools to disarm a trap or open a lock." },
+                "Misdirection": { desc: "While you are not wearing Heavy Armor, add your INT to your Armor Class." },
+                "Slippery Mind": { desc: "You have advantage on all WIL saves." },
+                "Uncanny Dodge": { desc: "When you are hit by an attack, you can use your reaction to halve the damage." },
+                "Vanish": { desc: "Bonus Action: Hide, even if you are being observed." }
             }
         };
     }
@@ -68,99 +68,43 @@ class CheatClass extends BaseClass {
      * @returns {Object} Core and subclass feature data.
      */
     static get FEATURES() {
-        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or INT', 'WIL or STR', false);
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or INT', 'STR or WIL', false);
 
         core[1] = [
-            {
-                id: "sneak_attack",
-                name: "Sneak Attack",
-                milestones: [1, 3, 7, 9, 11, 15, 17],
-                context: { type: 'attack', stat: 'dex' },
-                desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
-                    `(1/turn) When you crit, deal <strong>+${derived.saDice}</strong> damage.`,
-                    [
-                        { level: 3, text: "Deal +1d8 damage." },
-                        { level: 7, text: "Deal +2d8 damage." },
-                        { level: 9, text: "Deal +2d10 damage." },
-                        { level: 11, text: "Deal +2d12 damage." },
-                        { level: 15, text: "Deal +2d20 damage." },
-                        { level: 17, text: "Deal +3d20 damage." }
-                    ],
-                    level
-                )
-            },
-            { id: "vicious_opp", name: "Vicious Opportunist", desc: "(1/turn) When you hit a Distracted target with a melee attack, you may change the Primary Die roll to whatever you like (changing it to the max value counts as a crit)." }
+            { id: "sneak", name: "Sneak Attack", desc: (level, subclass, state, derived) => `(<strong>${derived.saDice}</strong>) Once per turn, you can deal extra damage to a creature you hit if you have advantage on the attack roll.` },
+            { id: "expertise", name: "Expertise", desc: "Choose two skills you are proficient in. Your proficiency bonus is doubled for any check you make that uses either of those skills." }
         ];
-        core[2] = [
-            { id: "cheat", name: "Cheat", desc: "You’re a well-rounded cheater. Gain the following abilities:<ul><li>(1/round) You may either Move or Hide for free.</li><li>(1/day) You may change any skill check to 10+INT.</li><li>If you roll less than 10 on Initiative, you may change it to 10 instead.</li><li>You may gain advantage on skill checks while playing any games, competitions, or placing wagers.</li></ul>" }
-        ];
-        core[3].push({ id: "thieves_cant", name: "Thieves’ Cant", desc: "You learn the secret language of rogues and scoundrels." });
+        core[2].push({ id: "cunning", name: "Cunning Action", desc: "Bonus Action: Dash, Disengage, or Hide." });
 
-        core[4].push({ id: "underhanded", name: "Underhanded Abilities", type: "dynamic_choice", collection: "underhanded", stateKey: "selectedUnderhanded", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose Underhanded Abilities as you level up.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) });
+        core[3].push({ id: "subclass_feat", name: "Cheat’s Path", desc: "Your specialized training grants you unique ways to bend the rules of combat." });
+        core[4].push({ id: "underhanded", name: "Underhanded Ability", type: "dynamic_choice", collection: "underhandedAbilities", stateKey: "selectedUnderhanded", milestones: [4, 10, 16], desc: "Choose an Underhanded Ability as you level up.", getCount: createStandardCount([4, 10, 16]) });
 
-        core[5].push({
-            id: "twist_blade",
-            name: "Twist the Blade",
-            milestones: [5, 13],
-            desc: (level) => FeatureGen.createScalingList(
-                "Action: Change one of your Sneak Attack dice to whatever you like.",
-                [{ level: 13, text: "You can Twist the Blade for free (1/turn)." }],
-                level
-            )
-        });
-        core[5].push({ id: "quick_read", name: "Quick Read", desc: "Gain advantage on an Assess check (1/encounter) and an Examination check (1/day)." });
+        core[18] = [{ id: "elusive", name: "Elusive", desc: "No attack roll has advantage against you while you aren’t incapacitated." }];
+        core[20].push({ id: "master", name: "Master of Shadows", desc: "+1 to any 2 stats. When you roll for Sneak Attack and roll a 1, you can treat that die as having rolled its maximum value." });
 
-        core[6].push({ id: "not_happened", name: "THAT'S Not What Happened!", desc: "(1/Safe Rest) Action: After a Distracted enemy attacks you, you may change the Primary Die roll to whatever you like (changing the die to the minimum value counts as a miss)." });
-
-        core[20].push({ id: "supreme_exec", name: "Supreme Execution", desc: "+1 to any 2 of your stats. When you attack with a blade, you do not require targets to be Distracted to trigger Vicious Opportunist." });
-
-        subclasses["SilentBlade"] = {
-            3: [
-                { id: "commotion", name: "Amidst All This Commotion…", desc: "If a creature dies while you Sneak Attack them, you may turn Invisible until you attack again or until the beginning of your next turn." },
-                { id: "no_trace", name: "Leave No Trace", desc: "Advantage on Stealth checks when you are at full health." }
-            ],
-            7: [{ id: "cunning_strike", name: "Cunning Strike", desc: "(2/encounter) When you land a Sneak Attack, you may force the target to make a STR save (DC 10+INT). On a failure, instead of rolling your Sneak Attack dice, they deal the maximum amount of damage (if your target saves, regain 1 use)." }],
-            11: [{ id: "skulker", name: "Professional Skulker", desc: "Gain a climbing speed and advantage on Stealth checks (replaces Leave No Trace).", replaces: "no_trace" }],
-            15: [{ id: "kill", name: "KILL", desc: "When you crit an enemy with fewer max HP than you, it dies." }]
+        subclasses["Assassin"] = {
+            3: [{ id: "assassinate", name: "Assassinate", desc: "You have advantage on attack rolls against any creature that hasn't taken a turn in combat yet. Any hit you score against a surprised creature is a critical hit." }],
+            7: [{ id: "infiltration", name: "Infiltration Expertise", desc: "You can perfectly mimic the speech, handwriting, and mannerisms of another person as long as you have studied them for at least 1 hour." }],
+            11: [{ id: "death_strike", name: "Death Strike", desc: "When you hit a creature that is surprised, it must make a CON save (DC 10+DEX). On a failure, double the damage of your attack." }],
+            15: [{ id: "poisoner", name: "Poison Master", desc: "You are immune to poison damage and the poisoned condition. Your attacks deal an extra 1d10 poison damage." }]
         };
-        subclasses["Scoundrel"] = {
-            3: [
-                { id: "low_blow", name: "Low Blow", desc: "When you Sneak Attack, you may spend 2 additional actions to Incapacitate your target for their next turn on a failed STR save (DC 10+INT). Save or fail, they are Taunted by you until you drop to 0 HP." },
-                { id: "sweet_talk", name: "Sweet Talk", desc: "You may gain advantage on all Influence checks with NPCs you’ve just met for the first time. This lasts until you fail an Influence check with them or until you meet a 2nd time. You have disadvantage on Influence checks with them after you use this ability (until you get back on their good side)." }
-            ],
-            7: [{ id: "pocket_sand", name: "Pocket Sand", desc: "(2/encounter—you’ve got to collect more sand!) When you Defend against a melee attack, Blind the attacker until the start of their next turn and force them to reroll the attack (Blinded creatures attack with disadvantage)." }],
-            11: [{ id: "escape_plan", name: "Escape Plan", desc: "(1/Safe Rest) When you would drop to 0 HP or gain a Wound, you don’t. Instead, you turn Invisible for 1 minute or until you attack." }],
-            15: [{ id: "heads_i_win", name: "Heads I Win, Tails You Lose", desc: "(1/encounter) Attacks you make this round don’t miss, you crit on 1 less than normally needed, and you gain LVL temp HP." }]
+        subclasses["Thief"] = {
+            3: [{ id: "climb", name: "Second-Story Work", desc: "Climbing no longer costs you extra movement. Your jump distance increases by your DEX modifier." }],
+            7: [{ id: "supreme", name: "Supreme Sneak", desc: "You have advantage on Hide checks if you move no more than half your speed on the same turn." }],
+            11: [{ id: "use_item", name: "Use Magic Device", desc: "You ignore all class, race, and level requirements on the use of magic items." }],
+            15: [{ id: "reflexes", name: "Thief’s Reflexes", desc: "You can take two turns during the first round of any combat. You take your first turn at your normal initiative and your second turn at your initiative minus 10." }]
         };
 
         return { core, subclasses };
     }
 
     /**
-     * Calculates Cheat-specific derived statistics.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @returns {Object} Derived statistics.
-     */
-    getDerivedStats(level, subclass, state) {
-        return super.getDerivedStats(level, subclass, state);
-    }
-
-    /**
      * Renders the Sneak Attack and Opportunist displays for the Cheat's mechanic panel.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} derived - Derived statistics.
-     * @returns {string} HTML string.
      */
     getMechanicPanelHTML(level, subclass, state, derived) {
-        const builder = new PanelBuilder();
+        const builder = super.getMechanicPanelHTML(level, subclass, state, derived);
 
-        builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, 'On Critical Hit', { type: 'attack', stat: 'dex' });
-
-        builder.addStatDisplay('MAX', 'Opportunist', 'Vs. Distracted targets', { borderRight: true });
+        builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, '1/turn | Adv Targets', { borderRight: true });
 
         if (level >= 2) {
             builder.addStatDisplay('10+', 'Cunning', 'Init Floor. Free Move/Hide.');

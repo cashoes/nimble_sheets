@@ -100,7 +100,7 @@ function computeDerived(s) {
     // 10. Armor (Calculates best equipped AC vs base defense)
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : statsMap.dex;
     let bestArmorVal = -1;
-    let shieldBonus = 0;
+    let shieldBonus = classOverrides.shieldBonus || 0;
     
     s.inventory.forEach(item => {
         if (!item.equipped) return;
@@ -119,7 +119,7 @@ function computeDerived(s) {
     if (bestArmorVal !== -1) armorVal = bestArmorVal;
     
     // Apply final composite AC modifiers
-    armorVal += shieldBonus + (CLASS_CONFIG.getShieldBonus ? CLASS_CONFIG.getShieldBonus(level, s.subclass, statsMap) : 0);
+    armorVal += shieldBonus;
     if (classOverrides.armor) armorVal += classOverrides.armor;
     if (ancFeat?.modArmor) armorVal += ancFeat.modArmor;
     if (bgFeat?.modArmor) armorVal += bgFeat.modArmor;
@@ -133,13 +133,15 @@ function computeDerived(s) {
     // 11. Resource Maxes (Mana, Class-specific pools)
     const resourceMaxes = {};
     (CLASS_CONFIG.resources || []).forEach(r => {
-        resourceMaxes[r.id] = r.calcMax(level, statsMap, s, s.subclass);
+        resourceMaxes[r.id] = r.calcMax(level, statsMap, s, s.subclass, classDerived);
     });
 
     // 12. Spell Tier (Calculates highest unlocked spell tier based on level)
     let maxTier = 0;
-    if (CLASS_CONFIG.getAvailableSpells || CLASS_CONFIG.spellProgression || (s.subclass === "Spellblade")) {
-        const progress = (s.subclass === "Spellblade") ? [0, 3, 7, 11, 15] : (CLASS_CONFIG.spellProgression || [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
+    if (CLASS_CONFIG.getAvailableSpells || CLASS_CONFIG.spellProgression) {
+        const subConfig = CLASS_CONFIG.getSubclassConfig ? CLASS_CONFIG.getSubclassConfig(s.subclass) : {};
+        const progress = subConfig.spellProgression || CLASS_CONFIG.spellProgression || [0, 2, 4, 6, 8, 10, 12, 14, 16, 18];
+        
         for (let i = progress.length - 1; i >= 0; i--) {
             if (level >= progress[i]) { 
                 maxTier = i; 

@@ -13,38 +13,75 @@ class SongweaverClass extends BaseClass {
             subtitle: "Musical mystic who weaves spells through song",
             keyStats: ['wil', 'int'],
             saves: { adv: 'wil', dis: 'str' },
-            proficiencies: { armor: "Cloth, Leather", weapons: "DEX, Wands" },
-            baseHp: 13,
-            hpPerLevel: 6,
+            proficiencies: { armor: "Mail", weapons: "Blades, Bows, Staves" },
+            baseHp: 15,
+            hpPerLevel: 7,
             hitDie: 8,
             theme: {
                 accent: "#fbbf24",
                 accentDim: "#d97706",
-                bodyBg: "#070401",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.08) 0%, transparent 100%), linear-gradient(180deg, #1a140a 0%, #070401 100%)",
-                panelBg: "rgba(35, 25, 15, 0.7)",
-                border: "rgba(251, 191, 36, 0.3)"
+                bodyBg: "#05070a",
+                containerBg: "radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a160f 0%, #05070a 100%)",
+                panelBg: "rgba(35, 25, 15, 0.8)",
+                border: "rgba(251, 191, 36, 0.25)"
             },
-            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 3 },
+            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "HeraldSnark", label: "Herald of Snark", accent: "#be123c" },
-                { value: "HeraldCourage", label: "Herald of Courage", accent: "#4338ca" }
+                { value: "HeraldSong", label: "Herald of Song", accent: "#38bdf8" },
+                { 
+                    value: "HeraldSnark", 
+                    label: "Herald of Snark", 
+                    accent: "#fbbf24",
+                    config: {
+                        scalingStats: {
+                            vmDie: (level) => (level >= 15) ? "1d6" : "1d4",
+                            vmBonus: (level, subclass, state) => {
+                                const statsMap = getStatsMap(state);
+                                let b = statsMap.int + (Math.floor(level / 5) * 2);
+                                if (level >= 15) b += statsMap.wil;
+                                return b;
+                            }
+                        },
+                        optionExtensions: {
+                            "vicious_mockery": {
+                                desc: (level, subclass, state, derived) => {
+                                    const die = level >= 15 ? "d6" : "d4";
+                                    return `Action: Hurl insults at a target within 12 spaces. On a failed WIL save (DC 10+WIL), they take (${die}) psychic damage and have disadvantage on their next attack. ${level >= 15 ? "Add your WIL to the damage." : ""}`;
+                                }
+                            }
+                        }
+                    }
+                }
             ],
             scalingStats: {
-                vmDisplay: (level, subclass, state) => {
+                vmDie: (l) => "1d4",
+                vmBonus: (level, subclass, state) => {
                     const statsMap = getStatsMap(state);
-                    const die = (level >= 15 && subclass === "HeraldSnark") ? "1d6" : "1d4";
-                    let bonus = statsMap.int + (Math.floor(level / 5) * 2);
-                    if (level >= 15 && subclass === "HeraldSnark") bonus += statsMap.wil;
-                    return `${die}${bonus >= 0 ? "+" : ""}${bonus}`;
+                    return statsMap.int + (Math.floor(level / 5) * 2);
+                },
+                vmDisplay: (level, subclass, state, derived) => {
+                    // Logic for self-calculating if dependencies aren't resolved yet
+                    const d = derived.vmDie || "1d4";
+                    let b = derived.vmBonus;
+                    if (typeof b !== 'number') {
+                        const statsMap = getStatsMap(state);
+                        b = statsMap.int + (Math.floor(level / 5) * 2);
+                        if (level >= 15 && subclass === "HeraldSnark") b += statsMap.wil;
+                    }
+                    return `${d}${b >= 0 ? "+" : ""}${b}`;
                 }
+            },
+            mechanicPanelExtension: (builder, level, state, derived) => {
+                builder.addRollDisplay(derived.vmDisplay, 'Vicious Mockery', derived.vmDisplay, 'Range 12 | Taunts', { type: 'cantrip', school: 'Wind' });
             },
             statModifiers: [
                 { id: "heroic_ballad_max", stat: "inspirationBonus", value: 2, condition: (l, s, state) => (state.selectedLyrical || []).includes("Heroic Ballad") }
             ],
             spellSchools: ["Wind"],
             extraSchoolsKeys: ["secondarySchool"],
+            spellProgression: [1, 2, 4, 6, 8, 10, 13, 17, 19, 21],
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14, "selectedSubclassSpells"),
             resources: [
                 createManaResource('wil'),
                 createSimpleResource('inspiration', 'Inspiration', (level, stats, state) => {
@@ -140,8 +177,8 @@ class SongweaverClass extends BaseClass {
             )
         }));
 
-        core[4].push({ id: "lyrical", name: "Lyrical Weaponry", type: "dynamic_choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", milestones: [4, 9, 13, 17], desc: "Choose abilities from the Lyrical Weaponry list as you level up.", getCount: (level) => level >= 17 ? 4 : level >= 13 ? 3 : level >= 9 ? 2 : 1 });
-        core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "Choose friends you can temporarily summon via song (1/Safe Rest each).", getCount: (level) => 2 });
+        core[4].push({ id: "lyrical", name: "Lyrical Weaponry", type: "dynamic_choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", milestones: [4, 9, 13, 17], desc: "Choose abilities from the Lyrical Weaponry list as you level up.", getCount: createStandardCount([4, 9, 13, 17]) });
+        core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "Choose friends you can temporarily summon via song (1/Safe Rest each).", getCount: createStandardCount([5]) });
 
         core[20].push({ id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 of your stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." });
 
@@ -159,25 +196,6 @@ class SongweaverClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Renders the Mana, Inspiration, and Vicious Mockery displays for the Songweaver's mechanic panel.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} derived - Derived statistics.
-     * @returns {string} HTML string.
-     */
-    getMechanicPanelHTML(level, subclass, state, derived) {
-        const builder = new PanelBuilder();
-
-        builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
-        builder.addResource('inspiration', 'Inspiration', state.resourceValues.inspiration, derived.resourceMaxes.inspiration);
-
-        builder.addRollDisplay(derived.vmDisplay, 'Vicious Mockery', derived.vmDisplay, 'Range 12 | Taunts', { type: 'cantrip', school: 'Wind' });
-
-        return builder.build();
     }
 }
 
