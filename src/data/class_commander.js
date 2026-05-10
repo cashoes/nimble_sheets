@@ -143,6 +143,18 @@ class CommanderClass extends BaseClass {
                 "Slashing": { desc: "Your attacks with slashing weapons cannot miss unarmored enemies." },
                 "Bludgeoning": { desc: "When your primary die rolls a 7 or higher with a bludgeoning weapon, ignore Heavy Armor." },
                 "Piercing": { desc: "Your attacks with piercing weapons ignore Medium Armor." }
+            },
+            combatAbilities: {
+                "Face Me!": { desc: "Reaction (after an ally is crit within 12 spaces): Taunt that enemy until you drop to 0 HP." },
+                "Hold the Line!": { desc: "(1/encounter) Reaction (when an ally drops to 0 HP): Command them to continue the fight! Set their HP to 3x LVL." },
+                "I Can Do This ALL DAY!": { desc: "(1/encounter) Reaction (when you would drop to 0 HP): You may expend any number of Hit Dice and set your HP to the sum rolled instead (do not add your STR)." },
+                "Move it! Move it!": { desc: "When you roll Initiative you may give yourself and an ally advantage on the roll and +3 speed for 1 round." },
+                "Reposition!": { desc: "Action/Reaction (on an ally’s turn): Command 1 ally to move up to their speed (or 2 allies up to half their speed) for free." },
+                "Commanding Presence": { desc: "Action: Shout a command up to 2 words long at an enemy. On a failed WIL save (DC 10+STR), they must spend their entire next turn obeying it to the best of their ability." },
+                "Heavy Strike": { desc: "When you hit, push a Medium creature STR spaces and deal extra damage equal to a roll of your Combat Die." },
+                "Inerrant Strike": { desc: "Reroll a missed attack, add 1 to the Primary Die, and deal extra damage equal to a roll of your Combat Die." },
+                "Lunging Strike": { desc: "Gain +1 Reach on an attack and deal extra damage equal to 2× a roll of your Combat Die." },
+                "Sweeping Strike": { desc: "2 actions: Select any contiguous area within your weapon’s Reach and damage ALL targets there." }
             }
         };
     }
@@ -198,17 +210,31 @@ class CommanderClass extends BaseClass {
                 id: "orders",
                 name: "Commander’s Orders",
                 type: "dynamic_choice",
-                collection: "orders",
                 stateKey: "selectedOrders",
-                milestones: [2],
-                desc: "Choose 2 Commander’s Orders.",
-                getCount: (level, subclass, state) => {
-                    let base = 1;
-                    if (level >= 2) base = 2;
-                    if (state && state.selectedTraining) {
-                        state.selectedTraining.forEach(t => { if (t === "+1 Order") base += 1; });
+                getSlots: (level, subclass, state) => {
+                    const slots = [];
+                    // Level 2 base
+                    if (level >= 2) {
+                        slots.push({ collection: 'orders', label: 'Order Selection' });
+                        slots.push({ collection: 'orders', label: 'Order Selection' });
                     }
-                    return base;
+                    
+                    if (subclass === "Spellblade") {
+                        (state.selectedTraining || []).forEach(t => {
+                            if (t === "+1 Order") slots.push({ collection: 'orders', label: 'Additional Order' });
+                        });
+                    } else {
+                        // Base Class "Fit for Any Battlefield" expansions
+                        if (level >= 4) slots.push({ collection: 'tactics', label: 'Combat Tactic' });
+                        [6, 8, 10, 12, 14, 16].forEach(m => {
+                            if (level >= m) slots.push({ collection: 'combatAbilities', label: 'Combat Ability' });
+                        });
+                    }
+                    return slots;
+                },
+                desc: (level, subclass) => {
+                    if (subclass === "Spellblade") return "Choose your Commander’s Orders.";
+                    return "Choose your Commander’s Orders and Combat Tactics.";
                 }
             },
             { id: "medic", name: "Field Medic", desc: "Roll 1 additional die for any health potion you administer. Whenever you or an ally spends any number of Hit Dice to recover HP, if you spent at least ten minutes examining their wounds, they can add your Examination bonus to the HP recovered." }
@@ -218,25 +244,19 @@ class CommanderClass extends BaseClass {
             id: "training",
             level: 4,
             name: (level, subclass) => subclass === "Spellblade" ? "Arcane Command" : "Fit for Any Battlefield",
-            type: "dynamic_choice",
-            collection: (level, subclass) => subclass === "Spellblade" ? "training" : "tactics",
-            stateKey: (level, subclass) => subclass === "Spellblade" ? "selectedTraining" : "selectedTactics",
+            type: (level, subclass) => subclass === "Spellblade" ? "dynamic_choice" : "static",
+            collection: "training",
+            stateKey: "selectedTraining",
             milestones: [4, 6, 8, 10, 12, 14, 16],
-            getCount: (level) => {
+            getCount: (level, subclass) => {
+                if (subclass !== "Spellblade") return 0;
                 let count = 0;
                 [4, 6, 8, 10, 12, 14, 16].forEach(m => { if (level >= m) count++; });
                 return count;
             },
             desc: (level, subclass, state, derived) => {
-                if (subclass === "Spellblade") {
-                    const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
-                    const rules = subConfig.featureExtensions?.["training"]?.empoweredRules || "";
-                    return `<div style="margin-top:8px; padding:8px; background:rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 4px; font-style: italic; color: #fff;">
-                        <strong>Empowered:</strong> ${rules}
-                    </div><div style="margin-top:10px;">Choose a training specialization:</div>`;
-                }
-                return FeatureGen.createScalingList(
-                    "Choose a Combat Tactic. When you roll Initiative, gain STR Combat Dice, each a d6. (1/attack) You may expend a Combat Die to perform a special maneuver. Combat Dice are lost when combat ends.",
+                const baseDesc = FeatureGen.createScalingList(
+                    "You gain access to specialized maneuvers on your <strong>Commander's Orders</strong> card. When you roll Initiative, gain STR Combat Dice, each a d6. (1/attack) You may expend a Combat Die to perform a special maneuver. Combat Dice are lost when combat ends.",
                     [
                         { level: 5, text: "Combat Tactics: Your Combat Dice are now d8s." },
                         { level: 9, text: "Combat Tactics (2): Your Combat Dice are now d10s." },
@@ -245,6 +265,15 @@ class CommanderClass extends BaseClass {
                     ],
                     level
                 );
+
+                if (subclass === "Spellblade") {
+                    const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
+                    const rules = subConfig.featureExtensions?.["training"]?.empoweredRules || "";
+                    return `${baseDesc}<div style="margin-top:12px; padding:10px; background:rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 4px; font-style: italic; color: #fff; font-size: 0.95em;">
+                        <strong>Empowered:</strong> ${rules}
+                    </div><div style="margin-top:10px; font-weight: bold; color: var(--gold-light); font-family: 'Cinzel'; font-size: 0.8em; text-transform: uppercase;">Choose training specialization:</div>`;
+                }
+                return baseDesc;
             }
         });
 
@@ -254,23 +283,16 @@ class CommanderClass extends BaseClass {
             id: "mastery", 
             name: "Weapon Mastery", 
             level: 6,
-            type: "dynamic_choice", 
-            collection: "masteries", 
-            stateKey: "selectedMastery", 
-            milestones: [6, 10, 14], 
-            getCount: (level, subclass) => {
-                if (subclass === "Spellblade") return 0;
-                let count = 0;
-                [6, 10, 14].forEach(m => { if (level >= m) count++; });
-                return count;
-            },
-            desc: (level) => FeatureGen.createScalingList(
-                "You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in.",
-                [
-                    { level: 14, text: "Weapon Mastery (3): You have complete mastery of all weapon types." }
-                ],
-                level
-            )
+            desc: (level, subclass) => {
+                if (subclass === "Spellblade") return "Handled by Arcane Command.";
+                return FeatureGen.createScalingList(
+                    "You may sheathe a weapon and draw a different one 2×/round for free. Your <strong>Commander’s Orders</strong> card now includes additional slots for Weapon Mastery options.",
+                    [
+                        { level: 14, text: "Weapon Mastery (3): You have complete mastery of all weapon types." }
+                    ],
+                    level
+                );
+            }
         });
 
         core[18] = [{ id: "unparalleled_tactics", name: "Unparalleled Tactics", desc: "The first time each encounter you use Coordinated Strike, an ally who can hear you also gains 1 action to use on their next turn." }];
