@@ -26,7 +26,6 @@ function renderModField() {
 
 /**
  * Adjusts the global Advantage/Disadvantage level.
- * @param {number} amt - Amount to change (usually 1 or -1).
  */
 function adjAdv(amt) { 
     state.advantage = Math.min(3, Math.max(-3, state.advantage + amt)); 
@@ -35,8 +34,26 @@ function adjAdv(amt) {
 }
 
 /**
+ * Formats spell tier string into graphical pips or utility label.
+ * @param {string} tier - The tier name (e.g., "Tier 3", "Utility").
+ * @param {string} school - The magic school (for coloring).
+ * @returns {string} HTML string containing pips or text.
+ */
+function formatPips(tier, school) {
+    if (!tier) return "";
+    if (tier.toLowerCase().includes('utility')) return "Utility";
+    if (tier.toLowerCase().includes('cantrip')) return "Cantrip";
+    
+    const tierNum = parseInt(tier.replace(/\D/g, '')) || 0;
+    let pips = "";
+    for (let i = 0; i < tierNum; i++) {
+        pips += "●";
+    }
+    return pips;
+}
+
+/**
  * Toggles an action point on the tracker.
- * @param {number} idx - Index of the action point clicked.
  */
 function toggleAction(idx) { 
     state.actionsSpent = (state.actionsSpent > idx) ? idx : idx + 1; 
@@ -49,7 +66,6 @@ function toggleAction(idx) {
 
 /**
  * Applies a CSS theme object to the document root.
- * @param {Object} theme - Map of CSS variable overrides.
  */
 function applyTheme(theme) {
     if (!theme) return;
@@ -64,8 +80,6 @@ function applyTheme(theme) {
 
 /**
  * Triggers a color-flash animation on a specific element.
- * @param {string} id - ID of the element to animate.
- * @param {'green'|'red'} type - Type of flash (success/failure).
  */
 function triggerAnimation(id, type) { 
     const el = document.getElementById(id); 
@@ -113,10 +127,6 @@ function updateBgSpell(val) {
 
 /**
  * Adjusts a class-specific resource (Mana, Lay on Hands, etc.).
- * @param {string} id - Resource ID.
- * @param {number} amt - Amount to change.
- * @param {number} max - Maximum capacity.
- * @param {boolean} isAbsolute - If true, treats amt as the new total.
  */
 function adjRes(id, amt, max, isAbsolute = false) { 
     let oldVal = state.resourceValues[id] || 0; 
@@ -132,7 +142,6 @@ function addQuickItem(cat, key) {
     let t = ITEM_TEMPLATES.data[key];
     if (!t) return;
     
-    // Deduct cost and update UI
     state.gold -= (t.cost || 0);
     if (document.getElementById('gold')) {
         document.getElementById('gold').value = state.gold;
@@ -232,7 +241,6 @@ function adjHP(a, isAbsolute = false) {
         state.hpCurrent = Math.min(max, Math.max(0, a));
     } else if (a < 0) {
         let dmg = Math.abs(a);
-        // Process Temp HP first
         if ((state.tempHP || 0) > 0) {
             const absorbed = Math.min(state.tempHP, dmg);
             state.tempHP -= absorbed;
@@ -280,15 +288,7 @@ function handleWoundClick(i) {
 }
 
 /**
- * GLOBAL DICE POOL HELPERS
- * Handles rolling and management of class-specific dice pools (Fury, Judgment).
- */
-
-/**
  * Recursive die roller with support for exploding dice.
- * @param {number} faces - Number of faces on the die.
- * @param {boolean} allowExplode - If true, max rolls roll again.
- * @returns {Object} Result with total and detailed string.
  */
 function _rollDie(faces, allowExplode = false) {
     let total = Math.floor(Math.random() * faces) + 1;
@@ -304,7 +304,6 @@ function _rollDie(faces, allowExplode = false) {
 
 /**
  * Adds a die to a specified pool.
- * Logic fills empty slots (from static pools) before appending.
  */
 function addPoolDie(key, max, faces) {
     if (!state[key]) state[key] = [];
@@ -313,7 +312,6 @@ function addPoolDie(key, max, faces) {
         (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
     const roll = _rollDie(faces, allowExplode);
 
-    // Fill first empty slot if exists, otherwise push
     const emptyIdx = state[key].findIndex(d => d === null);
     if (emptyIdx !== -1) {
         state[key][emptyIdx] = roll;
@@ -327,7 +325,6 @@ function addPoolDie(key, max, faces) {
 
 /**
  * Removes a die from a pool.
- * If isStatic is true, sets to null to maintain position.
  */
 function removePoolDie(key, idx, isStatic = false) {
     if (!state[key]) return;
@@ -358,7 +355,6 @@ function maximizePoolDie(key, idx, faces) {
 
 /**
  * Rolls an entire pool at once.
- * Supports Advantage (roll extra and drop lowest) for Judgment Dice.
  */
 function rollPool(key, count, faces) {
     let finalDice = [];
@@ -372,7 +368,6 @@ function rollPool(key, count, faces) {
         finalDice.push(_rollDie(faces, allowExplode));
     }
 
-    // Process Advantage: remove the lowest single die result
     if (hasAdv) {
         let minVal = Math.min(...finalDice.map(d => d.total));
         let minIdx = finalDice.findIndex(d => d.total === minVal);

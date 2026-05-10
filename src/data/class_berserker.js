@@ -10,10 +10,10 @@ class BerserkerClass extends BaseClass {
     constructor() {
         super({
             name: "Berserker",
-            subtitle: "Avatar of rage, fury, and raw power",
+            subtitle: "An unstoppable force of wrath and ruin",
             keyStats: ['str', 'dex'],
             saves: { adv: 'str', dis: 'int' },
-            proficiencies: { armor: "None", weapons: "All Simple & Martial Weapons" },
+            proficiencies: { armor: "None", weapons: "all STR weapons" },
             baseHp: 20,
             hpPerLevel: 10,
             hitDie: 12,
@@ -28,29 +28,23 @@ class BerserkerClass extends BaseClass {
             initialStats: { baseStr: 3, baseDex: 1, baseInt: -1, baseWil: 0 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "Slayer", label: "Path of the Slayer", accent: "#f87171" },
-                { value: "Juggernaut", label: "Path of the Juggernaut", accent: "#451a03" }
+                { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#451a03" },
+                { value: "RedMist", label: "Path of the Red Mist", accent: "#f87171" }
             ],
             scalingStats: {
-                furyMax: { 1: 2, 6: 3, 9: 4, 13: 5, 17: 6 },
-                furyText: { 1: "d4", 6: "d6", 9: "d8", 13: "d10", 17: "d12" }
+                furyMax: (level, subclass, state) => {
+                    const statsMap = getStatsMap(state);
+                    return Math.max(statsMap.str, statsMap.dex);
+                },
+                furyGain: { 1: 1, 5: 2 },
+                furyFaces: { 1: 4, 6: 6, 9: 8, 13: 10, 17: 12 },
+                furyText: (level, subclass, state, derived) => `d${derived.furyFaces}`
             },
             statModifiers: [
                 { id: "berserker_unarmored", stat: "armorBase", condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state), getMod: (stats) => 10 + stats.dex + stats.str },
                 { id: "eager_init", stat: "initAdv", condition: (l, s, state) => (state.selectedArsenal || []).includes("Eager for Battle") },
-                { id: "mighty_wounds", stat: "woundMax", value: 4, condition: (l, s, state) => (state.selectedArsenal || []).includes("Mighty Endurance") }
-            ],
-            rollTriggers: [
-                {
-                    condition: (label, options) => options.isFury,
-                    getMod: (state, options) => {
-                        const arsenal = state.selectedArsenal || [];
-                        if (arsenal.includes("Cruel Critical") && options.isCrit) {
-                            return 10;
-                        }
-                        return 0;
-                    }
-                }
+                { id: "mighty_wounds", stat: "woundMax", value: 4, condition: (l, s, state) => (state.selectedArsenal || []).includes("Mighty Endurance") },
+                { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "RedMist" && l >= 15 }
             ],
             resources: [],
             featuresData: BerserkerClass.FEATURES,
@@ -60,71 +54,90 @@ class BerserkerClass extends BaseClass {
 
     /**
      * Defines choice-based options for the Berserker class (Savage Arsenal).
-     * @returns {Object} Dictionary of class options.
      */
     static get OPTIONS() {
         return {
             savageArsenal: {
-                "Bloodthirst": { desc: "When you hit with a melee weapon attack, you regain HP equal to your STR modifier (minimum 1)." },
-                "Cruel Critical": { desc: "Your Fury dice deal an additional +10 damage on a critical hit." },
-                "Eager for Battle": { desc: "You have advantage on Initiative rolls." },
-                "Mighty Endurance": { desc: "Your maximum Wounds increases by +4." },
-                "Whirlwind Strike": { desc: "Action: Make a melee weapon attack against every creature within 1 space of you." }
+                "Death Blow": { desc: "After you deal damage from a crit, you may expend any number of Fury Dice. Sum the dice and deal double that amount of damage." },
+                "Deathless Rage": { desc: "(1/turn) While Dying, you may suffer 1 Wound to gain 1 action." },
+                "Eager for Battle": { desc: "Gain advantage on Initiative. Move 2×DEX spaces for free on your first turn each encounter." },
+                "Into the Fray": { desc: "Action: Leap up to 2×DEX spaces toward an enemy. If you land adjacent to at least 2 enemies, make an attack against 1 of them for free." },
+                "Mighty Endurance": { desc: "You can now survive an additional 4 Wounds before death." },
+                "MORE BLOOD!": { desc: "Whenever an enemy crits you, gain 1 Fury Die." },
+                "Rampage": { desc: "(1/turn) After you land a hit, you may treat your next attack this turn as if you rolled that same amount instead of rolling again." },
+                "Swift Fury": { desc: "Whenever you gain one or more Fury Dice, move up to DEX spaces for free, ignoring difficult terrain." },
+                "Thunderous Steps": { desc: "After moving at least 4 spaces while Raging, you may deal STR Bludgeoning damage to all adjacent creatures where you stop." },
+                "Unstoppable Force": { desc: "While Dying and Raging, taking damage causes 1 Wound (instead of 2) and critical hits inflict 2 Wounds (instead of 3)." },
+                "Whirlwind": { desc: "2 actions: Attack ALL targets within your melee weapon’s reach." },
+                "You’re Next!": { desc: "Action: While Raging, you can make a Might skill check to demoralize an enemy within Reach 12 (DC: their current HP). On a success, they immediately flee the battle." }
             }
         };
     }
 
     /**
      * Defines the core and subclass features for the Berserker class.
-     * @returns {Object} Core and subclass feature data.
      */
     static get FEATURES() {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or DEX', 'INT or WIL', false);
 
         core[1] = [
-            { id: "rage", name: "Berserker Rage", desc: "Action: Enter a rage for 1 minute. While raging, you have resistance to bludgeoning, piercing, and slashing damage. You cannot cast spells or concentrate." },
-            { id: "fury", name: "Fury Dice", desc: (level, subclass, state, derived) => `(<strong>${derived.furyMax}</strong> ${derived.furyText}) While raging, you gain a Fury die whenever you hit with a melee attack or take damage. You can expend all Fury dice on a hit to deal extra damage.` }
+            { 
+                id: "rage", 
+                name: "Rage", 
+                desc: (level, subclass, state, derived) => {
+                    const gain = derived.furyGain || 1;
+                    return `(1/turn) Action: Roll ${gain} Fury Die (1d${derived.furyFaces}) and set it aside. Add it to every STR attack you make. You can have a max of KEY (<strong>${derived.furyMax}</strong>) Fury Dice; they are lost when your Rage ends.`;
+                }
+            },
+            { id: "that_all", name: "That all you got?!", desc: "When you are attacked, you may expend 1 or more Fury Dice to reduce the damage taken by STR+DEX for each die spent." }
         ];
+        core[2] = [
+            { id: "intensifying", name: "Intensifying Fury", desc: "If you are Raging at the beginning of your turn, roll 1 Fury Die for free." },
+            { id: "ancients", name: "One with the Ancients", desc: "(1/Safe Rest) When faced with a decision about which direction or course of action to take, you can call upon your ancestors to guide you toward the most dangerous or challenging path." }
+        ];
+        core[3].push({ id: "bloodlust", name: "Bloodlust", desc: "Expend 1 or more Fury Dice on your turn, move DEX spaces per die spent for free." });
+        core[4].push({ id: "enduring", name: "Enduring Rage", desc: "While Dying, you Rage automatically for free at the beginning of your turn, have a max of 2 actions instead of 1, and ignore the STR saves to make attacks." });
+        core[4].push({ id: "arsenal", name: "Savage Arsenal", type: "dynamic_choice", collection: "savageArsenal", stateKey: "selectedArsenal", milestones: [4, 6, 8, 10, 12, 14, 16], desc: "Choose a Savage Arsenal ability.", getCount: createStandardCount([4, 6, 8, 10, 12, 14, 16]) });
 
-        core[2].push({ id: "unarmored", name: "Unarmored Defense", desc: "While you are not wearing armor, your Armor Class equals 10 + your DEX + your STR modifier." });
-        
-        core[4].push({ id: "arsenal", name: "Savage Arsenal", type: "dynamic_choice", collection: "savageArsenal", stateKey: "selectedArsenal", milestones: [4, 10, 16], desc: "Choose a Savage Arsenal ability as you level up.", getCount: createStandardCount([4, 10, 16]) });
+        core[18] = [{ id: "deep_rage", name: "DEEP RAGE", desc: "Dropping to 0 HP does not cause your Rage to end." }];
+        core[20].push({ id: "boundless", name: "BOUNDLESS RAGE", desc: "+1 to any 2 of your stats. Anytime you roll less than 6 on a Fury Die, change it to 6 instead." });
 
-        core[5].push({ id: "extra_attack", name: "Extra Attack", desc: "You can attack twice, instead of once, whenever you take the attack action on your turn." });
-
-        core[18] = [{ id: "indomitable", name: "Indomitable Will", desc: "While raging, you have advantage on all WIL saves and cannot be Charmed or Frightened." }];
-        core[20].push({ id: "avatar", name: "Avatar of Slaughter", desc: "+1 to any 2 stats. When you roll Initiative, you immediately gain your maximum number of Fury dice." });
-
-        subclasses["Slayer"] = {
-            3: [{ id: "execution", name: "Execute", desc: "When you hit a creature with fewer than half its maximum HP, you deal an extra 1d10 damage." }],
-            7: [{ id: "ferocity", name: "Feral Instinct", desc: "You have advantage on all DEX saves while raging." }],
-            11: [{ id: "bloodlust", name: "Bloodlust", desc: "Whenever you drop a creature to 0 HP, you can move half your speed and make one melee attack for free." }],
-            15: [{ id: "death_blow", name: "Death Blow", desc: "When you hit a creature with your Fury dice, and the total damage exceeds its remaining HP, the creature is instantly decapitated or destroyed." }]
+        subclasses["Mountainheart"] = {
+            3: [
+                { id: "stone_resilience", name: "Stone’s Resilience", desc: "Whenever you expend Fury Dice to reduce incoming damage, add the value of the die to the amount reduced." },
+                { id: "tenacity", name: "Mountainous Tenacity", desc: "Whenever you expend your Hit Dice to recover HP, for every 10 HP you would recover, you may heal 1 Wound instead." }
+            ],
+            7: [{ id: "unbreakable", name: "Unbreakable", desc: "(1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don’t." }],
+            11: [{ id: "titan", name: "Titan’s Fury", desc: "After you miss an attack or are crit by an enemy, Rage for free." }],
+            15: [{ id: "mountain_endurance", name: "Mountain’s Endurance", desc: "While Dying, if an attack against you would be a crit, the attack is rerolled instead (when-crit abilities, such as Titan’s Fury, still trigger)." }]
         };
-        subclasses["Juggernaut"] = {
-            3: [{ id: "heavy", name: "Heavy Hitter", desc: "You ignore the 'Heavy' property of weapons. Your weapon attacks push creatures 1 space on hit." }],
-            7: [{ id: "shield", name: "Shield of Rage", desc: "While raging, you gain temporary HP equal to your STR modifier at the start of each of your turns." }],
-            11: [{ id: "immovable", name: "Unyielding", desc: "You cannot be moved or knocked prone against your will while raging." }],
-            15: [{ id: "siege", name: "Siege Monster", desc: "You deal double damage to objects and structures. Your weapon attacks ignore all armor on a roll of 18-20." }]
+        subclasses["RedMist"] = {
+            3: [
+                { id: "blood_frenzy", name: "Blood Frenzy", desc: "(1/turn) While Raging, whenever you crit or kill an enemy, change 1 Fury Die to the maximum." },
+                { id: "savage_awareness", name: "Savage Awareness", desc: "Advantage on Perception checks to notice or track down blood. Blindsight 2 while Raging: you ignore the Blinded condition and can see through darkness and Invisibility within that Range." }
+            ],
+            7: [{ id: "unstoppable_brutality", name: "Unstoppable Brutality", desc: "While Raging, you may gain 1 Wound to reroll any attack or save." }],
+            11: [{ id: "opp_frenzy", name: "Opportunistic Frenzy", desc: "While Raging, you can make opportunity attacks without disadvantage, and you may make them whenever an enemy enters your melee weapon’s reach." }],
+            15: [{ id: "onslaught", name: "Onslaught", desc: "While Raging, gain +2 speed. (1/round) you may move for free." }]
         };
 
         return { core, subclasses };
     }
 
     /**
-     * Renders the Fury Dice pool and total damage display for the Berserker's mechanic panel.
+     * Renders the Fury Dice pool for the Berserker's mechanic panel.
      */
     getMechanicPanelHTML(level, subclass, state, derived) {
-        const builder = super.getMechanicPanelHTML(level, subclass, state, derived);
+        const builder = new PanelBuilder();
         const totalFury = (state.furyDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
 
         builder.addDicePool(
-            state.furyDice,
-            'Fury Dice',
+            state.furyDice || [],
+            'Fury',
             derived.furyText,
             'furyDice',
             derived.furyMax,
-            { static: true }
+            { static: true, rollAll: true }
         );
 
         builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.');

@@ -10,10 +10,10 @@ class CommanderClass extends BaseClass {
     constructor() {
         super({
             name: "Commander",
-            subtitle: "Fearless leader, tactician, & weapon master",
+            subtitle: "An academy-trained battlefield tactician",
             keyStats: ['str', 'int'],
             saves: { adv: 'str', dis: 'dex' },
-            proficiencies: { armor: "Mail, Shields", weapons: "All Martial Weapons" },
+            proficiencies: { armor: "Mail Armor, Shields", weapons: "All Martial Weapons" },
             baseHp: 17,
             hpPerLevel: 8,
             hitDie: 10,
@@ -35,8 +35,7 @@ class CommanderClass extends BaseClass {
                     accent: "#dc2626",
                     config: {
                         scalingStats: {
-                            bonusCombatDice: (l) => l >= 11 ? 1 : 0,
-                            bonusCoordStrike: (l) => l >= 7 ? 1 : 0
+                            bonusCombatDice: (l) => l >= 11 ? 1 : 0
                         }
                     }
                 },
@@ -45,8 +44,12 @@ class CommanderClass extends BaseClass {
                     label: "Spellblade", 
                     accent: "#8b5cf6",
                     config: {
-                        spellProgression: [0, 3, 7, 11, 15],
-                        useMana: true,
+                        spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
+                        includeUtilitySpells: createUtilityConfig(null, ["selectedDeepKnowledge"]),
+                        includeTieredSpells: ["selectedDeepKnowledge"],
+                        resources: [
+                            createManaResource('int')
+                        ],
                         statModifiers: [
                             {
                                 id: "spellblade_fly",
@@ -77,47 +80,36 @@ class CommanderClass extends BaseClass {
                             }
                         },
                         featureExtensions: {
-                            "coord_strike": {
-                                empoweredRules: "(Withering Strike) Any attacks made this way deal additional Necrotic damage equal to the max value of your Combat Die (cdType). An enemy damaged this way is considered undead for 1 round."
-                            },
-                            "deep_knowledge": {
-                                trainingBudgetKey: "selectedTraining",
-                                trainingMatch: "+1 Tier 1 Spell"
+                            "training": {
+                                empoweredRules: "Whenever you could choose a Combat Tactic or Weapon Mastery, instead choose another Commander’s Order or a tier 1 (or lower) spell from any spell school. Your Commander’s Orders are also empowered with magical power."
                             }
                         },
                         mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                            builder.addStatDisplay(derived.cdType, 'Combat Die', 'Reference for Spells');
                             const orders = state.selectedOrders || [];
                             if (orders.includes("Face Me!")) builder.addRollDisplay(`${statsMap.str}d8`, 'Radiant Order', `${statsMap.str}d8`, 'Radiant / Taunt', { type: 'attack', school: 'Radiant' });
                             if (orders.includes("I Can Do This ALL DAY!")) builder.addRollDisplay('HD', 'Fire Order', 'Sum HD', 'Fire / Smolder', { type: 'attack', school: 'Fire' });
-                            if (orders.includes("Hold the Line!")) builder.addStatDisplay(3 * level, 'Rally HP', 'Set HP & Temp HP', { borderLeft: true, color: '#22c55e' });
+                            if (orders.includes("Hold the Line!")) builder.addStatDisplay(3 * level, 'Rally HP', 'Set HP & Temp HP', { color: '#22c55e' });
                         }
                     }
                 }
             ],
             scalingStats: {
-                cdType: { 1: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" },
-                bonusCombatDice: 0,
-                bonusCoordStrike: 0
+                cdType: { 4: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" },
+                bonusCombatDice: 0
             },
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
-                const subConfig = CLASS_CONFIG.getSubclassConfig(state.subclass, state);
-                if (!subConfig.useMana) {
-                    builder.addRollDisplay('1' + derived.cdType, 'Combat Die', derived.cdType, `${state.resourceValues.combatDice || 0}/${derived.resourceMaxes.combatDice}`, { type: 'attack', stat: 'str' });
-                }
-                builder.addStatDisplay(10 + statsMap.str, 'Tactical DC', '10+STR save DC.', { borderLeft: true });
+                builder.addStatDisplay(10 + statsMap.str, 'Tactical DC', '10+STR save DC.');
             },
             statModifiers: [
                 { id: "move_it_bonus", stat: "initAdv", condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") },
                 { id: "move_it_speed", stat: "speed", value: 3, condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") }
             ],
-            spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18], 
-            extraSchoolsKeys: [],
-            includeUtilitySpells: createUtilityConfig(null, ["selectedDeepKnowledge"]),
-            includeTieredSpells: ["selectedDeepKnowledge"],
             resources: [
-                createSimpleResource('combatDice', 'Combat Dice', (level, stats, state, subclass, derived) => stats.str + (derived.bonusCombatDice || 0)),
-                createSimpleResource('coordStrike', 'Coord. Strike', (level, stats, state, subclass, derived) => stats.int + (level >= 9 ? 1 : 0) + (level >= 13 ? 1 : 0) + (level >= 17 ? 1 : 0) + (derived.bonusCoordStrike || 0)),
-                createManaResource('int')
+                createSimpleResource('combatDice', 'Combat Dice', (level, stats, state, subclass, derived) => {
+                    if (level < 4 || subclass === "Spellblade") return 0;
+                    return stats.str + (derived.bonusCombatDice || 0);
+                })
             ],
             featuresData: CommanderClass.FEATURES,
             optionsData: CommanderClass.OPTIONS
@@ -189,17 +181,18 @@ class CommanderClass extends BaseClass {
                     }, level, derived.statsMap);
 
                     return FeatureGen.createScalingList(
-                        `You gain the Coordinated Strike! Commander's Order (see card below).<div style="margin-top:10px;">${orderCard}</div>`,
+                        `Gain the Coordinated Strike! Commander's Order (see card below).<div style="margin-top:10px;">${orderCard}</div>`,
                         [
-                            { level: 9, text: "Master Commander: +1 use of Coordinated Strike/Safe Rest." },
-                            { level: 13, text: "Master Commander: +2 uses of Coordinated Strike/Safe Rest." },
-                            { level: 17, text: "Master Commander: +3 uses of Coordinated Strike/Safe Rest." }
+                            { level: 9, text: "Master Commander (2): +1 use of Coordinated Strike/Safe Rest." },
+                            { level: 13, text: "Master Commander (3): +2 uses of Coordinated Strike/Safe Rest." },
+                            { level: 17, text: "Master Commander (4): +3 uses of Coordinated Strike/Safe Rest." }
                         ],
                         level
                     );
                 }
             }
         ];
+
         core[2] = [
             {
                 id: "orders",
@@ -208,34 +201,77 @@ class CommanderClass extends BaseClass {
                 collection: "orders",
                 stateKey: "selectedOrders",
                 milestones: [2],
-                desc: "Choose Commander's Orders.",
-                getCount: (level, subclass, state) => createStandardCount([2], [{ stateKey: "selectedTraining", match: "+1 Order" }])(level, subclass, state)
+                desc: "Choose 2 Commander’s Orders.",
+                getCount: (level, subclass, state) => {
+                    let base = 1;
+                    if (level >= 2) base = 2;
+                    if (state && state.selectedTraining) {
+                        state.selectedTraining.forEach(t => { if (t === "+1 Order") base += 1; });
+                    }
+                    return base;
+                }
             },
             { id: "medic", name: "Field Medic", desc: "Roll 1 additional die for any health potion you administer. Whenever you or an ally spends any number of Hit Dice to recover HP, if you spent at least ten minutes examining their wounds, they can add your Examination bonus to the HP recovered." }
         ];
+        
         core[4].push({
-            id: "tactics",
-            name: "Fit for Any Battlefield",
+            id: "training",
+            level: 4,
+            name: (level, subclass) => subclass === "Spellblade" ? "Arcane Command" : "Fit for Any Battlefield",
             type: "dynamic_choice",
-            collection: "tactics",
-            stateKey: "selectedTactics",
+            collection: (level, subclass) => subclass === "Spellblade" ? "training" : "tactics",
+            stateKey: (level, subclass) => subclass === "Spellblade" ? "selectedTraining" : "selectedTactics",
             milestones: [4, 6, 8, 10, 12, 14, 16],
-            getCount: (level, subclass, state) => createStandardCount([4, 6, 8, 10, 12, 14, 16])(level, subclass, state),
+            getCount: (level) => {
+                let count = 0;
+                [4, 6, 8, 10, 12, 14, 16].forEach(m => { if (level >= m) count++; });
+                return count;
+            },
+            desc: (level, subclass, state, derived) => {
+                if (subclass === "Spellblade") {
+                    const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
+                    const rules = subConfig.featureExtensions?.["training"]?.empoweredRules || "";
+                    return `<div style="margin-top:8px; padding:8px; background:rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 4px; font-style: italic; color: #fff;">
+                        <strong>Empowered:</strong> ${rules}
+                    </div><div style="margin-top:10px;">Choose a training specialization:</div>`;
+                }
+                return FeatureGen.createScalingList(
+                    "Choose a Combat Tactic. When you roll Initiative, gain STR Combat Dice, each a d6. (1/attack) You may expend a Combat Die to perform a special maneuver. Combat Dice are lost when combat ends.",
+                    [
+                        { level: 5, text: "Combat Tactics: Your Combat Dice are now d8s." },
+                        { level: 9, text: "Combat Tactics (2): Your Combat Dice are now d10s." },
+                        { level: 13, text: "Combat Tactics (3): Your Combat Dice are now d12s." },
+                        { level: 17, text: "Combat Tactics (4): Your Combat Dice are now d20s." }
+                    ],
+                    level
+                );
+            }
+        });
+
+        core[5].push({ id: "master_commander", name: "Master Commander", desc: "When you roll Initiative, regain 1 spent use of Coordinated Strike (it is lost if not spent during that encounter). Attacks made from your Coordinated Strikes also now ignore disadvantage." });
+        
+        core[6].push({ 
+            id: "mastery", 
+            name: "Weapon Mastery", 
+            level: 6,
+            type: "dynamic_choice", 
+            collection: "masteries", 
+            stateKey: "selectedMastery", 
+            milestones: [6, 10, 14], 
+            getCount: (level, subclass) => {
+                if (subclass === "Spellblade") return 0;
+                let count = 0;
+                [6, 10, 14].forEach(m => { if (level >= m) count++; });
+                return count;
+            },
             desc: (level) => FeatureGen.createScalingList(
-                "Choose a Combat Tactic. When you roll Initiative, gain STR Combat Dice. (1/attack) You may expend a Combat Die to perform a special maneuver. Combat Dice are lost when combat ends.",
+                "You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in.",
                 [
-                    { level: 4, text: "Your Combat Dice are d6s." },
-                    { level: 5, text: "Your Combat Dice are now d8s." },
-                    { level: 9, text: "Your Combat Dice are now d10s." },
-                    { level: 13, text: "Your Combat Dice are now d12s." },
-                    { level: 17, text: "Your Combat Dice are now d20s." }
+                    { level: 14, text: "Weapon Mastery (3): You have complete mastery of all weapon types." }
                 ],
                 level
             )
         });
-
-        core[5].push({ id: "master_commander", name: "Master Commander", desc: "When you roll Initiative, regain 1 spent use of Coordinated Strike (it is lost if not spent during that encounter). Attacks made from your Coordinated Strikes also now ignore disadvantage." });
-        core[6].push({ id: "mastery", name: "Weapon Mastery", type: "dynamic_choice", collection: "masteries", stateKey: "selectedMastery", milestones: [6, 10, 14], getCount: (level, subclass, state) => createStandardCount([6, 10, 14])(level, subclass, state), desc: "You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in." });
 
         core[18] = [{ id: "unparalleled_tactics", name: "Unparalleled Tactics", desc: "The first time each encounter you use Coordinated Strike, an ally who can hear you also gains 1 action to use on their next turn." }];
         core[20].push({ id: "captain_of_legions", name: "Captain of Legions", desc: "+1 to any 2 of your stats. The first time each encounter you use Coordinated Strike, EVERY ally within 12 spaces gains +1 action (replaces Unparalleled Tactics)." });
@@ -249,25 +285,16 @@ class CommanderClass extends BaseClass {
             11: [{ id: "taunting_strike", name: "Taunting Strike", desc: "(1/turn) You may Taunt a creature you hit until the end of their next turn." }],
             15: [{ id: "shield_wall", name: "Shield Wall", desc: "Allies within 2 spaces gain ALL the benefits of the shield you have equipped." }]
         };
+
         subclasses["Vanguard"] = {
             3: [{ id: "advance", name: "Advance!", desc: "(1/round) After you move toward an enemy, gain advantage on the first melee attack you make against it. When you use your Coordinated Strike, you and all allies within 12 spaces can first move up to half their speed for free." }],
             7: [{ id: "exp_commander", name: "Experienced Commander", desc: "Your Coordinated Strike may target 1 additional ally. Gain +1 use of Coordinated Strike/Safe Rest." }],
             11: [{ id: "survey_battlefield", name: "Survey the Battlefield", desc: "When you roll Initiative, regain 1 use of Coordinated Strike. +1 max Combat Dice." }],
             15: [{ id: "as_one", name: "As One!", desc: "Attacks made with your Coordinated Strike also grant advantage and ignore all disadvantage. Your chosen allies gain 1 additional action to use on their next turn." }]
         };
+
         subclasses["Spellblade"] = {
             3: [
-                {
-                    id: "arcane_command",
-                    replaces: ["tactics", "mastery"],
-                    name: "Arcane Command",
-                    type: "dynamic_choice",
-                    collection: "training",
-                    stateKey: "selectedTraining",
-                    milestones: [4, 6, 6, 8, 10, 10, 12, 14, 14, 16],
-                    getCount: (level, subclass, state) => createStandardCount([4, 6, 6, 8, 10, 10, 12, 14, 14, 16])(level, subclass, state),
-                    desc: "Whenever you could choose a Combat Tactic or Weapon Mastery, instead choose another Commander’s Order or a Tier 1 Spell."
-                },
                 {
                     id: "firebrand",
                     name: "Firebrand",
@@ -280,34 +307,26 @@ class CommanderClass extends BaseClass {
                     spellType: "paired",
                     stateKey: "selectedDeepKnowledge",
                     getCount: (level, subclass, state) => {
-                        const baseCount = createStandardCount([3, 7, 11, 15])(level, subclass, state);
+                        let base = 0;
+                        [3, 7, 11, 15].forEach(m => { if (level >= m) base++; });
                         let extra = 0;
-                        const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
-                        const ext = subConfig.featureExtensions?.["deep_knowledge"];
-                        if (ext?.trainingBudgetKey) {
-                            (state[ext.trainingBudgetKey] || []).forEach(choice => {
-                                if (choice === ext.trainingMatch) extra += 1;
-                            });
+                        if (state && state.selectedTraining) {
+                            state.selectedTraining.forEach(t => { if (t === "+1 Tier 1 Spell") extra += 1; });
                         }
-                        return (baseCount * 2) + extra;
+                        return (base * 2) + extra;
                     },
                     getSlots: (level, subclass, state) => {
                         const slots = [];
-                        const baseCount = createStandardCount([3, 7, 11, 15])(level, subclass, state);
+                        let base = 0;
+                        [3, 7, 11, 15].forEach(m => { if (level >= m) base++; });
                         const tiers = [1, 2, 3, 4];
-
-                        for (let i = 0; i < baseCount; i++) {
+                        for (let i = 0; i < base; i++) {
                             slots.push({ type: 'utility', label: 'Utility Selection' });
                             slots.push({ type: 'tiered', tier: tiers[i] || 4, label: 'Tiered Selection' });
                         }
-
-                        const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
-                        const ext = subConfig.featureExtensions?.["deep_knowledge"];
-                        if (ext?.trainingBudgetKey) {
-                            (state[ext.trainingBudgetKey] || []).forEach(choice => {
-                                if (choice === ext.trainingMatch) {
-                                    slots.push({ type: 'tiered', tier: 1, label: ext.trainingMatch });
-                                }
+                        if (state && state.selectedTraining) {
+                            state.selectedTraining.forEach(t => {
+                                if (t === "+1 Tier 1 Spell") slots.push({ type: 'tiered', tier: 1, label: '+1 Tier 1 Spell' });
                             });
                         }
                         return slots;
@@ -315,12 +334,11 @@ class CommanderClass extends BaseClass {
                     schools: ["Fire", "Ice", "Lightning", "Radiant", "Necrotic", "Wind"],
                     milestones: [3, 7, 11, 15],
                     desc: (level) => FeatureGen.createScalingList(
-                        "Choose 1 utility and 1 tiered spell for every level of Deep Knowledge you have unlocked.",
+                        "Choose any tier 1 (or lower) spell and any Utility Spell.",
                         [
-                            { level: 3, text: "Tier 1 spells." },
-                            { level: 7, text: "Tier 2 spells." },
-                            { level: 11, text: "Tier 3 spells." },
-                            { level: 15, text: "Tier 4 spells." }
+                            { level: 7, text: "Deep Knowledge (2): Choose any tier 2 (or lower) spell and any Utility Spell." },
+                            { level: 11, text: "Deep Knowledge (3): Choose any tier 3 (or lower) spell and any Utility Spell." },
+                            { level: 15, text: "Deep Knowledge (4): Choose any tier 4 (or lower) spell and any Utility Spell." }
                         ],
                         level
                     )

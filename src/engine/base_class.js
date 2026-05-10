@@ -105,11 +105,6 @@ class BaseClass {
 
     /**
      * Gets attribute overrides for the current state.
-     * @param {number} level - Current character level.
-     * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} statsMap - Current attribute map.
-     * @returns {Object} Stat overrides.
      */
     getStatOverrides(level, subclass, state, statsMap) {
         const overrides = {};
@@ -123,7 +118,7 @@ class BaseClass {
 
             if (levelMatch && subclassMatch && conditionMatch) {
                 const val = typeof mod.getMod === 'function' ? mod.getMod(statsMap, state, level) : (mod.value || 0);
-                if (mod.stat === 'initAdv' || mod.stat === 'modFlySpeed' || mod.stat === 'quickRestLoh' || mod.stat === 'panel_surge') {
+                if (['initAdv', 'modFlySpeed', 'quickRestLoh', 'panel_surge'].includes(mod.stat)) {
                     overrides[mod.stat] = val || true;
                 } else {
                     overrides[mod.stat] = (overrides[mod.stat] || 0) + val;
@@ -142,8 +137,9 @@ class BaseClass {
         const statsMap = getStatsMap(state);
         const subConfig = this.getSubclassConfig(subclass, state);
         
-        // 1. Automatically add all standard resources
-        (this.resources || []).forEach(res => {
+        // 1. Automatically add all standard resources (Base + Subclass)
+        const combinedResources = [...(this.resources || []), ...(subConfig.resources || [])];
+        combinedResources.forEach(res => {
             const max = derived.resourceMaxes[res.id];
             if (max > 0 || res.manual) {
                 builder.addResource(res.id, res.label, state.resourceValues[res.id], max);
@@ -261,10 +257,10 @@ class BaseClass {
     }
 
     getAvailableSpells(level, subclass, state, derived) {
-        if (!this.isCaster) return [];
-        
         const subConfig = this.getSubclassConfig(subclass, state);
-        const progression = subConfig.spellProgression || this.spellProgression || [1, 2, 4, 6, 8, 10, 12, 14, 16, 18];
+        const progression = subConfig.spellProgression || this.spellProgression;
+        if (!progression) return [];
+        
         const limits = this._getActiveStateKeyLimits(level, subclass, state);
         const schools = this.getKnownSchools(level, subclass, state, limits);
         const spells = [];
@@ -376,9 +372,9 @@ class BaseClass {
                             if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school: val });
                         });
                     } else {
-                        for (const [sSch, spellsList] of Object.entries(UTILITY_SPELLS)) {
-                            if (spellsList[val]) {
-                                if (!spells.find(s => s.name === val)) spells.push({ name: val, desc: spellsList[val], tier: "Utility", school: sSch });
+                        for (const [sSch, list] of Object.entries(UTILITY_SPELLS)) {
+                            if (list[val]) {
+                                if (!spells.find(s => s.name === val)) spells.push({ name: val, desc: list[val], tier: "Utility", school: sSch });
                                 break;
                             }
                         }
