@@ -213,7 +213,7 @@ class ShadowmancerClass extends BaseClass {
             spellType: "utility",
             schools: ["Necrotic"],
             stateKey: "selectedShadowmastery",
-            getCount: FeatureGen.createStandardCount([6, 8]),
+            getCount: (l) => l >= 14 ? 0 : (l >= 8 ? 2 : 1),
             milestones: [6, 8, 14],
             desc: (level) => FeatureGen.createScalingList(
                 "Choose a Necrotic Utility Spell.",

@@ -136,10 +136,13 @@ class ShepherdClass extends BaseClass {
                 stateKey: "selectedTwilight",
                 milestones: [3, 11],
                 getCount: (l) => l >= 11 ? 0 : 2,
-                getSlots: (level, subclass, state) => [
-                    { type: 'utility', schools: ["Necrotic"], label: 'Necrotic Utility' },
-                    { type: 'utility', schools: ["Radiant"], label: 'Radiant Utility' }
-                ],
+                getSlots: (level, subclass, state) => {
+                    if (level >= 11) return [];
+                    return [
+                        { type: 'utility', schools: ["Necrotic"], label: 'Necrotic Utility' },
+                        { type: 'utility', schools: ["Radiant"], label: 'Radiant Utility' }
+                    ];
+                },
                 desc: (l) => l >= 11 ? "You know all Necrotic and Radiant Utility Spells." : "Choose 1 Necrotic and 1 Radiant Utility Spell."
             })
         ];
