@@ -68,6 +68,10 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
         if (finalCount > 0) {
             let choiceHtml = `<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">`;
             let selection = state[sKey] || [];
+            
+            // Extract values taken in other slots of this feature to filter them out
+            const takenValues = selection.filter(v => v && v !== "None");
+            const allowDupes = feat.allowDuplicates || [];
 
             if (getSlots) {
                 getSlots.forEach((slot, idx) => {
@@ -78,6 +82,8 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                     const customLabel = slot.label;
                     const slotColl = slot.collection || collection;
                     
+                    const valuesToHide = takenValues.filter(v => v !== val && !allowDupes.includes(v));
+
                     let optsHtml = `<option value="None">-- Select Option --</option>`;
                     let optDesc = "";
 
@@ -86,19 +92,28 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                         const isGrouped = Array.isArray(slot.options[0]?.options);
                         if (isGrouped) {
                             slot.options.forEach(group => {
-                                optsHtml += `<optgroup label="${group.label}">`;
-                                group.options.forEach(opt => {
+                                const visibleOpts = group.options.filter(opt => {
                                     const optVal = typeof opt === 'string' ? opt : (opt.value || opt.name);
-                                    const optLab = typeof opt === 'string' ? opt : (opt.label || opt.name);
-                                    optsHtml += `<option value="${optVal}" ${val === optVal ? 'selected' : ''}>${optLab}</option>`;
+                                    return !valuesToHide.includes(optVal);
                                 });
-                                optsHtml += `</optgroup>`;
+
+                                if (visibleOpts.length > 0) {
+                                    optsHtml += `<optgroup label="${group.label}">`;
+                                    visibleOpts.forEach(opt => {
+                                        const optVal = typeof opt === 'string' ? opt : (opt.value || opt.name);
+                                        const optLab = typeof opt === 'string' ? opt : (opt.label || opt.name);
+                                        optsHtml += `<option value="${optVal}" ${val === optVal ? 'selected' : ''}>${optLab}</option>`;
+                                    });
+                                    optsHtml += `</optgroup>`;
+                                }
                             });
                         } else {
                             slot.options.forEach(opt => {
                                 const optVal = typeof opt === 'string' ? opt : (opt.value || opt.name);
                                 const optLab = typeof opt === 'string' ? opt : (opt.label || opt.name);
-                                optsHtml += `<option value="${optVal}" ${val === optVal ? 'selected' : ''}>${optLab}</option>`;
+                                if (!valuesToHide.includes(optVal)) {
+                                    optsHtml += `<option value="${optVal}" ${val === optVal ? 'selected' : ''}>${optLab}</option>`;
+                                }
                             });
                         }
                     }
@@ -112,7 +127,9 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
 
                         if (effectiveType === 'school') {
                             schools.forEach(school => {
-                                optsHtml += `<option value="${school}" ${val === school ? 'selected' : ''}>${school}</option>`;
+                                if (!valuesToHide.includes(school)) {
+                                    optsHtml += `<option value="${school}" ${val === school ? 'selected' : ''}>${school}</option>`;
+                                }
                             });
                         } else {
                             schools.forEach(school => {
@@ -130,6 +147,10 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                                     } else if (effectiveTier) {
                                         spells = spells.filter(([_, data]) => data.tier === `Tier ${effectiveTier}`);
                                     }
+
+                                    // Filter out taken spells
+                                    spells = spells.filter(([sName, _]) => !valuesToHide.includes(sName));
+
                                     if (spells.length > 0) {
                                         optsHtml += `<optgroup label="${school}">`;
                                         spells.forEach(([sName, _]) => {
@@ -145,7 +166,9 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                     else {
                         const options = Object.keys(optionsRef[slotColl] || {});
                         options.forEach(optName => {
-                            optsHtml += `<option value="${optName}" ${val === optName ? 'selected' : ''}>${optName}</option>`;
+                            if (!valuesToHide.includes(optName)) {
+                                optsHtml += `<option value="${optName}" ${val === optName ? 'selected' : ''}>${optName}</option>`;
+                            }
                         });
                     }
 
@@ -197,12 +220,17 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                 for (let i = 0; i < count; i++) {
                     let idx = (feat.startIndex || 0) + i;
                     let val = selection[idx] || "None";
+                    
+                    const valuesToHide = takenValues.filter(v => v !== val && !allowDupes.includes(v));
+                    
                     let optsHtml = `<option value="None">-- Select Option --</option>`;
 
                     if (feat.type === "spell_choice") {
                         if (feat.spellType === 'school') {
                             schools.forEach(school => {
-                                optsHtml += `<option value="${school}" ${val === school ? 'selected' : ''}>${school}</option>`;
+                                if (!valuesToHide.includes(school)) {
+                                    optsHtml += `<option value="${school}" ${val === school ? 'selected' : ''}>${school}</option>`;
+                                }
                             });
                         } else {
                             schools.forEach(school => {
@@ -211,6 +239,10 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                                     let spells = Object.entries(source[school]);
                                     if (feat.spellType === "cantrip") spells = spells.filter(([_, data]) => data.tier.toLowerCase().includes('cantrip'));
                                     else if (feat.tier) spells = spells.filter(([_, data]) => data.tier === `Tier ${feat.tier}`);
+                                    
+                                    // Filter out taken spells
+                                    spells = spells.filter(([sName, _]) => !valuesToHide.includes(sName));
+
                                     if (spells.length > 0) {
                                         optsHtml += `<optgroup label="${school}">`;
                                         spells.forEach(([sName, _]) => optsHtml += `<option value="${sName}" ${val === sName ? 'selected' : ''}>${sName}</option>`);
@@ -220,7 +252,11 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                             });
                         }
                     } else {
-                        Object.keys(optionsRef[collection] || {}).forEach(opt => optsHtml += `<option value="${opt}" ${val === opt ? 'selected' : ''}>${opt}</option>`);
+                        Object.keys(optionsRef[collection] || {}).forEach(opt => {
+                            if (!valuesToHide.includes(opt)) {
+                                optsHtml += `<option value="${opt}" ${val === opt ? 'selected' : ''}>${opt}</option>`;
+                            }
+                        });
                     }
 
                     // --- OPTION EXTENSIONS (v2.2 Subclass Encapsulation) ---
