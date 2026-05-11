@@ -137,7 +137,7 @@ class BerserkerClass extends BaseClass {
             derived.furyText,
             'furyDice',
             derived.furyMax,
-            { static: true, rollAll: true }
+            { static: true }
         );
 
         builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.');
