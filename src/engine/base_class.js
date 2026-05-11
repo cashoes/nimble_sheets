@@ -130,6 +130,14 @@ class BaseClass {
     }
 
     /**
+     * Gets all resources (Base + Subclass).
+     */
+    getCombinedResources(subclass, state) {
+        const subConfig = this.getSubclassConfig(subclass, state);
+        return [...(this.resources || []), ...(subConfig.resources || [])];
+    }
+
+    /**
      * Generates HTML for the class mechanic panel.
      */
     getMechanicPanelHTML(level, subclass, state, derived) {
@@ -138,11 +146,10 @@ class BaseClass {
         const subConfig = this.getSubclassConfig(subclass, state);
         
         // 1. Automatically add all standard resources (Base + Subclass)
-        const combinedResources = [...(this.resources || []), ...(subConfig.resources || [])];
-        combinedResources.forEach(res => {
+        this.getCombinedResources(subclass, state).forEach(res => {
             const max = derived.resourceMaxes[res.id];
             if (max > 0 || res.manual) {
-                builder.addResource(res.id, res.label, state.resourceValues[res.id], max);
+                builder.addResource(res.id, res.label, state.resourceValues[res.id], max, res.options || {});
             }
         });
 
@@ -283,7 +290,10 @@ class BaseClass {
         if (combinedReplacements.length > 0) {
             combinedReplacements.forEach(replacement => {
                 if (replacement.add) {
-                    const spellData = SPELL_REGISTRY[replacement.school]?.[replacement.add] || (UTILITY_SPELLS[replacement.school] ? { desc: UTILITY_SPELLS[replacement.school][replacement.add], tier: "Utility" } : null);
+                    let spellData = SPELL_REGISTRY[replacement.school]?.[replacement.add];
+                    if (!spellData && UTILITY_SPELLS[replacement.school]?.[replacement.add]) {
+                        spellData = { desc: UTILITY_SPELLS[replacement.school][replacement.add], tier: "Utility" };
+                    }
                     if (spellData && !spells.find(s => s.name === replacement.add)) {
                         spells.push({ name: replacement.add, ...spellData, school: replacement.school });
                     }
@@ -322,19 +332,26 @@ class BaseClass {
             }
         });
 
-        if (this.includeUtilitySpells) this._addUtilitySpells(spells, level, subclass, state, limits);
+        this._addUtilitySpells(spells, level, subclass, state, limits, subConfig);
         
         const combinedTieredKeys = [...this.includeTieredSpells, ...(subConfig.includeTieredSpells || [])];
         const combinedCantripKeys = [...this.includeCantripSpells, ...(subConfig.includeCantripSpells || [])];
         
         [...combinedTieredKeys, ...combinedCantripKeys].forEach(key => {
-            const budget = limits[key] || 0;
+            const budget = (key in limits) ? limits[key] : (state[key] ? state[key].length : 0);
             const selections = (state[key] || []).slice(0, budget);
             selections.forEach(val => {
-                if (val === "None") return;
+                if (!val || val === "None" || val === "+1 Order") return; // Filter training markers
                 for (const [sSch, spellsList] of Object.entries(SPELL_REGISTRY)) {
                     if (spellsList[val]) {
                         if (!spells.find(s => s.name === val)) spells.push({ name: val, ...spellsList[val], school: sSch });
+                        break;
+                    }
+                }
+                // Check utility spells as well
+                for (const [sSch, utilsList] of Object.entries(UTILITY_SPELLS)) {
+                    if (utilsList[val]) {
+                        if (!spells.find(s => s.name === val)) spells.push({ name: val, desc: utilsList[val], tier: "Utility", school: sSch });
                         break;
                     }
                 }
@@ -344,44 +361,50 @@ class BaseClass {
         return spells;
     }
     
-    _addUtilitySpells(spells, level, subclass, state, limits) {
+    _addUtilitySpells(spells, level, subclass, state, limits, subConfig = {}) {
         const schools = this.getKnownSchools(level, subclass, state, limits);
-        const shouldAddAll = typeof this.includeUtilitySpells.all === "function" ? 
-            this.includeUtilitySpells.all(level, subclass, state) : 
-            this.includeUtilitySpells.all;
-
-        if (shouldAddAll) {
-            schools.forEach(school => {
-                if (UTILITY_SPELLS[school]) {
-                    Object.entries(UTILITY_SPELLS[school]).forEach(([name, desc]) => {
-                        if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school });
-                    });
-                }
-            });
-        }
         
-        if (this.includeUtilitySpells.selectKey) {
-            const keys = Array.isArray(this.includeUtilitySpells.selectKey) ? this.includeUtilitySpells.selectKey : [this.includeUtilitySpells.selectKey];
-            keys.forEach(key => {
-                const budget = limits[key] || 0;
-                const selections = (state[key] || []).slice(0, budget);
-                selections.forEach(val => {
-                    if (val === "None") return;
-                    if (UTILITY_SPELLS[val]) {
-                        Object.entries(UTILITY_SPELLS[val]).forEach(([name, desc]) => {
-                            if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school: val });
+        // Merge base and subclass utility configs
+        const configs = [this.includeUtilitySpells, subConfig.includeUtilitySpells].filter(Boolean);
+
+        configs.forEach(cfg => {
+            const allVal = typeof cfg.all === "function" ? cfg.all(level, subclass, state) : cfg.all;
+            
+            if (allVal) {
+                // If allVal is a list of schools, use it; otherwise use all known schools
+                const targetSchools = Array.isArray(allVal) ? allVal : schools;
+                targetSchools.forEach(school => {
+                    if (UTILITY_SPELLS[school]) {
+                        Object.entries(UTILITY_SPELLS[school]).forEach(([name, desc]) => {
+                            if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school });
                         });
-                    } else {
-                        for (const [sSch, list] of Object.entries(UTILITY_SPELLS)) {
-                            if (list[val]) {
-                                if (!spells.find(s => s.name === val)) spells.push({ name: val, desc: list[val], tier: "Utility", school: sSch });
-                                break;
-                            }
-                        }
                     }
                 });
-            });
-        }
+            }
+            
+            if (cfg.selectKey) {
+                const keys = Array.isArray(cfg.selectKey) ? cfg.selectKey : [cfg.selectKey];
+                keys.forEach(key => {
+                    const budget = (key in limits) ? limits[key] : (state[key] ? state[key].length : 0);
+                    const selections = (state[key] || []).slice(0, budget);
+                    selections.forEach(val => {
+                        if (!val || val === "None") return;
+                        if (UTILITY_SPELLS[val]) { // If selecting a whole school
+                            Object.entries(UTILITY_SPELLS[val]).forEach(([name, desc]) => {
+                                if (!spells.find(s => s.name === name)) spells.push({ name, desc, tier: "Utility", school: val });
+                            });
+                        } else { // If selecting a specific spell
+                            for (const [sSch, list] of Object.entries(UTILITY_SPELLS)) {
+                                if (list[val]) {
+                                    if (!spells.find(s => s.name === val)) spells.push({ name: val, desc: list[val], tier: "Utility", school: sSch });
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+        });
     }
     
     _parseTierNumber(tierStr) {

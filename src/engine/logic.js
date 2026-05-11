@@ -132,7 +132,8 @@ function computeDerived(s) {
 
     // 11. Resource Maxes (Mana, Class-specific pools)
     const resourceMaxes = {};
-    (CLASS_CONFIG.resources || []).forEach(r => {
+    const combinedResources = CLASS_CONFIG.getCombinedResources ? CLASS_CONFIG.getCombinedResources(s.subclass, s) : (CLASS_CONFIG.resources || []);
+    combinedResources.forEach(r => {
         resourceMaxes[r.id] = r.calcMax(level, statsMap, s, s.subclass, classDerived);
     });
 

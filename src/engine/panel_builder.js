@@ -30,10 +30,11 @@ class MechanicPanelBuilder {
      * @param {string} label - Display label.
      * @param {number} value - Current value.
      * @param {number} max - Maximum value.
-     * @param {boolean} [visible=true] - Whether the section is visible.
+     * @param {Object} [options={}] - Display options.
      * @returns {MechanicPanelBuilder} The builder instance.
      */
-    addResource(id, label, value, max, visible = true) {
+    addResource(id, label, value, max, options = {}) {
+        const visible = options.visible !== false;
         if (!visible || max <= 0) {
             return this;
         }
@@ -48,6 +49,7 @@ class MechanicPanelBuilder {
                 </div>
                 <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${max}</span></div>
             </div>
+            ${options.subtext ? `<div style="font-size: 0.55em; color: var(--text-muted); font-style: italic; margin-top: 2px;">${options.subtext}</div>` : ''}
         `;
 
         this._addSection(html, { flex: 1 });
@@ -296,9 +298,19 @@ class MechanicPanelBuilder {
     }
 
     /**
+     * Add a custom HTML section.
+     */
+    addHtml(html, options = {}) {
+        this._addSection(html, options);
+        return this;
+    }
+
+    /**
      * Build final HTML.
      */
     build(minHeight = 100) {
+        if (this.sections.length === 0) return "";
+
         const rendered = [];
         this.sections.forEach((sec, idx) => {
             // Only add divider between elements

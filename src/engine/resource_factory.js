@@ -7,13 +7,15 @@
  * Creates a standard mana-style resource definition.
  * @param {string} [stat='int'] - The attribute that scales the resource.
  * @param {string} [label='Mana Pool'] - The display name for the resource.
+ * @param {Object} [options={}] - Additional display options.
  * @returns {Object} Resource definition object.
  */
-function createManaResource(stat = 'int', label = 'Mana Pool') {
+function createManaResource(stat = 'int', label = 'Mana Pool', options = {}) {
     return {
         id: 'mana',
         label,
         manual: true,
+        options,
         calcMax: (level, stats) => {
             return level >= 2 ? (stats[stat] * 3) + level : 0;
         }
@@ -24,14 +26,16 @@ function createManaResource(stat = 'int', label = 'Mana Pool') {
  * Creates a simple manual resource definition.
  * @param {string} id - Unique identifier for the resource.
  * @param {string} label - Display name for the resource.
- * @param {Function} calcMaxFn - Function to calculate the maximum value (level, stats, state) => number.
+ * @param {Function} calcMaxFn - Function to calculate the maximum value (level, stats, state, subclass, derived) => number.
+ * @param {Object} [options={}] - Additional display options.
  * @returns {Object} Resource definition object.
  */
-function createSimpleResource(id, label, calcMaxFn) {
+function createSimpleResource(id, label, calcMaxFn, options = {}) {
     return {
         id,
         label,
         manual: true,
+        options,
         calcMax: calcMaxFn
     };
 }

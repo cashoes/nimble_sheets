@@ -42,7 +42,16 @@ function dispatchRoll(notation, label, options = {}) {
     if (autoMod !== 0) {
         finalNotation += (autoMod >= 0 ? '+' : '') + autoMod;
     }
-    // ---------------------------------
+
+    // --- ON INITIATIVE HOOK ---
+    if (/initiative/i.test(label) && typeof CLASS_CONFIG.onInitiative === 'function') {
+        const derived = computeDerived(state);
+        CLASS_CONFIG.onInitiative(state.level, state.subclass, state, derived);
+        // Render first so DOM is updated, then save so saveState picks up new values
+        render();
+        saveState();
+    }
+    // -------------------------
 
     const isCheckOrSave = /check|save|rest|hit die/i.test(label);
 
