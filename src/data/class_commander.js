@@ -85,6 +85,12 @@ class CommanderClass extends BaseClass {
                     }
                 }
             ],
+            onInitiative: (level, subclass, state, derived) => {
+                if (subclass === "Spellblade" && level >= 4) {
+                    const statsMap = getStatsMap(state);
+                    state.resourceValues.mana = statsMap.int;
+                }
+            },
             scalingStats: {
                 cdType: { 4: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" },
                 bonusCombatDice: 0
@@ -100,6 +106,7 @@ class CommanderClass extends BaseClass {
                 }
             },
             statModifiers: [
+                { id: "armor_master_prof", stat: "profArmor", subclass: "Bulwark", level: 3, value: "Plate Armor, Shields" },
                 { id: "move_it_bonus", stat: "initAdv", condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") },
                 { id: "move_it_speed", stat: "speed", value: 3, condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") }
             ],
