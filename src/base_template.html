@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NIMBLE — Character Tracker v2.2.1</title>
+  <title>NIMBLE — Character Tracker v2.2.4</title>
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
   <link
@@ -632,6 +632,29 @@
       background: var(--class-accent);
       border-color: var(--class-accent);
       box-shadow: 0 0 8px var(--class-accent);
+    }
+
+    .pip-inline {
+      appearance: none;
+      width: 12px !important;
+      height: 12px !important;
+      border: 1px solid var(--class-accent) !important;
+      border-radius: 50% !important;
+      cursor: pointer;
+      background: rgba(0,0,0,0.3) !important;
+      transition: all 0.2s;
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0 4px 0 0;
+      position: relative;
+      top: -1px;
+    }
+    .pip-inline:checked {
+      background: var(--class-accent) !important;
+      box-shadow: 0 0 4px var(--class-accent) !important;
+    }
+    .pip-inline:hover {
+      border-color: #fff !important;
     }
 
     .pip.wound:checked {

@@ -149,15 +149,15 @@ class ShadowmancerClass extends BaseClass {
         return {
             lesser: {
                 "Abhorrent Speech": { desc: "You can communicate with horrible creatures (aberrations, undead, etc.)." },
-                "Beguiling Influence": { desc: "(1/day) You may reroll an Influence check." },
-                "Blood Sight": { desc: "(1/day) You may reroll an Examination check. Additionally, you can detect traces of blood on a surface, even after it has been cleaned." },
+                "Beguiling Influence": { desc: "([[uBeguiling]] 1/day) You may reroll an Influence check." },
+                "Blood Sight": { desc: "([[uBloodSight]] 1/day) You may reroll an Examination check. Additionally, you can detect traces of blood on a surface, even after it has been cleaned." },
                 "Devoted Acolyte": { desc: "Learn 2 of the following languages: Celestial, Draconic, Deep Speak, Infernal, or Primordial. Advantage on Lore checks related to those 2 languages." },
                 "Eldritch Sense": { desc: "You can sense the presence of any shapechanger or creature concealed by magic while within 6 spaces of them." },
                 "Gaze of Two Minds": { desc: "Touch a willing creature and perceive through its senses instead of your own for as long as you hold concentration." },
                 "Knowledge from Beyond": { desc: "Whenever you fail an Insight or Arcana check, you may suffer 1 Wound to succeed instead." },
                 "My Favored Pet": { desc: "One shadow minion can begrudgingly tolerate you outside of combat. It can (very creepily) do any menial task a below average commoner could." },
                 "Voice of the Dark": { desc: "You can communicate telepathically with a humanoid within 6 spaces." },
-                "Whispers of the Grave": { desc: "(1/day) You can ask a dead creature 3 yes/no questions. It can never be questioned this way again." }
+                "Whispers of the Grave": { desc: "([[uWhispers]] 1/day) You can ask a dead creature 3 yes/no questions. It can never be questioned this way again." }
             },
             greater: {
                 "Armor of Shadows": { desc: "Reduce all damage you receive by an amount equal to the number of minions you have." },
@@ -244,7 +244,7 @@ class ShadowmancerClass extends BaseClass {
                 { id: "shadowfrost", name: "Shadowfrost", desc: "Your Shadow Blast also Slows. You can cast Cryosleep or Rimeblades without Pilfering Power by expending 10 temp HP. Choose 1 Ice Utility Spell." },
                 FeatureGen.createSpellChoiceFeature({ id: "abyssal_utility", name: "Ice Utility", level: 7, spellType: "utility", schools: ["Ice"], stateKey: "selectedAbyssalUtility", getCount: () => 1, desc: "Choose 1 Ice Utility Spell." })
             ],
-            11: [{ id: "glacial", name: "Glacial Resilience", desc: "(1/Safe Rest) Reaction (whenever you are attacked or would gain a condition), gain 10×LVL temp HP and end ALL negative conditions on yourself. At the end of your next turn, any remaining temp HP are lost." }],
+            11: [{ id: "glacial", name: "Glacial Resilience", desc: "([[uGlacial]] 1/Safe Rest) Reaction (whenever you are attacked or would gain a condition), gain 10×LVL temp HP and end ALL negative conditions on yourself. At the end of your next turn, any remaining temp HP are lost." }],
             15: [{ id: "cryo_reprisal", name: "Cryomancer’s Reprisal", desc: "Pay half your max HP to cast ANY Ice spell. After casting an Ice spell in this way, you gain an invisible aura: the next creature that hits you with a melee attack this encounter takes cold damage equal to half the HP you spent on this casting." }]
         };
 
@@ -271,3 +271,4 @@ class ShadowmancerClass extends BaseClass {
 }
 
 const CLASS_CONFIG = new ShadowmancerClass();
+FIG = new ShadowmancerClass();

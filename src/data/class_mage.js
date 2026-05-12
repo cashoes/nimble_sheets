@@ -196,10 +196,10 @@ class MageClass extends BaseClass {
                     ],
                     desc: "Gain access to dark powers. Choose 1 cantrip and 1 tiered spell (up to Tier 3) from the Necrotic school."
                 }),
-                { id: "nullify", name: "Nullify", desc: "(1/encounter) Ignore all disadvantage and other negative effects on your next action this turn, then Demand Control." }
+                { id: "nullify", name: "Nullify", desc: "([[uNullify]] 1/encounter) Ignore all disadvantage and other negative effects on your next action this turn, then Demand Control." }
             ],
             11: [
-                { id: "steel_will", name: "Steel Will", desc: "(1/Safe Rest) Whenever you would fail a save, you may succeed instead. Whenever you roll a 1 on an Elemental Surge die, you may reroll it once." }
+                { id: "steel_will", name: "Steel Will", desc: "([[uSteelWill]] 1/Safe Rest) Whenever you would fail a save, you may succeed instead. Whenever you roll a 1 on an Elemental Surge die, you may reroll it once." }
             ],
             15: [
                 { id: "supreme_control", name: "Supreme Control", desc: "Whenever you Demand Control, you may choose to trigger the selected option twice. You may Demand Control as a Reaction." }
@@ -223,10 +223,10 @@ class MageClass extends BaseClass {
                     ],
                     desc: "You attune your soul to the storm. Choose 1 cantrip and 1 tiered spell (up to Tier 3) from the Wind school."
                 }),
-                { id: "chaos_lash", name: "Chaos Lash", desc: "(1/encounter) Reaction (when an enemy moves adjacent to you): They are pushed back 2 spaces, and on a failed WIL save, knocked Prone as well. Invoke Chaos." }
+                { id: "chaos_lash", name: "Chaos Lash", desc: "([[uChaosLash]] 1/encounter) Reaction (when an enemy moves adjacent to you): They are pushed back 2 spaces, and on a failed WIL save, knocked Prone as well. Invoke Chaos." }
             ],
             11: [
-                { id: "thrive_chaos", name: "Thrive in Chaos", desc: "Whenever you Invoke Chaos, you may roll twice and cause BOTH effects. (1/Safe Rest) You may choose which roll to use instead." }
+                { id: "thrive_chaos", name: "Thrive in Chaos", desc: "Whenever you Invoke Chaos, you may roll twice and cause BOTH effects. ([[uThriveChaos]] 1/Safe Rest) You may choose which roll to use instead." }
             ],
             15: [
                 { id: "master_chaos", name: "Master of Chaos", desc: "Whenever you Invoke Chaos, roll with advantage." }

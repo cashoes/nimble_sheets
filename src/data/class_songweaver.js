@@ -82,10 +82,10 @@ class SongweaverClass extends BaseClass {
         return {
             lyricalWeaponry: {
                 "Heroic Ballad": { desc: "+2 max Songweaver’s Inspiration charges. When used to reroll an ally’s attack, your Songweaver’s Inspiration also grants them +WIL damage on the attack." },
-                "Inspiring Anthem": { desc: "(1/encounter) Action: Grant all friendly Dying creatures who can hear you 1 HP and 1 action." },
-                "Not My Beautiful Faaace!": { desc: "(1/encounter) When you Defend, force the attacker to choose another target within range on a failed WIL save (if there is none, the attack fails). If they fail by 5 or more, they attack themselves as punishment for even thinking they could harm you! On save, they attack you with disadvantage." },
+                "Inspiring Anthem": { desc: "([[uAnthem]] 1/encounter) Action: Grant all friendly Dying creatures who can hear you 1 HP and 1 action." },
+                "Not My Beautiful Faaace!": { desc: "([[uFaaace]] 1/encounter) When you Defend, force the attacker to choose another target within range on a failed WIL save (if there is none, the attack fails). If they fail by 5 or more, they attack themselves as punishment for even thinking they could harm you! On save, they attack you with disadvantage." },
                 "Rhapsody of the Normal": { desc: "When you roll 4 or more on your Vicious Mockery, you may spend a Songweaver’s Inspiration charge to temporarily suppress any special abilities they have until the end of their next turn. They can do only what an untrained average villager can do, attack once for 1d4 damage and move up to 6 spaces (no armor, spellcasting, flying, regeneration, other inherent or trained features)." },
-                "Song of Domination": { desc: "(1/encounter) 2 actions: Play a bewitching tune, and all enemies within 6 spaces who hear it must make a WIL save. If they fail, you move them up to 6 spaces in any direction, and they cannot move on their next turn." }
+                "Song of Domination": { desc: "([[uDomination]] 1/encounter) 2 actions: Play a bewitching tune, and all enemies within 6 spaces who hear it must make a WIL save. If they fail, you move them up to 6 spaces in any direction, and they cannot move on their next turn." }
             },
             friends: {
                 "Stompy": { desc: "3 actions: Summon a huge hill giant for 1 round. As he enters the battlefield adjacent to you, use Stompy’s Stomp: Make a DC 10 Influence check. On a success, he moves 6 spaces in a direction you choose; on a failure, he moves towards YOU instead (\"YOU NOT FRIEND!\"). He deals everything in his path damage equal to LVL+Influence check. ANY creature within 6 spaces of Stompy can use this ability once instead of an attack." },
@@ -108,7 +108,7 @@ class SongweaverClass extends BaseClass {
         core[2] = [
             { id: "mana", name: "Mana and Unlock Tier 1 Spells", desc: "You unlock tier 1 spells in the schools you know and gain a mana pool. This mana pool’s maximum is always equal to (INT×3)+LVL and recharges on a Safe Rest." },
             { id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." },
-            { id: "song_rest", name: "Song of Rest", desc: "(1/day) Whenever you Field Rest, you may play a song and allow anyone who spends Hit Dice to heal additional HP equal to your WIL." }
+            { id: "song_rest", name: "Song of Rest", desc: "([[uSongRest]] 1/day) Whenever you Field Rest, you may play a song and allow anyone who spends Hit Dice to heal additional HP equal to your WIL." }
         ];
 
         core[3] = [
@@ -139,7 +139,7 @@ class SongweaverClass extends BaseClass {
         subclasses["HeraldSnark"] = {
             3: [{ id: "snark", name: "Opportunistic Snark", desc: "Reaction (when an enemy within Range 12 misses an attack): You may cast Vicious Mockery at them; it deals double damage when cast this way." }],
             7: [{ id: "picker", name: "Fight Picker", desc: "(1/turn) When an enemy is damaged by your Vicious Mockery, you may have one of your allies Taunt them until the end of the enemy’s turn instead." }],
-            11: [{ id: "chord", name: "Chord of Chaos", desc: "(1/encounter) Action: You may move ALL creatures within hearing of your song up to 3 spaces as long as they do not move into an obviously dangerous place." }],
+            11: [{ id: "chord", name: "Chord of Chaos", desc: "([[uChord]] 1/encounter) Action: You may move ALL creatures within hearing of your song up to 3 spaces as long as they do not move into an obviously dangerous place." }],
             15: [{ id: "words", name: "Words Like Swords", desc: "Your Vicious Mockery damage becomes 1d6+INT+WIL." }]
         };
 
@@ -147,7 +147,7 @@ class SongweaverClass extends BaseClass {
             3: [{ id: "presence", name: "Inspiring Presence", desc: "Whenever you use Songweaver’s Inspiration, your allies within 12 spaces who can hear you gain WIL temp HP." }],
             7: [{ id: "courage", name: "Unfailing Courage", desc: "Your Songweaver’s Inspiration allows your target to roll with advantage." }],
             11: [{ id: "bones", name: "Fire in my Bones", desc: "Your Songweaver’s Inspiration also grants your target 1 additional action." }],
-            15: [{ id: "chorus", name: "Chorus of Champions", desc: "(1/encounter) Free Reaction: Give all party members 1 action." }]
+            15: [{ id: "chorus", name: "Chorus of Champions", desc: "([[uChorus]] 1/encounter) Free Reaction: Give all party members 1 action." }]
         };
 
         return { core, subclasses };

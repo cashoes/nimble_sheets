@@ -85,7 +85,7 @@ class ZephyrClass extends BaseClass {
         return {
             abilities: {
                 "Airshift": { desc: "You cannot be Grappled while conscious. While moving, you may travel across all terrain as normal ground, ignoring all ill effects." },
-                "Blur": { desc: "(1/encounter) When you Defend, you may first move up to half your speed away, taking no damage if you are now out of range or have Full Cover." },
+                "Blur": { desc: "([[uBlur]] 1/encounter) When you Defend, you may first move up to half your speed away, taking no damage if you are now out of range or have Full Cover." },
                 "Bodily Discipline": { desc: "You may spend 1 action to end any non-Wound condition on yourself." },
                 "Enduring Soul": { desc: "Each time you roll Initiative, gain Hit Dice equal to the actions you get on your first turn. These Hit Dice expire at the end of combat if unused." },
                 "I Jump On His Back!": { desc: "While moving with your Windstep, if you move into the space of a creature your size or larger, you may jump onto its back. While on a creature this way, gain advantage on melee attacks against it, and any damage you avoid is dealt to it instead." },
@@ -115,7 +115,7 @@ class ZephyrClass extends BaseClass {
         core[3] = [
             { id: "subclass", name: "Subclass", desc: "Choose a Zephyr subclass." },
             { id: "kinetic", name: "Kinetic Momentum", desc: "Whenever you gain a Wound, gain a Burst of Speed." },
-            { id: "ethereal", name: "Ethereal Projection", desc: "(1/day) By meditating for at least 10 minutes, you can project an ethereal version of yourself up to 30 ft. away." }
+            { id: "ethereal", name: "Ethereal Projection", desc: "([[uEthereal]] 1/day) By meditating for at least 10 minutes, you can project an ethereal version of yourself up to 30 ft. away." }
         ];
 
         core[4] = [
@@ -134,14 +134,14 @@ class ZephyrClass extends BaseClass {
         core[20].push({ id: "windborne", name: "Windborne", desc: "+1 to any 2 of your stats. +1 additional burst of speed when you roll Initiative. Permanently gain 1 action (while Dying, you have a max of 2 actions)." });
 
         subclasses["WayPain"] = {
-            3: [{ id: "bring_pain", name: "Bring the Pain", desc: "(1/round) You may turn any melee attack against you into a crit. Whenever you are crit, reduce the damage by half. The attacker takes the same amount of damage you took (ignoring armor). You may suffer 1 Wound to double the damage the enemy takes." }],
+            3: [{ id: "bring_pain", name: "Bring the Pain", desc: "([[uPain]] 1/round) You may turn any melee attack against you into a crit. Whenever you are crit, reduce the damage by half. The attacker takes the same amount of damage you took (ignoring armor). You may suffer 1 Wound to double the damage the enemy takes." }],
             7: [{ id: "share_pain", name: "Share My Pain", desc: "Your Swiftstrike can also target a 2nd creature within Reach 2." }],
             11: [{ id: "sharpens", name: "Pain Sharpens the Mind", desc: "While you are Bloodied, gain advantage on the first attack you make each turn, and on all saves." }],
             15: [{ id: "echoed", name: "Echoed Agony", desc: "Your Swiftstrike can also target a 3rd creature within Reach 4." }]
         };
 
         subclasses["WayFlame"] = {
-            3: [{ id: "exploding", name: "Exploding Soul", desc: "(1/round) On your turn, you may suffer a Wound. Whenever you gain a Wound, deal STR+Wounds damage to any creatures you choose within 2 spaces (ignoring armor) and give them the Smoldering condition." }],
+            3: [{ id: "exploding", name: "Exploding Soul", desc: "([[uExploding]] 1/round) On your turn, you may suffer a Wound. Whenever you gain a Wound, deal STR+Wounds damage to any creatures you choose within 2 spaces (ignoring armor) and give them the Smoldering condition." }],
             7: [{ id: "blazing", name: "Blazing Speed", desc: "Gain +2 speed while using Windstep. After you cease movement with Windstep, enemies you passed through take STR+DEX fire damage. You may have Smoldering enemies take double, ending the condition." }],
             11: [{ id: "chain", name: "Chain Reaction", desc: "(1/turn) When you crit, deal fire damage equal to your STR+Wounds to creatures of your choice within 2 spaces of your target. Repeat any number of times, targeting creatures not yet damaged by this effect within 2 spaces of any already damaged." }],
             15: [{ id: "burning", name: "Burning Soul", desc: "Double any fire damage you deal." }]

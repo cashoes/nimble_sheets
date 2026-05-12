@@ -293,7 +293,7 @@ function saveState(newState = null) {
 function loadState() {
     // 1. Define standard state schema and defaults
     state = {
-        version: "2.2.1",
+        version: "2.2.4",
         charName: '',        level: 1, 
         ancestry: 'None', 
         background: 'None', 

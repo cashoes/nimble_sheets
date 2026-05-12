@@ -35,11 +35,13 @@ class CheatClass extends BaseClass {
                 saDice: { 1: "1d6", 3: "1d8", 7: "2d8", 9: "2d10", 11: "2d12", 15: "2d20", 17: "3d20" }
             },
             statModifiers: [
-                { id: "misdirection_armor", stat: "armor", getMod: (stats, state) => {
-                    const hasMisdirection = (state.selectedUnderhanded || []).includes("Misdirection");
-                    if (!hasMisdirection) return 0;
-                    return stats.int;
-                }},
+                {
+                    id: "misdirection_armor", stat: "armor", getMod: (stats, state) => {
+                        const hasMisdirection = (state.selectedUnderhanded || []).includes("Misdirection");
+                        if (!hasMisdirection) return 0;
+                        return stats.int;
+                    }
+                },
                 { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "SilentBlade" && l >= 11 }
             ],
             resources: [],
@@ -54,7 +56,7 @@ class CheatClass extends BaseClass {
     static get OPTIONS() {
         return {
             underhanded: {
-                "\"Creative\" Accounting": { desc: "Steal up to INT actions from your next turn (Gain up to INT actions now. The next time you would gain actions, subtract the number stolen). You cannot use this 2 turns in a row." },
+                "'Creative' Accounting": { desc: "Steal up to INT actions from your next turn (Gain up to INT actions now. The next time you would gain actions, subtract the number stolen). You cannot use this 2 turns in a row." },
                 "Exploit Weakness": { desc: "Action: Make a contested INT check against an enemy. If you win, you can use Vicious Opportunist against them, even if they are not Distracted. This lasts for 1 minute or until you use this ability against another target." },
                 "Feinting Attack": { desc: "If you miss for the 2nd time in a single round, you may change the primary die roll to any result instead." },
                 "How’d YOU get here?!": { desc: "2 actions: “Teleport” up to 4 spaces away, adjacent to a Distracted target, and make a melee attack against them. If you crit, you may \"teleport\" again." },
@@ -80,7 +82,7 @@ class CheatClass extends BaseClass {
         ];
 
         core[2] = [
-            { id: "cheat", name: "Cheat", desc: "Gain the following abilities:<ul><li>(1/round) You may either Move or Hide for free.</li><li>(1/day) You may change any skill check to 10+INT.</li><li>If you roll less than 10 on Initiative, you may change it to 10 instead.</li><li>You may gain advantage on skill checks while playing games/competitions/wagers.</li></ul>" }
+            { id: "cheat", name: "Cheat", desc: "Gain the following abilities:<ul><li>(1/round) You may either Move or Hide for free.</li><li>([[uCheatDay]] 1/day) You may change any skill check to 10+INT.</li><li>If you roll less than 10 on Initiative, you may change it to 10 instead.</li><li>You may gain advantage on skill checks while playing games/competitions/wagers.</li></ul>" }
         ];
 
         core[3] = [
@@ -89,24 +91,24 @@ class CheatClass extends BaseClass {
             { id: "thieves_cant", name: "Thieves’ Cant", desc: "You learn the secret language of rogues and scoundrels." }
         ];
 
-        core[4].push({ 
-            id: "underhanded", 
-            name: "Underhanded Ability", 
-            type: "dynamic_choice", 
-            collection: "underhanded", 
-            stateKey: "selectedUnderhanded", 
-            milestones: [4, 6, 8, 10, 12, 14, 16, 18], 
-            desc: "Choose an Underhanded Ability.", 
-            getCount: createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) 
+        core[4].push({
+            id: "underhanded",
+            name: "Underhanded Ability",
+            type: "dynamic_choice",
+            collection: "underhanded",
+            stateKey: "selectedUnderhanded",
+            milestones: [4, 6, 8, 10, 12, 14, 16, 18],
+            desc: "Choose an Underhanded Ability.",
+            getCount: createStandardCount([4, 6, 8, 10, 12, 14, 16, 18])
         });
 
         core[5] = [
             { id: "twist", name: "Twist the Blade", desc: "Action: Change one of your Sneak Attack dice to whatever you like. (Lvl 13: You can do this 1/turn for free)." },
-            { id: "quick_read", name: "Quick Read", desc: "<ul><li>(1/encounter) Gain advantage on an Assess check.</li><li>(1/day) Gain advantage on an Examination check.</li></ul>" }
+            { id: "quick_read", replaces: ["quick_read"], name: "Quick Read", desc: "<ul><li>([[uQuickReadEnc]] 1/encounter) Gain advantage on an Assess check.</li><li>([[uQuickReadDay]] 1/day) Gain advantage on an Examination check.</li></ul>" }
         ];
 
         core[6] = [
-            { id: "not_happened", name: "THAT'S Not What Happened!", desc: "(1/Safe Rest) Action: After a Distracted enemy attacks you, you may change the Primary Die roll to whatever you like (changing the die to the minimum value counts as a miss)." }
+            { id: "not_happened", name: "THAT'S Not What Happened!", desc: "([[uNotHappened]] 1/Safe Rest) Action: After a Distracted enemy attacks you, you may change the Primary Die roll to whatever you like (changing the die to the minimum value counts as a miss)." }
         ];
 
         core[20].push({ id: "supreme", name: "Supreme Execution", desc: "+1 to any 2 stats. When you attack with a blade, you do not require targets to be Distracted to trigger Vicious Opportunist." });
@@ -116,7 +118,7 @@ class CheatClass extends BaseClass {
                 { id: "commotion", name: "Amidst All This Commotion...", desc: "If a creature dies while you Sneak Attack them, you may turn Invisible until you attack again or until the beginning of your next turn." },
                 { id: "trace", name: "Leave No Trace", desc: "Advantage on Stealth checks when you are at full health." }
             ],
-            7: [{ id: "cunning_strike", name: "Cunning Strike", desc: "(2/encounter) When you land a Sneak Attack, you may force the target to make a STR save (DC 10+INT). On a failure, instead of rolling your Sneak Attack dice, they deal the maximum amount of damage (if your target saves, regain 1 use)." }],
+            7: [{ id: "cunning_strike", name: "Cunning Strike", desc: "([[uCunningStrike1]] [[uCunningStrike2]] 2/encounter) When you land a Sneak Attack, you may force the target to make a STR save (DC 10+INT). On a failure, instead of rolling your Sneak Attack dice, they deal the maximum amount of damage (if your target saves, regain 1 use)." }],
             11: [{ id: "pro_skulker", name: "Professional Skulker", desc: "Gain a climbing speed and advantage on Stealth checks (replaces Leave No Trace)." }],
             15: [{ id: "kill", name: "KILL", desc: "When you crit an enemy with fewer max HP than you, it dies." }]
         };
@@ -126,9 +128,9 @@ class CheatClass extends BaseClass {
                 { id: "low_blow", name: "Low Blow", desc: "When you Sneak Attack, you may spend 2 additional actions to Incapacitate your target for their next turn on a failed STR save (DC 10+INT). Save or fail, they are Taunted by you until you drop to 0 HP." },
                 { id: "sweet_talk", name: "Sweet Talk", desc: "You may gain advantage on all Influence checks with NPCs you’ve just met for the first time. This lasts until you fail an Influence check with them or until you meet a 2nd time. You have disadvantage on Influence checks with them after you use this ability." }
             ],
-            7: [{ id: "pocket_sand", name: "Pocket Sand", desc: "(2/encounter) When you Defend against a melee attack, Blind the attacker until the start of their next turn and force them to reroll the attack (Blinded creatures attack with disadvantage)." }],
-            11: [{ id: "escape_plan", name: "Escape Plan", desc: "(1/Safe Rest) When you would drop to 0 HP or gain a Wound, you don’t. Instead, you turn Invisible for 1 minute or until you attack." }],
-            15: [{ id: "heads_win", name: "Heads I Win, Tails You Lose", desc: "(1/encounter) Attacks you make this round don’t miss, you crit on 1 less than normally needed, and you gain LVL temp HP." }]
+            7: [{ id: "pocket_sand", name: "Pocket Sand", desc: "([[uPocketSand1]] [[uPocketSand2]] 2/encounter) When you Defend against a melee attack, Blind the attacker until the start of their next turn and force them to reroll the attack (Blinded creatures attack with disadvantage)." }],
+            11: [{ id: "escape_plan", name: "Escape Plan", desc: "([[uEscapePlan]] 1/Safe Rest) When you would drop to 0 HP or gain a Wound, you don’t. Instead, you turn Invisible for 1 minute or until you attack." }],
+            15: [{ id: "heads_win", name: "Heads I Win, Tails You Lose", desc: "([[uHeadsIWin]] 1/encounter) Attacks you make this round don’t miss, you crit on 1 less than normally needed, and you gain LVL temp HP." }]
         };
 
         return { core, subclasses };
@@ -141,7 +143,7 @@ class CheatClass extends BaseClass {
         const builder = new PanelBuilder();
 
         builder.addStatDisplay(derived.saDice, 'Crit Bonus', 'Added to Critical Hits', { color: 'var(--class-accent)' });
-        
+
         builder.addRollDisplay('1d20', 'Vicious Opp.', 'MAX', 'On Distracted Target', { type: 'attack', isCrit: true });
 
         if (level >= 2) {

@@ -161,31 +161,31 @@ class StormshifterClass extends BaseClass {
         core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "boons", stateKey: "selectedBoons", milestones: [6, 9, 12, 17], desc: "Choose Chimeric Boons.", getCount: FeatureGen.createStandardCount([6, 9, 12, 17]) });
         core[6].push({ id: "expert", name: "Expert Shifter", desc: "Gain 1 additional use of Beastshift per Safe Rest." });
 
-        core[8].push({ id: "stormborn", name: "Stormborn", desc: "Gain resistance to lightning damage. (1/day) You may gain advantage on a Naturecraft check or Concentration check." });
+        core[8].push({ id: "stormborn", name: "Stormborn", desc: "Gain resistance to lightning damage. ([[uStormbornDay]] 1/day) You may gain advantage on a Naturecraft check or Concentration check." });
 
         core[13] = [{ id: "stormborn2", name: "Stormborn (2)", desc: "Instead of rolling dice, deal the max damage of a Wind spell by spending a charge of your Beastshift feature. Whenever you end Beastshift, you may cast a cantrip for free." }];
 
-        core[20].push({ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. (1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." });
+        core[20].push({ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. ([[uArchdruid]] 1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." });
 
         subclasses["SkyStorm"] = {
             3: [
                 FeatureGen.createSpellChoiceFeature({ id: "study", name: "Deepening Study", level: 3, spellType: "school", schools: ["Ice", "Radiant"], stateKey: "selectedStudy", desc: "Choose the Ice or Radiant school to learn." }),
                 { id: "fey", name: "Creature of the Fey", desc: "You may cast spells while Beastshifted." },
-                { id: "attuned", name: "Attuned to Nature", desc: "(1/day) Add LVL to any skill check related to nature or weather." }
+                { id: "attuned", name: "Attuned to Nature", desc: "([[uAttunedDay]] 1/day) Add LVL to any skill check related to nature or weather." }
             ],
             7: [{ id: "tempest", name: "Raging Tempest", desc: "Whenever you crit with a tiered spell, you may cast a cantrip for free from a school you know and haven’t cast any spells from this turn (at the same level of dis/advantage)." }],
             11: [{ id: "primordial", name: "Primordial Force", desc: "Spending 2+ mana on a spell grants an additional effect: <ul><li>Ice: Gain WIL temp HP.</li><li>Lightning: Deal additional damage equal to your WIL.</li><li>Radiant: You may heal a creature within 6 spaces WIL HP.</li><li>Wind: Gain a flying speed this turn. Move up to 6 spaces for free.</li></ul>" }],
-            15: [{ id: "master_storm", name: "Master of Storm", desc: "You can concentrate on 1 lightning spell and 1 wind spell at the same time. (1/Safe Rest) You can cast Ride the Lightning for 0 mana." }]
+            15: [{ id: "master_storm", name: "Master of Storm", desc: "You can concentrate on 1 lightning spell and 1 wind spell at the same time. ([[uMasterStorm]] 1/Safe Rest) You can cast Ride the Lightning for 0 mana." }]
         };
 
         subclasses["FangClaw"] = {
             3: [{ id: "swiftshift", name: "Swiftshift", desc: "When you roll Initiative, you may Beastshift or move for free. While transformed, you may shift between different Direbeast forms for free (and as a reaction by spending 1 mana); however, Beastshifting for free does not grant any temp HP." },
-            { id: "windborne", name: "Windborne Protector", desc: "(1/encounter) Reaction: when an enemy attacks, spend 2 mana to shift into a Fearsome Beast. Then you may Interpose from up to 12 spaces away and Defend for free (if you have not yet done so this round)." },
+            { id: "windborne", name: "Windborne Protector", desc: "([[uWindborne]] 1/encounter) Reaction: when an enemy attacks, spend 2 mana to shift into a Fearsome Beast. Then you may Interpose from up to 12 spaces away and Defend for free (if you have not yet done so this round)." },
             { id: "friend", name: "Friend of Beasts", desc: "Beasts will not attack you until you first harm them. You may transform into harmless beasts without spending a Beastshift charge." }],
-            7: [{ id: "unleash", name: "Unleash the Beast", desc: "(1/encounter) When you miss, you can crit instead." },
-            { id: "wake", name: "Storm Wake", desc: "(1/encounter) Action: Spend 3 mana to shift into a Beast of the Pack, then teleport in a straight line up to 12 spaces away, unerringly dealing WIL d8 lightning damage to any creatures you choose adjacent to your path." }],
+            7: [{ id: "unleash", name: "Unleash the Beast", desc: "([[uUnleash]] 1/encounter) When you miss, you can crit instead." },
+            { id: "wake", name: "Storm Wake", desc: "([[uStormWake]] 1/encounter) Action: Spend 3 mana to shift into a Beast of the Pack, then teleport in a straight line up to 12 spaces away, unerringly dealing WIL d8 lightning damage to any creatures you choose adjacent to your path." }],
             11: [{ id: "master_forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." },
-            { id: "venomous", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into a Beast of Nightmares. Then entice a creature within 12 spaces to move 2×WIL spaces closer to you on a failed WIL save (they roll with disadvantage and must repeat until they save or can move no further). If they end up in the same space as you, you may Sting them for free." }],
+            { id: "venomous", name: "Venomous Gaze", desc: "([[uVenomous]] 1/encounter) Action: Spend 2 mana to shift into a Beast of Nightmares. Then entice a creature within 12 spaces to move 2×WIL spaces closer to you on a failed WIL save (they roll with disadvantage and must repeat until they save or can move no further). If they end up in the same space as you, you may Sting them for free." }],
             15: [{ id: "master_forms2", name: "Master of Forms (2)", desc: "You can Beastshift 2 additional times per Safe Rest. Choose 2 additional Chimeric Boons. Your Direbeast forms can have 3 at a time." }]
         };
 

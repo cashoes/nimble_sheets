@@ -134,9 +134,9 @@ class OathswornClass extends BaseClass {
     static get OPTIONS() {
         return {
             decrees: {
-                "Blinding Aura": { desc: "(1/Safe Rest) Action: Enemies in your aura are Blinded until the end of their next turn." },
-                "Courage!": { desc: "(1/encounter) When you or an ally in your aura would drop to 0 HP, set their HP to 1 instead." },
-                "Explosive Judgment": { desc: "(1/encounter) 2 actions: Expend your Judgment Dice, deal that much radiant damage to all enemies in your aura." },
+                "Blinding Aura": { desc: "([[uBlinding]] 1/Safe Rest) Action: Enemies in your aura are Blinded until the end of their next turn." },
+                "Courage!": { desc: "([[uCourage]] 1/encounter) When you or an ally in your aura would drop to 0 HP, set their HP to 1 instead." },
+                "Explosive Judgment": { desc: "([[uExplosive]] 1/encounter) 2 actions: Expend your Judgment Dice, deal that much radiant damage to all enemies in your aura." },
                 "Improved Aura": { desc: "+2 aura Reach." },
                 "Radiant Aura": { desc: "Action: End any single harmful condition or effect on yourself or another willing creature within your aura. You may use this ability WIL times/Safe Rest." },
                 "Reliable Justice": { desc: "Whenever you roll Judgment Dice, roll with advantage (roll one extra and drop the lowest)." },

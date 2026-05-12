@@ -195,7 +195,7 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                     if (opt && opt.empowered) {
                         const empText = typeof opt.empowered === 'function' ? opt.empowered(level, subclass, state, derived, renderSingleSpellCard) : opt.empowered;
                         optDesc += `<div style="margin-top:8px; padding:6px; background:rgba(139, 92, 246, 0.15); border-left: 2px solid var(--subclass-accent, var(--class-accent)); font-style: italic; font-size: 0.95em; color: #fff;">
-                            <strong>Empowered:</strong> ${empText}
+                            <strong>Empowered:</strong> ${iStats(empText, level, statsMap)}
                         </div>`;
                     }
 

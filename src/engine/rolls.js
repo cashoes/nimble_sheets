@@ -180,10 +180,18 @@ function iStats(text, level, statsMap, context = {}) {
     };
 
     // Skip Pattern: Ignores existing highlighted spans or any HTML tags
-    const skipPattern = /(<span[^>]*class="[^"]*(dice-hl|stat-hl|formula-label)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>/gi;
+    const skipPattern = /(<span[^>]*class="[^"]*(dice-hl|stat-hl|formula-label|pip-inline)[^"]*"[^>]*>.*?<\/span>)|<[^>]*>/gi;
+
+    // Pass 0: Handle Inline Usage Tokens [[uKey]] or [[uKey:idx]] (v2.2.4)
+    let processed = text.replace(/\[\[u([a-zA-Z0-9_]+)(?::(\d+))?\]\]/g, (match, key, idx) => {
+        const val = state[key] || 0;
+        const index = idx ? parseInt(idx) : 0;
+        const isChecked = val > index;
+        return `<input type="checkbox" class="pip pip-inline" ${isChecked ? 'checked' : ''} onclick="toggleBgPip('${key}', ${index})" title="Use ${index+1}">`;
+    });
 
     // Pass 1: Handle mathematical multipliers (e.g., 3x LVL)
-    let processed = text.replace(new RegExp(skipPattern.source + '|(\\b(\\d+)\\s*[xX×]\\s*(STR|DEX|INT|WIL|KEY|LVL)\\b)', 'gi'), (match, p1, p2, p3, p4, p5) => {
+    processed = processed.replace(new RegExp(skipPattern.source + '|(\\b(\\d+)\\s*[xX×]\\s*(STR|DEX|INT|WIL|KEY|LVL)\\b)', 'gi'), (match, p1, p2, p3, p4, p5) => {
         if (p1 || !p3) {
             return match;
         }

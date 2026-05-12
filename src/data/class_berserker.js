@@ -93,7 +93,7 @@ class BerserkerClass extends BaseClass {
         ];
         core[2] = [
             { id: "intensifying", name: "Intensifying Fury", desc: "If you are Raging at the beginning of your turn, roll 1 Fury Die for free." },
-            { id: "ancients", name: "One with the Ancients", desc: "(1/Safe Rest) When faced with a decision about which direction or course of action to take, you can call upon your ancestors to guide you toward the most dangerous or challenging path." }
+            { id: "ancients", name: "One with the Ancients", desc: "([[uAncients]] 1/Safe Rest) When faced with a decision about which direction or course of action to take, you can call upon your ancestors to guide you toward the most dangerous or challenging path." }
         ];
         core[3].push({ id: "bloodlust", name: "Bloodlust", desc: "Expend 1 or more Fury Dice on your turn, move DEX spaces per die spent for free." });
         core[4].push({ id: "enduring", name: "Enduring Rage", desc: "While Dying, you Rage automatically for free at the beginning of your turn, have a max of 2 actions instead of 1, and ignore the STR saves to make attacks." });
@@ -107,7 +107,7 @@ class BerserkerClass extends BaseClass {
                 { id: "stone_resilience", name: "Stone’s Resilience", desc: "Whenever you expend Fury Dice to reduce incoming damage, add the value of the die to the amount reduced." },
                 { id: "tenacity", name: "Mountainous Tenacity", desc: "Whenever you expend your Hit Dice to recover HP, for every 10 HP you would recover, you may heal 1 Wound instead." }
             ],
-            7: [{ id: "unbreakable", name: "Unbreakable", desc: "(1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don’t." }],
+            7: [{ id: "unbreakable", name: "Unbreakable", desc: "([[uUnbreakable]] 1/encounter) While Raging, if you would suffer your last Wound or other negative condition of your choice, you don’t." }],
             11: [{ id: "titan", name: "Titan’s Fury", desc: "After you miss an attack or are crit by an enemy, Rage for free." }],
             15: [{ id: "mountain_endurance", name: "Mountain’s Endurance", desc: "While Dying, if an attack against you would be a crit, the attack is rerolled instead (when-crit abilities, such as Titan’s Fury, still trigger)." }]
         };

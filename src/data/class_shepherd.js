@@ -91,8 +91,7 @@ class ShepherdClass extends BaseClass {
                 createManaResource('wil'),
                 createSimpleResource('spirit_tier', 'Spirit Tier', (l, stats, state, subclass, derived) => derived.maxTier, { visible: false }),
                 createSimpleResource('searing', 'Searing Light', (l, stats) => stats.wil, { visible: false, reset: 'Safe Rest' }),
-                createSimpleResource('powerful_healer', 'Powerful Healer', (l, stats) => stats.wil, { visible: false, reset: 'Safe Rest' }),
-                createSimpleResource('veilwalker', 'Veilwalker’s Blessing', (l) => 1, { visible: false, reset: 'Safe Rest' })
+                createSimpleResource('powerful_healer', 'Powerful Healer', (l, stats) => stats.wil, { visible: false, reset: 'Safe Rest' })
             ],
             featuresData: ShepherdClass.FEATURES,
             optionsData: ShepherdClass.OPTIONS
@@ -106,7 +105,17 @@ class ShepherdClass extends BaseClass {
                 "Empowered Companion": { desc: "Whenever you spend mana to call forth your Lifebinding Spirit, you cast it as if you spent 1 additional mana (ignoring the typical spell tier restrictions). The maximum die size is now a d20." },
                 "Guiding Spirit": { desc: "When your Lifebinding Spirit rolls a 6 or higher on its damage die, the target begins to glow with radiant light. The next attack against that target has advantage." },
                 "Hasty Companion": { desc: "+4 Reach for your Lifebinding Spirit. It can also act for free when summoned." },
-                "Illuminate Soul": { desc: "Action: A creature within 6 spaces begins to glow with radiant light. For 1 Round, attacks against them are made with your choice of advantage or disadvantage. You may do this WIL times per Safe Rest." },
+                "Illuminate Soul": {
+                    desc: (level, subclass, state) => {
+                        const statsMap = getStatsMap(state);
+                        const wilVal = statsMap.wil;
+                        let pips = "";
+                        for (let i = 0; i < wilVal; i++) {
+                            pips += `[[uIlluminate:${i}]] `;
+                        }
+                        return `Action: A creature within 6 spaces begins to glow with radiant light. For 1 Round, attacks against them are made with your choice of advantage or disadvantage. You may do this (${pips.trim()}) ${wilVal} times per Safe Rest.`;
+                    }
+                },
                 "Light Bearer": { desc: "Regain 1 use of Searing Light when you roll Initiative (this expires if unspent at the end of combat)." },
                 "Not Beyond MY Reach": { desc: "You may target creatures who have been dead less than 1 round for healing. For every 10 HP a dead creature is healed this way, you may have them recover 1 Wound instead (you must heal at least 1 Wound to revive them)." },
                 "Vengeful Spirit": { desc: "Action: Your Lifebinding Spirit sacrifices itself to transform into a swirling vortex of radiant light. At the end of your turn, it damages all enemies within 3 spaces of you, ignoring armor and cover. This lasts for a number of rounds equal to the healing charges left on the Lifebinding Spirit. This effect ends early if you summon your spirit again." }
@@ -164,7 +173,7 @@ class ShepherdClass extends BaseClass {
         subclasses["Malice"] = {
             3: [{ id: "soul_reaper", name: "Soul Reaper", desc: "When you use Searing Light to harm an enemy, make a 2nd enemy within range take the same amount of damage (ignoring armor)." },
             { id: "decay", name: "Harbinger of Decay", desc: "Vibrant colors and lovely smells are suppressed near you. Foods spoil more rapidly in your presence, and you frequently awaken to flies wherever you lodge. You may have your Lifebinding Spirit shift into a deathly version of itself (a zombie dog, a devious imp, etc.) and have its damage type become necrotic." }],
-            7: [{ id: "veilwalker", name: "Veilwalker’s Blessing", resourceId: "veilwalker", desc: "(1/Safe Rest) Reaction (when you would drop to 0 HP): Drop to 1 HP instead and force an enemy within 6 spaces to make a STR save. On a failure, they become Bloodied, or if they are already Bloodied, they drop to 0 HP." }],
+            7: [{ id: "veilwalker", name: "Veilwalker’s Blessing", resourceId: "veilwalker", desc: "([[uVeilwalker]] 1/Safe Rest) Reaction (when you would drop to 0 HP): Drop to 1 HP instead and force an enemy within 6 spaces to make a STR save. On a failure, they become Bloodied, or if they are already Bloodied, they drop to 0 HP." }],
             11: [{ id: "death_touch", name: "Deathbringer’s Touch", desc: "Your first melee attack each round against a Bloodied creature is an automatic critical hit. Your Lifebinding Spirit deals additional damage equal to your STR." }],
             15: [{ id: "conduit_death", name: "Conduit of Death", desc: "Your Veilwalker’s Blessing ability recharges when you roll Initiative. This charge is lost if unspent at the end of combat." }]
         };
