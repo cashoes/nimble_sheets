@@ -110,6 +110,144 @@ function ensureValidState(state) {
 }
 
 /**
+ * Validates and corrects state values according to game rules.
+ * This function mutates the state object and returns it.
+ * @param {Object} state - The state object to validate.
+ * @returns {Object} The validated state object.
+ */
+function validateAndCorrectState(state) {
+    // Ensure level is between 1 and 20
+    if (typeof state.level === 'number') {
+        state.level = Math.min(20, Math.max(1, state.level));
+    } else {
+        state.level = 1;
+    }
+
+    // Ensure attribute bases and additions are numbers and within reasonable bounds
+    const attributes = ['Str', 'Dex', 'Int', 'Wil'];
+    attributes.forEach(attr => {
+        const baseKey = `base${attr}`;
+        const addKey = `add${attr}`;
+        let base = parseFloat(state[baseKey]) || 0;
+        let add = parseFloat(state[addKey]) || 0;
+        // Ensure they are numbers
+        if (isNaN(base)) base = 0;
+        if (isNaN(add)) add = 0;
+        // NIMBLE rule: base + add should be between -5 and 5? We'll just cap sum at 5 and -5 for safety.
+        let sum = base + add;
+        const max = 5;
+        const min = -5;
+        if (sum > max) {
+            // If base already exceeds max, set base to max and add to 0
+            if (base > max) {
+                base = max;
+                add = 0;
+            } else {
+                // Reduce add to keep sum at max
+                add = max - base;
+            }
+        } else if (sum < min) {
+            if (base < min) {
+                base = min;
+                add = 0;
+            } else {
+                add = min - base;
+            }
+        }
+        state[baseKey] = base;
+        state[addKey] = add;
+    });
+
+    // Ensure resource values are non-negative numbers
+    if (state.resourceValues && typeof state.resourceValues === 'object') {
+        for (const [key, value] of Object.entries(state.resourceValues)) {
+            const num = parseFloat(value);
+            if (!isNaN(num) && num >= 0) {
+                state.resourceValues[key] = num;
+            } else {
+                state.resourceValues[key] = 0;
+            }
+        }
+    }
+
+    // Ensure gold is non-negative
+    if (typeof state.gold === 'number') {
+        state.gold = Math.max(0, state.gold);
+    } else {
+        state.gold = 0;
+    }
+
+    // Ensure wounds non-negative
+    if (typeof state.wounds === 'number') {
+        state.wounds = Math.max(0, state.wounds);
+    } else {
+        state.wounds = 0;
+    }
+
+    // Ensure tempHP non-negative
+    if (typeof state.tempHP === 'number') {
+        state.tempHP = Math.max(0, state.tempHP);
+    } else {
+        state.tempHP = 0;
+    }
+
+    // Ensure advantage is non-negative integer? We'll just ensure it's a number >=0
+    if (typeof state.advantage === 'number') {
+        state.advantage = Math.max(0, state.advantage);
+    } else {
+        state.advantage = 0;
+    }
+
+    // Ensure actionsSpent is between 0 and 3
+    if (typeof state.actionsSpent === 'number') {
+        state.actionsSpent = Math.min(3, Math.max(0, state.actionsSpent));
+    } else {
+        state.actionsSpent = 0;
+    }
+
+    // Ensure hpCurrent and hdCurrent are either null or non-negative numbers
+    if (state.hpCurrent !== null) {
+        const hp = parseFloat(state.hpCurrent);
+        if (!isNaN(hp) && hp >= 0) {
+            state.hpCurrent = hp;
+        } else {
+            state.hpCurrent = null;
+        }
+    }
+    if (state.hdCurrent !== null) {
+        const hd = parseFloat(state.hdCurrent);
+        if (!isNaN(hd) && hd >= 0) {
+            state.hdCurrent = hd;
+        } else {
+            state.hdCurrent = null;
+        }
+    }
+
+    // Ensure furyDice is an array of objects with total property? We'll just ensure it's an array.
+    if (!Array.isArray(state.furyDice)) {
+        state.furyDice = [];
+    } else {
+        // Optionally validate each element, but skip for brevity.
+    }
+
+    // Ensure selected* arrays are arrays
+    const selectionKeys = [
+        'selectedDecrees', 'selectedSpells', 'selectedArsenal', 'selectedToth',
+        'selectedMastery', 'selectedGreater', 'selectedLesser', 'selectedGraces',
+        'selectedLyrical', 'selectedBoons', 'selectedMartial', 'selectedUnderhanded',
+        'selectedDeepKnowledge', 'secondarySchool', 'selectedSubclassSpells',
+        'selectedStudy', 'selectedTwilight', 'selectedShadowmastery', 'currentForm'
+    ];
+    selectionKeys.forEach(key => {
+        if (!Array.isArray(state[key])) {
+            state[key] = [];
+        }
+    });
+
+    return state;
+}
+
+/**
  * Calculates the current total for the four primary attributes.
  * @param {Object} s - Character state object.
  * @returns {Object} Map of str, dex, int, wil totals.
@@ -389,8 +527,8 @@ function saveState(newState = null) {
         newStateObj = state; // Use the mutated state
     }
 
-    // Ensure the state is valid and has correct types/defaults
-    state = ensureValidState(newStateObj);
+    // Ensure the state is valid and has correct types/defaults, and apply game-specific corrections
+    state = validateAndCorrectState(newStateObj);
 
     // 7. Persist to storage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -464,8 +602,8 @@ function loadState() {
             console.error("Failed to load character state:", e);
         } 
     }
-    // Ensure state is valid and has correct types/defaults
-    state = ensureValidState(state);
+    // Ensure state is valid and has correct types/defaults, and apply game-specific corrections
+    state = validateAndCorrectState(state);
 
     // 3. Apply class-specific initial stats for brand new characters
     if (state.level === 1 && !state.charName) { 
