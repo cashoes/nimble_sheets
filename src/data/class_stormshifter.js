@@ -124,19 +124,36 @@ class StormshifterClass extends BaseClass {
             { id: "dire_pack", name: "Direbeast Form (2)", desc: "You can Beastshift into a <strong>Beast of the Pack</strong> (Medium). Gain +DEX speed. Thunderfang: 1d4+LVL piercing damage. Supercharge: Spend up to WIL mana for +1d8 lightning damage per mana (take damage on a miss)." }
         ];
 
-        core[4].push(FeatureGen.createSpellChoiceFeature({ 
-            id: "stormcaller", 
-            name: "Stormcaller", 
-            level: 4, 
-            stateKey: "selectedStormcaller", 
-            milestones: [4, 7, 14], 
-            getCount: (l) => l >= 14 ? 0 : 3, 
+        core[4].push(FeatureGen.createSpellChoiceFeature({
+            id: "stormcaller",
+            name: "Stormcaller",
+            level: 4,
+            stateKey: "selectedStormcaller",
+            milestones: [4, 7, 14],
+            getCount: (l, s, state) => {
+                if (l >= 14) return 0;
+                const perSchool = l >= 7 ? 2 : 1;
+                const schoolCount = (s === "SkyStorm" && state.selectedStudy?.[0] && state.selectedStudy[0] !== "None") ? 3 : 2;
+                return schoolCount * perSchool;
+            },
             getSlots: (level, subclass, state) => {
                 if (level >= 14) return [];
-                const schools = ["Lightning", "Wind", state.selectedStudy || "Ice"];
-                return schools.map(s => ({ type: 'utility', schools: [s], label: `${s} Utility` }));
+                const schools = ["Lightning", "Wind"];
+                const third = state.selectedStudy?.[0];
+                if (subclass === "SkyStorm" && third && third !== "None") {
+                    schools.push(third);
+                }
+
+                const slots = [];
+                const perSchool = level >= 7 ? 2 : 1;
+                for (let i = 0; i < perSchool; i++) {
+                    schools.forEach(s => {
+                        slots.push({ type: 'utility', schools: [s], label: `${s} Utility ${i > 0 ? '(2)' : ''}`.trim() });
+                    });
+                }
+                return slots;
             },
-            desc: (l) => l >= 14 ? "You know all Utility Spells from each spell school you know." : "Learn a Utility Spell from each spell school you know." 
+            desc: (l) => l >= 14 ? "You know all Utility Spells from each spell school you know." : "Learn a Utility Spell from each spell school you know."
         }));
 
         core[5].push({ id: "dire_nightmare", name: "Direbeast Form (3)", desc: "You can Beastshift into a <strong>Beast of Nightmares</strong> (Tiny). Sting: 1d4 piercing + 3×LVL acid damage (ignoring armor), on crit: 4×LVL damage instead. Silent But Deadly: Speed 2, cannot Defend/Interpose, cannot be targeted until conspicuous." });
@@ -163,12 +180,12 @@ class StormshifterClass extends BaseClass {
 
         subclasses["FangClaw"] = {
             3: [{ id: "swiftshift", name: "Swiftshift", desc: "When you roll Initiative, you may Beastshift or move for free. While transformed, you may shift between different Direbeast forms for free (and as a reaction by spending 1 mana); however, Beastshifting for free does not grant any temp HP." },
-                { id: "windborne", name: "Windborne Protector", desc: "(1/encounter) Reaction: when an enemy attacks, spend 2 mana to shift into a Fearsome Beast. Then you may Interpose from up to 12 spaces away and Defend for free (if you have not yet done so this round)." },
-                { id: "friend", name: "Friend of Beasts", desc: "Beasts will not attack you until you first harm them. You may transform into harmless beasts without spending a Beastshift charge." }],
+            { id: "windborne", name: "Windborne Protector", desc: "(1/encounter) Reaction: when an enemy attacks, spend 2 mana to shift into a Fearsome Beast. Then you may Interpose from up to 12 spaces away and Defend for free (if you have not yet done so this round)." },
+            { id: "friend", name: "Friend of Beasts", desc: "Beasts will not attack you until you first harm them. You may transform into harmless beasts without spending a Beastshift charge." }],
             7: [{ id: "unleash", name: "Unleash the Beast", desc: "(1/encounter) When you miss, you can crit instead." },
-                { id: "wake", name: "Storm Wake", desc: "(1/encounter) Action: Spend 3 mana to shift into a Beast of the Pack, then teleport in a straight line up to 12 spaces away, unerringly dealing WIL d8 lightning damage to any creatures you choose adjacent to your path." }],
+            { id: "wake", name: "Storm Wake", desc: "(1/encounter) Action: Spend 3 mana to shift into a Beast of the Pack, then teleport in a straight line up to 12 spaces away, unerringly dealing WIL d8 lightning damage to any creatures you choose adjacent to your path." }],
             11: [{ id: "master_forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." },
-                { id: "venomous", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into a Beast of Nightmares. Then entice a creature within 12 spaces to move 2×WIL spaces closer to you on a failed WIL save (they roll with disadvantage and must repeat until they save or can move no further). If they end up in the same space as you, you may Sting them for free." }],
+            { id: "venomous", name: "Venomous Gaze", desc: "(1/encounter) Action: Spend 2 mana to shift into a Beast of Nightmares. Then entice a creature within 12 spaces to move 2×WIL spaces closer to you on a failed WIL save (they roll with disadvantage and must repeat until they save or can move no further). If they end up in the same space as you, you may Sting them for free." }],
             15: [{ id: "master_forms2", name: "Master of Forms (2)", desc: "You can Beastshift 2 additional times per Safe Rest. Choose 2 additional Chimeric Boons. Your Direbeast forms can have 3 at a time." }]
         };
 

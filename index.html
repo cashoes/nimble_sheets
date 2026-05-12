@@ -112,14 +112,14 @@
         <div id="status"></div>
     </div>
 
-    <div class="version" onclick="handleVersionClick()">NIMBLE Character Tracker v2.2.0</div>
+    <div class="version" onclick="handleVersionClick()">NIMBLE Character Tracker v2.2.1</div>
 
     <script>
         /**
          * Master Build Logic for NIMBLE Trackers.
          * Concatenates raw data, engine modules, and class-specific code into a single HTML blob.
          */
-        const VERSION = '2.2.0';
+        const VERSION = '2.2.1';
         let clickCount = 0;
 
         function handleVersionClick() {
@@ -146,9 +146,8 @@
          */
         async function fetchCore() {
             const engineModules = [
-                'roll_engine.js', 'feat_helpers.js', 'panel_builder.js', 'feature_gen.js',
-                'resource_factory.js', 'base_class.js', 'rendering_engine.js', 'logic.js',
-                'ui_helpers.js', 'state_manager.js', 'main.js'
+                'rolls.js', 'features.js', 'ui.js', 'core.js', 
+                'view.js', 'state.js', 'app.js'
             ];
 
             const [
@@ -193,12 +192,11 @@
             jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
 
             // Map engine parts (ordered by fetchCore)
-            const [roll, feat, panel, gen, res, base, render, logic, ui, state, main] = core.engineParts;
+            const [rolls, features, ui, corePart, view, state, app] = core.engineParts;
 
-            jsContent += `// --- Engine Helpers & Base ---\n${roll}\n${feat}\n${panel}\n${gen}\n${res}\n${base}\n\n`;
+            jsContent += `// --- Engine Helpers & Base ---\n${rolls}\n${features}\n${ui}\n${corePart}\n\n`;
             jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
-            jsContent += `// --- Engine Logic ---\n${render}\n${logic}\n${ui}\n${state}\n\n`;
-            jsContent += `// --- Main Entry ---\n${main}\n\n`;
+            jsContent += `// --- Engine Logic ---\n${view}\n${state}\n${app}\n\n`;
 
             const fullScript = `<script>\n${jsContent}<\/script>`;
             return core.template.replace('<!-- INJECT_SCRIPTS -->', fullScript);

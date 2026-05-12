@@ -104,7 +104,10 @@ class MageClass extends BaseClass {
             spellSchools: ["Fire", "Ice", "Lightning"],
             extraSchoolsKeys: ["selectedMastery"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
-            includeUtilitySpells: { selectKey: "selectedMastery" },
+            includeUtilitySpells: { 
+                all: (l) => l >= 14 ? ["Fire", "Ice", "Lightning"] : false,
+                selectKey: "selectedMastery" 
+            },
             resources: [
                 createManaResource('int', 'Mana Pool')
             ],
@@ -150,13 +153,17 @@ class MageClass extends BaseClass {
         core[2].push({ id: "researcher", name: "Talented Researcher", desc: "Advantage on Arcana/Lore checks when you have access to books/study time." });
 
         core[3].push({ 
-            id: "mastery_1", 
+            id: "mastery", 
             name: "Elemental Mastery", 
-            type: "choice", 
+            type: "dynamic_choice", 
             collection: "masterySchools", 
             stateKey: "selectedMastery", 
-            count: 1, 
-            desc: "Learn all Utility spells from one elemental school of your choice." 
+            milestones: [3, 6, 14],
+            getCount: (l) => l >= 14 ? 0 : (l >= 6 ? 2 : 1),
+            desc: (level) => FeatureGen.createScalingList("Learn all Utility spells from one elemental school of your choice.", [
+                { level: 6, text: "Elemental Mastery (2): Choose a 2nd school to master." },
+                { level: 14, text: "Elemental Mastery (3): You have mastered all three elemental schools. You know all Utility spells from Fire, Ice, and Lightning." }
+            ], level)
         });
 
         // Modular choices (Spellshaper)
@@ -169,29 +176,6 @@ class MageClass extends BaseClass {
             milestones: [4, 9, 13], 
             desc: "Choose modular Spellshaper upgrades.", 
             getCount: FeatureGen.createStandardCount([4, 9, 13]) 
-        });
-
-        // Advanced Elemental Mastery
-        core[6].push({ 
-            id: "mastery_2", 
-            name: "Elemental Mastery (2)", 
-            type: "choice", 
-            collection: "masterySchools", 
-            stateKey: "selectedMastery", 
-            count: 1, 
-            startIndex: 1, 
-            desc: "Learn all Utility spells from a 2nd elemental school." 
-        });
-
-        core[14].push({ 
-            id: "mastery_3", 
-            name: "Elemental Mastery (3)", 
-            type: "choice", 
-            collection: "masterySchools", 
-            stateKey: "selectedMastery", 
-            count: 1, 
-            startIndex: 2, 
-            desc: "Learn all Utility spells from your 3rd elemental school." 
         });
 
         subclasses["Control"] = {

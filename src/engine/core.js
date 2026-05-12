@@ -1,7 +1,6 @@
 /**
- * @fileoverview BaseClass definition for NIMBLE trackers.
- * Individual class definitions should extend this to provide specific logic
- * for features, resources, and spell progression.
+ * @fileoverview CORE ENGINE FOUNDATION
+ * Defines the BaseClass for all character classes and standardized resource creation factories.
  */
 
 /**
@@ -441,4 +440,41 @@ function createSpellReplacement(replace, add, school) {
 
 function createUtilityConfig(all = false, selectKey = null) {
     return { all, selectKey };
+}
+
+/**
+ * Creates a standard mana-style resource definition.
+ * @param {string} [stat='int'] - The attribute that scales the resource.
+ * @param {string} [label='Mana Pool'] - The display name for the resource.
+ * @param {Object} [options={}] - Additional display options.
+ * @returns {Object} Resource definition object.
+ */
+function createManaResource(stat = 'int', label = 'Mana Pool', options = {}) {
+    return {
+        id: 'mana',
+        label,
+        manual: true,
+        options,
+        calcMax: (level, stats) => {
+            return level >= 2 ? (stats[stat] * 3) + level : 0;
+        }
+    };
+}
+
+/**
+ * Creates a simple manual resource definition.
+ * @param {string} id - Unique identifier for the resource.
+ * @param {string} label - Display name for the resource.
+ * @param {Function} calcMaxFn - Function to calculate the maximum value (level, stats, state, subclass, derived) => number.
+ * @param {Object} [options={}] - Additional display options.
+ * @returns {Object} Resource definition object.
+ */
+function createSimpleResource(id, label, calcMaxFn, options = {}) {
+    return {
+        id,
+        label,
+        manual: true,
+        options,
+        calcMax: calcMaxFn
+    };
 }
