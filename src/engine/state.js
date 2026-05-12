@@ -5,6 +5,111 @@
  */
 
 /**
+ * Ensures the state object is valid by setting defaults and correcting types.
+ * @param {Object|null|undefined} state - The state object to validate.
+ * @returns {Object} A valid state object.
+ */
+function ensureValidState(state) {
+    // If state is null or undefined, start with an empty object
+    const valid = { ...(state || {}) };
+
+    // Define defaults and validators
+    const defaults = {
+        version: "2.2.4",
+        charName: '',
+        level: 1,
+        ancestry: 'None',
+        background: 'None',
+        subclass: 'None',
+        baseStr: 0, addStr: 0,
+        baseDex: 0, addDex: 0,
+        baseInt: 0, addInt: 0,
+        baseWil: 0, addWil: 0,
+        hpCurrent: null,
+        tempHP: 0,
+        hdCurrent: null,
+        wounds: 0,
+        skills: {},
+        activeConditions: [],
+        inventory: [],
+        gold: 0,
+        resourceValues: {},
+        bgSpell: 'None',
+        showMinor: false,
+        // Multi-selection feature states
+        selectedDecrees: [],
+        selectedSpells: [],
+        selectedArsenal: [],
+        selectedToth: [],
+        selectedMastery: [],
+        selectedGreater: [],
+        selectedLesser: [],
+        selectedGraces: [],
+        selectedLyrical: [],
+        selectedBoons: [],
+        selectedMartial: [],
+        selectedUnderhanded: [],
+        selectedDeepKnowledge: [],
+        secondarySchool: [],
+        selectedSubclassSpells: [],
+        selectedStudy: [],
+        selectedTwilight: [],
+        selectedShadowmastery: [],
+        currentForm: [],
+        furyDice: [],
+        judgmentDice: null,
+        judgmentBoom: 'OFF',
+        judgmentMode: 'Single',
+        furyBoom: 'OFF',
+        advantage: 0,
+        actionsSpent: 0
+    };
+
+    // Apply defaults for missing or incorrect types
+    for (const [key, defaultValue] of Object.entries(defaults)) {
+        if (valid[key] === undefined) {
+            valid[key] = defaultValue;
+        } else {
+            // Type correction
+            const expectedType = typeof defaultValue;
+            if (expectedType === 'object' && defaultValue !== null) {
+                // For objects and arrays, we want to ensure they are the correct type
+                if (Array.isArray(defaultValue)) {
+                    if (!Array.isArray(valid[key])) {
+                        valid[key] = [...defaultValue]; // copy the default array
+                    }
+                } else {
+                    // Plain object
+                    if (typeof valid[key] !== 'object' || valid[key] === null || Array.isArray(valid[key])) {
+                        valid[key] = { ...defaultValue }; // copy the default object
+                    }
+                }
+            } else if (expectedType === 'number') {
+                if (typeof valid[key] !== 'number' || Number.isNaN(valid[key])) {
+                    valid[key] = defaultValue;
+                } else if (key === 'level') {
+                    // Clamp level between 1 and 20
+                    valid[key] = Math.min(20, Math.max(1, valid[key]));
+                }
+            } else if (expectedType === 'string') {
+                if (typeof valid[key] !== 'string') {
+                    valid[key] = String(valid[key]);
+                }
+            } else if (expectedType === 'boolean') {
+                valid[key] = !!valid[key];
+            }
+            // For null (like hpCurrent, hdCurrent, judgmentDice) we don't correct type if it's not null,
+            // because the rest of the code expects either null or a specific type.
+            // We'll leave it as is and let the specific usage handle it.
+        }
+    }
+
+    // Additional validation: ensure arrays of strings for certain fields? Not necessary.
+
+    return valid;
+}
+
+/**
  * Calculates the current total for the four primary attributes.
  * @param {Object} s - Character state object.
  * @returns {Object} Map of str, dex, int, wil totals.
@@ -208,8 +313,15 @@ let state = {};
  * @param {Object|null} newState - Optional state object to overwrite the current state.
  */
 function saveState(newState = null) {
+    let newStateObj;
     if (newState) {
-        state = JSON.parse(JSON.stringify(newState));
+        // Parse and validate the provided state
+        try {
+            newStateObj = JSON.parse(JSON.stringify(newState));
+        } catch (e) {
+            console.error("Failed to parse provided state:", e);
+            return; // Abort save if state is invalid JSON
+        }
     } else {
         const oldDerived = computeDerived(state);
         const oldGold = state.gold;
@@ -273,7 +385,12 @@ function saveState(newState = null) {
                 state.resourceValues[r.id] = newMax;
             }
         });
+
+        newStateObj = state; // Use the mutated state
     }
+
+    // Ensure the state is valid and has correct types/defaults
+    state = ensureValidState(newStateObj);
 
     // 7. Persist to storage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -347,6 +464,8 @@ function loadState() {
             console.error("Failed to load character state:", e);
         } 
     }
+    // Ensure state is valid and has correct types/defaults
+    state = ensureValidState(state);
 
     // 3. Apply class-specific initial stats for brand new characters
     if (state.level === 1 && !state.charName) { 
