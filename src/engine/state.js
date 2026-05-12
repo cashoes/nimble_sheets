@@ -7,7 +7,7 @@
 /**
  * Ensures the state object is valid by setting defaults and correcting types.
  * @param {Object|null|undefined} state - The state object to validate.
- * @returns {Object} A valid state object.
+ * @returns {Object} A valid state object with default values for missing or incorrect types.
  */
 function ensureValidState(state) {
     // If state is null or undefined, start with an empty object
@@ -112,8 +112,8 @@ function ensureValidState(state) {
 /**
  * Validates and corrects state values according to game rules.
  * This function mutates the state object and returns it.
- * @param {Object} state - The state object to validate.
- * @returns {Object} The validated state object.
+ * @param {Object} state - The state object to validate and correct.
+ * @returns {Object} The validated state object (same reference).
  */
 function validateAndCorrectState(state) {
     // Ensure level is between 1 and 20

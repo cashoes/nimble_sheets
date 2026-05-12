@@ -26,6 +26,7 @@ const debouncedSaveAndRender = debounce(() => {
 /**
  * Imports character data from a JSON file.
  * @param {HTMLInputElement} input - File input element.
+ * @returns {void}
  */
 const importCharacter = (input) => {
     const file = input.files?.[0];
@@ -60,6 +61,7 @@ const importCharacter = (input) => {
 /**
  * Exports the current character sheet as a standalone HTML file.
  * Injects the current state into the EMBEDDED_STATE variable.
+ * @returns {void}
  */
 const saveAsHTML = () => {
     const newHtml = document.documentElement.outerHTML;
