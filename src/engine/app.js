@@ -8,101 +8,117 @@
  * Creates a debounced version of a function.
  * @param {Function} fn - Function to debounce.
  * @param {number} ms - Delay in milliseconds.
+ * @returns {Function} Debounced function.
  */
-function debounce(fn, ms) { 
-    let timeout; 
-    return (...args) => { 
-        clearTimeout(timeout); 
-        timeout = setTimeout(() => fn.apply(this, args), ms); 
-    }; 
-}
+const debounce = (fn, ms) => {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn.apply(this, args), ms);
+    };
+};
 
-const debouncedSaveAndRender = debounce(() => { 
-    saveState(); 
-    render(); 
+const debouncedSaveAndRender = debounce(() => {
+    saveState();
+    render();
 }, 300);
 
 /**
  * Imports character data from a JSON file.
  * @param {HTMLInputElement} input - File input element.
  */
-function importCharacter(input) { 
-    const file = input.files[0]; 
-    if (!file) return; 
+const importCharacter = (input) => {
+    const file = input.files?.[0];
+    if (!file) {
+        return; // No file selected
+    }
+    // Optional: validate file type
+    if (!file.name.toLowerCase().endsWith('.json')) {
+        alert("Please select a JSON file.");
+        return;
+    }
     
-    const reader = new FileReader(); 
-    reader.onload = (e) => { 
-        try { 
-            const imported = JSON.parse(e.target.result); 
-            saveState(imported); 
-            loadState(); 
-            render(); 
-            alert("Character imported successfully!"); 
-        } catch (err) { 
-            alert("Error importing character: Invalid file format."); 
-        } 
-    }; 
-    reader.readAsText(file); 
-}
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const imported = JSON.parse(e.target.result);
+            saveState(imported);
+            loadState();
+            render();
+            alert("Character imported successfully!");
+        } catch (err) {
+            console.error("Import error:", err);
+            alert("Error importing character: Invalid or corrupted JSON file.");
+        }
+    };
+    reader.onerror = () => {
+        alert("Failed to read the file.");
+    };
+    reader.readAsText(file);
+};
 
 /**
  * Exports the current character sheet as a standalone HTML file.
  * Injects the current state into the EMBEDDED_STATE variable.
  */
-function saveAsHTML() {
-    let newHtml = document.documentElement.outerHTML;
+const saveAsHTML = () => {
+    const newHtml = document.documentElement.outerHTML;
     
     // Inject current state into the template placeholder
-    newHtml = newHtml.replace(
+    const updatedHtml = newHtml.replace(
         /const EMBEDDED_STATE = (null|{.*?});/, 
         `const EMBEDDED_STATE = ${JSON.stringify(state)};`
     );
     
     // Update document title for the exported file
-    newHtml = newHtml.replace(
+    const titledHtml = updatedHtml.replace(
         /<title>(.*?)<\/title>/, 
-        `<title>NIMBLE — ${state.charName || 'Hero'} (${CLASS_CONFIG.name})</title>`
+        `<title>NIMBLE — ${state.charName ?? 'Hero'} (${CLASS_CONFIG?.name ?? 'Unknown'})</title>`
     );
     
     // Trigger download
-    const blob = new Blob([newHtml], { type: 'text/html' }); 
-    const url = URL.createObjectURL(blob); 
-    const a = document.createElement('a'); 
-    
-    a.href = url; 
-    a.download = `nimble_${state.charName || 'Hero'}_${CLASS_CONFIG.name}.html`; 
-    document.body.appendChild(a); 
-    a.click(); 
-    document.body.removeChild(a); 
+    const blob = new Blob([titledHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nimble_${state.charName ?? 'Hero'}_${CLASS_CONFIG?.name ?? 'Unknown'}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
-}
+};
 
 /**
  * Global Initialization on DOM Load.
  */
-document.addEventListener('DOMContentLoaded', () => { 
-    loadState(); 
-    render(); 
-    
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        loadState();
+        render();
+    } catch (err) {
+        console.error("Failed to initialize app:", err);
+        alert("An error occurred while loading the character sheet. See console for details.");
+    }
+
     // Bind change listeners to all sheet inputs
-    document.querySelectorAll('input, select').forEach(el => { 
+    document.querySelectorAll('input, select').forEach(el => {
         // 1. Instant update for discrete choices (Level, Dropdowns, Toggles)
         if (el.id === 'level' || el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'radio') {
-            const instantUpdate = () => { 
-                saveState(); 
-                render(); 
+            const instantUpdate = () => {
+                saveState();
+                render();
             };
             el.addEventListener('input', instantUpdate);
             el.addEventListener('change', instantUpdate);
         } else {
             // 2. Debounced update for text fields to maintain performance while typing
-            el.addEventListener('change', () => { 
-                saveState(); 
-                render(); 
-            }); 
-            el.addEventListener('input', debouncedSaveAndRender); 
+            el.addEventListener('change', () => {
+                saveState();
+                render();
+            });
+            el.addEventListener('input', debouncedSaveAndRender);
         }
-    }); 
+    });
 });
 
 /**

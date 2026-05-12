@@ -4,6 +4,30 @@
  */
 
 /**
+ * Manages resource creation and combination for a class.
+ */
+class ResourceManager {
+    /**
+     * @param {Array<Object>} baseResources - The base resources defined for the class.
+     */
+    constructor(baseResources) {
+        this.baseResources = baseResources || [];
+    }
+
+    /**
+     * Gets the combined resources (base + subclass) for the given subclass and state.
+     * @param {Function} getSubclassConfig - A function that returns the subclass config for a given subclass and state.
+     * @param {string} subclass - The selected subclass.
+     * @param {Object} state - The current character state.
+     * @returns {Array<Object>} Combined resource definitions.
+     */
+    getCombinedResources(getSubclassConfig, subclass, state) {
+        const subConfig = getSubclassConfig(subclass, state) || {};
+        return [...this.baseResources, ...(subConfig.resources || [])];
+    }
+}
+
+/**
  * Base class for all character class trackers.
  * Handles core attributes, feature rendering, and automated spell progression.
  */
