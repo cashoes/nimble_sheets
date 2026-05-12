@@ -374,25 +374,6 @@ function renderBackgroundFeature(state, level, statsMap, iStats, buildFeatureHtm
         bgDesc += `<div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">${iStats(bgSelectedOpt.desc, level, statsMap)}</div>`;
     }
 
-    // 1. Render Usage Pips (e.g. 1/day, 1/rest)
-    if (bgFeat.uses) {
-        let usesHtml = `<div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">`;
-        bgFeat.uses.forEach(u => {
-            const current = state[u.stateKey] || 0;
-            let pips = "";
-            for (let i = 0; i < u.max; i++) {
-                pips += `<input type="checkbox" class="pip" ${i < current ? 'checked' : ''} onclick="toggleBgPip('${u.stateKey}', ${i})">`;
-            }
-            usesHtml += `
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 4px; border: 1px solid var(--class-border);">
-                    <span style="font-size: 0.85em; font-family: 'Cinzel'; color: var(--gold-light); font-weight: bold;">${u.label}</span>
-                    <div class="pips">${pips}</div>
-                </div>`;
-        });
-        usesHtml += `</div>`;
-        bgDesc += usesHtml;
-    }
-
     let choiceHtml = "";
     if (bgFeat.collection) {
         if (bgFeat.collection === "spells" || bgFeat.collection === "utility") {
