@@ -44,7 +44,7 @@ class BerserkerClass extends BaseClass {
                 { id: "berserker_unarmored", stat: "armorBase", condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state), getMod: (stats) => 10 + stats.dex + stats.str },
                 { id: "eager_init", stat: "initAdv", condition: (l, s, state) => (state.selectedArsenal || []).includes("Eager for Battle") },
                 { id: "mighty_wounds", stat: "woundMax", value: 4, condition: (l, s, state) => (state.selectedArsenal || []).includes("Mighty Endurance") },
-                { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "RedMist" && l >= 15 }
+                { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "RedMist" && l >= 15 && (state.activeConditions || []).includes('raging') }
             ],
             resources: [],
             featuresData: BerserkerClass.FEATURES,
@@ -81,9 +81,9 @@ class BerserkerClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or DEX', 'INT or WIL', false);
 
         core[1] = [
-            { 
-                id: "rage", 
-                name: "Rage", 
+            {
+                id: "rage",
+                name: "Rage",
                 desc: (level, subclass, state, derived) => {
                     const gain = derived.furyGain || 1;
                     return `(1/turn) Action: Roll ${gain} Fury Die (1d${derived.furyFaces}) and set it aside. Add it to every STR attack you make. You can have a max of KEY (<strong>${derived.furyMax}</strong>) Fury Dice; they are lost when your Rage ends.`;
@@ -143,6 +143,15 @@ class BerserkerClass extends BaseClass {
         builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.');
 
         return builder.build();
+    }
+
+    getExtraConditions(level, subclass, state, derived) {
+        if (level >= 1) {
+            return [
+                { id: 'raging', name: 'RAGING!!!', type: 'rage', desc: 'You are in a state of primal fury. Fury Dice are added to your STR attacks.' }
+            ];
+        }
+        return [];
     }
 }
 
