@@ -105,7 +105,7 @@ class BaseClass {
     /**
      * Gets attribute overrides for the current state.
      */
-    getStatOverrides(level, subclass, state, statsMap) {
+    getStatOverrides(level, subclass, state, statsMap, maxHP = null) {
         const overrides = {};
         const subConfig = this.getSubclassConfig(subclass, state);
         const combinedModifiers = [...this.statModifiers, ...(subConfig.statModifiers || [])];
@@ -113,11 +113,11 @@ class BaseClass {
         combinedModifiers.forEach(mod => {
             const levelMatch = level >= (mod.level || 0);
             const subclassMatch = !mod.subclass || mod.subclass === subclass;
-            const conditionMatch = !mod.condition || mod.condition(level, subclass, state);
+            const conditionMatch = !mod.condition || mod.condition(level, subclass, state, maxHP);
 
             if (levelMatch && subclassMatch && conditionMatch) {
                 const val = typeof mod.getMod === 'function' ? mod.getMod(statsMap, state, level) : (mod.value || 0);
-                if (['initAdv', 'modFlySpeed', 'quickRestLoh', 'panel_surge'].includes(mod.stat)) {
+                if (['initAdv', 'modFlySpeed', 'quickRestLoh', 'panel_surge', 'profArmor', 'profWeapons', 'allSaveAdv', 'allSaveDis'].includes(mod.stat)) {
                     overrides[mod.stat] = val || true;
                 } else {
                     overrides[mod.stat] = (overrides[mod.stat] || 0) + val;
@@ -431,6 +431,14 @@ class BaseClass {
         return (state.inventory || []).some(item => 
             item.equipped && item.type === 'armor' && item.armorType === 'heavy'
         );
+    }
+
+    isBloodied(state, maxHP = null) {
+        if ((state.activeConditions || []).includes("bloodied")) return true;
+        if (maxHP !== null && state.hpCurrent !== null) {
+            return state.hpCurrent <= (maxHP / 2);
+        }
+        return false;
     }
 }
 

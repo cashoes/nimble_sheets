@@ -56,7 +56,8 @@ function computeDerived(s) {
 
     // 4. Base Stats & Overrides from Class logic
     const classDerived = CLASS_CONFIG.getDerivedStats ? CLASS_CONFIG.getDerivedStats(level, s.subclass, s) : {};
-    const classOverrides = CLASS_CONFIG.getStatOverrides ? CLASS_CONFIG.getStatOverrides(level, s.subclass, s, statsMap) : {};
+    const classOverrides = CLASS_CONFIG.getStatOverrides ? CLASS_CONFIG.getStatOverrides(level, s.subclass, s, statsMap, maxHP) : {};
+    const isBloodied = CLASS_CONFIG.isBloodied(s, maxHP);
 
     // 5. Initiative (DEX + modifiers)
     let initiative = statsMap.dex + (classOverrides.init || 0) + (ancFeat?.modInit || 0) + (bgFeat?.modInit || 0) + (bgSelectedOpt?.modInit || 0);
@@ -152,11 +153,13 @@ function computeDerived(s) {
     }
 
     return {
+        ...classOverrides,
         ...classDerived,
         level, 
         statsMap, 
         hdFace, 
         maxHP, 
+        isBloodied,
         hdMax: maxHD, 
         armor: armorVal, 
         speed, 
@@ -369,13 +372,19 @@ function loadState() {
  * Called on page load and after major state resets.
  */
 function syncStateToDOM() {
+    const derived = computeDerived(state);
+
     // 1. Identity and Header info
     if (document.getElementById('classNameDisplay')) document.getElementById('classNameDisplay').innerText = CLASS_CONFIG.name;
     if (document.getElementById('classSubtitleDisplay')) document.getElementById('classSubtitleDisplay').innerText = CLASS_CONFIG.subtitle;
     
-    if (CLASS_CONFIG.proficiencies) { 
-        if (document.getElementById('profArmor')) document.getElementById('profArmor').innerText = CLASS_CONFIG.proficiencies.armor || "--"; 
-        if (document.getElementById('profWeapons')) document.getElementById('profWeapons').innerText = CLASS_CONFIG.proficiencies.weapons || "--"; 
+    if (document.getElementById('profArmor')) {
+        const armorProf = derived.profArmor || (CLASS_CONFIG.proficiencies ? CLASS_CONFIG.proficiencies.armor : "--");
+        document.getElementById('profArmor').innerText = armorProf;
+    }
+    if (document.getElementById('profWeapons')) {
+        const weaponsProf = derived.profWeapons || (CLASS_CONFIG.proficiencies ? CLASS_CONFIG.proficiencies.weapons : "--");
+        document.getElementById('profWeapons').innerText = weaponsProf;
     }
 
     // 2. Populate Selection Dropdowns

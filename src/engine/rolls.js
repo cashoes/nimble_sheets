@@ -54,9 +54,16 @@ function dispatchRoll(notation, label, options = {}) {
     // -------------------------
 
     const isCheckOrSave = /check|save|rest|hit die/i.test(label);
+    const isSave = /save/i.test(label);
+    const derived = computeDerived(state);
 
     let condAdv = 0;
     if (!options.isMinion) {
+        if (isSave) {
+            if (derived.allSaveAdv) condAdv++;
+            if (derived.allSaveDis) condAdv--;
+        }
+
         state.activeConditions.forEach(cId => {
             const condition = CONDITIONS_LIST.find(cl => cl.id === cId);
             if (condition && condition.modRolls) {

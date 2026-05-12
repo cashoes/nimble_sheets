@@ -28,8 +28,17 @@ class ZephyrClass extends BaseClass {
             initialStats: { baseStr: 1, baseDex: 3, baseInt: -1, baseWil: 0 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { value: "WayPain", label: "Way of Pain", accent: "#ef4444" },
-                { value: "WayFlame", label: "Way of Flame", accent: "#f59e0b" }
+                { 
+                    value: "WayPain", 
+                    label: "Way of Pain", 
+                    accent: "#7f1d1d",
+                    config: {
+                        statModifiers: [
+                            { id: "pain_saves", stat: "allSaveAdv", level: 11, condition: (l, s, state, maxHP) => CLASS_CONFIG.isBloodied(state, maxHP) }
+                        ]
+                    }
+                },
+                { value: "WayFlame", label: "Way of the Burning Flame", accent: "#ea580c" }
             ],
             scalingStats: {
                 unyieldingMax: (level) => {
