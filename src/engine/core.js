@@ -916,10 +916,30 @@ class BaseClass {
     }
 }
 
+/**
+ * Creates a spell‑replacement configuration object.
+ * @param {string|string[]} replace - The spell name (or array of names) to remove.
+ * @param {string} add            - The spell name to add in place of the removed one(s).
+ * @param {string} school         - The magic school both spells belong to.
+ * @returns {Object}              { replace, add, school }
+ */
 function createSpellReplacement(replace, add, school) {
     return { replace, add, school };
 }
 
+/**
+ * Creates a utility‑spells configuration object.
+ * @param {boolean|string[]|Function} [all=false] -
+ *        `true` → include **all** utility schools;
+ *        `string[]` → include only the listed schools;
+ *        `Function(level, subclass, state)` → return `true`/`string[]` to decide;
+ *        `false`/null/undefined → no automatic inclusion.
+ * @param {string|null} [selectKey=null] -
+ *        Name of a state key (e.g., `"selectedMastery"`). When provided,
+ *        the engine looks at `state[selectKey]` (an array of school names or spell names)
+ *        to decide which utilities to include.
+ * @returns {Object} { all, selectKey }
+ */
 function createUtilityConfig(all = false, selectKey = null) {
     return { all, selectKey };
 }
