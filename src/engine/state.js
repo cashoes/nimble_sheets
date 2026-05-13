@@ -418,13 +418,6 @@ function computeDerived(s) {
 }
 
 /**
- * Utility to save current state to storage and trigger a UI refresh.
- */
-function saveAndRender() {
-    saveState();
-}
-
-/**
  * Generates a unique key for local storage based on the character class and filename.
  * @returns {string} The storage key.
  */
@@ -443,6 +436,179 @@ const EMBEDDED_STATE = null;
 
 /** The master character state object. */
 let state = {};
+
+/**
+ * Global character state dispatcher.
+ * Centralizes all state mutations through a single choke point to ensure unidirectional data flow.
+ * @param {Object} action - Action object containing type and payload.
+ */
+function dispatch(action) {
+    const oldState = JSON.parse(JSON.stringify(state));
+    
+    // Apply mutation via reducer
+    state = characterReducer(state, action);
+
+    // Side Effects: Animations
+    if (typeof triggerAnimation === 'function') {
+        if (state.hpCurrent > oldState.hpCurrent) triggerAnimation('displayCurrentHP', 'green');
+        else if (state.hpCurrent < oldState.hpCurrent) triggerAnimation('displayCurrentHP', 'red');
+        
+        if (state.tempHP < oldState.tempHP) triggerAnimation('displayTempHP', 'red');
+    }
+
+    // Side Effects: Manual DOM sync for specific non-reactive elements if needed
+    if (state.gold !== oldState.gold && document.getElementById('gold')) {
+        document.getElementById('gold').value = state.gold;
+    }
+
+    // Persist and Notify
+    saveState();
+}
+
+/**
+ * Pure reducer function that handles all character state transitions.
+ * @param {Object} currentState - The current character state.
+ * @param {Object} action - The action to perform.
+ * @returns {Object} The new state object.
+ */
+function characterReducer(currentState, action) {
+    const s = JSON.parse(JSON.stringify(currentState)); // Deep copy for immutability
+    const { type, payload } = action;
+
+    switch (type) {
+        case 'ADJ_HP': {
+            const { amount, isAbsolute } = payload;
+            const derived = computeDerived(s);
+            const max = derived.maxHP;
+            const current = s.hpCurrent ?? max;
+            
+            if (isAbsolute) {
+                s.hpCurrent = Math.min(max, Math.max(0, amount));
+            } else if (amount < 0) {
+                let dmg = Math.abs(amount);
+                if ((s.tempHP || 0) > 0) {
+                    const absorbed = Math.min(s.tempHP, dmg);
+                    s.tempHP -= absorbed;
+                    dmg -= absorbed;
+                }
+                if (dmg > 0) {
+                    s.hpCurrent = Math.max(0, current - dmg);
+                }
+            } else {
+                s.hpCurrent = Math.min(max, current + amount);
+            }
+            break;
+        }
+        case 'ADJ_TEMP_HP': {
+            const { amount, isAbsolute } = payload;
+            s.tempHP = Math.max(0, isAbsolute ? amount : (s.tempHP || 0) + amount);
+            break;
+        }
+        case 'ADJ_HD': {
+            const { amount, isAbsolute } = payload;
+            const derived = computeDerived(s);
+            const max = derived.hdMax;
+            s.hdCurrent = Math.min(max, Math.max(0, isAbsolute ? amount : (s.hdCurrent === null ? max : s.hdCurrent) + amount));
+            break;
+        }
+        case 'ADJ_RES': {
+            const { id, amount, max, isAbsolute } = payload;
+            let oldVal = s.resourceValues[id] || 0; 
+            s.resourceValues[id] = Math.min(max || 999, Math.max(0, isAbsolute ? amount : oldVal + amount));
+            break;
+        }
+        case 'SET_STATE_KEY': {
+            s[payload.key] = payload.value;
+            break;
+        }
+        case 'UPDATE_CLASS_STATE': {
+            const { key, index, value } = payload;
+            if (!s[key]) s[key] = []; 
+            s[key][index] = value;
+            break;
+        }
+        case 'TOGGLE_BG_PIP': {
+            const { key, idx } = payload;
+            const val = s[key] || 0; 
+            s[key] = (val === idx + 1) ? idx : idx + 1;
+            break;
+        }
+        case 'UPDATE_ITEM': {
+            const { id, field, val, check } = payload;
+            let item = s.inventory.find(i => i.id === id); 
+            if (item) { 
+                item[field] = check ? val : (field === 'slots' || field === 'armor' || field === 'cost' ? parseFloat(val) : val); 
+            }
+            break;
+        }
+        case 'DELETE_ITEM': {
+            const { id } = payload;
+            let item = s.inventory.find(i => i.id === id);
+            if (item) {
+                s.gold += (item.cost || 0);
+            }
+            s.inventory = s.inventory.filter(i => i.id !== id);
+            break;
+        }
+        case 'ADD_ITEM': {
+            s.inventory.push({ id: Date.now(), ...payload.item });
+            break;
+        }
+        case 'ADD_QUICK_ITEM': {
+            const { itemData } = payload;
+            s.gold -= (itemData.cost || 0);
+            s.inventory.push({ 
+                id: Date.now(), 
+                name: itemData.name, 
+                type: itemData.type, 
+                slots: itemData.slots, 
+                equipped: itemData.equipped, 
+                dmgDice: itemData.dmgDice || '1d6', 
+                stat: itemData.stat || 'str', 
+                props: itemData.props || '', 
+                armor: itemData.armor || 0, 
+                armorType: itemData.armorType || (itemData.type === 'armor' ? 'light' : ''), 
+                cost: itemData.cost || 0 
+            });
+            break;
+        }
+        case 'TOGGLE_CONDITION': {
+            const { id } = payload;
+            if (s.activeConditions.includes(id)) {
+                s.activeConditions = s.activeConditions.filter(c => c !== id);
+            } else {
+                s.activeConditions.push(id);
+            }
+            break;
+        }
+        case 'UPDATE_SKILL': {
+            const { id, val } = payload;
+            s.skills[id] = parseInt(val) || 0;
+            break;
+        }
+        case 'HANDLE_WOUND_CLICK': {
+            const { i } = payload;
+            s.wounds = (s.wounds === i + 1) ? i : i + 1;
+            break;
+        }
+        case 'UPDATE_POOL': {
+            s[payload.key] = payload.dice;
+            break;
+        }
+        case 'UPDATE_DOM_VALUES': {
+            syncStateWithDOMValues(s, payload.domValues);
+            break;
+        }
+        case 'IMPORT_STATE': {
+            return validateAndCorrectState(ensureValidState(payload.newState));
+        }
+        default:
+            console.warn(`Unknown action type: ${type}`);
+            return s;
+    }
+
+    return validateAndCorrectState(s);
+}
 
 /**
  * Saves the character state to LocalStorage.

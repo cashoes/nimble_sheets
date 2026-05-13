@@ -361,8 +361,7 @@ function renderModField(stateObj) {
  * Adjusts the global Advantage/Disadvantage level.
  */
 function adjAdv(amt) { 
-    state.advantage = Math.min(3, Math.max(-3, state.advantage + amt)); 
-    saveState(); 
+    dispatch({ type: 'SET_STATE_KEY', payload: { key: 'advantage', value: Math.min(3, Math.max(-3, state.advantage + amt)) } });
 }
 
 /**
@@ -388,8 +387,7 @@ function formatPips(tier, school) {
  * Toggles an action point on the tracker.
  */
 function toggleAction(idx) { 
-    state.actionsSpent = (state.actionsSpent > idx) ? idx : idx + 1; 
-    saveState(); 
+    dispatch({ type: 'SET_STATE_KEY', payload: { key: 'actionsSpent', value: (state.actionsSpent > idx) ? idx : idx + 1 } });
 }
 
 /**
@@ -423,36 +421,33 @@ function triggerAnimation(id, type) {
  * Updates a multi-selection state array at a specific index.
  */
 function updateClassState(key, index, value) { 
-    if (!state[key]) state[key] = []; 
-    state[key][index] = value; 
-    saveState();
-    }
+    dispatch({ type: 'UPDATE_CLASS_STATE', payload: { key, index, value } });
+}
+
 /**
  * Toggles circular "pip" indicators in feature cards.
  */
 function toggleBgPip(key, idx) { 
-    const val = state[key] || 0; 
-    state[key] = (val === idx + 1) ? idx : idx + 1; 
-    saveState();
-    }
+    dispatch({ type: 'TOGGLE_BG_PIP', payload: { key, idx } });
+}
+
 /** Updates a generic choice state key and refreshes UI. */
 function updateBgChoice(key, val) { 
-    state[key] = val; 
-    saveState();
-    }
+    dispatch({ type: 'SET_STATE_KEY', payload: { key, value: val } });
+}
+
 /** Updates the background spell selection. */
 function updateBgSpell(val) { 
-    state.bgSpell = val; 
-    saveState();
-    }
+    dispatch({ type: 'SET_STATE_KEY', payload: { key: 'bgSpell', value: val } });
+}
+
 /**
  * Adjusts a class-specific resource (Mana, Lay on Hands, etc.).
  */
 function adjRes(id, amt, max, isAbsolute = false) { 
-    let oldVal = state.resourceValues[id] || 0; 
-    state.resourceValues[id] = Math.min(max || 999, Math.max(0, isAbsolute ? amt : oldVal + amt)); 
-    saveState();
-    }
+    dispatch({ type: 'ADJ_RES', payload: { id, amount: amt, max, isAbsolute } });
+}
+
 /**
  * Spawns a pre-defined item from the template library.
  */
@@ -460,132 +455,72 @@ function addQuickItem(cat, key) {
     let t = ITEM_TEMPLATES.data[key];
     if (!t) return;
     
-    state.gold -= (t.cost || 0);
-    if (document.getElementById('gold')) {
-        document.getElementById('gold').value = state.gold;
-    }
-    
-    state.inventory.push({ 
-        id: Date.now(), 
-        name: t.name, 
-        type: t.type, 
-        slots: t.slots, 
-        equipped: t.equipped, 
-        dmgDice: t.dmgDice || '1d6', 
-        stat: t.stat || 'str', 
-        props: t.props || '', 
-        armor: t.armor || 0, 
-        armorType: t.armorType || (t.type === 'armor' ? 'light' : ''), 
-        cost: t.cost || 0 
-    });
-    
-    saveState();
-    }
+    dispatch({ type: 'ADD_QUICK_ITEM', payload: { itemData: t } });
+}
+
 /** Spawns a blank custom item in the inventory. */
 function addItem() { 
-    state.inventory.push({ 
-        id: Date.now(), 
-        name: 'New Item', 
-        type: 'misc', 
-        slots: 1, 
-        equipped: false, 
-        dmgDice: '1d6', 
-        stat: 'str', 
-        props: '', 
-        armor: 1, 
-        armorType: '', 
-        cost: 0, 
-        isCustom: true 
-    }); 
-    saveState();
-    }
+    dispatch({ type: 'ADD_ITEM', payload: { 
+        item: { 
+            name: 'New Item', 
+            type: 'misc', 
+            slots: 1, 
+            equipped: false, 
+            dmgDice: '1d6', 
+            stat: 'str', 
+            props: '', 
+            armor: 1, 
+            armorType: '', 
+            cost: 0, 
+            isCustom: true 
+        }
+    } });
+}
+
 /**
  * Deletes an item and refunds its value if possible.
  */
 function deleteItem(id) {
-    let item = state.inventory.find(i => i.id === id);
-    if (item) {
-        state.gold += (item.cost || 0);
-        if (document.getElementById('gold')) {
-            document.getElementById('gold').value = state.gold;
-        }
-    }
-    state.inventory = state.inventory.filter(i => i.id !== id);
-    saveState();
-    }
+    dispatch({ type: 'DELETE_ITEM', payload: { id } });
+}
+
 /** Updates a specific field of an inventory item. */
 function updateItem(id, field, val, check = false) { 
-    let item = state.inventory.find(i => i.id === id); 
-    if (item) { 
-        item[field] = check ? val : (field === 'slots' || field === 'armor' || field === 'cost' ? parseFloat(val) : val); 
-        saveState(); 
-    } 
+    dispatch({ type: 'UPDATE_ITEM', payload: { id, field, val, check } });
 }
 
 /** Toggles a condition (Blinded, Burned, etc.) on the character. */
 function toggleCondition(id) { 
-    if (state.activeConditions.includes(id)) {
-        state.activeConditions = state.activeConditions.filter(c => c !== id);
-    } else {
-        state.activeConditions.push(id);
-    }
-    saveState();
-    }
+    dispatch({ type: 'TOGGLE_CONDITION', payload: { id } });
+}
+
 /** Updates a skill proficiency level. */
 function updateSkill(id, val) { 
-    state.skills[id] = parseInt(val) || 0; 
-    saveState();
-    }
+    dispatch({ type: 'UPDATE_SKILL', payload: { id, val } });
+}
+
 /**
  * Adjusts character HP, handling damage, healing, and Temp HP absorption.
  */
 function adjHP(a, isAbsolute = false) {
-    const derived = computeDerived(state);
-    const max = derived.maxHP;
-    const oldHP = state.hpCurrent ?? max;
-    
-    if (isAbsolute) {
-        state.hpCurrent = Math.min(max, Math.max(0, a));
-    } else if (a < 0) {
-        let dmg = Math.abs(a);
-        if ((state.tempHP || 0) > 0) {
-            const absorbed = Math.min(state.tempHP, dmg);
-            state.tempHP -= absorbed;
-            dmg -= absorbed;
-            triggerAnimation('displayTempHP', 'red');
-        }
-        if (dmg > 0) {
-            state.hpCurrent = Math.max(0, oldHP - dmg);
-        }
-    } else {
-        state.hpCurrent = Math.min(max, oldHP + a);
-    }
-    
-    if (state.hpCurrent > oldHP) {
-        triggerAnimation('displayCurrentHP', 'green');
-    } else if (state.hpCurrent < oldHP) {
-        triggerAnimation('displayCurrentHP', 'red');
-    }
-    
-    saveState();
-    }
+    dispatch({ type: 'ADJ_HP', payload: { amount: a, isAbsolute } });
+}
+
 /** Adjusts Temp HP total. */
 function adjTempHP(a, isAbsolute = false) {
-    state.tempHP = Math.max(0, isAbsolute ? a : (state.tempHP || 0) + a);
-    saveState();
-    }
+    dispatch({ type: 'ADJ_TEMP_HP', payload: { amount: a, isAbsolute } });
+}
+
 /** Adjusts current Hit Dice pool. */
 function adjHD(a, isAbsolute = false) {
-    const derived = computeDerived(state);
-    const max = derived.hdMax;
-    state.hdCurrent = Math.min(max, Math.max(0, isAbsolute ? a : (state.hdCurrent === null ? max : state.hdCurrent) + a));
-    saveState();
-    }
+    dispatch({ type: 'ADJ_HD', payload: { amount: a, isAbsolute } });
+}
+
 /** Toggles wound status pips. */
 function handleWoundClick(i) { 
-    state.wounds = (state.wounds === i + 1) ? i : i + 1; 
-    saveState();
-    }
+    dispatch({ type: 'HANDLE_WOUND_CLICK', payload: { i } });
+}
+
 /**
  * Recursive die roller with support for exploding dice.
  */
@@ -605,45 +540,58 @@ function _rollDie(faces, allowExplode = false) {
  * Adds a die to a specified pool.
  */
 function addPoolDie(key, max, faces) {
-    if (!state[key]) state[key] = [];
+    if (!state[key]) state[key] = []; // Guard for reducer logic if needed
+    const currentPool = state[key] || [];
 
     const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') ||
         (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
     const roll = _rollDie(faces, allowExplode);
 
-    const emptyIdx = state[key].findIndex(d => d === null);
+    const newDice = [...currentPool];
+    const emptyIdx = newDice.findIndex(d => d === null);
     if (emptyIdx !== -1) {
-        state[key][emptyIdx] = roll;
-    } else if (state[key].length < max) {
-        state[key].push(roll);
+        newDice[emptyIdx] = roll;
+    } else if (newDice.length < max) {
+        newDice.push(roll);
     }
 
-    saveState();
-    }
+    dispatch({ type: 'UPDATE_POOL', payload: { key, dice: newDice } });
+}
+
 /**
  * Removes a die from a pool.
  */
 function removePoolDie(key, idx, isStatic = false) {
-    if (!state[key]) return;
+    const currentPool = state[key] || [];
+    if (!currentPool.length) return;
+
+    const newDice = [...currentPool];
     if (isStatic) {
-        state[key][idx] = null;
+        newDice[idx] = null;
     } else {
-        state[key].splice(idx, 1);
+        newDice.splice(idx, 1);
     }
-    saveState();
-    }
+    dispatch({ type: 'UPDATE_POOL', payload: { key, dice: newDice } });
+}
+
 /** Clears an entire dice pool. */
 function clearPool(key) {
-    state[key] = [];
-    saveState();
-    }
+    dispatch({ type: 'UPDATE_POOL', payload: { key, dice: [] } });
+}
+
 /** Manually sets a die to its maximum possible value. */
 function maximizePoolDie(key, idx, faces) {
-    if (!state[key] || !state[key][idx]) return;
-    state[key][idx].total = faces;
-    state[key][idx].detail = `${faces} (Maxed)`;
-    saveState();
-    }
+    const currentPool = state[key] || [];
+    if (!currentPool[idx]) return;
+
+    const newDice = [...currentPool];
+    newDice[idx] = { 
+        total: faces, 
+        detail: `${faces} (Maxed)` 
+    };
+    dispatch({ type: 'UPDATE_POOL', payload: { key, dice: newDice } });
+}
+
 /**
  * Rolls an entire pool at once.
  */
@@ -665,6 +613,5 @@ function rollPool(key, count, faces) {
         finalDice.splice(minIdx, 1);
     }
 
-    state[key] = finalDice;
-    saveState(); 
+    dispatch({ type: 'UPDATE_POOL', payload: { key, dice: finalDice } });
 }

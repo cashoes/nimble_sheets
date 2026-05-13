@@ -34,7 +34,7 @@ class ShepherdClass extends BaseClass {
             scalingStats: {
                 spiritDie: (level, subclass, state) => {
                     const maxT = level >= 8 ? 4 : (level >= 6 ? 3 : (level >= 4 ? 2 : (level >= 2 ? 1 : 0)));
-                    const manaSpent = state.resourceValues?.spirit_tier !== undefined ? state.resourceValues.spirit_tier : Math.max(1, maxT);
+                    const manaSpent = state.resourceValues?.spirit_tier || Math.max(1, maxT);
                     const sizes = ["d6", "d8", "d10", "d12", "d20"];
                     let idx = Math.max(1, manaSpent) - 1;
                     if ((state.selectedGraces || []).includes("Empowered Companion")) idx++;
@@ -54,7 +54,7 @@ class ShepherdClass extends BaseClass {
                     if (state.subclass === 'Malice' && level >= 11) bonus += statsMap.str;
 
                     const maxT = level >= 8 ? 4 : (level >= 6 ? 3 : (level >= 4 ? 2 : (level >= 2 ? 1 : 0)));
-                    const tierVal = state.resourceValues?.spirit_tier !== undefined ? state.resourceValues.spirit_tier : Math.max(1, maxT);
+                    const tierVal = state.resourceValues?.spirit_tier || Math.max(1, maxT);
 
                     const notation = `${sCount}${sDie}+${bonus}`;
                     const label = `Spirit (Tier ${tierVal})`;
@@ -89,7 +89,7 @@ class ShepherdClass extends BaseClass {
             includeUtilitySpells: createUtilityConfig((level) => level >= 11, ["selectedTwilight"]),
             resources: [
                 createManaResource('wil'),
-                createSimpleResource('spirit_tier', 'Spirit Tier', (l, stats, state, subclass, derived) => derived.maxTier, { visible: false }),
+                createSimpleResource('spirit_tier', 'Spirit Tier', (l) => l >= 8 ? 4 : (l >= 6 ? 3 : (l >= 4 ? 2 : (l >= 2 ? 1 : 0))), { visible: false }),
                 createSimpleResource('searing', 'Searing Light', (l, stats) => stats.wil, { visible: false, reset: 'Safe Rest' }),
                 createSimpleResource('powerful_healer', 'Powerful Healer', (l, stats) => stats.wil, { visible: false, reset: 'Safe Rest' })
             ],

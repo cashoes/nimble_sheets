@@ -47,7 +47,7 @@ function dispatchRoll(notation, label, options = {}) {
     if (/initiative/i.test(label) && typeof CLASS_CONFIG.onInitiative === 'function') {
         const derived = computeDerived(state);
         CLASS_CONFIG.onInitiative(state.level, state.subclass, state, derived);
-        saveState();
+        dispatch({ type: 'UPDATE_DOM_VALUES', payload: { domValues: extractDOMValues() } });
     }
     // -------------------------
 

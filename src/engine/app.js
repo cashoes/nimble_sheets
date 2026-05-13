@@ -19,7 +19,8 @@ const debounce = (fn, ms) => {
 };
 
 const debouncedSaveAndRender = debounce(() => {
-    saveState();
+    const domValues = extractDOMValues();
+    dispatch({ type: 'UPDATE_DOM_VALUES', payload: { domValues } });
 }, 300);
 
 /**
@@ -42,8 +43,7 @@ const importCharacter = (input) => {
     reader.onload = (e) => {
         try {
             const imported = JSON.parse(e.target.result);
-            saveState(imported);
-            loadState(CLASS_CONFIG);
+            dispatch({ type: 'IMPORT_STATE', payload: { newState: imported } });
             alert("Character imported successfully!");
         } catch (err) {
             console.error("Import error:", err);
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.id === 'level' || el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'radio') {
             const instantUpdate = () => {
                 const domValues = extractDOMValues();
-                saveState(null, domValues);
+                dispatch({ type: 'UPDATE_DOM_VALUES', payload: { domValues } });
             };
             el.addEventListener('input', instantUpdate);
             el.addEventListener('change', instantUpdate);
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. Debounced update for text fields to maintain performance while typing
             el.addEventListener('change', () => {
                 const domValues = extractDOMValues();
-                saveState(null, domValues);
+                dispatch({ type: 'UPDATE_DOM_VALUES', payload: { domValues } });
             });
             el.addEventListener('input', debouncedSaveAndRender);
         }
