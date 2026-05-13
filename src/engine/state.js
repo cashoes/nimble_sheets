@@ -1,6 +1,6 @@
 /**
  * @fileoverview STATE ENGINE MODULE
- * Responsible for character mathematical model, derived stats, calculation, 
+ * Responsible for character mathematical model, derived stats, calculation,
  * persistence, and synchronization between state and DOM.
  */
 
@@ -270,7 +270,7 @@ function computeDerived(s) {
     const statsMap = getStatsMap(s);
     const ancFeat = ANCESTRY_FEATURES[s.ancestry];
     const bgFeat = BACKGROUND_FEATURES[s.background];
-    
+
     // Resolve specific background option if chosen
     let bgSelectedOpt = null;
     if (bgFeat && bgFeat.options && s[bgFeat.stateKey]) {
@@ -282,9 +282,9 @@ function computeDerived(s) {
     if (ancFeat && ancFeat.modHDStep) {
         const dieSteps = [6, 8, 10, 12, 20];
         let idx = dieSteps.indexOf(hdFace);
-        if (idx !== -1) { 
-            idx = Math.min(dieSteps.length - 1, idx + ancFeat.modHDStep); 
-            hdFace = dieSteps[idx]; 
+        if (idx !== -1) {
+            idx = Math.min(dieSteps.length - 1, idx + ancFeat.modHDStep);
+            hdFace = dieSteps[idx];
         }
     }
 
@@ -326,7 +326,7 @@ function computeDerived(s) {
     maxActions = Math.max(0, maxActions);
 
     // 9. Skill Passives (Ancestry and Background bonuses)
-    let passMods = {}; 
+    let passMods = {};
     SKILL_LIST.forEach(sk => passMods[sk.id] = 0);
     if (ancFeat) {
         if (ancFeat.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += ancFeat.modAllSkills);
@@ -345,7 +345,7 @@ function computeDerived(s) {
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : statsMap.dex;
     let bestArmorVal = -1;
     let shieldBonus = classOverrides.shieldBonus || 0;
-    
+
     s.inventory.forEach(item => {
         if (!item.equipped) return;
         if (item.type === 'armor') {
@@ -361,7 +361,7 @@ function computeDerived(s) {
     });
 
     if (bestArmorVal !== -1) armorVal = bestArmorVal;
-    
+
     // Apply final composite AC modifiers
     armorVal += shieldBonus;
     if (classOverrides.armor) armorVal += classOverrides.armor;
@@ -386,11 +386,11 @@ function computeDerived(s) {
     if (CLASS_CONFIG.getAvailableSpells || CLASS_CONFIG.spellProgression) {
         const subConfig = CLASS_CONFIG.getSubclassConfig ? CLASS_CONFIG.getSubclassConfig(s.subclass) : {};
         const progress = subConfig.spellProgression || CLASS_CONFIG.spellProgression || [0, 2, 4, 6, 8, 10, 12, 14, 16, 18];
-        
+
         for (let i = progress.length - 1; i >= 0; i--) {
-            if (level >= progress[i]) { 
-                maxTier = i; 
-                break; 
+            if (level >= progress[i]) {
+                maxTier = i;
+                break;
             }
         }
     }
@@ -398,19 +398,19 @@ function computeDerived(s) {
     return {
         ...classOverrides,
         ...classDerived,
-        level, 
-        statsMap, 
-        hdFace, 
-        maxHP, 
+        level,
+        statsMap,
+        hdFace,
+        maxHP,
         isBloodied,
-        hdMax: maxHD, 
-        armor: armorVal, 
-        speed, 
-        initiative, 
-        woundMax, 
-        maxActions, 
-        resourceMaxes, 
-        maxTier, 
+        hdMax: maxHD,
+        armor: armorVal,
+        speed,
+        initiative,
+        woundMax,
+        maxActions,
+        resourceMaxes,
+        maxTier,
         passMods,
         initAdv: classOverrides.initAdv || false,
         size: bgFeat?.modSize || ancFeat?.modSize || classDerived.size || "Med"
@@ -436,8 +436,8 @@ const getStorageKey = () => {
 
 const STORAGE_KEY = getStorageKey();
 
-/** 
- * Placeholder for embedded state injection. 
+/**
+ * Placeholder for embedded state injection.
  * This is used when a character sheet is exported as a standalone HTML file.
  */
 const EMBEDDED_STATE = null;
@@ -489,13 +489,13 @@ function saveState(newState = null) {
             if (baseEl && addEl) {
                 let b = parseInt(baseEl.value) || 0;
                 let a = parseInt(addEl.value) || 0;
-                
+
                 // Validate NIMBLE's attribute cap of 5
-                if (b + a > 5) { 
-                    a = Math.max(0, 5 - b); 
-                    addEl.value = a; 
+                if (b + a > 5) {
+                    a = Math.max(0, 5 - b);
+                    addEl.value = a;
                 }
-                
+
                 addEl.max = Math.max(0, 5 - b);
                 if (isLevel1) {
                     state[`base${s}`] = b;
@@ -517,7 +517,7 @@ function saveState(newState = null) {
         (CLASS_CONFIG.resources || []).forEach(r => {
             const newMax = derived.resourceMaxes[r.id];
             const oldMax = oldDerived.resourceMaxes[r.id];
-            
+
             // Auto-refill resources if they were empty or if level changed
             if (state.resourceValues[r.id] === undefined || newMax !== oldMax || oldLevel !== state.level) {
                 state.resourceValues[r.id] = newMax;
@@ -533,12 +533,15 @@ function saveState(newState = null) {
     // 7. Persist to storage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
+    // Clear pure function cache since state has changed
+    clearPureFunctionCache();
+
     // 8. Visual save confirmation
-    const ind = document.getElementById('saveIndicator'); 
+    const ind = document.getElementById('saveIndicator');
     if (ind) {
-        ind.textContent = 'Saved ✓'; 
-        setTimeout(() => { 
-            ind.textContent = 'Auto-saved'; 
+        ind.textContent = 'Saved ✓';
+        setTimeout(() => {
+            ind.textContent = 'Auto-saved';
         }, 1500);
     }
 }
@@ -552,76 +555,79 @@ function loadState() {
     // 1. Define standard state schema and defaults
     state = {
         version: "2.2.4",
-        charName: '',        level: 1, 
-        ancestry: 'None', 
-        background: 'None', 
+        charName: '',        level: 1,
+        ancestry: 'None',
+        background: 'None',
         subclass: 'None',
-        baseStr: 0, addStr: 0, 
-        baseDex: 0, addDex: 0, 
-        baseInt: 0, addInt: 0, 
+        baseStr: 0, addStr: 0,
+        baseDex: 0, addDex: 0,
+        baseInt: 0, addInt: 0,
         baseWil: 0, addWil: 0,
-        hpCurrent: null, 
-        tempHP: 0, 
-        hdCurrent: null, 
+        hpCurrent: null,
+        tempHP: 0,
+        hdCurrent: null,
         wounds: 0,
-        skills: {}, 
-        activeConditions: [], 
-        inventory: [], 
+        skills: {},
+        activeConditions: [],
+        inventory: [],
         gold: 0,
-        resourceValues: {}, 
-        bgSpell: 'None', 
+        resourceValues: {},
+        bgSpell: 'None',
         showMinor: false,
-        
+
         // Multi-selection feature states
         selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: [],
         selectedMastery: [], selectedGreater: [], selectedLesser: [], selectedGraces: [],
         selectedLyrical: [], selectedBoons: [], selectedMartial: [], selectedUnderhanded: [],
         selectedDeepKnowledge: [], secondarySchool: [], selectedSubclassSpells: [],
         selectedStudy: [], selectedTwilight: [], selectedShadowmastery: [],
-        
+
         currentForm: [],
-        furyDice: [], 
+        furyDice: [],
         judgmentDice: null,
         judgmentBoom: 'OFF',
         judgmentMode: 'Single',
         furyBoom: 'OFF',
-        
-        advantage: 0, 
+
+        advantage: 0,
         actionsSpent: 0
     };
 
     // 2. Load from storage
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (EMBEDDED_STATE) { 
-        Object.assign(state, EMBEDDED_STATE); 
-    } else if (raw) { 
-        try { 
-            const loaded = JSON.parse(raw); 
-            Object.assign(state, loaded); 
+    if (EMBEDDED_STATE) {
+        Object.assign(state, EMBEDDED_STATE);
+    } else if (raw) {
+        try {
+            const loaded = JSON.parse(raw);
+            Object.assign(state, loaded);
         } catch(e) {
             console.error("Failed to load character state:", e);
-        } 
+        }
     }
     // Ensure state is valid and has correct types/defaults, and apply game-specific corrections
     state = validateAndCorrectState(state);
 
     // 3. Apply class-specific initial stats for brand new characters
-    if (state.level === 1 && !state.charName) { 
-        if (CLASS_CONFIG.initialStats) { 
-            Object.assign(state, CLASS_CONFIG.initialStats); 
-        } 
+    if (state.level === 1 && !state.charName) {
+        if (CLASS_CONFIG.initialStats) {
+            Object.assign(state, CLASS_CONFIG.initialStats);
+        }
     }
 
     // 4. Initial UI Setup
-    applyTheme(CLASS_CONFIG.theme); 
+    applyTheme(CLASS_CONFIG.theme);
     syncStateToDOM();
-    
+
     // 5. Ensure derived totals are calculated and persisted
     const derived = computeDerived(state);
     if (state.hpCurrent === null) state.hpCurrent = derived.maxHP;
     if (state.hdCurrent === null) state.hdCurrent = derived.hdMax;
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    
+    // Clear pure function cache since state has been initialized/loaded
+    clearPureFunctionCache();
 }
 
 /**
@@ -634,7 +640,7 @@ function syncStateToDOM() {
     // 1. Identity and Header info
     if (document.getElementById('classNameDisplay')) document.getElementById('classNameDisplay').innerText = CLASS_CONFIG.name;
     if (document.getElementById('classSubtitleDisplay')) document.getElementById('classSubtitleDisplay').innerText = CLASS_CONFIG.subtitle;
-    
+
     if (document.getElementById('profArmor')) {
         const armorProf = derived.profArmor || (CLASS_CONFIG.proficiencies ? CLASS_CONFIG.proficiencies.armor : "--");
         document.getElementById('profArmor').innerText = armorProf;
@@ -646,27 +652,27 @@ function syncStateToDOM() {
 
     // 2. Populate Selection Dropdowns
     const subHtml = CLASS_CONFIG.subclasses.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
-    const sc = document.getElementById('subclass'); 
+    const sc = document.getElementById('subclass');
     if (sc) sc.innerHTML = subHtml;
 
     let ancHtml = `<option value="None">None</option>`;
-    Object.keys(ANCESTRIES).forEach(group => { 
-        ancHtml += `<optgroup label="${group}">`; 
-        ANCESTRIES[group].forEach(a => ancHtml += `<option value="${a}">${a}</option>`); 
-        ancHtml += `</optgroup>`; 
+    Object.keys(ANCESTRIES).forEach(group => {
+        ancHtml += `<optgroup label="${group}">`;
+        ANCESTRIES[group].forEach(a => ancHtml += `<option value="${a}">${a}</option>`);
+        ancHtml += `</optgroup>`;
     });
-    const ac = document.getElementById('ancestry'); 
+    const ac = document.getElementById('ancestry');
     if (ac) ac.innerHTML = ancHtml;
 
     let bgHtml = `<option value="None">None</option>`;
-    Object.keys(BACKGROUNDS).forEach(group => { 
-        bgHtml += `<optgroup label="${group}">`; 
-        BACKGROUNDS[group].forEach(b => bgHtml += `<option value="${b}">${b}</option>`); 
-        bgHtml += `</optgroup>`; 
+    Object.keys(BACKGROUNDS).forEach(group => {
+        bgHtml += `<optgroup label="${group}">`;
+        BACKGROUNDS[group].forEach(b => bgHtml += `<option value="${b}">${b}</option>`);
+        bgHtml += `</optgroup>`;
     });
-    const bc = document.getElementById('background'); 
+    const bc = document.getElementById('background');
     if (bc) bc.innerHTML = bgHtml;
-    
+
     // 3. Populate Inventory Item Lists
     const itemSlots = [
         { id: 'meleeSelect', key: 'melee', label: '+ Melee Item' },
@@ -686,45 +692,45 @@ function syncStateToDOM() {
                 html += `</optgroup>`;
             });
             el.innerHTML = html;
-            
+
             // Re-bind change events
-            el.onchange = (e) => { 
-                if (e.target.value) { 
-                    addQuickItem('data', e.target.value); 
-                    e.target.value = ""; 
-                } 
+            el.onchange = (e) => {
+                if (e.target.value) {
+                    addQuickItem('data', e.target.value);
+                    e.target.value = "";
+                }
             };
         }
     });
-    
+
     // 4. Sync values to Input elements
-    if (document.getElementById('charName')) document.getElementById('charName').value = state.charName || ''; 
+    if (document.getElementById('charName')) document.getElementById('charName').value = state.charName || '';
     if (document.getElementById('level')) document.getElementById('level').value = state.level || 1;
-    if (document.getElementById('ancestry')) document.getElementById('ancestry').value = state.ancestry || 'None'; 
+    if (document.getElementById('ancestry')) document.getElementById('ancestry').value = state.ancestry || 'None';
     if (document.getElementById('background')) document.getElementById('background').value = state.background || 'None';
-    if (document.getElementById('subclass')) document.getElementById('subclass').value = state.subclass || 'None'; 
+    if (document.getElementById('subclass')) document.getElementById('subclass').value = state.subclass || 'None';
     if (document.getElementById('gold')) document.getElementById('gold').value = state.gold || 0;
-    
+
     // 5. Attributes and Limits
     const isLevel1 = (state.level || 1) === 1;
-    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => { 
+    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
         const bEl = document.getElementById(`base${s}`);
         const aEl = document.getElementById(`add${s}`);
         if (bEl) {
-            bEl.value = state[`base${s}`]; 
+            bEl.value = state[`base${s}`];
             bEl.disabled = !isLevel1;
             bEl.style.opacity = isLevel1 ? '1' : '0.6';
             bEl.style.cursor = isLevel1 ? 'text' : 'not-allowed';
         }
-        if (aEl) { 
-            aEl.value = state[`add${s}`]; 
-            aEl.max = Math.max(0, 5 - state[`base${s}`]); 
+        if (aEl) {
+            aEl.value = state[`add${s}`];
+            aEl.max = Math.max(0, 5 - state[`base${s}`]);
         }
     });
 
     // 6. Action Points
-    for (let i = 0; i < 3; i++) { 
-        const ap = document.getElementById(`action${i+1}`); 
-        if (ap) ap.checked = (state.actionsSpent > i); 
+    for (let i = 0; i < 3; i++) {
+        const ap = document.getElementById(`action${i+1}`);
+        if (ap) ap.checked = (state.actionsSpent > i);
     }
 }

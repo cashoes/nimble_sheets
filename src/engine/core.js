@@ -4,6 +4,50 @@
  */
 
 /**
+ * Simple memoization utility.
+ * @param {Function} fn - Function to memoize.
+ * @param {Function} [keyResolver] - Optional function to generate cache key from args.
+ * @returns {Function} Memoized function.
+ */
+function memoize(fn, keyResolver = JSON.stringify) {
+    const cache = new Map();
+    return function (...args) {
+        const key = keyResolver ? keyResolver(...args) : JSON.stringify(args);
+        if (cache.has(key)) {
+            return cache.get(key);
+        }
+        const result = fn.apply(this, args);
+        cache.set(key, result);
+        return result;
+    };
+}
+
+/** Cache for expensive pure functions. Cleared when state changes. */
+const pureFunctionCache = {
+    getKnownSchools: new Map(),
+    getDerivedStats: new Map(),
+    getAvailableSpells: new Map()
+};
+
+/**
+ * Clears the cache for expensive pure functions. Call this when the state changes.
+ */
+function clearPureFunctionCache() {
+    pureFunctionCache.getKnownSchools.clear();
+    pureFunctionCache.getDerivedStats.clear();
+    pureFunctionCache.getAvailableSpells.clear();
+}
+
+/**
+ * Clears the pure function cache. Should be called whenever the state mutates.
+ */
+function clearPureFunctionCache() {
+    pureFunctionCache.getKnownSchools.clear();
+    pureFunctionCache.getDerivedStats.clear();
+    pureFunctionCache.getAvailableSpells.clear();
+}
+
+/**
  * Manages resource creation and combination for a class.
  */
 class ResourceManager {
@@ -33,16 +77,22 @@ class StatCalculator {
      */
     constructor(baseClass) {
         this.baseClass = baseClass;
+        this._derivedStatsCache = new Map();
+        this._statOverridesCache = new Map();
     }
 
     /**
      * Calculates derived statistics for the character.
      * @param {number} level - Current character level.
      * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @returns {Object} Derived statistics object.
+     * @param {CharacterState} state - Current character state.
+     * @returns {DerivedStats} Derived statistics object.
      */
     getDerivedStats(level, subclass, state) {
+        const key = `${level}-${subclass}-${JSON.stringify(state)}`;
+        if (pureFunctionCache.getDerivedStats.has(key)) {
+            return pureFunctionCache.getDerivedStats.get(key);
+        }
         const stats = { speed: 6, woundMax: 6 };
         const subConfig = this.baseClass.getSubclassConfig(subclass, state);
         
@@ -64,6 +114,7 @@ class StatCalculator {
             }
         });
 
+        pureFunctionCache.getDerivedStats.set(key, stats);
         return stats;
     }
 
@@ -142,11 +193,15 @@ class SpellManager {
      * Gets known schools for the given level, subclass, and state.
      * @param {number} level - Current character level.
      * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
+     * @param {CharacterState} state - Current character state.
      * @param {Object|null} limits - Optional limits for extra schools.
      * @returns {Array<string>} List of known spell schools.
      */
     getKnownSchools(level, subclass, state, limits = null) {
+        const key = `${level}-${subclass}-${JSON.stringify(state)}-${JSON.stringify(limits)}`;
+        if (pureFunctionCache.getKnownSchools.has(key)) {
+            return pureFunctionCache.getKnownSchools.get(key);
+        }
         const subConfig = this.baseClass.getSubclassConfig(subclass, state);
         const schools = new Set(this.baseClass.spellSchools);
         
@@ -174,18 +229,24 @@ class SpellManager {
             }
         });
 
-        return Array.from(schools);
+        const result = Array.from(schools);
+        pureFunctionCache.getKnownSchools.set(key, result);
+        return result;
     }
 
     /**
      * Gets available spells for the given level, subclass, state, and derived stats.
      * @param {number} level - Current character level.
      * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} derived - Derived stats.
+     * @param {CharacterState} state - Current character state.
+     * @param {DerivedStats} derived - Derived stats.
      * @returns {Array<Object>} List of available spells.
      */
     getAvailableSpells(level, subclass, state, derived) {
+        const key = `${level}-${subclass}-${JSON.stringify(state)}-${JSON.stringify(derived)}`;
+        if (pureFunctionCache.getAvailableSpells.has(key)) {
+            return pureFunctionCache.getAvailableSpells.get(key);
+        }
         const subConfig = this.baseClass.getSubclassConfig(subclass, state);
         const progression = subConfig.spellProgression || this.baseClass.spellProgression;
         if (!progression) return [];
@@ -280,7 +341,9 @@ class SpellManager {
             });
         });
         
-        return spells;
+        const result = spells;
+        pureFunctionCache.getAvailableSpells.set(key, result);
+        return result;
     }
     
     _addUtilitySpells(spells, level, subclass, state, limits, subConfig = {}) {
@@ -732,8 +795,8 @@ class BaseClass {
      * Gets available spells for the given level, subclass, state, and derived stats.
      * @param {number} level - Current character level.
      * @param {string} subclass - Selected subclass.
-     * @param {Object} state - Current character state.
-     * @param {Object} derived - Derived stats.
+     * @param {CharacterState} state - Current character state.
+     * @param {DerivedStats} derived - Derived stats.
      * @returns {Array<Object>} List of available spells.
      */
     getAvailableSpells(level, subclass, state, derived) {
