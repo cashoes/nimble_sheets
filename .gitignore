@@ -1,6 +1,11 @@
 # Generated character trackers
 nimble_tracker_*.html
 
+# Node modules
+node_modules/*
+package.json
+package-lock.json
+
 # Logs
 *.log
 
