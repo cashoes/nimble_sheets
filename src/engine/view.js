@@ -9,15 +9,17 @@
  * @param {Object} derived - Derived character data.
  * @param {number} armorVal - Calculated armor value.
  * @param {number} init - Initiative modifier.
+ * @param {Object} state - Current character state.
+ * @param {Object} config - Class configuration.
  */
-function renderHeader(derived, armorVal, init) {
+function renderHeader(derived, armorVal, init, state, config) {
     let leftStats = `<div class="header-stat"><label style="color:var(--gold-light)">Armor</label><div class="header-stat-val" style="color:var(--gold-light)">${armorVal}</div></div>`;
 
-    if (CLASS_CONFIG.customHeaderStats) {
-        CLASS_CONFIG.customHeaderStats
+    if (config.customHeaderStats) {
+        config.customHeaderStats
             .filter(stat => stat.position === 'left')
             .forEach(stat => {
-                if (stat.isVisible(state.level, state.subclass)) {
+                if (stat.isVisible(stateObj.level, stateObj.subclass)) {
                     leftStats += `<div class="header-stat"><label style="color:${stat.color}">${stat.label}</label><div class="header-stat-val" style="color:${stat.color}">${stat.getValue(derived)}</div></div>`;
                 }
             });
@@ -28,7 +30,7 @@ function renderHeader(derived, armorVal, init) {
         headerLeft.innerHTML = leftStats;
     }
 
-    const ancestryFeat = ANCESTRY_FEATURES[state.ancestry];
+    const ancestryFeat = ANCESTRY_FEATURES[stateObj.ancestry];
     const hasInitAdv = (ancestryFeat && ancestryFeat.modInitAdv) || derived.initAdv;
     const initAdvIcon = hasInitAdv ? '<span style="font-size:0.5em; vertical-align:middle; color:var(--save-adv); margin-left:2px;">▲</span>' : '';
     const initNotation = `1d20${init >= 0 ? '+' : ''}${init}`;
@@ -112,13 +114,13 @@ function renderAttributes(level, statsMap, derived) {
     let secondarySpent = 0;
 
     CLASS_CONFIG.keyStats.forEach(stat => {
-        keySpent += state[`add${stat.charAt(0).toUpperCase() + stat.slice(1)}`];
+        keySpent += stateObj[`add${stat.charAt(0).toUpperCase() + stat.slice(1)}`];
     });
 
     ['str', 'dex', 'int', 'wil']
         .filter(stat => !CLASS_CONFIG.keyStats.includes(stat))
         .forEach(stat => {
-            secondarySpent += state[`add${stat.charAt(0).toUpperCase() + stat.slice(1)}`];
+            secondarySpent += stateObj[`add${stat.charAt(0).toUpperCase() + stat.slice(1)}`];
         });
 
     let flexSpent = Math.max(0, keySpent - keyAllowed) + Math.max(0, secondarySpent - secondaryAllowed);
@@ -159,7 +161,7 @@ function renderResources(level, derived, statsMap, hdFace) {
 
     let woundsHtml = "";
     for (let i = 0; i < derived.woundMax; i++) {
-        woundsHtml += `<input type="checkbox" class="pip wound" ${i < state.wounds ? 'checked' : ''} onclick="handleWoundClick(${i})">`;
+        woundsHtml += `<input type="checkbox" class="pip wound" ${i < stateObj.wounds ? 'checked' : ''} onclick="handleWoundClick(${i})">`;
     }
 
     const woundsContainer = document.getElementById('woundsContainer');
@@ -184,7 +186,7 @@ function renderResources(level, derived, statsMap, hdFace) {
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <div class="res-val dark-incrementer">
                         <button onclick="adjRes('${resource.id}', -1)">-</button>
-                        <input type="number" id="res_${resource.id}" value="${state.resourceValues[resource.id]}" onchange="adjRes('${resource.id}', parseInt(this.value), ${max}, true)">
+                        <input type="number" id="res_${resource.id}" value="${stateObj.resourceValues[resource.id]}" onchange="adjRes('${resource.id}', parseInt(this.value), ${max}, true)">
                         <button onclick="adjRes('${resource.id}', 1, ${max})">+</button>
                     </div>
                     <div class="max-text">/ <span style="color:var(--text-main);">${max}</span></div>
@@ -296,7 +298,7 @@ function renderInventoryRow(item, statsMap, iStats) {
 function renderInventory(statsMap, armorVal, str, iStats) {
     let maxSlots = 10 + str;
     let slotsUsed = 0;
-    state.inventory.forEach(item => {
+    stateObj.inventory.forEach(item => {
         slotsUsed += (parseFloat(item.slots) || 0);
     });
 
@@ -313,7 +315,7 @@ function renderInventory(statsMap, armorVal, str, iStats) {
             <div></div>
         </div>`;
 
-    html += state.inventory.map(item => renderInventoryRow(item, statsMap, iStats)).join('');
+    html += stateObj.inventory.map(item => renderInventoryRow(item, statsMap, iStats)).join('');
 
     const inventoryContainer = document.getElementById('inventoryContainer');
     if (inventoryContainer) {
@@ -342,10 +344,10 @@ function renderSkills(level, statsMap, passMods) {
     let spentPoints = 0;
 
     SKILL_LIST.forEach(skill => {
-        let points = state.skills[skill.id] || 0;
+        let points = stateObj.skills[skill.id] || 0;
         let base = statsMap[skill.stat] + passMods[skill.id];
         points = Math.min(12 - base, Math.max(Math.min(0, -base), points));
-        state.skills[skill.id] = points;
+        stateObj.skills[skill.id] = points;
         spentPoints += points;
     });
 
@@ -357,11 +359,11 @@ function renderSkills(level, statsMap, passMods) {
         <div class="skills-grid">`;
 
     SKILL_LIST.forEach(skill => {
-        let totalMod = statsMap[skill.stat] + (state.skills[skill.id] || 0) + passMods[skill.id];
+        let totalMod = statsMap[skill.stat] + (stateObj.skills[skill.id] || 0) + passMods[skill.id];
         skillsHtml += `
             <div class="skill-row">
                 <div class="skill-name">${skill.name} <span class="skill-stat">${skill.stat.toUpperCase()}</span></div>
-                <div class="skill-pts"><input type="number" value="${state.skills[skill.id] || 0}" onchange="updateSkill('${skill.id}', this.value)"></div>
+                <div class="skill-pts"><input type="number" value="${stateObj.skills[skill.id] || 0}" onchange="updateSkill('${skill.id}', this.value)"></div>
                 <div class="skill-total roll-link" onclick="dispatchRoll('1d20${totalMod >= 0 ? '+' : ''}${totalMod}', '${skill.name} Skill Check')">${totalMod >= 0 ? '+' : ''}${totalMod}</div>
             </div>`;
     });
@@ -377,11 +379,11 @@ function renderSkills(level, statsMap, passMods) {
  */
 function renderConditions(derived) {
     let conditionsHtml = "";
-    const extraConditions = (CLASS_CONFIG.getExtraConditions ? CLASS_CONFIG.getExtraConditions(state.level, state.subclass, state, derived) : []) || [];
+    const extraConditions = (config.getExtraConditions ? config.getExtraConditions(stateObj.level, stateObj.subclass, stateObj, derived) : []) || [];
     const allConditions = [...CONDITIONS_LIST, ...extraConditions];
 
     allConditions.forEach(condition => {
-        const isActive = condition.id === 'bloodied' ? derived.isBloodied : state.activeConditions.includes(condition.id);
+        const isActive = condition.id === 'bloodied' ? derived.isBloodied : stateObj.activeConditions.includes(condition.id);
         conditionsHtml += `<div class="condition-btn ${condition.type} ${isActive ? 'active' : ''}" title="${condition.desc}" onclick="toggleCondition('${condition.id}')">${condition.name}</div>`;
     });
 
@@ -421,10 +423,10 @@ function renderSingleSpellCard(spell, level, statsMap, contextOverride = null) {
  * @param {Function} iStats - Callback to parse stat tokens.
  * @returns {string} HTML string for the spells column.
  */
-function renderSpells(level, subclass, state, derived, iStats) {
+function renderSpells(level, subclass, state, derived, config, iStats) {
     let spells = [];
-    if (CLASS_CONFIG.getAvailableSpells) {
-        spells = CLASS_CONFIG.getAvailableSpells(level, subclass, state, derived);
+    if (config.getAvailableSpells) {
+        spells = config.getAvailableSpells(level, subclass, state, derived);
     }
 
     if (!spells || spells.length === 0) {
@@ -450,16 +452,18 @@ function renderSpells(level, subclass, state, derived, iStats) {
 
 /**
  * Master render function that updates the entire UI based on current state.
+ * @param {Object} stateObj - Current character state.
+ * @param {Object} config - Class configuration.
  */
-function render() {
-    const derived = computeDerived(state);
+function render(stateObj, config) {
+    const derived = computeDerived(stateObj);
     const { level, statsMap, armor, initiative, speed, hdFace, maxHP, hdMax, woundMax, maxActions, maxTier, passMods } = derived;
 
     const subclassSelect = document.getElementById('subclass');
     if (level < 3) {
         if (subclassSelect && subclassSelect.value !== "None") {
             subclassSelect.value = "None";
-            state.subclass = "None";
+            stateObj.subclass = "None";
         }
         if (subclassSelect) {
             subclassSelect.disabled = true;
@@ -470,12 +474,12 @@ function render() {
         }
     }
 
-    const subConfig = CLASS_CONFIG.subclasses.find(s => s.value === state.subclass);
+    const subConfig = config.subclasses.find(s => s.value === stateObj.subclass);
     document.documentElement.style.setProperty('--subclass-accent', (subConfig && subConfig.accent) ? subConfig.accent : 'var(--class-accent)');
 
     const mechanicPanel = document.getElementById('classMechanicPanel');
-    if (CLASS_CONFIG.getMechanicPanelHTML && mechanicPanel) {
-        mechanicPanel.innerHTML = CLASS_CONFIG.getMechanicPanelHTML(level, state.subclass, state, derived);
+    if (config.getMechanicPanelHTML && mechanicPanel) {
+        mechanicPanel.innerHTML = config.getMechanicPanelHTML(level, stateObj.subclass, stateObj, derived);
     }
 
     for (let i = 0; i < 3; i++) {
@@ -486,8 +490,8 @@ function render() {
             pip.style.cursor = (i >= maxActions) ? 'not-allowed' : 'pointer';
             if (i >= maxActions && pip.checked) {
                 pip.checked = false;
-                if (state.actionsSpent > i) {
-                    state.actionsSpent = i;
+                if (stateObj.actionsSpent > i) {
+                    stateObj.actionsSpent = i;
                 }
             }
         }
@@ -498,13 +502,13 @@ function render() {
     const currentHDEl = document.getElementById('displayHD');
 
     if (currentHPEl && document.activeElement !== currentHPEl) {
-        currentHPEl.value = state.hpCurrent;
+        currentHPEl.value = stateObj.hpCurrent;
     }
     if (tempHPEl && document.activeElement !== tempHPEl) {
-        tempHPEl.value = state.tempHP || 0;
+        tempHPEl.value = stateObj.tempHP || 0;
     }
     if (currentHDEl && document.activeElement !== currentHDEl) {
-        currentHDEl.value = state.hdCurrent;
+        currentHDEl.value = stateObj.hdCurrent;
     }
 
     const maxHPEl = document.getElementById('displayMaxHP');
@@ -519,7 +523,7 @@ function render() {
     const parseStatsBound = (txt, l, sm, ctx) => iStats(txt, l || level, sm || statsMap, ctx || {});
     const buildFeatureHtmlBound = (title, lTag, desc, theme = "", skip = false, l2, sm, ctx) => buildFeatureHtml(title, lTag, desc, theme, skip, l2 || level, sm || statsMap, ctx || {});
 
-    renderHeader(derived, armor, initiative);
+    renderHeader(derived, armor, initiative, stateObj, config);
     renderAttributes(level, statsMap, derived);
     renderResources(level, derived, statsMap, hdFace);
     renderInventory(statsMap, armor, statsMap.str, parseStatsBound);
@@ -528,15 +532,15 @@ function render() {
 
     const minorToggle = document.getElementById('toggleMinorFeatures');
     if (minorToggle) {
-        minorToggle.checked = state.showMinor || false;
+        minorToggle.checked = stateObj.showMinor || false;
     }
-    document.body.classList.toggle('show-minor', state.showMinor);
+    document.body.classList.toggle('show-minor', stateObj.showMinor);
 
-    let featuresHtml = CLASS_CONFIG.getFeaturesHTML(level, state.subclass, state, derived, buildFeatureHtmlBound, parseStatsBound, formatPips, renderSingleSpellCard);
+    let featuresHtml = config.getFeaturesHTML(level, stateObj.subclass, stateObj, derived, buildFeatureHtmlBound, parseStatsBound, formatPips, renderSingleSpellCard);
 
     // Add background and ancestry features to the top
-    featuresHtml = renderBackgroundFeature(state, level, statsMap, parseStatsBound, buildFeatureHtmlBound, renderSingleSpellCard) + featuresHtml;
-    featuresHtml = renderAncestryFeature(state, buildFeatureHtmlBound) + featuresHtml;
+    featuresHtml = renderBackgroundFeature(stateObj, level, statsMap, parseStatsBound, buildFeatureHtmlBound, renderSingleSpellCard) + featuresHtml;
+    featuresHtml = renderAncestryFeature(stateObj, buildFeatureHtmlBound) + featuresHtml;
 
     const featuresContainer = document.getElementById('featuresContainer');
     if (featuresContainer) {
@@ -548,7 +552,7 @@ function render() {
         maxTierEl.innerText = maxTier > 0 ? `(Max Tier: ${maxTier})` : "";
     }
 
-    let spellsHtml = renderSpells(level, state.subclass, state, derived, parseStatsBound);
+    let spellsHtml = renderSpells(level, stateObj.subclass, stateObj, derived, config, parseStatsBound);
     const spellsWrapper = document.getElementById('spellsColWrapper');
     if (spellsHtml && spellsHtml.trim().length > 0) {
         if (document.getElementById('featuresSpellsLayout')) {

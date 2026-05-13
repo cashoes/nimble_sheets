@@ -446,11 +446,12 @@ const EMBEDDED_STATE = null;
 let state = {};
 
 /**
- * Saves the current character state to LocalStorage.
- * Reads values from the DOM if no newState is provided.
+ * Saves the character state to LocalStorage.
  * @param {Object|null} newState - Optional state object to overwrite the current state.
+ * @param {Object} domValues - Optional object containing DOM values to sync with state.
+ *                              If not provided, state is not synced with DOM (for programmatic updates).
  */
-function saveState(newState = null) {
+function saveState(newState = null, domValues = null) {
     let newStateObj;
     if (newState) {
         // Parse and validate the provided state
@@ -461,70 +462,14 @@ function saveState(newState = null) {
             return; // Abort save if state is invalid JSON
         }
     } else {
-        const oldDerived = computeDerived(state);
-        const oldGold = state.gold;
-        const oldLevel = state.level;
-
-        // 1. Sync basic identity fields
-        state.charName = document.getElementById('charName').value;
-        state.level = parseInt(document.getElementById('level').value) || 1;
-        state.ancestry = document.getElementById('ancestry').value;
-        state.background = document.getElementById('background').value;
-        state.subclass = document.getElementById('subclass').value;
-        state.gold = parseInt(document.getElementById('gold').value) || 0;
-        state.showMinor = document.getElementById('toggleMinorFeatures')?.checked || false;
-
-        // 2. Trigger visual feedback for currency changes
-        if (state.gold > oldGold) {
-            triggerAnimation('gold', 'green');
-        } else if (state.gold < oldGold) {
-            triggerAnimation('gold', 'red');
+        // If domValues provided, sync state with those values
+        if (domValues) {
+            syncStateWithDOMValues(state, domValues);
         }
+        // If no domValues, we assume caller wants to save current state as-is
+        // (used for programmatic updates like leveling up)
 
-        // 3. Sync primary attributes (Base + Level Ups)
-        const isLevel1 = state.level === 1;
-        ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
-            const baseEl = document.getElementById(`base${s}`);
-            const addEl = document.getElementById(`add${s}`);
-            if (baseEl && addEl) {
-                let b = parseInt(baseEl.value) || 0;
-                let a = parseInt(addEl.value) || 0;
-
-                // Validate NIMBLE's attribute cap of 5
-                if (b + a > 5) {
-                    a = Math.max(0, 5 - b);
-                    addEl.value = a;
-                }
-
-                addEl.max = Math.max(0, 5 - b);
-                if (isLevel1) {
-                    state[`base${s}`] = b;
-                }
-                state[`add${s}`] = a;
-            }
-        });
-
-        // 4. Recalculate derived totals
-        const derived = computeDerived(state);
-
-        // 5. Automatic recovery on level up
-        if (oldLevel !== state.level || state.hpCurrent === null) {
-            state.hpCurrent = derived.maxHP;
-            state.hdCurrent = derived.hdMax;
-        }
-
-        // 6. Handle resource max changes
-        (CLASS_CONFIG.resources || []).forEach(r => {
-            const newMax = derived.resourceMaxes[r.id];
-            const oldMax = oldDerived.resourceMaxes[r.id];
-
-            // Auto-refill resources if they were empty or if level changed
-            if (state.resourceValues[r.id] === undefined || newMax !== oldMax || oldLevel !== state.level) {
-                state.resourceValues[r.id] = newMax;
-            }
-        });
-
-        newStateObj = state; // Use the mutated state
+        newStateObj = state; // Use the current state
     }
 
     // Ensure the state is valid and has correct types/defaults, and apply game-specific corrections
@@ -536,96 +481,163 @@ function saveState(newState = null) {
     // Clear pure function cache since state has changed
     clearPureFunctionCache();
 
-    // 8. Visual save confirmation
-    const ind = document.getElementById('saveIndicator');
-    if (ind) {
-        ind.textContent = 'Saved ✓';
-        setTimeout(() => {
-            ind.textContent = 'Auto-saved';
-        }, 1500);
+    // Publish state changed event
+    eventBus.publish('STATE_CHANGED', { state: {...state} });
+
+    // Publish state saved event
+    eventBus.publish('STATE_SAVED', { state: {...state} });
+}
+
+/**
+ * Syncs state object with DOM values.
+ * Extracted from saveState to allow separate calling when needed.
+ * @param {Object} stateObj - The state object to sync.
+ * @param {Object} domValues - Object containing DOM values.
+ */
+function syncStateWithDOMValues(stateObj, domValues) {
+    const oldDerived = computeDerived(stateObj);
+    const oldGold = stateObj.gold;
+    const oldLevel = stateObj.level;
+
+    // 1. Sync basic identity fields
+    stateObj.charName = domValues.charName ?? '';
+    stateObj.level = parseInt(domValues.level) || 1;
+    stateObj.ancestry = domValues.ancestry ?? 'None';
+    stateObj.background = domValues.background ?? 'None';
+    stateObj.subclass = domValues.subclass ?? 'None';
+    stateObj.gold = parseInt(domValues.gold) || 0;
+    stateObj.showMinor = domValues.showMinor ?? false;
+
+    // 2. Trigger visual feedback for currency changes
+    if (stateObj.gold > oldGold) {
+        triggerAnimation('gold', 'green');
+    } else if (stateObj.gold < oldGold) {
+        triggerAnimation('gold', 'red');
     }
+
+    // 3. Sync primary attributes (Base + Level Ups)
+    const isLevel1 = stateObj.level === 1;
+    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
+        const baseKey = `base${s}`;
+        const addKey = `add${s}`;
+        const baseEl = domValues[baseKey] !== undefined ? domValues[baseKey] : 0;
+        const addEl = domValues[addKey] !== undefined ? domValues[addKey] : 0;
+
+        let b = parseInt(baseEl) || 0;
+        let a = parseInt(addEl) || 0;
+
+        // Validate NIMBLE's attribute cap of 5
+        if (b + a > 5) {
+            a = Math.max(0, 5 - b);
+        }
+
+        if (isLevel1) {
+            stateObj[baseKey] = b;
+        }
+        stateObj[addKey] = a;
+    });
+
+    // 4. Recalculate derived totals
+    const derived = computeDerived(stateObj);
+
+    // 5. Automatic recovery on level up
+    if (oldLevel !== stateObj.level || stateObj.hpCurrent === null) {
+        stateObj.hpCurrent = derived.maxHP;
+        stateObj.hdCurrent = derived.hdMax;
+    }
+
+    // 6. Handle resource max changes
+    (CLASS_CONFIG.resources || []).forEach(r => {
+        const newMax = derived.resourceMaxes[r.id];
+        const oldMax = oldDerived.resourceMaxes[r.id];
+
+        // Auto-refill resources if they were empty or if level changed
+        if (stateObj.resourceValues[r.id] === undefined || newMax !== oldMax || oldLevel !== stateObj.level) {
+            stateObj.resourceValues[r.id] = newMax;
+        }
+    });
 }
 
 /**
  * Initializes the character state.
  * Loads from EMBEDDED_STATE (export mode) or LocalStorage.
  * Falls back to class defaults for new characters.
+ * @param {Object} config - The class configuration to use.
  */
-function loadState() {
+function loadState(config) {
     // 1. Define standard state schema and defaults
     state = {
         version: "2.2.4",
-        charName: '',        level: 1,
-        ancestry: 'None',
-        background: 'None',
+        charName: '',        level: 1, 
+        ancestry: 'None', 
+        background: 'None', 
         subclass: 'None',
-        baseStr: 0, addStr: 0,
-        baseDex: 0, addDex: 0,
-        baseInt: 0, addInt: 0,
+        baseStr: 0, addStr: 0, 
+        baseDex: 0, addDex: 0, 
+        baseInt: 0, addInt: 0, 
         baseWil: 0, addWil: 0,
-        hpCurrent: null,
-        tempHP: 0,
-        hdCurrent: null,
+        hpCurrent: null, 
+        tempHP: 0, 
+        hdCurrent: null, 
         wounds: 0,
-        skills: {},
-        activeConditions: [],
-        inventory: [],
+        skills: {}, 
+        activeConditions: [], 
+        inventory: [], 
         gold: 0,
-        resourceValues: {},
-        bgSpell: 'None',
+        resourceValues: {}, 
+        bgSpell: 'None', 
         showMinor: false,
-
+        
         // Multi-selection feature states
         selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: [],
         selectedMastery: [], selectedGreater: [], selectedLesser: [], selectedGraces: [],
         selectedLyrical: [], selectedBoons: [], selectedMartial: [], selectedUnderhanded: [],
         selectedDeepKnowledge: [], secondarySchool: [], selectedSubclassSpells: [],
         selectedStudy: [], selectedTwilight: [], selectedShadowmastery: [],
-
+        
         currentForm: [],
-        furyDice: [],
+        furyDice: [], 
         judgmentDice: null,
         judgmentBoom: 'OFF',
         judgmentMode: 'Single',
         furyBoom: 'OFF',
-
-        advantage: 0,
+        
+        advantage: 0, 
         actionsSpent: 0
     };
 
     // 2. Load from storage
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (EMBEDDED_STATE) {
-        Object.assign(state, EMBEDDED_STATE);
-    } else if (raw) {
-        try {
-            const loaded = JSON.parse(raw);
-            Object.assign(state, loaded);
+    if (EMBEDDED_STATE) { 
+        Object.assign(state, EMBEDDED_STATE); 
+    } else if (raw) { 
+        try { 
+            const loaded = JSON.parse(raw); 
+            Object.assign(state, loaded); 
         } catch(e) {
             console.error("Failed to load character state:", e);
-        }
+        } 
     }
     // Ensure state is valid and has correct types/defaults, and apply game-specific corrections
     state = validateAndCorrectState(state);
 
     // 3. Apply class-specific initial stats for brand new characters
-    if (state.level === 1 && !state.charName) {
-        if (CLASS_CONFIG.initialStats) {
-            Object.assign(state, CLASS_CONFIG.initialStats);
-        }
+    if (state.level === 1 && !state.charName) { 
+        if (config.initialStats) { 
+            Object.assign(state, config.initialStats); 
+        } 
     }
 
-    // 4. Initial UI Setup
-    applyTheme(CLASS_CONFIG.theme);
-    syncStateToDOM();
-
+    // 4. Publish state loaded event
+    eventBus.publish('STATE_LOADED', { state: {...state}, config });
+    
     // 5. Ensure derived totals are calculated and persisted
     const derived = computeDerived(state);
     if (state.hpCurrent === null) state.hpCurrent = derived.maxHP;
     if (state.hdCurrent === null) state.hdCurrent = derived.hdMax;
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    
+
     // Clear pure function cache since state has been initialized/loaded
     clearPureFunctionCache();
 }
@@ -633,25 +645,27 @@ function loadState() {
 /**
  * Synchronizes the internal state object with the physical DOM elements.
  * Called on page load and after major state resets.
+ * @param {Object} stateObj - The state object to sync.
+ * @param {Object} config - The class configuration to use.
  */
-function syncStateToDOM() {
-    const derived = computeDerived(state);
+function syncStateToDOM(stateObj, config) {
+    const derived = computeDerived(stateObj);
 
     // 1. Identity and Header info
-    if (document.getElementById('classNameDisplay')) document.getElementById('classNameDisplay').innerText = CLASS_CONFIG.name;
-    if (document.getElementById('classSubtitleDisplay')) document.getElementById('classSubtitleDisplay').innerText = CLASS_CONFIG.subtitle;
+    if (document.getElementById('classNameDisplay')) document.getElementById('classNameDisplay').innerText = config.name;
+    if (document.getElementById('classSubtitleDisplay')) document.getElementById('classSubtitleDisplay').innerText = config.subtitle;
 
     if (document.getElementById('profArmor')) {
-        const armorProf = derived.profArmor || (CLASS_CONFIG.proficiencies ? CLASS_CONFIG.proficiencies.armor : "--");
+        const armorProf = derived.profArmor || (config.proficiencies ? config.proficiencies.armor : "--");
         document.getElementById('profArmor').innerText = armorProf;
     }
     if (document.getElementById('profWeapons')) {
-        const weaponsProf = derived.profWeapons || (CLASS_CONFIG.proficiencies ? CLASS_CONFIG.proficiencies.weapons : "--");
+        const weaponsProf = derived.profWeapons || (config.proficiencies ? config.proficiencies.weapons : "--");
         document.getElementById('profWeapons').innerText = weaponsProf;
     }
 
     // 2. Populate Selection Dropdowns
-    const subHtml = CLASS_CONFIG.subclasses.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+    const subHtml = config.subclasses.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
     const sc = document.getElementById('subclass');
     if (sc) sc.innerHTML = subHtml;
 
@@ -704,33 +718,33 @@ function syncStateToDOM() {
     });
 
     // 4. Sync values to Input elements
-    if (document.getElementById('charName')) document.getElementById('charName').value = state.charName || '';
-    if (document.getElementById('level')) document.getElementById('level').value = state.level || 1;
-    if (document.getElementById('ancestry')) document.getElementById('ancestry').value = state.ancestry || 'None';
-    if (document.getElementById('background')) document.getElementById('background').value = state.background || 'None';
-    if (document.getElementById('subclass')) document.getElementById('subclass').value = state.subclass || 'None';
-    if (document.getElementById('gold')) document.getElementById('gold').value = state.gold || 0;
+    if (document.getElementById('charName')) document.getElementById('charName').value = stateObj.charName || '';
+    if (document.getElementById('level')) document.getElementById('level').value = stateObj.level || 1;
+    if (document.getElementById('ancestry')) document.getElementById('ancestry').value = stateObj.ancestry || 'None';
+    if (document.getElementById('background')) document.getElementById('background').value = stateObj.background || 'None';
+    if (document.getElementById('subclass')) document.getElementById('subclass').value = stateObj.subclass || 'None';
+    if (document.getElementById('gold')) document.getElementById('gold').value = stateObj.gold || 0;
 
     // 5. Attributes and Limits
-    const isLevel1 = (state.level || 1) === 1;
+    const isLevel1 = (stateObj.level || 1) === 1;
     ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
         const bEl = document.getElementById(`base${s}`);
         const aEl = document.getElementById(`add${s}`);
         if (bEl) {
-            bEl.value = state[`base${s}`];
+            bEl.value = stateObj[`base${s}`];
             bEl.disabled = !isLevel1;
             bEl.style.opacity = isLevel1 ? '1' : '0.6';
             bEl.style.cursor = isLevel1 ? 'text' : 'not-allowed';
         }
         if (aEl) {
-            aEl.value = state[`add${s}`];
-            aEl.max = Math.max(0, 5 - state[`base${s}`]);
+            aEl.value = stateObj[`add${s}`];
+            aEl.max = Math.max(0, 5 - stateObj[`base${s}`]);
         }
     });
 
     // 6. Action Points
     for (let i = 0; i < 3; i++) {
         const ap = document.getElementById(`action${i+1}`);
-        if (ap) ap.checked = (state.actionsSpent > i);
+        if (ap) ap.checked = (stateObj.actionsSpent > i);
     }
 }

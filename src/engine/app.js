@@ -20,7 +20,7 @@ const debounce = (fn, ms) => {
 
 const debouncedSaveAndRender = debounce(() => {
     saveState();
-    render();
+    render(state, CLASS_CONFIG);
 }, 300);
 
 /**
@@ -44,8 +44,8 @@ const importCharacter = (input) => {
         try {
             const imported = JSON.parse(e.target.result);
             saveState(imported);
-            loadState();
-            render();
+            loadState(CLASS_CONFIG);
+            render(state, CLASS_CONFIG);
             alert("Character imported successfully!");
         } catch (err) {
             console.error("Import error:", err);
@@ -91,12 +91,37 @@ const saveAsHTML = () => {
 };
 
 /**
+ * Extracts DOM values into an object for state synchronization.
+ * @returns {Object} Object containing current DOM values.
+ */
+function extractDOMValues() {
+    return {
+        charName: document.getElementById('charName')?.value ?? '',
+        level: document.getElementById('level')?.value ?? '',
+        ancestry: document.getElementById('ancestry')?.value ?? 'None',
+        background: document.getElementById('background')?.value ?? 'None',
+        subclass: document.getElementById('subclass')?.value ?? 'None',
+        gold: document.getElementById('gold')?.value ?? '',
+        showMinor: document.getElementById('toggleMinorFeatures')?.checked ?? false,
+        // Attribute bases and additions
+        baseStr: document.getElementById('baseStr')?.value ?? '',
+        addStr: document.getElementById('addStr')?.value ?? '',
+        baseDex: document.getElementById('baseDex')?.value ?? '',
+        addDex: document.getElementById('addDex')?.value ?? '',
+        baseInt: document.getElementById('baseInt')?.value ?? '',
+        addInt: document.getElementById('addInt')?.value ?? '',
+        baseWil: document.getElementById('baseWil')?.value ?? '',
+        addWil: document.getElementById('addWil')?.value ?? ''
+    };
+}
+
+/**
  * Global Initialization on DOM Load.
  */
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        loadState();
-        render();
+        loadState(CLASS_CONFIG);
+        render(state, CLASS_CONFIG);
     } catch (err) {
         console.error("Failed to initialize app:", err);
         alert("An error occurred while loading the character sheet. See console for details.");
@@ -107,7 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Instant update for discrete choices (Level, Dropdowns, Toggles)
         if (el.id === 'level' || el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'radio') {
             const instantUpdate = () => {
-                saveState();
+                const domValues = extractDOMValues();
+                saveState(null, domValues);
                 render();
             };
             el.addEventListener('input', instantUpdate);
@@ -115,7 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // 2. Debounced update for text fields to maintain performance while typing
             el.addEventListener('change', () => {
-                saveState();
+                const domValues = extractDOMValues();
+                saveState(null, domValues);
                 render();
             });
             el.addEventListener('input', debouncedSaveAndRender);
