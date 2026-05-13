@@ -422,7 +422,6 @@ function computeDerived(s) {
  */
 function saveAndRender() {
     saveState();
-    render();
 }
 
 /**
@@ -644,6 +643,13 @@ function loadState(config) {
 
     // Clear pure function cache since state has been initialized/loaded
     clearPureFunctionCache();
+}
+
+// Subscribe to STATE_LOADED to sync the DOM when a character is first loaded
+if (window.eventBus) {
+    window.eventBus.subscribe('STATE_LOADED', (data) => {
+        syncStateToDOM(data.state, data.config || CLASS_CONFIG);
+    });
 }
 
 /**

@@ -57,7 +57,7 @@ class MageClass extends BaseClass {
                                     </div>
                                 </div>
                             `;
-                            builder.addHtml(tableHtml, { flex: 4, align: 'stretch' });
+                            builder.addHtml(tableHtml, { flex: 2, align: 'stretch' });
                         }
                     }
                 },

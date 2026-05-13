@@ -339,30 +339,29 @@ const PanelBuilder = MechanicPanelBuilder;
 
 /**
  * Renders the primary combat modifier selector (Advantage/Disadvantage).
+ * @param {Object} stateObj - Current character state.
  */
-function renderModField() {
-    const displayValue = state.advantage === 0 ? 'Normal' : (state.advantage > 0 ? 'Adv +' + state.advantage : 'Dis ' + state.advantage);
-    const statusClass = state.advantage > 0 ? 'positive' : (state.advantage < 0 ? 'negative' : '');
-    
+function renderModField(stateObj) {
+    const displayValue = stateObj.advantage === 0 ? 'Normal' : (stateObj.advantage > 0 ? 'Adv +' + stateObj.advantage : 'Dis ' + stateObj.advantage);
+    const statusClass = stateObj.advantage > 0 ? 'positive' : (stateObj.advantage < 0 ? 'negative' : '');
+
     const html = `
         <div class="advantage-controls">
             <button class="adv-btn" onclick="adjAdv(-1)">-</button>
             <div id="advDisplay" class="adv-val ${statusClass}">${displayValue}</div>
             <button class="adv-btn" onclick="adjAdv(1)">+</button>
         </div>`;
-        
+
     const container = document.getElementById('combatControlsContainer');
-    if (container) { 
-        container.innerHTML = html; 
+    if (container) {
+        container.innerHTML = html;
     }
 }
-
 /**
  * Adjusts the global Advantage/Disadvantage level.
  */
 function adjAdv(amt) { 
     state.advantage = Math.min(3, Math.max(-3, state.advantage + amt)); 
-    renderModField(); 
     saveState(); 
 }
 
@@ -390,10 +389,6 @@ function formatPips(tier, school) {
  */
 function toggleAction(idx) { 
     state.actionsSpent = (state.actionsSpent > idx) ? idx : idx + 1; 
-    for (let i = 0; i < 3; i++) { 
-        const ap = document.getElementById(`action${i + 1}`); 
-        if (ap) ap.checked = (state.actionsSpent > i); 
-    } 
     saveState(); 
 }
 
@@ -430,44 +425,34 @@ function triggerAnimation(id, type) {
 function updateClassState(key, index, value) { 
     if (!state[key]) state[key] = []; 
     state[key][index] = value; 
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /**
  * Toggles circular "pip" indicators in feature cards.
  */
 function toggleBgPip(key, idx) { 
     const val = state[key] || 0; 
     state[key] = (val === idx + 1) ? idx : idx + 1; 
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /** Updates a generic choice state key and refreshes UI. */
 function updateBgChoice(key, val) { 
     state[key] = val; 
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /** Updates the background spell selection. */
 function updateBgSpell(val) { 
     state.bgSpell = val; 
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /**
  * Adjusts a class-specific resource (Mana, Lay on Hands, etc.).
  */
 function adjRes(id, amt, max, isAbsolute = false) { 
     let oldVal = state.resourceValues[id] || 0; 
     state.resourceValues[id] = Math.min(max || 999, Math.max(0, isAbsolute ? amt : oldVal + amt)); 
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /**
  * Spawns a pre-defined item from the template library.
  */
@@ -494,10 +479,8 @@ function addQuickItem(cat, key) {
         cost: t.cost || 0 
     });
     
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /** Spawns a blank custom item in the inventory. */
 function addItem() { 
     state.inventory.push({ 
@@ -514,10 +497,8 @@ function addItem() {
         cost: 0, 
         isCustom: true 
     }); 
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /**
  * Deletes an item and refunds its value if possible.
  */
@@ -530,17 +511,14 @@ function deleteItem(id) {
         }
     }
     state.inventory = state.inventory.filter(i => i.id !== id);
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /** Updates a specific field of an inventory item. */
 function updateItem(id, field, val, check = false) { 
     let item = state.inventory.find(i => i.id === id); 
     if (item) { 
         item[field] = check ? val : (field === 'slots' || field === 'armor' || field === 'cost' ? parseFloat(val) : val); 
         saveState(); 
-        render(); 
     } 
 }
 
@@ -551,17 +529,13 @@ function toggleCondition(id) {
     } else {
         state.activeConditions.push(id);
     }
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /** Updates a skill proficiency level. */
 function updateSkill(id, val) { 
     state.skills[id] = parseInt(val) || 0; 
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /**
  * Adjusts character HP, handling damage, healing, and Temp HP absorption.
  */
@@ -593,33 +567,25 @@ function adjHP(a, isAbsolute = false) {
         triggerAnimation('displayCurrentHP', 'red');
     }
     
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /** Adjusts Temp HP total. */
 function adjTempHP(a, isAbsolute = false) {
     state.tempHP = Math.max(0, isAbsolute ? a : (state.tempHP || 0) + a);
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /** Adjusts current Hit Dice pool. */
 function adjHD(a, isAbsolute = false) {
     const derived = computeDerived(state);
     const max = derived.hdMax;
     state.hdCurrent = Math.min(max, Math.max(0, isAbsolute ? a : (state.hdCurrent === null ? max : state.hdCurrent) + a));
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /** Toggles wound status pips. */
 function handleWoundClick(i) { 
     state.wounds = (state.wounds === i + 1) ? i : i + 1; 
-    saveState(); 
-    render(); 
-}
-
+    saveState();
+    }
 /**
  * Recursive die roller with support for exploding dice.
  */
@@ -652,10 +618,8 @@ function addPoolDie(key, max, faces) {
         state[key].push(roll);
     }
 
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /**
  * Removes a die from a pool.
  */
@@ -666,26 +630,20 @@ function removePoolDie(key, idx, isStatic = false) {
     } else {
         state[key].splice(idx, 1);
     }
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /** Clears an entire dice pool. */
 function clearPool(key) {
     state[key] = [];
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /** Manually sets a die to its maximum possible value. */
 function maximizePoolDie(key, idx, faces) {
     if (!state[key] || !state[key][idx]) return;
     state[key][idx].total = faces;
     state[key][idx].detail = `${faces} (Maxed)`;
-    saveState(); 
-    render();
-}
-
+    saveState();
+    }
 /**
  * Rolls an entire pool at once.
  */
@@ -709,5 +667,4 @@ function rollPool(key, count, faces) {
 
     state[key] = finalDice;
     saveState(); 
-    render();
 }

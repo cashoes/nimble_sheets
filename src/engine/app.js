@@ -20,7 +20,6 @@ const debounce = (fn, ms) => {
 
 const debouncedSaveAndRender = debounce(() => {
     saveState();
-    render(state, CLASS_CONFIG);
 }, 300);
 
 /**
@@ -45,7 +44,6 @@ const importCharacter = (input) => {
             const imported = JSON.parse(e.target.result);
             saveState(imported);
             loadState(CLASS_CONFIG);
-            render(state, CLASS_CONFIG);
             alert("Character imported successfully!");
         } catch (err) {
             console.error("Import error:", err);
@@ -121,7 +119,6 @@ function extractDOMValues() {
 document.addEventListener('DOMContentLoaded', () => {
     try {
         loadState(CLASS_CONFIG);
-        render(state, CLASS_CONFIG);
     } catch (err) {
         console.error("Failed to initialize app:", err);
         alert("An error occurred while loading the character sheet. See console for details.");
@@ -134,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const instantUpdate = () => {
                 const domValues = extractDOMValues();
                 saveState(null, domValues);
-                render();
             };
             el.addEventListener('input', instantUpdate);
             el.addEventListener('change', instantUpdate);
@@ -143,7 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
             el.addEventListener('change', () => {
                 const domValues = extractDOMValues();
                 saveState(null, domValues);
-                render();
             });
             el.addEventListener('input', debouncedSaveAndRender);
         }

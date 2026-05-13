@@ -142,7 +142,7 @@ class CheatClass extends BaseClass {
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
 
-        builder.addStatDisplay(derived.saDice, 'Crit Bonus', 'Added to Critical Hits', { color: 'var(--class-accent)' });
+        builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, 'Added to Critical Hits');
 
         builder.addRollDisplay('1d20', 'Vicious Opp.', 'MAX', 'On Distracted Target', { type: 'attack', isCrit: true });
 

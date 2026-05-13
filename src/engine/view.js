@@ -12,7 +12,7 @@
  * @param {Object} state - Current character state.
  * @param {Object} config - Class configuration.
  */
-function renderHeader(derived, armorVal, init, state, config) {
+function renderHeader(derived, armorVal, init, stateObj, config) {
     let leftStats = `<div class="header-stat"><label style="color:var(--gold-light)">Armor</label><div class="header-stat-val" style="color:var(--gold-light)">${armorVal}</div></div>`;
 
     if (config.customHeaderStats) {
@@ -47,7 +47,7 @@ function renderHeader(derived, armorVal, init, state, config) {
             </div>`;
     }
 
-    renderModField();
+    renderModField(stateObj);
 }
 
 /**
@@ -55,12 +55,14 @@ function renderHeader(derived, armorVal, init, state, config) {
  * @param {number} level - Current character level.
  * @param {Object} statsMap - Current attribute map.
  * @param {Object} derived - Derived statistics.
+ * @param {Object} stateObj - Current character state.
+ * @param {Object} config - Class configuration.
  */
-function renderAttributes(level, statsMap, derived) {
+function renderAttributes(level, statsMap, derived, stateObj, config) {
     ['str', 'dex', 'int', 'wil'].forEach(stat => {
         const card = document.getElementById(`statCard_${stat}`);
         if (card) {
-            if (CLASS_CONFIG.keyStats.includes(stat)) {
+            if (config.keyStats.includes(stat)) {
                 card.classList.add('key-stat');
             } else {
                 card.classList.remove('key-stat');
@@ -68,8 +70,8 @@ function renderAttributes(level, statsMap, derived) {
 
             card.classList.remove('save-adv', 'save-dis');
             let baseAdv = 0;
-            if (CLASS_CONFIG.saves.adv === stat) baseAdv = 1;
-            if (CLASS_CONFIG.saves.dis === stat) baseAdv = -1;
+            if (config.saves.adv === stat) baseAdv = 1;
+            if (config.saves.dis === stat) baseAdv = -1;
 
             const currentTotalAdv = baseAdv + (derived.allSaveAdv ? 1 : 0) + (derived.allSaveDis ? -1 : 0);
             if (currentTotalAdv > 0) card.classList.add('save-adv');
@@ -113,12 +115,12 @@ function renderAttributes(level, statsMap, derived) {
     let keySpent = 0;
     let secondarySpent = 0;
 
-    CLASS_CONFIG.keyStats.forEach(stat => {
+    config.keyStats.forEach(stat => {
         keySpent += stateObj[`add${stat.charAt(0).toUpperCase() + stat.slice(1)}`];
     });
 
     ['str', 'dex', 'int', 'wil']
-        .filter(stat => !CLASS_CONFIG.keyStats.includes(stat))
+        .filter(stat => !config.keyStats.includes(stat))
         .forEach(stat => {
             secondarySpent += stateObj[`add${stat.charAt(0).toUpperCase() + stat.slice(1)}`];
         });
@@ -139,10 +141,10 @@ function renderAttributes(level, statsMap, derived) {
 
     // 3. Dynamic Proficiencies (v2.2.5)
     if (document.getElementById('profArmor')) {
-        document.getElementById('profArmor').innerText = derived.profArmor || (CLASS_CONFIG.proficiencies ? CLASS_CONFIG.proficiencies.armor : "--");
+        document.getElementById('profArmor').innerText = derived.profArmor || (config.proficiencies ? config.proficiencies.armor : "--");
     }
     if (document.getElementById('profWeapons')) {
-        document.getElementById('profWeapons').innerText = derived.profWeapons || (CLASS_CONFIG.proficiencies ? CLASS_CONFIG.proficiencies.weapons : "--");
+        document.getElementById('profWeapons').innerText = derived.profWeapons || (config.proficiencies ? config.proficiencies.weapons : "--");
     }
 }
 
@@ -152,8 +154,10 @@ function renderAttributes(level, statsMap, derived) {
  * @param {Object} derived - Derived statistics.
  * @param {Object} statsMap - Current attribute map.
  * @param {number} hdFace - Hit Die faces (e.g., 10 for d10).
+ * @param {Object} stateObj - Current character state.
+ * @param {Object} config - Class configuration.
  */
-function renderResources(level, derived, statsMap, hdFace) {
+function renderResources(level, derived, statsMap, hdFace, stateObj, config) {
     const hitDieLabel = document.getElementById('hitDiceLabel');
     if (hitDieLabel) {
         hitDieLabel.innerHTML = `<span class="roll-link" onclick="dispatchRoll('1d${hdFace}${statsMap.str >= 0 ? '+' : ''}${statsMap.str}', 'Hit Die Rest')">Hit Dice (d${hdFace})</span>`;
@@ -170,7 +174,7 @@ function renderResources(level, derived, statsMap, hdFace) {
     }
 
     let resourcesHtml = "";
-    (CLASS_CONFIG.resources || []).forEach(resource => {
+    (config.resources || []).forEach(resource => {
         if (resource.manual) {
             return;
         }
@@ -294,8 +298,9 @@ function renderInventoryRow(item, statsMap, iStats) {
  * @param {number} armorVal - Calculated armor value.
  * @param {number} str - Strength value for slot calculation.
  * @param {Function} iStats - Callback to parse stat tokens.
+ * @param {Object} stateObj - Current character state.
  */
-function renderInventory(statsMap, armorVal, str, iStats) {
+function renderInventory(statsMap, armorVal, str, iStats, stateObj) {
     let maxSlots = 10 + str;
     let slotsUsed = 0;
     stateObj.inventory.forEach(item => {
@@ -338,8 +343,9 @@ function renderInventory(statsMap, armorVal, str, iStats) {
  * @param {number} level - Current level.
  * @param {Object} statsMap - Current attribute map.
  * @param {Object} passMods - Passive skill modifiers.
+ * @param {Object} stateObj - Current character state.
  */
-function renderSkills(level, statsMap, passMods) {
+function renderSkills(level, statsMap, passMods, stateObj) {
     let totalPoints = 3 + level;
     let spentPoints = 0;
 
@@ -376,8 +382,11 @@ function renderSkills(level, statsMap, passMods) {
 
 /**
  * Renders condition toggle buttons.
+ * @param {Object} derived - Derived character data.
+ * @param {Object} stateObj - Current character state.
+ * @param {Object} config - Class configuration.
  */
-function renderConditions(derived) {
+function renderConditions(derived, stateObj, config) {
     let conditionsHtml = "";
     const extraConditions = (config.getExtraConditions ? config.getExtraConditions(stateObj.level, stateObj.subclass, stateObj, derived) : []) || [];
     const allConditions = [...CONDITIONS_LIST, ...extraConditions];
@@ -459,6 +468,11 @@ function render(stateObj, config) {
     const derived = computeDerived(stateObj);
     const { level, statsMap, armor, initiative, speed, hdFace, maxHP, hdMax, woundMax, maxActions, maxTier, passMods } = derived;
 
+    // Apply class theme
+    if (config.theme && typeof applyTheme === 'function') {
+        applyTheme(config.theme);
+    }
+
     const subclassSelect = document.getElementById('subclass');
     if (level < 3) {
         if (subclassSelect && subclassSelect.value !== "None") {
@@ -488,6 +502,10 @@ function render(stateObj, config) {
             pip.disabled = (i >= maxActions);
             pip.style.opacity = (i >= maxActions) ? '0.2' : '1';
             pip.style.cursor = (i >= maxActions) ? 'not-allowed' : 'pointer';
+            
+            // Sync checked state
+            pip.checked = (stateObj.actionsSpent > i);
+
             if (i >= maxActions && pip.checked) {
                 pip.checked = false;
                 if (stateObj.actionsSpent > i) {
@@ -524,11 +542,11 @@ function render(stateObj, config) {
     const buildFeatureHtmlBound = (title, lTag, desc, theme = "", skip = false, l2, sm, ctx) => buildFeatureHtml(title, lTag, desc, theme, skip, l2 || level, sm || statsMap, ctx || {});
 
     renderHeader(derived, armor, initiative, stateObj, config);
-    renderAttributes(level, statsMap, derived);
-    renderResources(level, derived, statsMap, hdFace);
-    renderInventory(statsMap, armor, statsMap.str, parseStatsBound);
-    renderSkills(level, statsMap, passMods);
-    renderConditions(derived);
+    renderAttributes(level, statsMap, derived, stateObj, config);
+    renderResources(level, derived, statsMap, hdFace, stateObj, config);
+    renderInventory(statsMap, armor, statsMap.str, parseStatsBound, stateObj);
+    renderSkills(level, statsMap, passMods, stateObj);
+    renderConditions(derived, stateObj, config);
 
     const minorToggle = document.getElementById('toggleMinorFeatures');
     if (minorToggle) {
@@ -573,5 +591,15 @@ function render(stateObj, config) {
             spellsWrapper.style.display = 'none';
         }
     }
+}
+
+// Subscribe to state changes via EventBus
+if (window.eventBus) {
+    window.eventBus.subscribe('STATE_CHANGED', (data) => {
+        render(data.state, CLASS_CONFIG);
+    });
+    window.eventBus.subscribe('STATE_LOADED', (data) => {
+        render(data.state, data.config || CLASS_CONFIG);
+    });
 }
 
