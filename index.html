@@ -147,7 +147,7 @@
         async function fetchCore() {
             const engineModules = [
                 'rolls.js', 'features.js', 'ui.js', 'core.js', 
-                'view.js', 'state.js', 'app.js'
+                'eventBus.js', 'view.js', 'state.js', 'app.js'
             ];
 
             const [
@@ -192,9 +192,9 @@
             jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
 
             // Map engine parts (ordered by fetchCore)
-            const [rolls, features, ui, corePart, view, state, app] = core.engineParts;
+            const [rolls, features, ui, corePart, eventBus, view, state, app] = core.engineParts;
 
-            jsContent += `// --- Engine Helpers & Base ---\n${rolls}\n${features}\n${ui}\n${corePart}\n\n`;
+            jsContent += `// --- Engine Helpers & Base ---\n${rolls}\n${features}\n${ui}\n${corePart}\n${eventBus}\n\n`;
             jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
             jsContent += `// --- Engine Logic ---\n${view}\n${state}\n${app}\n\n`;
 

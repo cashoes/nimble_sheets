@@ -481,11 +481,13 @@ function saveState(newState = null, domValues = null) {
     // Clear pure function cache since state has changed
     clearPureFunctionCache();
 
-    // Publish state changed event
-    eventBus.publish('STATE_CHANGED', { state: {...state} });
-
-    // Publish state saved event
-    eventBus.publish('STATE_SAVED', { state: {...state} });
+    // Publish state changed event (if eventBus is available)
+    if (typeof window !== 'undefined' && window.eventBus !== null) {
+        window.eventBus.publish('STATE_CHANGED', { state: {...state} });
+        
+        // Publish state saved event
+        window.eventBus.publish('STATE_SAVED', { state: {...state} });
+    }
 }
 
 /**
@@ -568,74 +570,76 @@ function loadState(config) {
     // 1. Define standard state schema and defaults
     state = {
         version: "2.2.4",
-        charName: '',        level: 1, 
-        ancestry: 'None', 
-        background: 'None', 
+        charName: '',        level: 1,
+        ancestry: 'None',
+        background: 'None',
         subclass: 'None',
-        baseStr: 0, addStr: 0, 
-        baseDex: 0, addDex: 0, 
-        baseInt: 0, addInt: 0, 
+        baseStr: 0, addStr: 0,
+        baseDex: 0, addDex: 0,
+        baseInt: 0, addInt: 0,
         baseWil: 0, addWil: 0,
-        hpCurrent: null, 
-        tempHP: 0, 
-        hdCurrent: null, 
+        hpCurrent: null,
+        tempHP: 0,
+        hdCurrent: null,
         wounds: 0,
-        skills: {}, 
-        activeConditions: [], 
-        inventory: [], 
+        skills: {},
+        activeConditions: [],
+        inventory: [],
         gold: 0,
-        resourceValues: {}, 
-        bgSpell: 'None', 
+        resourceValues: {},
+        bgSpell: 'None',
         showMinor: false,
-        
+
         // Multi-selection feature states
         selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: [],
         selectedMastery: [], selectedGreater: [], selectedLesser: [], selectedGraces: [],
         selectedLyrical: [], selectedBoons: [], selectedMartial: [], selectedUnderhanded: [],
         selectedDeepKnowledge: [], secondarySchool: [], selectedSubclassSpells: [],
         selectedStudy: [], selectedTwilight: [], selectedShadowmastery: [],
-        
+
         currentForm: [],
-        furyDice: [], 
+        furyDice: [],
         judgmentDice: null,
         judgmentBoom: 'OFF',
         judgmentMode: 'Single',
         furyBoom: 'OFF',
-        
-        advantage: 0, 
+
+        advantage: 0,
         actionsSpent: 0
     };
 
     // 2. Load from storage
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (EMBEDDED_STATE) { 
-        Object.assign(state, EMBEDDED_STATE); 
-    } else if (raw) { 
-        try { 
-            const loaded = JSON.parse(raw); 
-            Object.assign(state, loaded); 
+    if (EMBEDDED_STATE) {
+        Object.assign(state, EMBEDDED_STATE);
+    } else if (raw) {
+        try {
+            const loaded = JSON.parse(raw);
+            Object.assign(state, loaded);
         } catch(e) {
             console.error("Failed to load character state:", e);
-        } 
+        }
     }
     // Ensure state is valid and has correct types/defaults, and apply game-specific corrections
     state = validateAndCorrectState(state);
 
     // 3. Apply class-specific initial stats for brand new characters
-    if (state.level === 1 && !state.charName) { 
-        if (config.initialStats) { 
-            Object.assign(state, config.initialStats); 
-        } 
+    if (state.level === 1 && !state.charName) {
+        if (config.initialStats) {
+            Object.assign(state, config.initialStats);
+        }
     }
 
-    // 4. Publish state loaded event
-    eventBus.publish('STATE_LOADED', { state: {...state}, config });
-    
+    // 4. Publish state loaded event (if eventBus is available)
+    if (typeof window !== 'undefined' && window.eventBus !== null) {
+        window.eventBus.publish('STATE_LOADED', { state: {...state}, config });
+    }
+
     // 5. Ensure derived totals are calculated and persisted
     const derived = computeDerived(state);
     if (state.hpCurrent === null) state.hpCurrent = derived.maxHP;
     if (state.hdCurrent === null) state.hdCurrent = derived.hdMax;
-    
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
     // Clear pure function cache since state has been initialized/loaded
