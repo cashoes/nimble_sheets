@@ -243,24 +243,21 @@ function validateAndCorrectState(state) {
         }
     }
 
-    // 6. Automatic recovery on level up (Full Heal and Resource Restore)
+    // 6. Automatic recovery on level change (Full Heal and Resource Restore)
     const derived = computeDerived(state);
     if (state.lastLeveledUpAt === undefined) state.lastLeveledUpAt = state.level;
 
-    if (state.level > state.lastLeveledUpAt) {
+    if (state.level !== state.lastLeveledUpAt) {
         state.hpCurrent = derived.maxHP;
         state.hdCurrent = derived.hdMax;
 
         // Restore dynamic resources
-        const combined = config.getCombinedResources ? config.getCombinedResources(state.subclass, state) : (config.resources || []);
-        combined.forEach(r => {
-            const rmax = r.calcMax(state.level, derived.statsMap, state, state.subclass, derived);
-            state.resourceValues[r.id] = rmax;
-        });
+        if (derived.resourceMaxes) {
+            Object.keys(derived.resourceMaxes).forEach(id => {
+                state.resourceValues[id] = derived.resourceMaxes[id];
+            });
+        }
 
-        state.lastLeveledUpAt = state.level;
-    } else if (state.level < state.lastLeveledUpAt) {
-        // Just sync the tracking variable if level was manually decreased
         state.lastLeveledUpAt = state.level;
     }
 
@@ -679,11 +676,18 @@ function characterReducer(currentState, action) {
         case 'SET_STATE_KEY': {
             s[payload.key] = payload.value;
 
-            // Auto-clamp vitals on level change (Down-leveling protection)
+            // Auto-reset vitals and class resources on level change
             if (payload.key === 'level') {
                 const derived = computeDerived(s);
-                if (s.hpCurrent > derived.maxHP) s.hpCurrent = derived.maxHP;
-                if (s.hdCurrent > derived.hdMax) s.hdCurrent = derived.hdMax;
+                s.hpCurrent = derived.maxHP;
+                s.hdCurrent = derived.hdMax;
+
+                // Reset dynamic class resources (Mana, Lay on Hands, etc.)
+                if (derived.resourceMaxes) {
+                    Object.keys(derived.resourceMaxes).forEach(id => {
+                        s.resourceValues[id] = derived.resourceMaxes[id];
+                    });
+                }
             }
             break;
         }
@@ -908,6 +912,13 @@ function loadState(config) {
     const isNewChar = state.level === 1 && !state.charName;
     if (state.hpCurrent === null || isNewChar) state.hpCurrent = derived.maxHP;
     if (state.hdCurrent === null || isNewChar) state.hdCurrent = derived.hdMax;
+
+    // Initialize dynamic class resources for new characters
+    if (isNewChar && derived.resourceMaxes) {
+        Object.keys(derived.resourceMaxes).forEach(id => {
+            state.resourceValues[id] = derived.resourceMaxes[id];
+        });
+    }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
