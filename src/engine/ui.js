@@ -13,7 +13,12 @@ class MechanicPanelBuilder {
         this.sections = [];
     }
 
-    _addSection(type, props, { flex = 1, minWidth = null, align = 'center' } = {}) {
+    _addSection(type, props, defaults = {}) {
+        const options = props.options || {};
+        const flex = options.flex !== undefined ? options.flex : (defaults.flex || 1);
+        const minWidth = options.minWidth !== undefined ? options.minWidth : (defaults.minWidth || null);
+        const align = options.align !== undefined ? options.align : (defaults.align || 'center');
+        
         this.sections.push({ type, props, flex, minWidth, align });
     }
 
@@ -23,8 +28,8 @@ class MechanicPanelBuilder {
         return this;
     }
 
-    addRollDisplay(notation, label, display, subtext = '', rollContext = {}) {
-        this._addSection('Roll', { notation, label, display, subtext, rollContext }, { flex: 1 });
+    addRollDisplay(notation, label, display, subtext = '', rollContext = {}, options = {}) {
+        this._addSection('Roll', { notation, label, display, subtext, rollContext, options }, { flex: 1 });
         return this;
     }
 
@@ -38,13 +43,13 @@ class MechanicPanelBuilder {
         return this;
     }
 
-    addToggleDisplay(id, label, options, stateKey) {
-        this._addSection('Toggle', { id, label, options, stateKey }, { flex: 1.2 });
+    addToggleDisplay(id, label, options, stateKey, displayOptions = {}) {
+        this._addSection('Toggle', { id, label, options, stateKey, displayOptions }, { flex: 1.2 });
         return this;
     }
 
-    addSelectDisplay(id, label, options, current, subtext = '') {
-        this._addSection('Select', { id, label, options, current, subtext }, { flex: 1.6 });
+    addSelectDisplay(id, label, options, current, subtext = '', displayOptions = {}) {
+        this._addSection('Select', { id, label, options, current, subtext, displayOptions }, { flex: 1.6 });
         return this;
     }
 
@@ -70,6 +75,13 @@ class MechanicPanelBuilder {
 }
 
 const PanelBuilder = MechanicPanelBuilder;
+
+/**
+ * Updates the upcast state for a specific spell.
+ */
+function setSpellUpcast(name, tier, choiceId = null) {
+    dispatch({ type: 'SET_SPELL_UPCAST', payload: { name, tier, choiceId } });
+}
 
 /**
  * Adjusts the global Advantage/Disadvantage level.
@@ -235,7 +247,7 @@ function _rollDie(faces, allowExplode = false, floor = 1) {
     if (allowExplode && total === faces) {
         const next = _rollDie(faces, true, floor);
         total += next.total;
-        detail = `${detail}! + ${next.detail}`;
+        detail = `${detail}!! + ${next.detail}`;
     }
     return { total, detail };
 }

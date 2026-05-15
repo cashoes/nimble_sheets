@@ -18,6 +18,35 @@ function handleAutoResize(e) {
 }
 
 /**
+ * Wraps key mechanical terms in a highlighting span for better visibility.
+ */
+function highlightMechanicalTerms(text) {
+    if (!text) return "";
+    let processed = text;
+    
+    // 1. Highlight standard properties (Term: Value OR Value Term)
+    // Supports Reach, Range, Line, DC, Armor, Damage, Actions, Targets, Allies, Area, Temp HP, HP, Advantage, Minutes, Rounds, Turns, Spaces, Feet
+    const terms = "Reach|Range|Line|DC|Armor|Damage|Actions?|Targets?|Allies?|Area|Temp\\s+HP|HP|Advantage|Minutes?|Rounds?|Turns?|Spaces?|Feet";
+    
+    // Strict greedy value pattern (Dice w/ modifiers, Table rolls, Math, Stat tokens, Placeholders, Keywords)
+    // Now explicitly includes kh/kl/dh/dl/! and table roll prefixes to avoid splitting
+    const valPattern = `(?:(?:\\d+d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!|\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL))*|(?:\\d+|STR|DEX|INT|WIL|KEY|LVL)(?:\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL))+|{.*?}|(?:Cone|Line|AoE)\\s*[\\d{}x\\+]+|AoE|Self|Single|[+-]?\\d+(?:\\.\\d+)?|[\\d+x/]+)`;
+    
+    // Pattern A: Term: Value (Preserving separator)
+    const regA = new RegExp(`\\b(${terms})\\b(:?\\s*)(${valPattern})`, 'gi');
+    processed = processed.replace(regA, (match, p1, p2, p3) => `<span class="prop-hl">${p1}${p2}${p3}</span>`);
+
+    // Pattern B: Value [Adjective] Term
+    const regB = new RegExp(`(${valPattern})\\s+(?:[\\w-]+\\s+)?\\b(${terms})\\b`, 'gi');
+    processed = processed.replace(regB, (match, p1, p2) => {
+        if (match.includes('class="prop-hl"')) return match;
+        return `<span class="prop-hl">${match}</span>`;
+    });
+
+    return processed;
+}
+
+/**
  * Generic Action Pip Component
  */
 function ActionPip(props) {
@@ -103,8 +132,8 @@ function Header() {
 
     const actionPipsNodes = () => {
         const nodes = [];
-        const max = d().maxActions;
-        for (let i = 0; i < max; i++) {
+        const potential = d().potentialActions;
+        for (let i = 0; i < potential; i++) {
             nodes.push(html`<${ActionPip} index=${i} />`);
         }
         return nodes;
@@ -436,7 +465,7 @@ function InventoryRow(props) {
     const reachNode = () => {
         if (typeStr !== 'weapon') return '-';
         if (isLib()) return item.reach || '-';
-        return html`<input type="text" class="inv-input" value=${item.reach || '1'} style="text-align:center;" onchange=${handleReach} />`;
+        return html`<input type="text" class="inv-input" value=${() => item.reach || '1'} style="text-align:center;" onchange=${handleReach} />`;
     };
 
     const effectNode = () => {
@@ -469,7 +498,7 @@ function InventoryRow(props) {
             } else {
                 return html`
                     <div style="display:flex; flex-direction:row; align-items:center; gap:4px; width:100%;">
-                        <input type="text" class="inv-input" value=${diceStr} style="flex:1; min-width:0;" onchange=${handleDice} />
+                        <input type="text" class="inv-input" value=${() => diceStr} style="flex:1; min-width:0;" onchange=${handleDice} />
                         <select class="inv-input" style="flex:1; min-width:0; padding:0;" onchange=${handleStat}>
                             <option value="str" selected=${() => statKey === 'str'}>STR</option>
                             <option value="dex" selected=${() => statKey === 'dex'}>DEX</option>
@@ -491,7 +520,7 @@ function InventoryRow(props) {
             } else {
                 return html`
                     <div style="display:flex; flex-direction:row; align-items:center; gap:4px; width:100%;">
-                        <input type="number" class="inv-input" value=${armorStr} style="flex:0.5; min-width:0;" onchange=${handleArmor} />
+                        <input type="number" class="inv-input" value=${() => armorStr} style="flex:0.5; min-width:0;" onchange=${handleArmor} />
                         <select class="inv-input" style="flex:1.5; min-width:0; padding:0;" onchange=${handleArmorType}>
                             <option value="light" selected=${() => atypeStr === 'light'}>Cloth/Leather</option>
                             <option value="medium" selected=${() => atypeStr === 'medium'}>Mail</option>
@@ -502,20 +531,20 @@ function InventoryRow(props) {
             }
         }
         if (typeStr === 'shield' && !isLib()) {
-            return html`<input type="number" class="inv-input" value=${armorStr} style="width:30px;" onchange=${handleArmor} />`;
+            return html`<input type="number" class="inv-input" value=${() => armorStr} style="width:30px;" onchange=${handleArmor} />`;
         }
         return '-';
     };
 
     const typeNode = () => {
         if (isLib()) {
-            return html`<div style="color:var(--text-muted); text-transform:capitalize; text-align:left; line-height:1.2;">
+            return html`<div style="color:var(--text-muted); text-transform:capitalize; text-align:center; line-height:1.2;">
                 ${item.category || (typeStr === 'armor' ? atypeStr + ' ' : '') + typeStr}
             </div>`;
         }
         return html`
-            <div style="width:100%;">
-                <select class="inv-input" style="padding:0; width:100%;" onchange=${handleType}>
+            <div style="width:100%; text-align:center;">
+                <select class="inv-input" style="text-align-last: center;" onchange=${handleType}>
                     <option value="weapon" selected=${() => typeStr === 'weapon'}>Weapon</option>
                     <option value="armor" selected=${() => typeStr === 'armor'}>Armor</option>
                     <option value="shield" selected=${() => typeStr === 'shield'}>Shield</option>
@@ -525,32 +554,38 @@ function InventoryRow(props) {
         `;
     };
 
+    let taRef;
+    Solid.onMount(() => {
+        if (taRef) handleAutoResize({ target: taRef });
+    });
+
     return html`
         <div class=${rowClass}>
             <div style="display:flex; justify-content:center;">
                 <input type="checkbox" checked=${isEquipped} onchange=${handleEquip} />
             </div>
             <div>
-                <input type="text" class="inv-input" value=${nameStr} style="text-align:left;" onchange=${handleName} />
+                <input type="text" class="inv-input" value=${() => nameStr} style="text-align:left;" onchange=${handleName} />
             </div>
             ${typeNode}
             <div>
-                <textarea class="inv-input" 
-                          style="height:auto; resize:none; overflow:hidden; line-height:1.2; border:none; background:transparent; text-align:left;" 
+                <textarea ref=${el => taRef = el} class="inv-input" 
+                          rows="1"
+                          style="resize:none; overflow:hidden; text-align:left;" 
                           oninput=${handleAutoResize}
-                          onchange=${handleProps}>${propsVal || ''}</textarea>
+                          onchange=${handleProps}>${() => propsVal || ''}</textarea>
             </div>
             <div style="text-align:center; color:var(--text-muted);">
                 ${reachNode}
             </div>
             <div style="display:flex; justify-content:center;">
                 ${() => isLib() ? html`<span style="opacity:0.8;">${costVal || 0}</span>` : html`
-                    <input type="number" class="inv-input" value=${costVal || 0} onchange=${handleCost} />
+                    <input type="number" class="inv-input" value=${() => costVal || 0} onchange=${handleCost} />
                 `}
             </div>
             <div style="display:flex; justify-content:center;">
                 ${() => isLib() ? html`<span style="opacity:0.8;">${slotsVal}</span>` : html`
-                    <input type="number" class="inv-input" value=${slotsVal} onchange=${handleSlots} />
+                    <input type="number" class="inv-input" value=${() => slotsVal} onchange=${handleSlots} />
                 `}
             </div>
             <div style="text-align:center; line-height:1.2;">
@@ -578,7 +613,7 @@ function Inventory() {
             <div class="inv-header">
                 <div></div>
                 <div>Item</div>
-                <div>Type</div>
+                <div style="text-align:center;">Type</div>
                 <div>Description</div>
                 <div style="text-align:center;">Rch</div>
                 <div style="text-align:center;">GP</div>
@@ -643,8 +678,8 @@ function InventorySection() {
 
     return html`
         <div class="skills-box" style="padding: 15px; height: auto; border: 1px solid var(--class-border); border-radius: 6px; background: var(--class-panel-bg);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom: 2px solid var(--slate-lighter); padding-bottom: 5px;">
-                <span style="font-family:'Cinzel', serif; font-weight:bold; color:var(--text-main); font-size:1.1em;">INVENTORY & EQUIPMENT</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h2 class="section-header" style="font-size: 1.1em; margin: 0; border: none;">INVENTORY & EQUIPMENT</h2>
                 <div style="display:flex; align-items:center; gap: 15px;">
                     <span style=${() => `color:${slotsColor()}; font-weight:bold; letter-spacing:1px; font-size: 0.9em;`}>
                         SLOTS: ${totalSlots} / ${maxSlots}
@@ -785,30 +820,128 @@ function SpellCard(props) {
     const s = charState;
     const d = charDerived;
     const spell = props.spell;
-
     const nameStr = spell.name;
-    const tierStr = spell.tier;
-    const schoolStr = spell.school;
-    const customStr = spell.customHtml;
-    const descText = spell.desc || "";
 
-    const schoolLow = (schoolStr || "").toLowerCase();
-    const css = `spell-card ${schoolLow}`;
-    const pips = formatPips(tierStr, schoolStr);
+    // 1. Determine Tier Boundaries
+    const baseTier = parseInt(spell.tier.replace(/\D/g, '')) || 0;
+    const isCantrip = (spell.tier || "").toLowerCase().includes("cantrip");
+    const isUtility = (spell.tier || "").toLowerCase().includes("utility");
+    const isTiered = !isCantrip && !isUtility;
+    
+    // Shadowmancer forces max tier
+    const isShadowmancerCaster = CLASS_CONFIG.name === "Shadowmancer" && s().subclass !== "Reaver";
+    const maxUnlocked = d().maxTier;
+
+    // 2. Get Upcast State
+    const upcastState = () => s().spellUpcasts?.[nameStr] || { tier: baseTier, choiceId: null };
+    const currentCastTier = () => {
+        if (isShadowmancerCaster && isTiered) return maxUnlocked;
+        return upcastState().tier;
+    };
+    const selectedChoiceId = () => upcastState().choiceId || (spell.upcastChoices?.[0]?.id || null);
+
+    // 3. Resolve scaling
+    const resolved = () => resolveUpcast(spell, currentCastTier(), selectedChoiceId());
+    
+    const isUpcastActive = () => currentCastTier() > baseTier;
+    const schoolLow = (spell.school || "").toLowerCase();
+    const cardCss = () => `spell-card ${schoolLow} ${isUpcastActive() ? 'upcast-active' : ''}`;
+
+    // 4. Pip Logic
+    const pipNodes = () => {
+        if (!isTiered) return html`<span>${formatPips(spell.tier, spell.school)}</span>`;
+        
+        const nodes = [];
+        const cur = currentCastTier();
+        const max = maxUnlocked;
+        
+        const pipStyBase = "display:inline-block; width:1.2em; text-align:center; font-size:1.1em; line-height:1;";
+
+        // Base pips (●)
+        for (let i = 1; i <= baseTier; i++) {
+            nodes.push(html`<span style=${`color:var(--text-main); ${pipStyBase}`}>●</span>`);
+        }
+        // Potential upcast pips (○ or ● if selected)
+        for (let i = baseTier + 1; i <= max; i++) {
+            const idx = i;
+            const isF = cur >= idx;
+            const click = () => {
+                if (isShadowmancerCaster) return;
+                const next = (isF && cur === idx) ? idx - 1 : idx;
+                setSpellUpcast(nameStr, next, selectedChoiceId());
+            };
+            
+            nodes.push(html`<span onclick=${click} 
+                                 style=${() => `cursor:${isShadowmancerCaster ? 'default' : 'pointer'}; 
+                                        color:${isF ? 'var(--school-color)' : 'var(--text-muted)'}; 
+                                        transition: 0.2s; ${pipStyBase}`}>
+                ${() => isF ? '●' : '○'}
+            </span>`);
+        }
+        return html`<div style="display:flex; gap:0; align-items:center;">${nodes}</div>`;
+    };
+
+    // 5. Choice Logic
+    const choiceNodes = () => {
+        if (!spell.upcastChoices || currentCastTier() <= baseTier) return null;
+        
+        return html`
+            <div style="margin-top:8px; display:flex; flex-direction:column; gap:4px; padding:6px; background:rgba(0,0,0,0.2); border-radius:4px;">
+                <div style="font-size:0.65em; text-transform:uppercase; color:var(--gold-light); font-weight:bold; letter-spacing:0.5px; margin-bottom:2px;">Select Upcast Bonus</div>
+                ${spell.upcastChoices.map(c => {
+                    const isSel = () => selectedChoiceId() === c.id;
+                    const click = () => setSpellUpcast(nameStr, currentCastTier(), c.id);
+                    return html`
+                        <div onclick=${click} style=${() => `display:flex; align-items:center; gap:8px; cursor:pointer; opacity:${isSel() ? 1 : 0.6}; transition:0.2s;`}>
+                            <input type="radio" checked=${isSel} style="pointer-events:none;" />
+                            <span style=${() => `font-size:0.85em; color:${isSel() ? '#fff' : 'var(--text-muted)'};`}>${c.label}</span>
+                        </div>
+                    `;
+                })}
+            </div>
+        `;
+    };
 
     const descriptionNode = () => {
-        if (customStr) return customStr;
+        const res = resolved();
+        const dsc = res.desc;
+        const bData = res.baseData;
         const lvl = s().level;
         const smap = d().statsMap;
-        const isCantrip = (tierStr || "").toLowerCase().includes("cantrip") || nameStr === "Vicious Mockery";
-        const ctx = isCantrip ? { type: 'cantrip', name: nameStr, school: schoolStr } : { name: nameStr };
-        return iStats(descText, lvl, smap, ctx);
+        
+        // Merge upcast data into the roll context
+        const rollCtx = { 
+            name: nameStr,
+            ...(isCantrip ? { type: 'cantrip', school: spell.school } : {}),
+            ...bData 
+        };
+        
+        // HIGHLIGHT FIRST, then resolve stats
+        let htmlContent = highlightMechanicalTerms(dsc);
+        htmlContent = iStats(htmlContent, lvl, smap, rollCtx);
+        
+        if (bData.DC) {
+            const resolvedDC = iStats(bData.DC, lvl, smap, rollCtx);
+            htmlContent += `<div style="margin-top:8px; font-weight:bold; color:var(--gold-light); display:flex; align-items:center; gap:8px;">
+                <span>Difficulty Class:</span>
+                <span class="prop-hl">DC ${resolvedDC}</span>
+            </div>`;
+        }
+        
+        return htmlContent;
     };
 
     return html`
-        <div class=${css} style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
-            <h4>${nameStr ? `${nameStr} ` : ""}<span class="tier-tag">${pips}</span></h4>
+        <div class=${cardCss} style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+            <h4 style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="display:flex; align-items:center; gap:8px;">
+                    ${nameStr}
+                    ${() => isUpcastActive() ? html`<span style="font-size:0.6em; background:var(--class-accent); color:#000; padding:1px 4px; border-radius:3px; font-weight:900;">UPCAST</span>` : ''}
+                </span>
+                <span class="tier-tag">${() => pipNodes()}</span>
+            </h4>
             <div class="spell-desc" style="font-size: 0.85em;" innerHTML=${descriptionNode}></div>
+            ${choiceNodes}
         </div>
     `;
 }
@@ -1115,8 +1248,8 @@ const PanelComponents = {
         const set = (e) => adjRes(id, parseInt(e.target.value), max, true);
 
         return html`
-            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1;">
-                <label style="font-size: 0.65em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${label}</label>
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${label}</label>
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <div class="dark-incrementer">
                         <button onclick=${down}>-</button>
@@ -1125,7 +1258,7 @@ const PanelComponents = {
                     </div>
                     <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${max}</span></div>
                 </div>
-                ${sub ? html`<div style="font-size: 0.55em; color: var(--text-muted); font-style: italic; margin-top: 2px;">${sub}</div>` : ''}
+                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-style: italic; margin-top: 4px; line-height: 1.1;">${sub}</div>` : ''}
             </div>
         `;
     },
@@ -1139,7 +1272,7 @@ const PanelComponents = {
         const click = () => dispatchRoll(not, lab, ctx);
 
         return html`
-            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1;">
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                 <label class="roll-link" onclick=${click} 
                       style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px; cursor: pointer;">
                     ${lab}
@@ -1148,7 +1281,7 @@ const PanelComponents = {
                      style="font-size: 2.2em; color: #fff; font-weight: bold; font-family: 'Cinzel', serif; line-height: 1; cursor: pointer;">
                     ${disp}
                 </div>
-                ${sub ? html`<div style="font-size: 0.65em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic;">${sub}</div>` : ''}
+                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">${sub}</div>` : ''}
             </div>
         `;
     },
@@ -1163,7 +1296,9 @@ const PanelComponents = {
         const colorVal = opt.color || 'var(--gold-light)';
         const valCol = () => curVal() > 0 ? colorVal : '#fff';
         const valLab = () => (curVal() >= 0 ? '+' : '') + curVal();
-        const valSty = () => `font-size: 2.2em; font-family: 'Cinzel', serif; font-weight: 900; color: ${valCol()}; line-height: 1;`;
+        
+        const vSize = opt.fontSize || '2.2em';
+        const valSty = () => `font-size: ${vSize}; font-family: 'Cinzel', serif; font-weight: 900; color: ${valCol()}; line-height: 1;`;
 
         const iNodes = () => (indList || []).map(ind => {
             const iLab = ind.label;
@@ -1172,7 +1307,7 @@ const PanelComponents = {
 
             const isActive = () => tKey ? charState()[tKey] === 'BOOM' : ind.active;
             const iSty = () => `display: flex; align-items: center; gap: 6px; cursor: ${tKey ? 'pointer' : 'default'}; opacity: ${isActive() ? '1' : '0.2'};`;
-            const lSty = () => `font-size: 0.5em; color: ${isActive() ? iCol : 'var(--text-muted)'}; text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 0.5px;`;
+            const lSty = () => `font-size: 0.6em; color: ${isActive() ? iCol : 'var(--text-muted)'}; text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 0.5px;`;
             const pSty = () => `width: 6px; height: 6px; border-radius: 50%; background: ${iCol}; box-shadow: ${isActive() ? `0 0 6px ${iCol}` : ''};`;
             const clickFn = () => tKey ? updateBgChoice(tKey, charState()[tKey] === 'BOOM' ? 'OFF' : 'BOOM') : undefined;
 
@@ -1186,11 +1321,11 @@ const PanelComponents = {
 
         return html`
             <div style="display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 80px;">
+                <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${lab}</label>
                 <span style=${valSty}>${valLab}</span>
-                <span style="font-size: 0.6em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-top: 4px; white-space: nowrap;">${lab}</span>
-                ${sub ? html`<div style="font-size: 0.55em; color: var(--text-muted); font-style: italic; text-align: center; line-height: 1.1; margin-top: 6px;">${sub}</div>` : ''}
+                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-style: italic; text-align: center; line-height: 1.1; margin-top: 4px;">${sub}</div>` : ''}
                 ${() => indList ? html`
-                    <div style="display: flex; flex-direction: column; gap: 3px; margin-top: 6px; width: 100%; align-items: center;">
+                    <div style="display: flex; flex-direction: column; gap: 3px; margin-top: 6px; width: 100%; align-items: flex-end;">
                         ${iNodes}
                     </div>
                 ` : ''}
@@ -1243,7 +1378,7 @@ const PanelComponents = {
                 for (let i = 0; i < maxDiceCount; i++) items.push(dieGenerator(list[i], i, !list[i]));
                 return items;
             }
-            return (list && list.length > 0) ? list.map((d, i) => dieGenerator(d, i)) : html`<div style="color: var(--text-muted); font-style: italic; font-size: 0.85em; opacity: 0.5; padding: 5px;">Awaiting ${flab}...</div>`;
+            return (list && list.length > 0) ? list.map((d, i) => dieGenerator(d, i)) : html`<div style="color: var(--text-muted); font-style: italic; font-size: 0.9em; opacity: 0.5; padding: 5px;">Awaiting ${flab}...</div>`;
         };
 
         const indList = opt.indicators || [];
@@ -1263,22 +1398,22 @@ const PanelComponents = {
         const btnNode = () => {
             if (rallFlag) {
                 const click = () => rollPool(skey, maxDiceCount, facesCount);
-                return html`<button onclick=${click} style="background: rgba(255,255,255,0.1); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Roll</button>`;
+                return html`<button onclick=${click} style="background: rgba(255,255,255,0.1); border: 1px solid var(--class-accent); color: #fff; font-size: 0.7em; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Roll</button>`;
             }
             const click = () => addPoolDie(skey, maxDiceCount, facesCount);
-            return html`<button onclick=${click} style="background: rgba(255,255,255,0.1); border: 1px solid var(--class-accent); color: #fff; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">+ Die</button>`;
+            return html`<button onclick=${click} style="background: rgba(255,255,255,0.1); border: 1px solid var(--class-accent); color: #fff; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">+ Die</button>`;
         };
 
         const clearBtnNode = () => {
             const click = () => clearPool(skey);
-            return html`<button onclick=${click} style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-muted); font-size: 0.65em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Clear</button>`;
+            return html`<button onclick=${click} style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--text-muted); font-size: 0.7em; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-family:'Cinzel'; font-weight:bold;">Clear</button>`;
         };
 
         return html`
-            <div style="display: flex; flex-direction: column; align-items: stretch; flex: 1.5; min-width: 250px;">
+            <div style="display: flex; flex-direction: column; align-items: stretch;">
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 4px;">
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">${flab} (${facesCount})</label>
+                        <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">${flab} (${facesCount})</label>
                         <div style="display: flex; gap: 4px; align-items: center;">
                             ${indNodes}
                         </div>
@@ -1288,8 +1423,8 @@ const PanelComponents = {
                         ${clearBtnNode}
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: center; flex: 1; width: 100%; min-height: 55px; background: rgba(0,0,0,0.2); border-radius: 4px; padding: 4px;">
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+                <div style="display: flex; align-items: center; justify-content: center; width: 100%; min-height: 58px; background: rgba(0,0,0,0.2); border-radius: 4px; padding: 4px;">
+                    <div style=${() => `display: flex; gap: 4px; flex-wrap: ${maxDiceCount <= 6 ? 'nowrap' : 'wrap'}; justify-content: center; align-items: center; width: 100%;`}>
                         ${dNodes}
                     </div>
                 </div>
@@ -1305,7 +1440,7 @@ const PanelComponents = {
 
         const curVal = () => s()[skey] || optList[0];
         const btnNodes = () => optList.map(opt => {
-            const bSty = () => `flex: 1; background: ${curVal() === opt ? 'var(--class-accent)' : 'transparent'}; border: 1px solid ${curVal() === opt ? 'var(--class-accent)' : 'rgba(255,255,255,0.2)'}; color: ${curVal() === opt ? '#000' : 'var(--text-muted)'}; font-size: 0.65em; padding: 4px; border-radius: 4px; cursor: pointer; font-family: 'Cinzel'; font-weight: bold;`;
+            const bSty = () => `flex: 1; background: ${curVal() === opt ? 'var(--class-accent)' : 'transparent'}; border: 1px solid ${curVal() === opt ? 'var(--class-accent)' : 'rgba(255,255,255,0.2)'}; color: ${curVal() === opt ? '#000' : 'var(--text-muted)'}; font-size: 0.7em; padding: 4px; border-radius: 4px; cursor: pointer; font-family: 'Cinzel'; font-weight: bold;`;
             const click = () => updateBgChoice(skey, opt);
             return html`
                 <button onclick=${click} style=${bSty}>${opt}</button>
@@ -1314,7 +1449,7 @@ const PanelComponents = {
 
         return html`
             <div style="display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1.2;">
-                <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">${lab}</label>
+                <label style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 5px;">${lab}</label>
                 <div style="display: flex; gap: 4px; width: 100%;">
                     ${btnNodes}
                 </div>
@@ -1334,11 +1469,11 @@ const PanelComponents = {
 
         return html`
             <div style="display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1.6;">
-                <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${slab}</label>
-                <select onchange=${changeFn} style="border-bottom-color: var(--class-accent); font-size: 0.85em; width: 100%;">
+                <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${slab}</label>
+                <select onchange=${changeFn} style="border-bottom-color: var(--class-accent); font-size: 0.9em; width: 100%;">
                     ${optNodes}
                 </select>
-                ${ssub ? html`<div style="font-size: 0.6em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">${ssub}</div>` : ''}
+                ${ssub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">${ssub}</div>` : ''}
             </div>
         `;
     },
@@ -1374,7 +1509,7 @@ const PanelComponents = {
                         <input type="number" value=${curVal} onchange=${handleSet} />
                         <button onclick=${handleUp}>+</button>
                     </div>
-                    <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${rmax}</div>
+                    <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${rmax}</div>
                 </div>
             </div>
         `;

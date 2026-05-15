@@ -25,7 +25,7 @@ class SongweaverClass extends BaseClass {
                 panelBg: "rgba(35, 25, 15, 0.8)",
                 border: "rgba(251, 191, 36, 0.25)"
             },
-            initialStats: { baseStr: -1, baseDex: 1, baseInt: 2, baseWil: 2 },
+            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "HeraldSnark", label: "Herald of Snark", accent: "#f59e0b" },
@@ -56,10 +56,9 @@ class SongweaverClass extends BaseClass {
             },
             onInitiative: (level, subclass, state, derived) => {
                 if (level >= 3) {
-                    const statsMap = getStatsMap(state);
                     const current = state.resourceValues?.inspiration || 0;
-                    const max = (statsMap.wil * 2) + (state.selectedLyrical?.includes("Heroic Ballad") ? 2 : 0);
-                    state.resourceValues.inspiration = Math.min(max, current + 2);
+                    const max = derived.resourceMaxes.inspiration || 0;
+                    adjRes('inspiration', Math.min(max, current + 2), max, true);
                 }
             },
             statModifiers: [

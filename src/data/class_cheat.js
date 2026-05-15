@@ -25,7 +25,7 @@ class CheatClass extends BaseClass {
                 panelBg: "rgba(15, 23, 42, 0.8)",
                 border: "rgba(148, 163, 184, 0.25)"
             },
-            initialStats: { baseStr: -1, baseDex: 3, baseInt: 2, baseWil: 0 },
+            initialStats: { baseStr: -1, baseDex: 3, baseInt: 1, baseWil: -1 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#be123c" },
@@ -44,6 +44,14 @@ class CheatClass extends BaseClass {
                 },
                 { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "SilentBlade" && l >= 11 }
             ],
+            mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, 'Added to Critical Hits');
+                builder.addRollDisplay('1d20', 'Vicious Opp.', 'MAX', 'On Distracted Target', { type: 'attack', isCrit: true });
+
+                if (level >= 2) {
+                    builder.addStatDisplay('10', 'Init Floor', 'Min Initiative Result');
+                }
+            },
             featuresData: CheatClass.FEATURES,
             optionsData: CheatClass.OPTIONS
         });
@@ -76,7 +84,22 @@ class CheatClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or INT', 'STR or WIL', false, null, [2, 2, 4, 6, 8, 10, 13, 17, 19, 21]);
 
         core[1] = [
-            { id: "sneak_attack", name: "Sneak Attack", desc: (level, subclass, state, derived) => `(1/turn) When you crit, deal <strong>+${derived.saDice}</strong> damage.` },
+            { 
+                id: "sneak_attack", 
+                name: "Sneak Attack", 
+                milestones: [1, 3, 7, 9, 11, 15, 17],
+                desc: (level, subclass, state, derived) => {
+                    const upgrades = [
+                        { level: 3, text: "Rank 2: Dice becomes 1d8." },
+                        { level: 7, text: "Rank 3: Dice becomes 1d10." },
+                        { level: 9, text: "Rank 4: Dice becomes 1d12." },
+                        { level: 11, text: "Rank 5: Dice becomes 1d20." },
+                        { level: 15, text: "Rank 6: Dice becomes 2d12." },
+                        { level: 17, text: "Rank 7: Dice becomes 2d20." }
+                    ];
+                    return FeatureGen.createScalingList(`(1/turn) When you land a critical hit with a melee weapon, deal <strong>+${derived.saDice}</strong> additional damage.`, upgrades, level);
+                }
+            },
             { id: "vicious_opportunist", name: "Vicious Opportunist", desc: "When you hit a Distracted target with a melee attack, you may change the Primary Die roll to whatever you like (changing it to the max value counts as a crit). <br><em>Distracted: A target is Distracted if it is adjacent to or Taunted by an ally, or if it cannot see you.</em>" }
         ];
 
@@ -88,6 +111,12 @@ class CheatClass extends BaseClass {
             { id: "subclass", name: "Subclass", level: 3, minor: true, desc: "Choose a Cheat subclass." },
             { id: "thieves_cant", name: "Thieves’ Cant", desc: "You learn the secret language of rogues and scoundrels." }
         ];
+
+        core[7] = [];
+        core[9] = [];
+        core[11] = [];
+        core[15] = [];
+        core[17] = [];
 
         core[4].push({
             id: "underhanded",
@@ -132,23 +161,6 @@ class CheatClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Renders the Sneak Attack bonus and Cheat status for the mechanic panel.
-     */
-    getMechanicPanelHTML(level, subclass, state, derived) {
-        const builder = new PanelBuilder();
-
-        builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, 'Added to Critical Hits');
-
-        builder.addRollDisplay('1d20', 'Vicious Opp.', 'MAX', 'On Distracted Target', { type: 'attack', isCrit: true });
-
-        if (level >= 2) {
-            builder.addStatDisplay('10', 'Init Floor', 'Min Initiative Result');
-        }
-
-        return builder.build();
     }
 }
 

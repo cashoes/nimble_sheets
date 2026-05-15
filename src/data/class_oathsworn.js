@@ -86,17 +86,15 @@ class OathswornClass extends BaseClass {
                 {
                     id: "radiant_judgment",
                     condition: (label, options, state) => {
-                        const isMeleeAttack = /attack|⚔️/i.test(label) || options.type === 'attack';
+                        const isMelee = /⚔️/.test(label) || options.stat === 'str';
                         const hasJD = state.judgmentDice && state.judgmentDice.length > 0;
-                        return isMeleeAttack && hasJD;
+                        return isMelee && hasJD;
                     },
                     getMod: (state) => {
                         return (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
                     },
                     onRoll: (state) => {
                         state.judgmentDice = [];
-                        saveState();
-                        render();
                     }
                 },
                 {
@@ -137,6 +135,7 @@ class OathswornClass extends BaseClass {
 
                 // 4. JD Status
                 builder.addStatDisplay(totalJD, 'Radiant DMG', '', {
+                    fontSize: '1.8em',
                     indicators: [
                         { label: 'Adv', color: '#22c55e', active: (state.selectedDecrees || []).includes("Reliable Justice") },
                         { label: 'Exploding', color: "#e879f9", active: state.judgmentBoom === 'BOOM', toggleKey: 'judgmentBoom' }
@@ -182,11 +181,11 @@ class OathswornClass extends BaseClass {
                 desc: (level, subclass, state, derived) => FeatureGen.createScalingList(
                     `Whenever an enemy attacks you, if you have no Judgment Dice, roll your Judgment dice (<strong>${derived.jdText}</strong>). On your next melee attack this encounter, if you hit, deal that much additional radiant damage. The dice are expended whether you hit or miss.`,
                     [
-                        { level: 3, text: "Your Judgment Dice are now d8s." },
-                        { level: 5, text: "Your Judgment Dice are now d10s." },
-                        { level: 8, text: "Your Judgment Dice are now d12s." },
-                        { level: 10, text: "Your Judgment Dice are now d20s." },
-                        { level: 14, text: "Roll 3 Judgment Dice." }
+                        { level: 3, text: "Rank 2: Your Judgment Dice are now d8s." },
+                        { level: 5, text: "Rank 3: Your Judgment Dice are now d10s." },
+                        { level: 8, text: "Rank 4: Your Judgment Dice are now d12s." },
+                        { level: 10, text: "Rank 5: Your Judgment Dice are now d20s." },
+                        { level: 14, text: "Rank 6: Roll 3 Judgment Dice." }
                     ],
                     level
                 )
@@ -205,7 +204,22 @@ class OathswornClass extends BaseClass {
             { id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." }
         ];
 
-        core[3].push({ id: "decrees", name: "Sacred Decree", type: "dynamic_choice", collection: "decrees", stateKey: "selectedDecrees", milestones: [3, 6, 9, 12, 14, 16], desc: "Choose Sacred Decrees.", getCount: FeatureGen.createStandardCount([3, 6, 9, 12, 14, 16]) });
+        core[3].push({
+            id: "decrees",
+            name: "Sacred Decree",
+            type: "dynamic_choice",
+            collection: "decrees",
+            stateKey: "selectedDecrees",
+            milestones: [3, 6, 9, 12, 14, 16],
+            desc: (l) => FeatureGen.createScalingList("Choose Sacred Decrees.", [
+                { level: 6, text: "Rank 2: Choose another Decree." },
+                { level: 9, text: "Rank 3: Choose another Decree." },
+                { level: 12, text: "Rank 4: Choose another Decree." },
+                { level: 14, text: "Rank 5: Choose another Decree." },
+                { level: 16, text: "Rank 6: Choose another Decree." }
+            ], l),
+            getCount: FeatureGen.createStandardCount([3, 6, 9, 12, 14, 16])
+        });
 
         core[4].push({ id: "life", name: "My Life, for My Friends", desc: "You can Interpose for free." });
 

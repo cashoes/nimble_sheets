@@ -50,6 +50,13 @@ class HunterClass extends BaseClass {
             resources: [
                 createSimpleResource('tothCharges', 'Thrill of the Hunt', (level, stats) => stats.wil, { hideMechanic: true })
             ],
+            rollTriggers: [
+                {
+                    id: "keen_eye",
+                    condition: (label, options, state) => (state.level || 1) >= 10 && (/attack|⚔️/i.test(label) || options.type === 'attack') && options.stat === 'dex',
+                    getMod: (state) => getStatsMap(state).wil
+                }
+            ],
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
                 if (level >= 2) {
                     builder.addResource('tothCharges', 'Thrill of the Hunt', state.resourceValues.tothCharges, derived.resourceMaxes.tothCharges);

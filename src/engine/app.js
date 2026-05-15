@@ -110,6 +110,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
+ * Keyboard shortcuts for level adjustment.
+ * PageUp to increase, PageDown to decrease.
+ */
+window.addEventListener('keydown', (e) => {
+    // Ignore if user is typing in an input, textarea, or select
+    const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+    if (isTyping) return;
+
+    if (e.key === 'PageUp' || e.key === 'PageDown') {
+        e.preventDefault();
+        const delta = e.key === 'PageUp' ? 1 : -1;
+        const currentLevel = state.level;
+        const newLevel = Math.min(20, Math.max(1, currentLevel + delta));
+        
+        if (newLevel !== currentLevel) {
+            dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: newLevel } });
+        }
+    }
+});
+
+/**
  * Mouse Wheel delegation for numeric inputs.
  * Allows rapid adjustment of HP, HD, and other number fields.
  */

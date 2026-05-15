@@ -88,7 +88,8 @@ class CommanderClass extends BaseClass {
             onInitiative: (level, subclass, state, derived) => {
                 if (subclass === "Spellblade" && level >= 4) {
                     const statsMap = getStatsMap(state);
-                    state.resourceValues.mana = statsMap.int;
+                    const intVal = statsMap.int;
+                    adjRes('mana', intVal, derived.resourceMaxes.mana, true);
                 }
             },
             scalingStats: {
@@ -202,9 +203,9 @@ class CommanderClass extends BaseClass {
                     const baseRules = `1/round, Free action: you and an ally within 6 spaces both immediately make a weapon attack or cast a cantrip for free. You can do this (${pips.trim()}) ${intVal} times/Safe Rest.`;
                     const orderCard = renderSingleSpellCard({ name: "Order: Coordinated Strike!", tier: "Order", school: "Commander", customHtml: baseRules }, level, derived.statsMap);
                     return FeatureGen.createScalingList(`Gain the Coordinated Strike! Commander's Order (see card below).<div style="margin-top:10px;">${orderCard}</div>`, [
-                        { level: 9, text: "Master Commander (2): +1 use of Coordinated Strike/Safe Rest." },
-                        { level: 13, text: "Master Commander (3): +2 uses of Coordinated Strike/Safe Rest." },
-                        { level: 17, text: "Master Commander (4): +3 uses of Coordinated Strike/Safe Rest." }
+                        { level: 9, text: "Rank 2: +1 use of Coordinated Strike/Safe Rest." },
+                        { level: 13, text: "Rank 3: +2 uses of Coordinated Strike/Safe Rest." },
+                        { level: 17, text: "Rank 4: +3 uses of Coordinated Strike/Safe Rest." }
                     ], level);
                 }
             }
@@ -236,15 +237,8 @@ class CommanderClass extends BaseClass {
 
         core[4].push({
             id: "training",
-            level: 4,
-            milestones: [4, 5, 9, 13, 17],
-            name: (l) => {
-                if (l >= 17) return "Combat Tactics (4)";
-                if (l >= 13) return "Combat Tactics (3)";
-                if (l >= 9) return "Combat Tactics (2)";
-                if (l >= 5) return "Combat Tactics";
-                return "Fit for Any Battlefield";
-            },
+            name: "Combat Tactics",
+            milestones: [5, 9, 13, 17],
             type: "dynamic_choice",
             stateKey: "selectedTactics",
             getSlots: (level, subclass) => {
@@ -268,10 +262,10 @@ class CommanderClass extends BaseClass {
                 return slots;
             },
             desc: (level) => FeatureGen.createScalingList("When you roll Initiative, gain STR Combat Dice, each a d6. (1/attack) You may expend a Combat Die to perform a special maneuver. Combat Dice are lost when combat ends.", [
-                { level: 5, text: "Combat Tactics: Your Combat Dice are now d8s." },
-                { level: 9, text: "Combat Tactics (2): Your Combat Dice are now d10s." },
-                { level: 13, text: "Combat Tactics (3): Your Combat Dice are now d12s." },
-                { level: 17, text: "Combat Tactics (4): Your Combat Dice are now d20s." }
+                { level: 5, text: "Rank 1: Your Combat Dice are now d8s." },
+                { level: 9, text: "Rank 2: Your Combat Dice are now d10s." },
+                { level: 13, text: "Rank 3: Your Combat Dice are now d12s." },
+                { level: 17, text: "Rank 4: Your Combat Dice are now d20s." }
             ], level)
         });
 
@@ -279,19 +273,17 @@ class CommanderClass extends BaseClass {
 
         core[6].push({
             id: "mastery",
-            name: (l) => {
-                if (l >= 14) return "Weapon Mastery (3)";
-                if (l >= 10) return "Weapon Mastery (2)";
-                return "Weapon Mastery";
-            },
-            level: 6, milestones: [6, 10, 14], type: "dynamic_choice", stateKey: "selectedMastery",
+            name: "Weapon Mastery",
+            milestones: [6, 14], 
+            type: "dynamic_choice", 
+            stateKey: "selectedMastery",
             getSlots: (level, subclass) => {
                 if (subclass === "Spellblade") return null;
                 const slots = [];
                 [6, 10, 14].forEach((m, idx) => { if (level >= m) slots.push({ collection: 'masteries', label: `Weapon Mastery` }); });
                 return slots;
             },
-            desc: (level) => FeatureGen.createScalingList("You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in.", [{ level: 14, text: "Weapon Mastery (3): You have complete mastery of all weapon types." }], level)
+            desc: (level) => FeatureGen.createScalingList("You may sheathe a weapon and draw a different one 2×/round for free. Choose a weapon type to specialize in.", [{ level: 14, text: "Rank 3: You have complete mastery of all weapon types." }], level)
         });
 
         core[18] = [{ id: "unparalleled_tactics", name: "Unparalleled Tactics", desc: "([[uUnparalleled]] 1/encounter) The first time each encounter you use Coordinated Strike, an ally who can hear you also gains 1 action to use on their next turn." }];
@@ -329,9 +321,9 @@ class CommanderClass extends BaseClass {
                     schools: ["Fire", "Ice", "Lightning", "Radiant", "Necrotic", "Wind"],
                     milestones: [3, 7, 11, 15],
                     desc: (level) => FeatureGen.createScalingList("Choose any tier 1 (or lower) spell and any Utility Spell.", [
-                        { level: 7, text: "Deep Knowledge (2): Choose any tier 2 (or lower) spell and any Utility Spell." },
-                        { level: 11, text: "Deep Knowledge (3): Choose any tier 3 (or lower) spell and any Utility Spell." },
-                        { level: 15, text: "Deep Knowledge (4): Choose any tier 4 (or lower) spell and any Utility Spell." }
+                        { level: 7, text: "Rank 2: Choose any tier 2 (or lower) spell and any Utility Spell." },
+                        { level: 11, text: "Rank 3: Choose any tier 3 (or lower) spell and any Utility Spell." },
+                        { level: 15, text: "Rank 4: Choose any tier 4 (or lower) spell and any Utility Spell." }
                     ], level)
                 })
             ],

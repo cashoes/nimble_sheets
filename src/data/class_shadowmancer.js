@@ -25,7 +25,7 @@ class ShadowmancerClass extends BaseClass {
                 panelBg: "rgba(25, 15, 35, 0.7)",
                 border: "rgba(168, 85, 247, 0.3)"
             },
-            initialStats: { baseStr: -1, baseDex: 1, baseInt: 3, baseWil: 0 },
+            initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 {
@@ -88,14 +88,53 @@ class ShadowmancerClass extends BaseClass {
                 }
             },
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
-                if (level >= 2) {
-                    builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+                if (level >= 2 && state.subclass !== "Reaver") {
+                    const pilferMax = statsMap.dex;
+                    const pilferRemaining = state.resourceValues.pilfer ?? pilferMax;
+                    const hpCost = Math.floor(derived.maxHP / 2);
+
+                    const onclickCode = level >= 12
+                        ? `(function(){const r=Math.floor(Math.random()*20)+1; let m='Roll: '+r+'. '; if(r===20){updateBgChoice('greedyBonus','BOOM');m+='Crit! 0 dmg, +1 Tier.';}else if(r>=10){adjHP(-10);m+='Success. 10 HP dmg.';}else{adjHP(-${hpCost});m+='Failure. ${hpCost} HP dmg.';}updateBgChoice('greedyResult', m); window.dispatchEvent(new CustomEvent('NIMBLE_ROLL_EVENT',{detail:{notation:'1d20',label:'Greedy Pact: '+r,playerName:charState().charName||'Shadowmancer',timestamp:Date.now()}}));})()`
+                        : `adjHP(-${hpCost})`;
+
+                    let pilferHtml = `
+                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%;">
+                        <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">Pilfered Power</label>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <div class="dark-incrementer">
+                                <button onclick="adjRes('pilfer', -1, ${pilferMax})">-</button>
+                                <span style="width: 2em;">${pilferRemaining}</span>
+                                <button onclick="adjRes('pilfer', 1, ${pilferMax})">+</button>
+                            </div>
+                            <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${pilferMax}</span></div>
+                        </div>
+                    `;
+
+                    if (pilferRemaining <= 0) {
+                        const btnLabel = level >= 12 ? "Greedy Pact Cast" : "Cast for HP";
+                        pilferHtml += `
+                            <button onclick="${onclickCode}" style="margin-top:6px; font-size:0.75em; font-family:'Cinzel'; background:rgba(239, 68, 68, 0.2); border:1px solid #ef4444; color:#fff; border-radius:3px; cursor:pointer; padding:4px 8px;">${btnLabel} (${hpCost} HP)</button>
+                            ${state.greedyResult ? `<div style="font-size:0.65em; color:var(--text-muted); font-style:italic; margin-top:4px;">${state.greedyResult}</div>` : ''}
+                        `;
+                    }
+
+                    if (state.greedyBonus === 'BOOM') {
+                        pilferHtml += `
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; cursor: pointer;" onclick="updateBgChoice('greedyBonus', 'OFF')">
+                            <span style="font-size: 0.6em; color: #fbbf24; text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 0.5px;">+1 Tier Active</span>
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; box-shadow: 0 0 8px #fbbf24;"></div>
+                        </div>`;
+                    }
+
+                    pilferHtml += `</div>`;
+                    builder.addHtml(pilferHtml, { flex: 1.5 });
                 }
+
                 const bStat = derived.blastStat.toLowerCase();
                 const bonusPerDie = statsMap[bStat];
                 const bTotalBonus = derived.multipliedBonus ? (derived.blastDice * bonusPerDie) : bonusPerDie;
                 const bDisplay = `${derived.blastDice}d12+${bTotalBonus}`;
-                builder.addRollDisplay(`${derived.blastDice}d12+${bTotalBonus}`, derived.blastName, bDisplay, `${derived.blastRange} | Necrotic`, { type: 'attack', school: 'Necrotic', stat: bStat });
+                builder.addRollDisplay(`${derived.blastDice}d12+${bTotalBonus}`, derived.blastName, bDisplay, `${derived.blastRange} | Necrotic`, { type: 'attack', school: 'Necrotic', stat: bStat }, { flex: 1.2 });
 
                 const minionVal = state.resourceValues?.minions || 0;
                 builder.addRollWithResource(
@@ -104,8 +143,16 @@ class ShadowmancerClass extends BaseClass {
                     derived.minionDmg,
                     'minions',
                     derived.minionMax,
-                    { rollContext: { isMinion: true } }
+                    { rollContext: { isMinion: true }, flex: 1 }
                 );
+            },
+            onInitiative: (level, subclass, state, derived) => {
+                if (subclass === 'RedDragon' && level >= 11) {
+                    const current = state.resourceValues.pilfer ?? 0;
+                    if (current > 0) {
+                        adjRes('pilfer', -1, statsMap.dex);
+                    }
+                }
             },
             statModifiers: [
                 { id: "fiendish_boon_stats", stat: "addDex", value: 1, condition: (l, s, state) => (state.selectedGreater || []).includes("Fiendish Boon") },
@@ -116,13 +163,12 @@ class ShadowmancerClass extends BaseClass {
             ],
             spellSchools: ["Necrotic"],
             spellProgression: [2, 2, 4, 6, 8, 10, 12, 14, 16, 18],
-            includeUtilitySpells: createUtilityConfig((level) => level >= 14 ? ["Necrotic"] : false, ["selectedShadowmastery"]),  
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14 ? ["Necrotic"] : false, ["selectedShadowmastery"]),
             resources: [
-                createManaResource('int', 'Mana Pool', { hideMechanic: true }),
                 createSimpleResource('minions', 'Minions', (l, stats, state, subclass, derived) => derived.minionMax, { hideMechanic: true }),
-                createSimpleResource('pilfer', 'Pilfer', (l, stats, state, subclass, derived) => derived.pilferMax, { hideMechanic: true })
+                createSimpleResource('pilfer', 'Pilfer', (l, stats, state, subclass, derived) => stats.dex, { hideMechanic: true })
             ],
-            featuresData: ShadowmancerClass.FEATURES,            optionsData: ShadowmancerClass.OPTIONS
+            featuresData: ShadowmancerClass.FEATURES, optionsData: ShadowmancerClass.OPTIONS
         });
     }
 
@@ -180,7 +226,7 @@ class ShadowmancerClass extends BaseClass {
 
         core[2] = [
             { id: "master_darkness", name: "Master of Darkness", desc: "Your Patron grants you knowledge of Necrotic cantrips and tier 1 spells." },
-            { id: "pilfer", name: "Pilfered Power", resourceId: "pilfer", desc: (level, subclass, state, derived) => `You may steal power from your patron to cast tiered spells, always casting them at the highest tier you have unlocked. You can do this <strong>${getStatsMap(state).dex}</strong> (DEX) times before your patron takes notice. Each time you exceed this limit, your patron damages you for half your max HP as recompense. Resets on Safe Rest.` }
+            { id: "pilfer", name: "Pilfered Power", desc: (level, subclass, state, derived) => `You may steal power from your patron to cast tiered spells, always casting them at the highest tier you have unlocked. You can do this <strong>${getStatsMap(state).dex}</strong> (DEX) times before your patron takes notice. Each time you exceed this limit, your patron damages you for half your max HP as recompense. Resets on Safe Rest.` }
         ];
 
         core[3] = [
@@ -192,18 +238,14 @@ class ShadowmancerClass extends BaseClass {
 
         core[6].push(FeatureGen.createSpellChoiceFeature({
             id: "mastery",
-            name: (l) => l >= 14 ? "Shadowmastery (3)" : "Shadowmastery",
+            name: "Shadowmastery",
             level: 6,
             spellType: "utility",
             schools: ["Necrotic"],
             stateKey: "selectedShadowmastery",
             getCount: (l) => l >= 14 ? 0 : (l >= 8 ? 2 : 1),
             milestones: [6, 8, 14],
-            desc: (level) => FeatureGen.createScalingList(
-                "Choose a Necrotic Utility Spell.",
-                [{ level: 14, text: "Shadowmastery (3): You know all Necrotic Utility spells." }],
-                level
-            )
+            desc: (l) => FeatureGen.createScalingList("Choose a Necrotic Utility Spell.", [{ level: 14, text: "Rank 3: You know all Necrotic Utility spells." }], l)
         }));
 
         core[12] = [{ id: "greedy", name: "Greedy Pact", desc: "When you would take damage from Pilfer Power, make a STR save: <ul><li>1–9: Suffer damage as normal.</li><li>10–19: Suffer only 10 HP of damage.</li><li>20+: Suffer no damage and cast the spell as if it were 1 tier higher.</li></ul>" }];

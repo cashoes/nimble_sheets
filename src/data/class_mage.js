@@ -25,7 +25,7 @@ class MageClass extends BaseClass {
                 panelBg: "rgba(15, 20, 35, 0.7)",
                 border: "rgba(59, 130, 246, 0.3)"
             },
-            initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
+            initialStats: { baseStr: -1, baseDex: -1, baseInt: 3, baseWil: 1 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 {
@@ -38,7 +38,7 @@ class MageClass extends BaseClass {
                         mechanicPanelExtension: (builder, level, state) => {
                             if (level < 3) return;
                             const tableHtml = `
-                                <div style="width: 100%; font-size: 0.55em; line-height: 1.2; color: var(--text-muted); display: flex; flex-direction: column; gap: 5px; padding: 2px;">
+                                <div style="width: 100%; font-size: 0.55em; line-height: 1.25; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; padding: 2px;">
                                     <div style="text-align: left;">
                                         <div style="color: #fff; font-weight: bold; font-family: 'Cinzel'; letter-spacing: 0.5px;">I INSIST.</div>
                                         <div style="font-style: italic; opacity: 0.8;">Free cantrip (no DIS, no miss).</div>
@@ -57,7 +57,7 @@ class MageClass extends BaseClass {
                                     </div>
                                 </div>
                             `;
-                            builder.addHtml(tableHtml, { flex: 2, align: 'stretch' });
+                            builder.addHtml(tableHtml, { flex: 1.5, align: 'stretch' });
                         }
                     }
                 },
@@ -149,19 +149,15 @@ class MageClass extends BaseClass {
 
         core[3].push({
             id: "mastery",
-            name: (l) => {
-                if (l >= 14) return "Elemental Mastery (3)";
-                if (l >= 6) return "Elemental Mastery (2)";
-                return "Elemental Mastery";
-            },
+            name: "Elemental Mastery",
             type: "dynamic_choice",
             collection: "masterySchools",
             stateKey: "selectedMastery",
             milestones: [3, 6, 14],
             getCount: (l) => l >= 14 ? 0 : (l >= 6 ? 2 : 1),
             desc: (level) => FeatureGen.createScalingList("Learn all Utility spells from one elemental school of your choice.", [
-                { level: 6, text: "Elemental Mastery (2): Choose a 2nd school to master." },
-                { level: 14, text: "Elemental Mastery (3): You have mastered all three elemental schools. You know all Utility spells from Fire, Ice, and Lightning." }
+                { level: 6, text: "Rank 2: Choose a 2nd school to master." },
+                { level: 14, text: "Rank 3: You have mastered all three elemental schools. You know all Utility spells from Fire, Ice, and Lightning." }
             ], level)
         });
 

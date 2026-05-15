@@ -171,7 +171,7 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                         });
                     }
 
-                    // --- OPTION EXTENSIONS (v2.2 Subclass Encapsulation) ---
+                    // --- OPTION EXTENSIONS (v2.4 Subclass Encapsulation) ---
                     let opt = (val !== "None" && optionsRef[slotColl]?.[val]) ? { ...optionsRef[slotColl][val] } : null;
                     const subConfig = configRef.getSubclassConfig ? configRef.getSubclassConfig(subclass, state) : {};
                     
@@ -258,7 +258,7 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                         });
                     }
 
-                    // --- OPTION EXTENSIONS (v2.2 Subclass Encapsulation) ---
+                    // --- OPTION EXTENSIONS (v2.4 Subclass Encapsulation) ---
                     let opt = (feat.type !== "spell_choice" && val !== "None" && optionsRef[collection]?.[val]) ? { ...optionsRef[collection][val] } : null;
                     const subConfig = configRef.getSubclassConfig ? configRef.getSubclassConfig(subclass, state) : {};
                     
@@ -315,13 +315,23 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
     const sCls = "subclass-feature";
     const subData = featuresRef.subclasses[subclass] || {};
 
-    // 1. Gather all active features and track source levels
+    // 1. Gather all active features and track original discovery order
     const allActive = [];
     const idToFeature = {};
+    let globalCounter = 0;
 
     for (let i = 1; i <= level; i++) {
-        [...(featuresRef.core[i] || []), ...(subData[i] || [])].forEach(f => {
-            const feat = { ...f, _sourceLevel: i, _isSubclass: !!subData[i]?.includes(f) };
+        const coreAtLevel = featuresRef.core[i] || [];
+        const subAtLevel = subData[i] || [];
+
+        // Add Core, then Subclass to maintain standard interleave
+        [...coreAtLevel, ...subAtLevel].forEach(f => {
+            const feat = { 
+                ...f, 
+                _sourceLevel: i, 
+                _isSubclass: subAtLevel.includes(f),
+                _discoveryOrder: globalCounter++ 
+            };
             allActive.push(feat);
             idToFeature[f.id] = feat;
         });
@@ -346,22 +356,23 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
     const processedTerminalIds = new Set();
 
     allActive.forEach(f => {
-        if (replacedIds.has(f.id)) return; // Only process terminal (latest) versions
+        if (replacedIds.has(f.id)) return; // Only process latest versions
         if (processedTerminalIds.has(f.id)) return;
 
-        // Trace back to find earliest level in the chain
+        // Trace back to find earliest level and original position in the chain
         let earliestLevel = f._sourceLevel;
+        let originalDiscoveryOrder = f._discoveryOrder;
         let chain = [f.id];
         let foundEarlier = true;
         
         while (foundEarlier) {
             foundEarlier = false;
-            // Check if any active feature's ID is replaced by something in our current chain
             for (const [oldId, newId] of Object.entries(replacedById)) {
                 if (chain.includes(newId)) {
                     const oldFeat = allActive.find(feat => feat.id === oldId);
                     if (oldFeat && !chain.includes(oldId)) {
                         earliestLevel = Math.min(earliestLevel, oldFeat._sourceLevel);
+                        originalDiscoveryOrder = Math.min(originalDiscoveryOrder, oldFeat._discoveryOrder);
                         chain.push(oldId);
                         foundEarlier = true;
                     }
@@ -372,15 +383,17 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
         terminalFeatures.push({ 
             feat: f, 
             anchorLevel: earliestLevel,
+            tieBreaker: originalDiscoveryOrder,
             isSubclass: f._isSubclass
         });
         processedTerminalIds.add(f.id);
     });
 
     // 4. Sort and Render
-    // Sort by anchor level, then by type (Core then Subclass)
+    // Stable Sort: anchor level -> discovery order -> type
     terminalFeatures.sort((a, b) => {
         if (a.anchorLevel !== b.anchorLevel) return a.anchorLevel - b.anchorLevel;
+        if (a.tieBreaker !== b.tieBreaker) return a.tieBreaker - b.tieBreaker;
         if (a.isSubclass !== b.isSubclass) return a.isSubclass ? 1 : -1;
         return 0;
     });

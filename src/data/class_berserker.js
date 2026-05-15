@@ -25,7 +25,7 @@ class BerserkerClass extends BaseClass {
                 panelBg: "rgba(25, 15, 15, 0.8)",
                 border: "rgba(239, 68, 68, 0.25)"
             },
-            initialStats: { baseStr: 3, baseDex: 1, baseInt: -1, baseWil: 0 },
+            initialStats: { baseStr: 3, baseDex: 1, baseInt: -1, baseWil: -1 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#451a03" },
@@ -54,11 +54,17 @@ class BerserkerClass extends BaseClass {
                     derived.furyText,
                     'furyDice',
                     derived.furyMax,
-                    { static: true }
+                    { static: true, flex: 3.5 }
                 );
 
-                builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.');
+                builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.', { minWidth: 80, flex: 1 });
             },
+            rollTriggers: [
+                {
+                    condition: (label, options, state) => (state.activeConditions || []).includes('raging') && (options.stat === 'str' || /⚔️/.test(label)),
+                    getMod: (state) => (state.furyDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0)
+                }
+            ],
             featuresData: BerserkerClass.FEATURES,
             optionsData: BerserkerClass.OPTIONS
         });

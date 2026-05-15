@@ -25,7 +25,7 @@ class ZephyrClass extends BaseClass {
                 panelBg: "rgba(15, 20, 35, 0.8)",
                 border: "rgba(6, 182, 212, 0.25)"
             },
-            initialStats: { baseStr: 1, baseDex: 3, baseInt: -1, baseWil: 0 },
+            initialStats: { baseStr: 1, baseDex: 3, baseInt: -1, baseWil: -1 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 {
@@ -75,8 +75,7 @@ class ZephyrClass extends BaseClass {
                         return ac;
                     }
                 },
-                { id: "swift_feet_speed", stat: "speed", level: 2, value: 2, condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state) },
-                { id: "swift_feet_speed_2", stat: "speed", level: 9, value: 2, condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state) },
+                { id: "swift_feet_speed", stat: "speed", milestones: [2, 9], value: 2, condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state) },
                 { id: "swift_feet_init", stat: "init", level: 2, getMod: (stats, state, level) => level, condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state) },
                 { id: "windborne_actions", stat: "maxActions", level: 20, value: 1 }
             ],
@@ -107,12 +106,22 @@ class ZephyrClass extends BaseClass {
         const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or STR', 'INT or WIL', true, [1, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
 
         core[1] = [
-            { id: "iron_defense", name: "Iron Defense", desc: "Your armor equals DEX+STR as long as you are unarmored." },
+            { 
+                id: "iron_defense", 
+                name: "Iron Defense", 
+                milestones: [1, 13],
+                desc: (l) => FeatureGen.createScalingList("Your armor equals DEX+STR as long as you are unarmored.", [{ level: 13, text: "Rank 2: Your armor is doubled while unarmored." }], l)
+            },
             { id: "swift_fists", name: "Swift Fists", desc: "Your unarmed strikes are not subject to disadvantage imposed by Rushed Attacks, and their damage is 1d4+STR." }
         ];
 
         core[2] = [
-            { id: "swift_feet", name: "Swift Feet", desc: "While unarmored, gain +2 speed and +LVL Initiative." },
+            { 
+                id: "swift_feet", 
+                name: "Swift Feet", 
+                milestones: [2, 9],
+                desc: (l) => FeatureGen.createScalingList("While unarmored, gain +2 speed and +LVL Initiative.", [{ level: 9, text: "Rank 2: Gain an additional +2 speed as long as you are unarmored." }], l)
+            },
             { id: "bursts", name: "Burst of Speed", resourceId: "bursts", desc: "When you roll Initiative, gain DEX Bursts of Speed. (1/turn) You may spend 1 Burst of Speed for a free maneuver: <ul><li>Slipstream: Defend, and the attack misses.</li><li>Whirling Defense: Defend and apply your armor to every attack this round.</li><li>Swiftstrike: Attack on your turn, and ignore disadvantage from Rushed Attacks.</li><li>Windstep: Move on your turn, ignoring difficult terrain.</li></ul>" }
         ];
 
@@ -125,14 +134,13 @@ class ZephyrClass extends BaseClass {
         core[4] = [
             { 
                 id: "resolve", 
-                name: (l) => {
-                    if (l >= 17) return "Unyielding Resolve (3)";
-                    if (l >= 10) return "Unyielding Resolve (2)";
-                    return "Unyielding Resolve";
-                },
+                name: "Unyielding Resolve",
                 milestones: [4, 10, 17], 
                 resourceId: "unyielding", 
-                desc: "Ignore the first Wound you would suffer each encounter." 
+                desc: (l) => FeatureGen.createScalingList("Ignore the first Wound you would suffer each encounter.", [
+                    { level: 10, text: "Rank 2: You can use this ability twice per encounter." },
+                    { level: 17, text: "Rank 3: You can use this ability three times per encounter." }
+                ], l)
             },
             { id: "martial", name: "Martial Master", type: "dynamic_choice", collection: "abilities", stateKey: "selectedMartial", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose a Martial Arts ability.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) }
         ];
@@ -141,9 +149,10 @@ class ZephyrClass extends BaseClass {
 
         core[6].push({ id: "infuse", name: "Infuse Strength", desc: "Action: Make an unarmed strike against an ally and infuse them with strength instead of harming them. Expend Hit Dice to heal them (roll and add STR)." });
 
-        core[9].push({ id: "swift_feet2", replaces: "swift_feet", name: "Swift Feet (2)", desc: "Gain an additional +2 speed as long as you are unarmored." });
-
-        core[13] = [{ id: "iron_defense2", replaces: "iron_defense", name: "Iron Defense (2)", desc: "Your armor is doubled while unarmored." }];
+        core[9] = [];
+        core[10] = [];
+        core[13] = [];
+        core[17] = [];
 
         core[20].push({ id: "windborne", name: "Windborne", desc: "+1 to any 2 of your stats. +1 additional burst of speed when you roll Initiative. Permanently gain 1 action (while Dying, you have a max of 2 actions)." });
 

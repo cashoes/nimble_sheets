@@ -118,17 +118,22 @@ class StatCalculator {
         const combinedModifiers = [...this.baseClass.statModifiers, ...(subConfig.statModifiers || [])];
 
         combinedModifiers.forEach(mod => {
-            const levelMatch = level >= (mod.level || 0);
             const subclassMatch = !mod.subclass || mod.subclass === subclass;
             const conditionMatch = !mod.condition || mod.condition(level, subclass, state, maxHP);
 
-            if (levelMatch && subclassMatch && conditionMatch) {
-                const val = typeof mod.getMod === 'function' ? mod.getMod(statsMap, state, level) : (mod.value || 0);
-                if (['initAdv', 'modFlySpeed', 'quickRestLoh', 'panel_surge', 'profArmor', 'profWeapons', 'allSaveAdv', 'allSaveDis'].includes(mod.stat)) {
-                    overrides[mod.stat] = val || true;
-                } else {
-                    overrides[mod.stat] = (overrides[mod.stat] || 0) + val;
-                }
+            if (subclassMatch && conditionMatch) {
+                const milestones = Array.isArray(mod.milestones) ? mod.milestones : [(mod.level || 0)];
+                
+                milestones.forEach(m => {
+                    if (level >= m) {
+                        const val = typeof mod.getMod === 'function' ? mod.getMod(statsMap, state, level) : (mod.value || 0);
+                        if (['initAdv', 'modFlySpeed', 'quickRestLoh', 'panel_surge', 'profArmor', 'profWeapons', 'allSaveAdv', 'allSaveDis'].includes(mod.stat)) {
+                            overrides[mod.stat] = val || true;
+                        } else {
+                            overrides[mod.stat] = (overrides[mod.stat] || 0) + val;
+                        }
+                    }
+                });
             }
         });
 
@@ -201,7 +206,7 @@ class SpellManager {
             this.baseClass.subclassSchools[subclass].forEach(s => schools.add(s));
         }
 
-        // Add declarative subclass schools (v2.2)
+        // Add declarative subclass schools (v2.4)
         if (subConfig.spellSchools) {
             subConfig.spellSchools.forEach(s => schools.add(s));
         }

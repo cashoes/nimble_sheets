@@ -25,7 +25,7 @@ class ShepherdClass extends BaseClass {
                 panelBg: "rgba(35, 15, 35, 0.8)",
                 border: "rgba(217, 70, 239, 0.25)"
             },
-            initialStats: { baseStr: 1, baseDex: -1, baseInt: 0, baseWil: 3 },
+            initialStats: { baseStr: 1, baseDex: -1, baseInt: -1, baseWil: 3 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Mercy", label: "Luminary of Mercy", accent: "#f0f9ff" },
@@ -128,7 +128,7 @@ class ShepherdClass extends BaseClass {
             { id: "subclass", name: "Subclass", desc: "Choose a Shepherd subclass." },
             FeatureGen.createSpellChoiceFeature({
                 id: "twilight",
-                name: (l) => l >= 11 ? "Master of Twilight (2)" : "Master of Twilight",
+                name: "Master of Twilight",
                 level: 3,
                 stateKey: "selectedTwilight",
                 milestones: [3, 11],
@@ -140,8 +140,8 @@ class ShepherdClass extends BaseClass {
                         { type: 'utility', schools: ["Radiant"], label: 'Radiant Utility' }
                     ];
                 },
-                desc: (l) => l >= 11 ? "You know all Necrotic and Radiant Utility Spells." : "Choose 1 Necrotic and 1 Radiant Utility Spell."
-            })
+                desc: (l) => FeatureGen.createScalingList("Choose 1 Necrotic and 1 Radiant Utility Spell.", [{ level: 11, text: "Rank 2: You know all Necrotic and Radiant Utility Spells." }], l)
+            }),
         ];
 
         core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", milestones: [5, 9, 13], desc: "Choose a Sacred Grace.", getCount: FeatureGen.createStandardCount([5, 9, 13]) });

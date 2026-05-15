@@ -15,7 +15,7 @@ function ensureValidState(state) {
 
     // Define defaults and validators
     const defaults = {
-        version: "2.2.4",
+        version: "2.4.0",
         charName: '',
         level: 1,
         ancestry: 'None',
@@ -36,6 +36,7 @@ function ensureValidState(state) {
         resourceValues: {},
         bgSpell: 'None',
         showMinor: false,
+        greedyResult: '', // New: Stores the result text of Greedy Pact rolls
         // Multi-selection feature states
         selectedDecrees: [],
         selectedSpells: [],
@@ -62,7 +63,8 @@ function ensureValidState(state) {
         judgmentMode: 'Single',
         furyBoom: 'OFF',
         advantage: 0,
-        actionsSpent: 0
+        actionsSpent: 0,
+        spellUpcasts: {} // stores { [spellName]: { tier: number, choiceId: string } }
     };
 
     // Apply defaults for missing or incorrect types
@@ -200,31 +202,59 @@ function validateAndCorrectState(state) {
         }
     }
 
-    // 5. Skill Validation (NIMBLE v2.2 Revised)
+    // 5. Skill Validation (NIMBLE v2.4 Revised)
     // - Skill budget: 4 (Level 1) + 1 per additional level.
-    // - Total Skill modifier (pts + attr) is maximum 12.
-    // - Total Skill modifier cannot be negative.
-    // - Skill points (pts) cannot be negative.
+    // - Total Skill modifier (pts + attr + passive) is maximum 12.
+    // - Total Skill modifier cannot be reallocated below 0.
+    // - One-way exception: If points are 0, total can be negative (base attribute).
     const maxSkillMod = 12;
     const skillBudget = 4 + (level - 1);
     let skillSpent = 0;
 
+    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
+    const bgFeat = BACKGROUND_FEATURES[state.background];
+    let bgSelectedOpt = null;
+    if (bgFeat && bgFeat.options && state[bgFeat.stateKey]) {
+        bgSelectedOpt = bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === state[bgFeat.stateKey]);
+    }
+
     if (state.skills && typeof state.skills === 'object') {
         const statsMap = getStatsMap(state);
+        
+        // Calculate Passives for skills (Ancestry/Background)
+        let passMods = {};
+        SKILL_LIST.forEach(sk => passMods[sk.id] = 0);
+        if (ancFeat) {
+            if (ancFeat.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += ancFeat.modAllSkills);
+            if (ancFeat.modSkill) passMods[ancFeat.modSkill.id] += ancFeat.modSkill.val;
+        }
+        if (bgFeat) {
+            if (bgFeat.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += bgFeat.modAllSkills);
+            if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val;
+            if (bgSelectedOpt) {
+                if (bgSelectedOpt.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += bgSelectedOpt.modAllSkills);
+                if (bgSelectedOpt.modSkill) passMods[bgSelectedOpt.modSkill.id] += bgSelectedOpt.modSkill.val;
+            }
+        }
+
         SKILL_LIST.forEach(sk => {
             let pts = parseInt(state.skills[sk.id]);
             if (isNaN(pts)) pts = 0;
             
-            // Skill points themselves cannot be negative
-            pts = Math.max(0, pts);
-
             const attrBonus = statsMap[sk.stat] || 0;
-            
-            // Enforce max modifier of 12
-            if (pts + attrBonus > maxSkillMod) {
-                pts = Math.max(0, maxSkillMod - attrBonus);
+            const passive = passMods[sk.id] || 0;
+            const total = attrBonus + pts + passive;
+
+            // Enforce max total of 12
+            if (total > maxSkillMod) {
+                pts = maxSkillMod - attrBonus - passive;
             }
             
+            // Enforce floor of 0 (unless pts is 0)
+            if (pts !== 0 && total < 0) {
+                pts = -(attrBonus + passive);
+            }
+
             state.skills[sk.id] = pts;
             skillSpent += pts;
         });
@@ -233,10 +263,19 @@ function validateAndCorrectState(state) {
         if (skillSpent > skillBudget) {
             let excess = skillSpent - skillBudget;
             // Reduce skill points in reverse order to fit budget
+            // Note: We can reduce pts into negative range as long as total >= 0
             for (let i = SKILL_LIST.length - 1; i >= 0 && excess > 0; i--) {
                 const sk = SKILL_LIST[i];
-                const pts = state.skills[sk.id] || 0;
-                const reduce = Math.min(pts, excess);
+                let pts = state.skills[sk.id] || 0;
+                const attrBonus = statsMap[sk.stat] || 0;
+                const passive = passMods[sk.id] || 0;
+                
+                // How many points can we take away? 
+                // Only until total (attr + pts + passive) reaches 0.
+                const currentTotal = attrBonus + pts + passive;
+                const maxReduction = Math.max(0, currentTotal); 
+                
+                const reduce = Math.min(maxReduction, excess);
                 state.skills[sk.id] -= reduce;
                 excess -= reduce;
             }
@@ -363,7 +402,38 @@ const getStatsMap = (s) => ({
 });
 
 /**
- * The master calculation engine for character stats.
+ * Calculates all passive skill modifiers from ancestry and background.
+ * @param {Object} s - Character state object.
+ * @returns {Object} Map of skill id to total passive bonus.
+ */
+const getPassMods = (s) => {
+    let pass = {};
+    SKILL_LIST.forEach(sk => pass[sk.id] = 0);
+    
+    const ancFeat = ANCESTRY_FEATURES[s.ancestry];
+    const bgFeat = BACKGROUND_FEATURES[s.background];
+    let bgSelectedOpt = null;
+    if (bgFeat && bgFeat.options && s[bgFeat.stateKey]) {
+        bgSelectedOpt = bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === s[bgFeat.stateKey]);
+    }
+
+    if (ancFeat) {
+        if (ancFeat.modAllSkills) SKILL_LIST.forEach(sk => pass[sk.id] += ancFeat.modAllSkills);
+        if (ancFeat.modSkill) pass[ancFeat.modSkill.id] += ancFeat.modSkill.val;
+    }
+    if (bgFeat) {
+        if (bgFeat.modAllSkills) SKILL_LIST.forEach(sk => pass[sk.id] += bgFeat.modAllSkills);
+        if (bgFeat.modSkill) pass[bgFeat.modSkill.id] += bgFeat.modSkill.val;
+        if (bgSelectedOpt) {
+            if (bgSelectedOpt.modAllSkills) SKILL_LIST.forEach(sk => pass[sk.id] += bgSelectedOpt.modAllSkills);
+            if (bgSelectedOpt.modSkill) pass[bgSelectedOpt.modSkill.id] += bgSelectedOpt.modSkill.val;
+        }
+    }
+    return pass;
+};
+
+/**
+ * master calculation engine for character stats.
  * Runs on every state change to refresh all derived numbers.
  * @param {Object} s - Character state object.
  * @returns {Object} Comprehensive map of all derived stats.
@@ -455,7 +525,8 @@ function computeDerived(s) {
     let woundMax = Math.max(1, (classDerived.woundMax || 6) + (classOverrides.woundMax || 0) + (ancFeat?.modWounds || 0) + (bgFeat?.modWounds || 0) + (bgSelectedOpt?.modWounds || 0));
 
     // 8. Actions (Standard 3, modified by Class and Conditions)
-    let maxActions = 3 + (classOverrides.maxActions || 0);
+    const potentialActions = 3 + (classOverrides.maxActions || 0);
+    let maxActions = potentialActions;
     s.activeConditions.forEach(cId => {
         const c = CONDITIONS_LIST.find(cl => cl.id === cId);
         if (c) {
@@ -468,20 +539,7 @@ function computeDerived(s) {
     maxActions = Math.max(0, maxActions);
 
     // 9. Skill Passives (Ancestry and Background bonuses)
-    let passMods = {};
-    SKILL_LIST.forEach(sk => passMods[sk.id] = 0);
-    if (ancFeat) {
-        if (ancFeat.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += ancFeat.modAllSkills);
-        if (ancFeat.modSkill) passMods[ancFeat.modSkill.id] += ancFeat.modSkill.val;
-    }
-    if (bgFeat) {
-        if (bgFeat.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += bgFeat.modAllSkills);
-        if (bgFeat.modSkill) passMods[bgFeat.modSkill.id] += bgFeat.modSkill.val;
-        if (bgSelectedOpt) {
-            if (bgSelectedOpt.modAllSkills) SKILL_LIST.forEach(sk => passMods[sk.id] += bgSelectedOpt.modAllSkills);
-            if (bgSelectedOpt.modSkill) passMods[bgSelectedOpt.modSkill.id] += bgSelectedOpt.modSkill.val;
-        }
-    }
+    const passMods = getPassMods(s);
 
     let unarmored = true;
     s.inventory.forEach(item => { 
@@ -559,6 +617,7 @@ function computeDerived(s) {
         initiative,
         woundMax,
         maxActions,
+        potentialActions,
         resourceMaxes,
         maxTier,
         passMods,
@@ -632,6 +691,12 @@ function characterReducer(currentState, action) {
     const { type, payload } = action;
 
     switch (type) {
+        case 'SET_SPELL_UPCAST': {
+            const { name, tier, choiceId } = payload;
+            if (!s.spellUpcasts) s.spellUpcasts = {};
+            s.spellUpcasts[name] = { tier, choiceId };
+            break;
+        }
         case 'ADJ_HP': {
             const { amount, isAbsolute } = payload;
             const derived = computeDerived(s);
@@ -760,24 +825,38 @@ function characterReducer(currentState, action) {
         }
         case 'UPDATE_SKILL': {
             const { id, val } = payload;
-            const newPts = Math.max(0, parseInt(val) || 0);
+            const newPts = parseInt(val) || 0;
             const oldPts = s.skills[id] || 0;
             
             const statsMap = getStatsMap(s);
+            const passMods = getPassMods(s);
             const skillDef = SKILL_LIST.find(sk => sk.id === id);
             const attrBonus = skillDef ? statsMap[skillDef.stat] : 0;
+            const passive = passMods[id] || 0;
 
-            // 1. Enforce max total modifier of 12
-            let clampedPts = Math.min(newPts, 12 - attrBonus);
+            const oldTotal = attrBonus + oldPts + passive;
+            const naturalTotal = attrBonus + passive;
             
-            // 2. Ensure pts itself is non-negative
-            clampedPts = Math.max(0, clampedPts);
+            // 1. Enforce max total modifier of 12
+            let clampedPts = Math.min(newPts, 12 - attrBonus - passive);
+            
+            // 2. Enforce floor of 0 
+            // Rule: Total >= 0, UNLESS (pts is 0 AND old total was already negative)
+            // Rule 2: If old total was >= 0, new total MUST be >= 0 (Lock-in)
+            if (oldTotal >= 0 || clampedPts !== 0) {
+                clampedPts = Math.max(clampedPts, -(attrBonus + passive));
+            } else {
+                // They are at pts=0 and total is negative. 
+                // They can't make it even more negative.
+                clampedPts = Math.max(clampedPts, 0); 
+            }
 
             // 3. Enforce Budget
             const skillBudget = 4 + (s.level - 1);
             const currentSpent = SKILL_LIST.reduce((sum, sk) => sum + (s.skills[sk.id] || 0), 0);
             const remaining = skillBudget - (currentSpent - oldPts);
             
+            // Note: Buying back points (negative pts) increases the remaining budget
             s.skills[id] = Math.min(clampedPts, remaining);
             break;
         }
@@ -796,6 +875,9 @@ function characterReducer(currentState, action) {
         }
         case 'IMPORT_STATE': {
             return validateAndCorrectState(ensureValidState(payload.newState));
+        }
+        case 'SYNC_STATE': {
+            return validateAndCorrectState(s);
         }
         default:
             console.warn(`Unknown action type: ${type}`);
@@ -841,7 +923,7 @@ function saveState(newState = null) {
 function loadState(config) {
     // 1. Define standard state schema and defaults
     state = {
-        version: "2.2.4",
+        version: "2.4.0",
         charName: '',        level: 1,
         ancestry: 'None',
         background: 'None',
@@ -877,7 +959,8 @@ function loadState(config) {
         furyBoom: 'OFF',
 
         advantage: 0,
-        actionsSpent: 0
+        actionsSpent: 0,
+        spellUpcasts: {}
     };
 
     // 2. Load from storage
