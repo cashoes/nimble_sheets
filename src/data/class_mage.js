@@ -88,7 +88,10 @@ class MageClass extends BaseClass {
                     return `+${wil}`;
                 }
             },
-            mechanicPanelExtension: (builder, level, state, derived) => {
+            mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                if (level >= 2) {
+                    builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+                }
                 if (level >= 5) {
                     builder.addRollDisplay(derived.surgeNotation, 'Elemental Surge', derived.surgeDisplay, 'Regain on Init');
                 }
@@ -100,6 +103,9 @@ class MageClass extends BaseClass {
                 all: (l) => l >= 14 ? ["Fire", "Ice", "Lightning"] : false,
                 selectKey: "selectedMastery"
             },
+            resources: [
+                createManaResource('int', 'Mana Pool', { hideMechanic: true })
+            ],
             featuresData: MageClass.FEATURES,
             optionsData: MageClass.OPTIONS
         });
@@ -143,7 +149,11 @@ class MageClass extends BaseClass {
 
         core[3].push({
             id: "mastery",
-            name: "Elemental Mastery",
+            name: (l) => {
+                if (l >= 14) return "Elemental Mastery (3)";
+                if (l >= 6) return "Elemental Mastery (2)";
+                return "Elemental Mastery";
+            },
             type: "dynamic_choice",
             collection: "masterySchools",
             stateKey: "selectedMastery",

@@ -312,43 +312,84 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
  * Generates the HTML for all class features up to the current level.
  */
 function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, featuresRef, optionsRef, configRef) {
-    let fHtml = "";
     const sCls = "subclass-feature";
     const subData = featuresRef.subclasses[subclass] || {};
+
+    // 1. Gather all active features and track source levels
+    const allActive = [];
+    const idToFeature = {};
+
+    for (let i = 1; i <= level; i++) {
+        [...(featuresRef.core[i] || []), ...(subData[i] || [])].forEach(f => {
+            const feat = { ...f, _sourceLevel: i, _isSubclass: !!subData[i]?.includes(f) };
+            allActive.push(feat);
+            idToFeature[f.id] = feat;
+        });
+    }
+
+    // 2. Build replacement mapping
+    const replacedById = {}; // oldId -> newId
     const replacedIds = new Set();
 
-    // 1. Pre-calculate replaced features
-    Object.values(subData).forEach(lvlFeats => {
-        lvlFeats.forEach(f => {
-            if (f.replaces) {
-                const r = Array.isArray(f.replaces) ? f.replaces : [f.replaces];
-                r.forEach(id => {
-                    replacedIds.add(id);
-                });
-            }
-        });
+    allActive.forEach(f => {
+        if (f.replaces) {
+            const r = Array.isArray(f.replaces) ? f.replaces : [f.replaces];
+            r.forEach(oldId => {
+                replacedById[oldId] = f.id;
+                replacedIds.add(oldId);
+            });
+        }
     });
 
-    // 2. Render interleaved by level (L1 -> Current)
-    for (let i = 1; i <= level; i++) {
-        // Render Core Features for this level
-        if (featuresRef.core[i]) {
-            featuresRef.core[i].forEach(feat => {
-                if (!replacedIds.has(feat.id)) {
-                    const html = defaultRenderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, "", optionsRef, configRef, i);
-                    fHtml += html;
-                }
-            });
-        }
+    // 3. Find terminal versions and their earliest anchor levels
+    const terminalFeatures = [];
+    const processedTerminalIds = new Set();
+
+    allActive.forEach(f => {
+        if (replacedIds.has(f.id)) return; // Only process terminal (latest) versions
+        if (processedTerminalIds.has(f.id)) return;
+
+        // Trace back to find earliest level in the chain
+        let earliestLevel = f._sourceLevel;
+        let chain = [f.id];
+        let foundEarlier = true;
         
-        // Render Subclass Features for this level
-        if (subData[i]) {
-            subData[i].forEach(feat => {
-                const html = defaultRenderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, sCls, optionsRef, configRef, i);
-                fHtml += html;
-            });
+        while (foundEarlier) {
+            foundEarlier = false;
+            // Check if any active feature's ID is replaced by something in our current chain
+            for (const [oldId, newId] of Object.entries(replacedById)) {
+                if (chain.includes(newId)) {
+                    const oldFeat = allActive.find(feat => feat.id === oldId);
+                    if (oldFeat && !chain.includes(oldId)) {
+                        earliestLevel = Math.min(earliestLevel, oldFeat._sourceLevel);
+                        chain.push(oldId);
+                        foundEarlier = true;
+                    }
+                }
+            }
         }
-    }
+
+        terminalFeatures.push({ 
+            feat: f, 
+            anchorLevel: earliestLevel,
+            isSubclass: f._isSubclass
+        });
+        processedTerminalIds.add(f.id);
+    });
+
+    // 4. Sort and Render
+    // Sort by anchor level, then by type (Core then Subclass)
+    terminalFeatures.sort((a, b) => {
+        if (a.anchorLevel !== b.anchorLevel) return a.anchorLevel - b.anchorLevel;
+        if (a.isSubclass !== b.isSubclass) return a.isSubclass ? 1 : -1;
+        return 0;
+    });
+
+    let fHtml = "";
+    terminalFeatures.forEach(entry => {
+        const cls = entry.isSubclass ? sCls : "";
+        fHtml += defaultRenderFeature(entry.feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, cls, optionsRef, configRef, entry.feat._sourceLevel);
+    });
 
     return fHtml;
 }

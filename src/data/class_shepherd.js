@@ -48,6 +48,7 @@ class ShepherdClass extends BaseClass {
             },
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
                 if (level >= 2) {
+                    builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
                     const sDie = derived.spiritDie || "d6";
                     const sCount = derived.spiritDiceCount || 1;
                     let bonus = statsMap.wil;
@@ -74,6 +75,12 @@ class ShepherdClass extends BaseClass {
             spellSchools: ["Radiant", "Necrotic"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 11, ["selectedTwilight"]),
+            resources: [
+                createManaResource('wil', 'Mana Pool', { hideMechanic: true }),
+                createSimpleResource('spirit_tier', 'Spirit Tier', (l) => l >= 8 ? 4 : (l >= 6 ? 3 : (l >= 4 ? 2 : (l >= 2 ? 1 : 0))), { hideMechanic: true }),
+                createSimpleResource('searing', 'Searing Light', (l, stats) => stats.wil, { hideMechanic: true, reset: 'Safe Rest' }),
+                createSimpleResource('powerful_healer', 'Powerful Healer', (l, stats) => stats.wil, { hideMechanic: true, reset: 'Safe Rest' })
+            ],
             featuresData: ShepherdClass.FEATURES,
             optionsData: ShepherdClass.OPTIONS
         });
@@ -121,7 +128,7 @@ class ShepherdClass extends BaseClass {
             { id: "subclass", name: "Subclass", desc: "Choose a Shepherd subclass." },
             FeatureGen.createSpellChoiceFeature({
                 id: "twilight",
-                name: "Master of Twilight",
+                name: (l) => l >= 11 ? "Master of Twilight (2)" : "Master of Twilight",
                 level: 3,
                 stateKey: "selectedTwilight",
                 milestones: [3, 11],

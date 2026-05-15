@@ -45,6 +45,20 @@ class BerserkerClass extends BaseClass {
                 { id: "mighty_wounds", stat: "woundMax", value: 4, condition: (l, s, state) => (state.selectedArsenal || []).includes("Mighty Endurance") },
                 { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "RedMist" && l >= 15 && (state.activeConditions || []).includes('raging') }
             ],
+            mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                const totalFury = (state.furyDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
+
+                builder.addDicePool(
+                    state.furyDice || [],
+                    'Fury',
+                    derived.furyText,
+                    'furyDice',
+                    derived.furyMax,
+                    { static: true }
+                );
+
+                builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.');
+            },
             featuresData: BerserkerClass.FEATURES,
             optionsData: BerserkerClass.OPTIONS
         });
@@ -120,27 +134,6 @@ class BerserkerClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Renders the Fury Dice pool for the Berserker's mechanic panel.
-     */
-    getMechanicPanelHTML(level, subclass, state, derived) {
-        const builder = new PanelBuilder();
-        const totalFury = (state.furyDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
-
-        builder.addDicePool(
-            state.furyDice || [],
-            'Fury',
-            derived.furyText,
-            'furyDice',
-            derived.furyMax,
-            { static: true }
-        );
-
-        builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.');
-
-        return builder.build();
     }
 
     getExtraConditions(level, subclass, state, derived) {

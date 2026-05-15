@@ -48,6 +48,9 @@ class SongweaverClass extends BaseClass {
                 }
             },
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                if (level >= 2) {
+                    builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+                }
                 const vmDisplay = `${derived.vmDice}+${derived.vmBonus}`;
                 builder.addRollDisplay(vmDisplay, 'Vicious Mockery', vmDisplay, 'Range 12 | Taunts | Psychic', { type: 'cantrip', school: 'Wind' });
             },
@@ -69,6 +72,10 @@ class SongweaverClass extends BaseClass {
             extraSchoolsKeys: ["secondarySchool"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14, ["selectedWindbag"]),
+            resources: [
+                createManaResource('int', 'Mana Pool', { hideMechanic: true }),
+                createSimpleResource('inspiration', 'Inspiration', (level, stats) => stats.wil * 2, { hideMechanic: true, bonusKey: 'inspirationBonus', reset: 'Safe Rest' })
+            ],
             featuresData: SongweaverClass.FEATURES,
             optionsData: SongweaverClass.OPTIONS
         });

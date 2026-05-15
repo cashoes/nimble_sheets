@@ -50,6 +50,9 @@ class StormshifterClass extends BaseClass {
                 stingDmg: (level) => `1d4+${3 * level}`
             },
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                if (level >= 2) {
+                    builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+                }
                 const activeForm = (state.currentForm || [])[0] || "Normal";
                 const formOptions = ["Normal", "Fearsome", "Beast of the Pack", "Beast of Nightmares"].filter(k => {
                     if (k === "Fearsome" && level < 2) return false;
@@ -77,10 +80,14 @@ class StormshifterClass extends BaseClass {
             grantedSpells: [
                 { level: 1, spells: ["Lightning Cantrips", "Wind Cantrips"] }
             ],
-            spellSchools: ["Lightning", "Wind"],
+            spellSchools: ["Wind", "Lightning"],
             extraSchoolsKeys: ["selectedStudy"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14, ["selectedStormcaller"]),
+            resources: [
+                createManaResource('wil', 'Mana Pool', { hideMechanic: true }),
+                createSimpleResource('shift', 'Beastshift', (l, stats, state, sub, derived) => derived.shiftMax, { hideMechanic: true, reset: 'Safe Rest' })
+            ],
             featuresData: StormshifterClass.FEATURES,
             optionsData: StormshifterClass.OPTIONS
         });
@@ -117,7 +124,7 @@ class StormshifterClass extends BaseClass {
 
         core[3] = [
             { id: "subclass", name: "Subclass", desc: "Choose a Stormshifter subclass." },
-            { id: "dire_pack", name: "Direbeast Form (2)", desc: "You can Beastshift into a <strong>Beast of the Pack</strong> (Medium). Gain +DEX speed. Thunderfang: 1d4+LVL piercing damage. Supercharge: Spend up to WIL mana for +1d8 lightning damage per mana (take damage on a miss)." }
+            { id: "dire_pack", replaces: "dire_fearsome", name: "Direbeast Form (2)", desc: "You can Beastshift into a <strong>Beast of the Pack</strong> (Medium). Gain +DEX speed. Thunderfang: 1d4+LVL piercing damage. Supercharge: Spend up to WIL mana for +1d8 lightning damage per mana (take damage on a miss)." }
         ];
 
         core[4].push(FeatureGen.createSpellChoiceFeature({
@@ -152,14 +159,14 @@ class StormshifterClass extends BaseClass {
             desc: (l) => l >= 14 ? "You know all Utility Spells from each spell school you know." : "Learn a Utility Spell from each spell school you know."
         }));
 
-        core[5].push({ id: "dire_nightmare", name: "Direbeast Form (3)", desc: "You can Beastshift into a <strong>Beast of Nightmares</strong> (Tiny). Sting: 1d4 piercing + 3×LVL acid damage (ignoring armor), on crit: 4×LVL damage instead. Silent But Deadly: Speed 2, cannot Defend/Interpose, cannot be targeted until conspicuous." });
+        core[5].push({ id: "dire_nightmare", replaces: "dire_pack", name: "Direbeast Form (3)", desc: "You can Beastshift into a <strong>Beast of Nightmares</strong> (Tiny). Sting: 1d4 piercing + 3×LVL acid damage (ignoring armor), on crit: 4×LVL damage instead. Silent But Deadly: Speed 2, cannot Defend/Interpose, cannot be targeted until conspicuous." });
 
         core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "boons", stateKey: "selectedBoons", milestones: [6, 9, 12, 17], desc: "Choose Chimeric Boons.", getCount: FeatureGen.createStandardCount([6, 9, 12, 17]) });
         core[6].push({ id: "expert", name: "Expert Shifter", desc: "Gain 1 additional use of Beastshift per Safe Rest." });
 
         core[8].push({ id: "stormborn", name: "Stormborn", desc: "Gain resistance to lightning damage. ([[uStormbornDay]] 1/day) You may gain advantage on a Naturecraft check or Concentration check." });
 
-        core[13] = [{ id: "stormborn2", name: "Stormborn (2)", desc: "Instead of rolling dice, deal the max damage of a Wind spell by spending a charge of your Beastshift feature. Whenever you end Beastshift, you may cast a cantrip for free." }];
+        core[13] = [{ id: "stormborn2", replaces: "stormborn", name: "Stormborn (2)", desc: "Instead of rolling dice, deal the max damage of a Wind spell by spending a charge of your Beastshift feature. Whenever you end Beastshift, you may cast a cantrip for free." }];
 
         core[20].push({ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. ([[uArchdruid]] 1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." });
 
@@ -182,7 +189,7 @@ class StormshifterClass extends BaseClass {
             { id: "wake", name: "Storm Wake", desc: "([[uStormWake]] 1/encounter) Action: Spend 3 mana to shift into a Beast of the Pack, then teleport in a straight line up to 12 spaces away, unerringly dealing WIL d8 lightning damage to any creatures you choose adjacent to your path." }],
             11: [{ id: "master_forms", name: "Master of Forms", desc: "Your shapeshift forms can have 2 Chimeric Boons at a time." },
             { id: "venomous", name: "Venomous Gaze", desc: "([[uVenomous]] 1/encounter) Action: Spend 2 mana to shift into a Beast of Nightmares. Then entice a creature within 12 spaces to move 2×WIL spaces closer to you on a failed WIL save (they roll with disadvantage and must repeat until they save or can move no further). If they end up in the same space as you, you may Sting them for free." }],
-            15: [{ id: "master_forms2", name: "Master of Forms (2)", desc: "You can Beastshift 2 additional times per Safe Rest. Choose 2 additional Chimeric Boons. Your Direbeast forms can have 3 at a time." }]
+            15: [{ id: "master_forms2", replaces: "master_forms", name: "Master of Forms (2)", desc: "You can Beastshift 2 additional times per Safe Rest. Choose 2 additional Chimeric Boons. Your Direbeast forms can have 3 at a time." }]
         };
 
         return { core, subclasses };

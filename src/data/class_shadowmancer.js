@@ -88,6 +88,9 @@ class ShadowmancerClass extends BaseClass {
                 }
             },
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                if (level >= 2) {
+                    builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+                }
                 const bStat = derived.blastStat.toLowerCase();
                 const bonusPerDie = statsMap[bStat];
                 const bTotalBonus = derived.multipliedBonus ? (derived.blastDice * bonusPerDie) : bonusPerDie;
@@ -113,9 +116,13 @@ class ShadowmancerClass extends BaseClass {
             ],
             spellSchools: ["Necrotic"],
             spellProgression: [2, 2, 4, 6, 8, 10, 12, 14, 16, 18],
-            includeUtilitySpells: createUtilityConfig((level) => level >= 14 ? ["Necrotic"] : false, ["selectedShadowmastery"]),
-            featuresData: ShadowmancerClass.FEATURES,
-            optionsData: ShadowmancerClass.OPTIONS
+            includeUtilitySpells: createUtilityConfig((level) => level >= 14 ? ["Necrotic"] : false, ["selectedShadowmastery"]),  
+            resources: [
+                createManaResource('int', 'Mana Pool', { hideMechanic: true }),
+                createSimpleResource('minions', 'Minions', (l, stats, state, subclass, derived) => derived.minionMax, { hideMechanic: true }),
+                createSimpleResource('pilfer', 'Pilfer', (l, stats, state, subclass, derived) => derived.pilferMax, { hideMechanic: true })
+            ],
+            featuresData: ShadowmancerClass.FEATURES,            optionsData: ShadowmancerClass.OPTIONS
         });
     }
 
@@ -185,7 +192,7 @@ class ShadowmancerClass extends BaseClass {
 
         core[6].push(FeatureGen.createSpellChoiceFeature({
             id: "mastery",
-            name: "Shadowmastery",
+            name: (l) => l >= 14 ? "Shadowmastery (3)" : "Shadowmastery",
             level: 6,
             spellType: "utility",
             schools: ["Necrotic"],

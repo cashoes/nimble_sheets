@@ -100,15 +100,24 @@ class CommanderClass extends BaseClass {
                     if (state.subclass === "Spellblade") {
                         builder.addStatDisplay(derived.cdType, 'Combat Die', 'Reference');
                     } else {
+                        builder.addResource('combatDice', 'Combat Dice', state.resourceValues.combatDice, derived.resourceMaxes.combatDice);
                         builder.addStatDisplay(derived.cdType, 'Combat Die', 'Die Size');
                         builder.addStatDisplay(10 + statsMap.str, 'Tactical DC', '10+STR');
                     }
                 }
             },
             statModifiers: [
-                { id: "armor_master_prof", stat: "profArmor", subclass: "Bulwark", level: 3, value: "Plate Armor, Shields" },
+                { id: "armor_master_prof", stat: "profArmor", subclass: "Bulwark", level: 3, value: "All Armor" },
                 { id: "move_it_bonus", stat: "initAdv", condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") },
                 { id: "move_it_speed", stat: "speed", value: 3, condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") }
+            ],
+            resources: [
+                createSimpleResource('combatDice', 'Combat Dice', (level, stats, state, subclass, derived) => {
+                    if (level < 4 || subclass === "Spellblade") return 0;
+                    let max = stats.str + (derived.bonusCombatDice || 0);
+                    (state.selectedTactics || []).forEach(t => { if (t === "+1 Combat Die") max += 1; });
+                    return max;
+                }, { hideMechanic: true })
             ],
             featuresData: CommanderClass.FEATURES,
             optionsData: CommanderClass.OPTIONS
@@ -228,8 +237,14 @@ class CommanderClass extends BaseClass {
         core[4].push({
             id: "training",
             level: 4,
-            milestones: [4, 6, 8, 10, 12, 16],
-            name: "Fit for Any Battlefield",
+            milestones: [4, 5, 9, 13, 17],
+            name: (l) => {
+                if (l >= 17) return "Combat Tactics (4)";
+                if (l >= 13) return "Combat Tactics (3)";
+                if (l >= 9) return "Combat Tactics (2)";
+                if (l >= 5) return "Combat Tactics";
+                return "Fit for Any Battlefield";
+            },
             type: "dynamic_choice",
             stateKey: "selectedTactics",
             getSlots: (level, subclass) => {
@@ -263,7 +278,13 @@ class CommanderClass extends BaseClass {
         core[5].push({ id: "master_commander", name: "Master Commander", desc: "When you roll Initiative, regain 1 spent use of Coordinated Strike (it is lost if not spent during that encounter). Attacks made from your Coordinated Strikes also now ignore disadvantage." });
 
         core[6].push({
-            id: "mastery", name: "Weapon Mastery", level: 6, milestones: [6, 10, 14], type: "dynamic_choice", stateKey: "selectedMastery",
+            id: "mastery",
+            name: (l) => {
+                if (l >= 14) return "Weapon Mastery (3)";
+                if (l >= 10) return "Weapon Mastery (2)";
+                return "Weapon Mastery";
+            },
+            level: 6, milestones: [6, 10, 14], type: "dynamic_choice", stateKey: "selectedMastery",
             getSlots: (level, subclass) => {
                 if (subclass === "Spellblade") return null;
                 const slots = [];
@@ -278,7 +299,7 @@ class CommanderClass extends BaseClass {
 
         subclasses["Bulwark"] = {
             3: [
-                { id: "armor_master", name: "Armor Master", desc: "You are proficient with plate armor." },
+                { id: "armor_master", name: "Armor Master", desc: "You are proficient with all armor." },
                 { id: "shield_expert", name: "Shield Expert", desc: "While wearing a shield, you may Defend 2× each round. The first time each round you block all of the damage from an attack, you may make an opportunity attack against the attacker for free." }
             ],
             7: [{ id: "juggernaut", name: "Juggernaut", desc: "When you use Coordinated Strike, you deal extra damage equal to your armor, and you can add 1 to your primary die." }],
@@ -288,7 +309,7 @@ class CommanderClass extends BaseClass {
 
         subclasses["Vanguard"] = {
             3: [{ id: "advance", name: "Advance!", desc: "(1/round) After you move toward an enemy, gain advantage on the first melee attack you make against it. When you use your Coordinated Strike, you and all allies within 12 spaces can first move up to half their speed for free." }],
-            7: [{ id: "experienced_commander", name: "Experienced Commander", desc: "Your Coordinated Strike may target 1 additional ally. Gain +1 use of Coordinated Strike/Safe Rest." }],
+            7: [{ id: "experienced_commander", replaces: "coord_strike", name: "Experienced Commander", desc: "Your Coordinated Strike may target 1 additional ally. Gain +1 use of Coordinated Strike/Safe Rest." }],
             11: [{ id: "survey_battlefield", name: "Survey the Battlefield", desc: "When you roll Initiative, regain 1 use of Coordinated Strike. +1 max Combat Dice." }],
             15: [{ id: "as_one", name: "As One!", desc: "Attacks made with your Coordinated Strikes also grant advantage and ignore all disadvantage. Your chosen allies gain 1 additional action to use on their next turn." }]
         };

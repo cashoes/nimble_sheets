@@ -18,8 +18,7 @@ class MechanicPanelBuilder {
     }
 
     addResource(id, label, value, max, options = {}) {
-        const visible = options.visible !== false;
-        if (!visible || max <= 0) return this;
+        if (options.hideMechanic === true || max <= 0) return this;
         this._addSection('Resource', { id, label, value, max, options }, { flex: 1 });
         return this;
     }

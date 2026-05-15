@@ -48,6 +48,10 @@ class ZephyrClass extends BaseClass {
                     return 0;
                 }
             },
+            resources: [
+                createSimpleResource('bursts', 'Bursts of Speed', (l, stats) => stats.dex + (l >= 20 ? 1 : 0), { hideMechanic: true }),
+                createSimpleResource('unyielding', 'Unyielding Resolve', (l, stats, state, sub, derived) => derived.unyieldingMax, { hideMechanic: true })
+            ],
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
                 const isUnarmored = this.isUnarmored(state);
                 let acVal = isUnarmored ? (statsMap.dex + statsMap.str) : 0;
@@ -61,14 +65,7 @@ class ZephyrClass extends BaseClass {
                 builder.addRollDisplay(notation, 'Swift Fists', notation, subtext, { type: 'attack', stat: 'str' });
             },
             onInitiative: (level, subclass, state, derived) => {
-                const statsMap = getStatsMap(state);
-                const max = statsMap.dex + (level >= 20 ? 1 : 0);
-                state.resourceValues.bursts = max;
-
-                const uMax = level >= 17 ? 3 : (level >= 10 ? 2 : (level >= 4 ? 1 : 0));
-                if (state.resourceValues.unyielding === undefined) {
-                    state.resourceValues.unyielding = uMax;
-                }
+                // Engine handles resource resets automatically
             },
             statModifiers: [
                 {
@@ -126,7 +123,17 @@ class ZephyrClass extends BaseClass {
         ];
 
         core[4] = [
-            { id: "resolve", name: "Unyielding Resolve", resourceId: "unyielding", desc: "Ignore the first Wound you would suffer each encounter." },
+            { 
+                id: "resolve", 
+                name: (l) => {
+                    if (l >= 17) return "Unyielding Resolve (3)";
+                    if (l >= 10) return "Unyielding Resolve (2)";
+                    return "Unyielding Resolve";
+                },
+                milestones: [4, 10, 17], 
+                resourceId: "unyielding", 
+                desc: "Ignore the first Wound you would suffer each encounter." 
+            },
             { id: "martial", name: "Martial Master", type: "dynamic_choice", collection: "abilities", stateKey: "selectedMartial", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose a Martial Arts ability.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) }
         ];
 
@@ -134,9 +141,9 @@ class ZephyrClass extends BaseClass {
 
         core[6].push({ id: "infuse", name: "Infuse Strength", desc: "Action: Make an unarmed strike against an ally and infuse them with strength instead of harming them. Expend Hit Dice to heal them (roll and add STR)." });
 
-        core[9].push({ id: "swift_feet2", name: "Swift Feet (2)", desc: "Gain an additional +2 speed as long as you are unarmored." });
+        core[9].push({ id: "swift_feet2", replaces: "swift_feet", name: "Swift Feet (2)", desc: "Gain an additional +2 speed as long as you are unarmored." });
 
-        core[13] = [{ id: "iron_defense2", name: "Iron Defense (2)", desc: "Your armor is doubled while unarmored." }];
+        core[13] = [{ id: "iron_defense2", replaces: "iron_defense", name: "Iron Defense (2)", desc: "Your armor is doubled while unarmored." }];
 
         core[20].push({ id: "windborne", name: "Windborne", desc: "+1 to any 2 of your stats. +1 additional burst of speed when you roll Initiative. Permanently gain 1 action (while Dying, you have a max of 2 actions)." });
 

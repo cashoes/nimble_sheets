@@ -3,9 +3,9 @@
  * Reactive UI components for the NIMBLE tracker.
  */
 
-const { 
-    html, 
-    createComponent: createComp 
+const {
+    html,
+    createComponent: createComp
 } = Solid;
 
 /**
@@ -24,10 +24,10 @@ function ActionPip(props) {
     const s = charState;
     const d = charDerived;
     const index = props.index;
-    
+
     const isChecked = () => s().actionsSpent > index;
     const isAvail = () => index < d().maxActions;
-    
+
     const pipOpacity = () => isAvail() ? '1' : '0.2';
     const pipCursor = () => isAvail() ? 'pointer' : 'not-allowed';
     const pipStyle = () => `opacity: ${pipOpacity()}; cursor: ${pipCursor()};`;
@@ -50,7 +50,7 @@ function Header() {
 
     const nameText = config.name;
     const subText = config.subtitle;
-    
+
     const armorVal = () => d().armor;
     const sizeVal = () => d().size;
     const speedVal = () => d().speed;
@@ -59,15 +59,15 @@ function Header() {
         const v = initVal();
         return (v >= 0 ? "+" : "") + v;
     };
-    
+
     const getHasAdv = () => {
         const ancestry = s().ancestry;
         const feat = ANCESTRY_FEATURES[ancestry];
         const base = (feat && feat.modInitAdv) || d().initAdv;
         return !!base;
     };
-    const showAdv = getHasAdv; 
-    
+    const showAdv = getHasAdv;
+
     const getNotation = () => {
         const v = initVal();
         return `1d20${v >= 0 ? '+' : ''}${v}`;
@@ -101,6 +101,15 @@ function Header() {
             });
     };
 
+    const actionPipsNodes = () => {
+        const nodes = [];
+        const max = d().maxActions;
+        for (let i = 0; i < max; i++) {
+            nodes.push(html`<${ActionPip} index=${i} />`);
+        }
+        return nodes;
+    };
+
     return html`
         <div class="header">
             <div id="headerLeftStats" class="header-left-stats">
@@ -115,9 +124,7 @@ function Header() {
                 <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
                     <h1 id="classNameDisplay">${nameText}</h1>
                     <div class="action-pips">
-                        <${ActionPip} index=${0} />
-                        <${ActionPip} index=${1} />
-                        <${ActionPip} index=${2} />
+                        ${actionPipsNodes}
                     </div>
                 </div>
                 <div class="subtitle" id="classSubtitleDisplay">${subText}</div>
@@ -153,11 +160,11 @@ function AttributeCard(props) {
     const config = CLASS_CONFIG;
     const statKey = props.stat;
     const statLabel = props.label;
-    
+
     const isMain = config.keyStats.includes(statKey);
     const getStatVal = () => d().statsMap[statKey];
     const statVal = getStatVal;
-    
+
     const getAdvStatus = () => {
         let base = 0;
         const saves = config.saves;
@@ -192,7 +199,7 @@ function AttributeCard(props) {
 
     const baseId = 'base' + statLabel;
     const addId = 'add' + statLabel;
-    
+
     const baseVal = () => s()[baseId] || 0;
     const addVal = () => s()[addId] || 0;
     const isLevel1 = () => s().level === 1;
@@ -227,21 +234,21 @@ function AttributeCard(props) {
 function AttributesSection() {
     const s = charState;
     const d = charDerived;
-    
+
     const unspentText = () => {
         const der = d();
         const k = der.keyUnspent || 0;
         const sc = der.secUnspent || 0;
         const f = der.flexRemaining || 0;
-        
+
         let parts = [];
         if (k > 0) parts.push(`+${k} KEY`);
         if (sc > 0) parts.push(`+${sc} SEC`);
         if (f > 0) parts.push(`+${f} FLEX`);
-        
+
         return parts.length > 0 ? parts.join(' | ') : "MAXED OUT";
     };
-    
+
     const color = () => {
         const der = d();
         if (der.flexRemaining < 0 || der.keyUnspent < 0 || der.secUnspent < 0) {
@@ -285,11 +292,11 @@ function HPTracker() {
     const hpDown = () => adjHP(-1);
     const hpUp = () => adjHP(1);
     const hpSet = (e) => adjHP(parseInt(e.target.value), true);
-    
+
     const thpDown = () => adjTempHP(-1);
     const thpUp = () => adjTempHP(1);
     const thpSet = (e) => adjTempHP(parseInt(e.target.value), true);
-    
+
     const hdDown = () => adjHD(-1);
     const hdUp = () => adjHD(1);
     const hdSet = (e) => adjHD(parseInt(e.target.value), true);
@@ -405,7 +412,7 @@ function InventoryRow(props) {
     const propsVal = item.props;
     const costVal = item.cost;
     const slotsVal = item.slots;
-    
+
     const isEquipped = () => item.equipped;
     const rowClass = () => `inv-row ${isEquipped() ? 'equipped' : ''}`;
 
@@ -461,7 +468,7 @@ function InventoryRow(props) {
                 return html`<span>${diceStr} (<span class="stat-hl">${lab}</span> ${snam})</span>`;
             } else {
                 return html`
-                    <div style="display:flex; flex-direction:row; align-items:center; gap:4px; font-size:0.75em; width:100%;">
+                    <div style="display:flex; flex-direction:row; align-items:center; gap:4px; width:100%;">
                         <input type="text" class="inv-input" value=${diceStr} style="flex:1; min-width:0;" onchange=${handleDice} />
                         <select class="inv-input" style="flex:1; min-width:0; padding:0;" onchange=${handleStat}>
                             <option value="str" selected=${() => statKey === 'str'}>STR</option>
@@ -483,7 +490,7 @@ function InventoryRow(props) {
                 return `+${armorStr}`;
             } else {
                 return html`
-                    <div style="display:flex; flex-direction:row; align-items:center; gap:4px; font-size:0.75em; width:100%;">
+                    <div style="display:flex; flex-direction:row; align-items:center; gap:4px; width:100%;">
                         <input type="number" class="inv-input" value=${armorStr} style="flex:0.5; min-width:0;" onchange=${handleArmor} />
                         <select class="inv-input" style="flex:1.5; min-width:0; padding:0;" onchange=${handleArmorType}>
                             <option value="light" selected=${() => atypeStr === 'light'}>Cloth/Leather</option>
@@ -495,20 +502,20 @@ function InventoryRow(props) {
             }
         }
         if (typeStr === 'shield' && !isLib()) {
-             return html`<input type="number" class="inv-input" value=${armorStr} style="width:30px;" onchange=${handleArmor} />`;
+            return html`<input type="number" class="inv-input" value=${armorStr} style="width:30px;" onchange=${handleArmor} />`;
         }
         return '-';
     };
 
     const typeNode = () => {
         if (isLib()) {
-            return html`<div style="font-size:0.9em; color:var(--text-muted); text-transform:capitalize; text-align:left; min-height:26px; display:flex; align-items:center; padding:2px 0; line-height:1.2;">
+            return html`<div style="color:var(--text-muted); text-transform:capitalize; text-align:left; line-height:1.2;">
                 ${item.category || (typeStr === 'armor' ? atypeStr + ' ' : '') + typeStr}
             </div>`;
         }
         return html`
-            <div style="display:flex; align-items:center; padding:2px 0; width:100%;">
-                <select class="inv-input" style="font-size:0.85em; padding:0; width:100%;" onchange=${handleType}>
+            <div style="width:100%;">
+                <select class="inv-input" style="padding:0; width:100%;" onchange=${handleType}>
                     <option value="weapon" selected=${() => typeStr === 'weapon'}>Weapon</option>
                     <option value="armor" selected=${() => typeStr === 'armor'}>Armor</option>
                     <option value="shield" selected=${() => typeStr === 'shield'}>Shield</option>
@@ -520,39 +527,39 @@ function InventoryRow(props) {
 
     return html`
         <div class=${rowClass}>
-            <div style="display:flex; justify-content:center; align-items:center; min-height:26px;">
+            <div style="display:flex; justify-content:center;">
                 <input type="checkbox" checked=${isEquipped} onchange=${handleEquip} />
             </div>
-            <div style="display:flex; align-items:center; min-height:26px;">
+            <div>
                 <input type="text" class="inv-input" value=${nameStr} style="text-align:left;" onchange=${handleName} />
             </div>
             ${typeNode}
-            <div style="display:flex; align-items:center; min-height:26px;">
+            <div>
                 <textarea class="inv-input" 
-                          style="height:auto; resize:none; overflow:hidden; font-size:0.85em; color:var(--text-muted); line-height:1.2; border:none; background:transparent; text-align:left;" 
+                          style="height:auto; resize:none; overflow:hidden; line-height:1.2; border:none; background:transparent; text-align:left;" 
                           oninput=${handleAutoResize}
                           onchange=${handleProps}>${propsVal || ''}</textarea>
             </div>
-            <div style="text-align:center; font-size:0.9em; color:var(--text-muted); display:flex; align-items:center; justify-content:center;">
+            <div style="text-align:center; color:var(--text-muted);">
                 ${reachNode}
             </div>
-            <div style="display:flex; justify-content:center; align-items:center; min-height:26px;">
-                ${() => isLib() ? html`<span style="font-size:0.9em; opacity:0.8;">${costVal || 0}</span>` : html`
+            <div style="display:flex; justify-content:center;">
+                ${() => isLib() ? html`<span style="opacity:0.8;">${costVal || 0}</span>` : html`
                     <input type="number" class="inv-input" value=${costVal || 0} onchange=${handleCost} />
                 `}
             </div>
-            <div style="display:flex; justify-content:center; align-items:center; min-height:26px;">
-                ${() => isLib() ? html`<span style="font-size:0.9em; opacity:0.8;">${slotsVal}</span>` : html`
+            <div style="display:flex; justify-content:center;">
+                ${() => isLib() ? html`<span style="opacity:0.8;">${slotsVal}</span>` : html`
                     <input type="number" class="inv-input" value=${slotsVal} onchange=${handleSlots} />
                 `}
             </div>
-            <div style="text-align:center; font-size:0.9em; min-height:26px; display:flex; align-items:center; justify-content:center; padding:2px 0; line-height:1.2;">
+            <div style="text-align:center; line-height:1.2;">
                 ${statsNode}
             </div>
-            <div style="font-weight:bold; color:var(--class-accent); display:flex; justify-content:center; align-items:center; min-height:26px;">
+            <div style="font-weight:bold; color:var(--class-accent); text-align:center;">
                 ${effectNode}
             </div>
-            <div style="display:flex; justify-content:center; align-items:center; min-height:26px;">
+            <div style="display:flex; justify-content:center;">
                 <button onclick=${handleDel} style="background:none; border:none; color:var(--save-dis); cursor:pointer;">×</button>
             </div>
         </div>
@@ -710,7 +717,7 @@ function SkillRow(props) {
  */
 function Skills() {
     const s = charState;
-    
+
     const unspentVal = () => {
         const lvl = s().level;
         const sks = s().skills;
@@ -778,7 +785,7 @@ function SpellCard(props) {
     const s = charState;
     const d = charDerived;
     const spell = props.spell;
-    
+
     const nameStr = spell.name;
     const tierStr = spell.tier;
     const schoolStr = spell.school;
@@ -788,7 +795,7 @@ function SpellCard(props) {
     const schoolLow = (schoolStr || "").toLowerCase();
     const css = `spell-card ${schoolLow}`;
     const pips = formatPips(tierStr, schoolStr);
-    
+
     const descriptionNode = () => {
         if (customStr) return customStr;
         const lvl = s().level;
@@ -840,11 +847,11 @@ function Spells() {
             const wa = getTierWeight(a.tier);
             const wb = getTierWeight(b.tier);
             if (wa !== wb) return wa - wb;
-            
+
             const schA = (a.school || "").toLowerCase();
             const schB = (b.school || "").toLowerCase();
             if (schA !== schB) return schA.localeCompare(schB);
-            
+
             const nA = (a.name || "").toLowerCase();
             const nB = (b.name || "").toLowerCase();
             return nA.localeCompare(nB);
@@ -894,16 +901,16 @@ function Features() {
         const state = s();
         const der = d();
 
-        const buildBound = (t, lTag, desc, theme = "", skip = false, l2, sm, ctx) => 
+        const buildBound = (t, lTag, desc, theme = "", skip = false, l2, sm, ctx) =>
             buildFeatureHtml(t, lTag, desc, theme, skip, l2 || lvl, sm || stats, ctx || {});
-        const statsBound = (txt, l, sm, ctx) => 
+        const statsBound = (txt, l, sm, ctx) =>
             iStats(txt, l || lvl, sm || stats, ctx || {});
 
         try {
             let htmlStr = config.getFeaturesHTML(lvl, sub, state, der, buildBound, statsBound, formatPips, spellGen);
             const bgHtml = renderBackgroundFeature(state, lvl, stats, statsBound, buildBound, spellGen);
             const ancHtml = renderAncestryFeature(state, buildBound);
-            
+
             const final = bgHtml + ancHtml + htmlStr;
             setHtmlContent(final);
         } catch (e) {
@@ -938,9 +945,9 @@ function FeaturesAndSpellsLayout() {
     const layoutCls = () => getHasSpells() ? 'layout-2col' : 'layout-1col';
     const tierLabel = () => d().maxTier > 0 ? `(Max Tier: ${d().maxTier})` : "";
     const showMinorVal = () => !!s().showMinor;
-    
-    const handleMinor = (e) => { 
-        dispatch({ type: 'SET_STATE_KEY', payload: { key: 'showMinor', value: e.target.checked } }); 
+
+    const handleMinor = (e) => {
+        dispatch({ type: 'SET_STATE_KEY', payload: { key: 'showMinor', value: e.target.checked } });
     };
 
     Solid.createEffect(() => {
@@ -983,7 +990,7 @@ function IdentityBar() {
     const config = CLASS_CONFIG;
 
     const handleSet = (key, val) => dispatch({ type: 'SET_STATE_KEY', payload: { key, value: val } });
-    
+
     const ancGroups = () => {
         let items = [html`<option value="None">None</option>`];
         Object.keys(ANCESTRIES).forEach(group => {
@@ -1006,13 +1013,13 @@ function IdentityBar() {
     const isSubDisabled = () => s().level < 3;
 
     return html`
-        <div class="top-bar">
+        <div class="top-bar" style="margin-bottom: 15px;">
             <div class="panel">
                 <label class="panel-title">Hero Name</label>
-                <input type="text" id="charName" placeholder="Name" value=${() => s().charName} oninput=${(e) => handleSet('charName', e.target.value)} />
+                <input type="text" id="charName" placeholder="Enter Name..." value=${() => s().charName} oninput=${(e) => handleSet('charName', e.target.value)} />
             </div>
             <div class="panel">
-                <label class="panel-title">Lvl (1-20)</label>
+                <label class="panel-title">Level</label>
                 <input type="number" id="level" min="1" max="20" value=${() => s().level} oninput=${(e) => handleSet('level', parseInt(e.target.value))} />
             </div>
             <div class="panel">
@@ -1050,10 +1057,10 @@ function Die(props) {
         const c = color();
         const filled = isFilled();
         const fill = filled ? c : 'transparent';
-        
+
         let shape = '';
         let glow = '';
-        
+
         if (f === 4) {
             shape = `<polygon points="24,45 3,6 45,6" fill="${fill}" stroke="${c}" stroke-width="2" />`;
             if (filled) glow = `<polygon points="24,45 3,6 45,6" fill="url(#grad_${f})" />`;
@@ -1151,7 +1158,7 @@ const PanelComponents = {
         const sub = props.subtext;
         const opt = props.options;
         const indList = opt.indicators;
-        
+
         const curVal = () => props.value;
         const colorVal = opt.color || 'var(--gold-light)';
         const valCol = () => curVal() > 0 ? colorVal : '#fff';
@@ -1162,7 +1169,7 @@ const PanelComponents = {
             const iLab = ind.label;
             const iCol = ind.color;
             const tKey = ind.toggleKey;
-            
+
             const isActive = () => tKey ? charState()[tKey] === 'BOOM' : ind.active;
             const iSty = () => `display: flex; align-items: center; gap: 6px; cursor: ${tKey ? 'pointer' : 'default'}; opacity: ${isActive() ? '1' : '0.2'};`;
             const lSty = () => `font-size: 0.5em; color: ${isActive() ? iCol : 'var(--text-muted)'}; text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 0.5px;`;
@@ -1200,23 +1207,23 @@ const PanelComponents = {
         const diceVal = () => props.dice;
 
         const facesCount = parseInt(props.faces.toString().replace(/\D/g, '')) || 6;
-        
+
         const dieGenerator = (die, idx, place = false) => {
             const expFn = () => (die && die.detail) && die.detail.includes('!');
             const colFn = () => expFn() ? 'var(--gold-light)' : 'var(--class-accent)';
-            
+
             const remFlag = opt.disableRemove;
             const maxFlag = opt.disableMaximize;
             const statFlag = opt.static;
 
             const canRem = !place && !remFlag;
             const canMax = !place && !maxFlag;
-            
+
             const vTot = die ? die.total : "";
             const vDet = die ? die.detail : "";
 
             const dStyFn = () => `position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: ${canRem || canMax ? 'pointer' : 'default'}; opacity: ${place ? 0.3 : 1};`;
-            
+
             const clickFn = () => canRem ? removePoolDie(skey, idx, statFlag) : undefined;
             const ctxFn = (e) => { e.preventDefault(); if (canMax) maximizePoolDie(skey, idx, facesCount); };
             const titStr = place ? 'Empty Slot' : `${vDet || vTot}${!canMax ? '' : ' (Right-click to Maximize)'}`;
@@ -1406,7 +1413,7 @@ function MechanicPanel() {
     const secNodes = () => {
         const d = data();
         if (!d || !d.sections) return [];
-        
+
         return d.sections.map((sec, idx) => {
             const styp = sec.type;
             const sflx = sec.flex;
@@ -1414,10 +1421,10 @@ function MechanicPanel() {
             const smw = sec.minWidth;
             const sprop = sec.props;
             const Comp = PanelComponents[styp];
-            
+
             const divNode = idx > 0 ? html`<div style="width: 1px; background: rgba(255,255,255,0.15); align-self: center; height: 60px; margin: 0 5px;"></div>` : '';
             const sSty = `flex: ${sflx}; display: flex; flex-direction: column; align-items: ${saln}; justify-content: center; text-align: center; ${smw ? `min-width: ${smw}px;` : ''}`;
-            
+
             return html`
                 ${divNode}
                 <div style=${sSty}>
@@ -1441,61 +1448,17 @@ function MechanicPanel() {
  */
 function ProficiencyRow() {
     const s = charState;
+    const d = charDerived;
     const config = CLASS_CONFIG;
 
-    const weapons = config.proficiencies?.weapons || "--";
-    const armor = config.proficiencies?.armor || "--";
+    const weapons = () => d().profWeapons || config.proficiencies?.weapons || "--";
+    const armor = () => d().profArmor || config.proficiencies?.armor || "--";
 
     return html`
         <div class="proficiency-row"
             style="margin-top: auto; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
             <div style="text-align: left; flex: 1.5;"> WEAPONS: <span style="color: #fff;">${weapons}</span></div>
             <div style="text-align: right; flex: 1;"> ARMOR: <span style="color: #fff;">${armor}</span> </div>
-        </div>
-    `;
-}
-
-/**
- * Dynamic Resources Component (Mana, etc.)
- */
-function DynamicResources() {
-    const s = charState;
-    const d = charDerived;
-    const config = CLASS_CONFIG;
-
-    const resourceNodes = () => {
-        const lvl = s().level;
-        const sub = s().subclass;
-        const state = s();
-        const der = d();
-
-        const resources = config.getCombinedResources ? config.getCombinedResources(sub, state) : (config.resources || []);
-        return resources.map(r => {
-            const cur = () => s().resourceValues[r.id] || 0;
-            const max = der.resourceMaxes[r.id];
-            const down = () => adjRes(r.id, -1, max);
-            const up = () => adjRes(r.id, 1, max);
-            const set = (e) => adjRes(r.id, parseInt(e.target.value), max, true);
-
-            return html`
-                <div class="res-row" style="margin-top: 5px;">
-                    <label style=${() => `color: ${r.color || 'var(--class-accent)'};`}>${r.name}</label>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div class="res-val dark-incrementer">
-                            <button onclick=${down}>-</button>
-                            <input type="number" value=${cur} onchange=${set} />
-                            <button onclick=${up}>+</button>
-                        </div>
-                        <div class="max-text">/ <span style="color:var(--text-main);">${max}</span></div>
-                    </div>
-                </div>
-            `;
-        });
-    };
-
-    return html`
-        <div id="dynamicResourcesContainer">
-            ${resourceNodes}
         </div>
     `;
 }
@@ -1507,7 +1470,6 @@ window.NIMBLE_COMPONENTS = {
     HPTracker,
     WoundTracker,
     ProficiencyRow,
-    DynamicResources,
     InventorySection,
     Skills,
     Conditions,

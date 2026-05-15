@@ -113,9 +113,36 @@ class OathswornClass extends BaseClass {
             spellSchools: ["Radiant"],
             spellProgression: [2, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig(false, ["selectedSpells"]),
+            resources: [
+                createManaResource('wil', 'Mana Pool', { multiplier: 1, hideMechanic: true }),
+                createSimpleResource('loh', 'Lay on Hands', (level) => 5 * level, { reset: 'Safe Rest', hideMechanic: true })
+            ],
             customHeaderStats: [
                 { id: 'auraContainer', label: 'Aura', position: 'left', color: 'var(--class-accent)', isVisible: (level) => level >= 3, getValue: (derived) => `R ${derived.auraReach}` }
             ],
+            mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
+                const totalJD = (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
+
+                // 1. Mana Pool
+                if (level >= 2) {
+                    builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
+                }
+
+                // 2. JD Dice Pool
+                builder.addDicePool(state.judgmentDice || [], 'Judgment', `d${derived.jdFaces}`, 'judgmentDice', derived.jdCount, {
+                    rollAll: true,
+                    static: true,
+                    disableRemove: true
+                });
+
+                // 4. JD Status
+                builder.addStatDisplay(totalJD, 'Radiant DMG', '', {
+                    indicators: [
+                        { label: 'Adv', color: '#22c55e', active: (state.selectedDecrees || []).includes("Reliable Justice") },
+                        { label: 'Exploding', color: "#e879f9", active: state.judgmentBoom === 'BOOM', toggleKey: 'judgmentBoom' }
+                    ]
+                });
+            },
             featuresData: OathswornClass.FEATURES,
             optionsData: OathswornClass.OPTIONS
         });
@@ -174,7 +201,7 @@ class OathswornClass extends BaseClass {
 
         core[2] = [
             { id: "radiant_casting", name: "Mana and Radiant Spellcasting", desc: (level, subclass, state, derived) => `You learn all Radiant cantrips and unlock tier 1 Radiant spells. You gain a mana pool of <strong>${derived.resourceMaxes.mana}</strong> (WIL+LVL) to cast these spells; it recharges on a Safe Rest.` },
-            { id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target’s armor by 1 step for this attack.</li></ul>" },
+            { id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target’s armor by 1 step for this attack.</li><li><strong>Righteous Defense:</strong> Gain +1 AC for each mana spent until the start of your next turn.</li></ul>" },
             { id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." }
         ];
 
@@ -229,36 +256,6 @@ class OathswornClass extends BaseClass {
         };
 
         return { core, subclasses };
-    }
-
-    /**
-     * Renders the mechanic panel.
-     */
-    getMechanicPanelHTML(level, subclass, state, derived) {
-        const builder = new PanelBuilder();
-        const totalJD = (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
-
-        // 1. Mana Pool
-        if (level >= 2) {
-            builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
-        }
-
-        // 2. JD Dice Pool
-        builder.addDicePool(state.judgmentDice || [], 'Judgment', `d${derived.jdFaces}`, 'judgmentDice', derived.jdCount, {
-            rollAll: true,
-            static: true,
-            disableRemove: true
-        });
-
-        // 3. JD Status
-        builder.addStatDisplay(totalJD, 'Radiant DMG', '', {
-            indicators: [
-                { label: 'Adv', color: '#22c55e', active: (state.selectedDecrees || []).includes("Reliable Justice") },
-                { label: 'Exploding', color: "#e879f9", active: state.judgmentBoom === 'BOOM', toggleKey: 'judgmentBoom' }
-            ]
-        });
-
-        return builder.build();
     }
 }
 

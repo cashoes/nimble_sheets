@@ -86,7 +86,6 @@ class CheatClass extends BaseClass {
 
         core[3] = [
             { id: "subclass", name: "Subclass", level: 3, minor: true, desc: "Choose a Cheat subclass." },
-            { id: "sneak_attack_2", name: "Sneak Attack (2)", desc: "Your Sneak Attack becomes 1d8." },
             { id: "thieves_cant", name: "Thieves’ Cant", desc: "You learn the secret language of rogues and scoundrels." }
         ];
 

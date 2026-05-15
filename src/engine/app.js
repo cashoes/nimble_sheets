@@ -19,7 +19,7 @@ const importCharacter = (input) => {
         alert("Please select a JSON file.");
         return;
     }
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
@@ -44,19 +44,19 @@ const importCharacter = (input) => {
  */
 const saveAsHTML = () => {
     const newHtml = document.documentElement.outerHTML;
-    
+
     // Inject current state into the template placeholder
     const updatedHtml = newHtml.replace(
-        /const EMBEDDED_STATE = (null|{.*?});/, 
+        /const EMBEDDED_STATE = (null|{.*?});/,
         `const EMBEDDED_STATE = ${JSON.stringify(state)};`
     );
-    
+
     // Update document title for the exported file
     const titledHtml = updatedHtml.replace(
-        /<title>(.*?)<\/title>/, 
+        /<title>(.*?)<\/title>/,
         `<title>NIMBLE — ${state.charName ?? 'Hero'} (${CLASS_CONFIG?.name ?? 'Unknown'})</title>`
     );
-    
+
     // Trigger download
     const blob = new Blob([titledHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
@@ -75,12 +75,12 @@ const saveAsHTML = () => {
 document.addEventListener('DOMContentLoaded', () => {
     try {
         loadState(CLASS_CONFIG);
-        
+
         // Mount SolidJS Components
         if (window.NIMBLE_COMPONENTS) {
-            const { 
-                Header, AttributesSection, HPTracker, WoundTracker, 
-                ProficiencyRow, DynamicResources, InventorySection, Skills, Conditions, CombatControls, 
+            const {
+                Header, AttributesSection, HPTracker, WoundTracker,
+                ProficiencyRow, DynamicResources, InventorySection, Skills, Conditions, CombatControls,
                 FeaturesAndSpellsLayout, MechanicPanel, IdentityBar
             } = window.NIMBLE_COMPONENTS;
 
@@ -96,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
             Solid.render(() => Solid.createComponent(HPTracker, {}), document.getElementById('solid-hp'));
             Solid.render(() => Solid.createComponent(WoundTracker, {}), document.getElementById('solid-wounds'));
             Solid.render(() => Solid.createComponent(ProficiencyRow, {}), document.getElementById('solid-proficiency'));
-            Solid.render(() => Solid.createComponent(DynamicResources, {}), document.getElementById('solid-resources'));
             Solid.render(() => Solid.createComponent(InventorySection, {}), document.getElementById('solid-inventory-section'));
             Solid.render(() => Solid.createComponent(Skills, {}), document.getElementById('solid-skills'));
             Solid.render(() => Solid.createComponent(Conditions, {}), document.getElementById('solid-conditions'));
@@ -114,30 +113,30 @@ document.addEventListener('DOMContentLoaded', () => {
  * Mouse Wheel delegation for numeric inputs.
  * Allows rapid adjustment of HP, HD, and other number fields.
  */
-window.addEventListener('wheel', (e) => { 
-    if (e.target.type === 'number') { 
+window.addEventListener('wheel', (e) => {
+    if (e.target.type === 'number') {
         if (e.target.disabled) return;
-        
-        e.preventDefault(); 
-        const delta = e.deltaY < 0 ? 1 : -1; 
-        
+
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 1 : -1;
+
         // Specialized adjustment for core vitals
         if (e.target.id === 'displayCurrentHP') {
-            adjHP(delta, false); 
+            adjHP(delta, false);
         } else if (e.target.id === 'displayTempHP') {
-            adjTempHP(delta, false); 
+            adjTempHP(delta, false);
         } else if (e.target.id === 'displayHD') {
-            adjHD(delta, false); 
-        } else { 
+            adjHD(delta, false);
+        } else {
             // General handling for standard numeric fields (Gold, Attributes, etc.)
-            let val = parseInt(e.target.value || 0) + delta; 
+            let val = parseInt(e.target.value || 0) + delta;
             const min = e.target.hasAttribute('min') ? parseInt(e.target.getAttribute('min')) : -Infinity;
             const max = e.target.hasAttribute('max') ? parseInt(e.target.getAttribute('max')) : Infinity;
-            
-            let newVal = Math.min(max, Math.max(min, val)); 
-            e.target.value = newVal; 
-            e.target.dispatchEvent(new Event('input', { bubbles: true })); 
-            e.target.dispatchEvent(new Event('change', { bubbles: true })); 
-        } 
-    } 
+
+            let newVal = Math.min(max, Math.max(min, val));
+            e.target.value = newVal;
+            e.target.dispatchEvent(new Event('input', { bubbles: true }));
+            e.target.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
 }, { passive: false });

@@ -301,9 +301,9 @@ function validateAndCorrectState(state) {
         state.advantage = 0;
     }
 
-    // Ensure actionsSpent is between 0 and 3
+    // Ensure actionsSpent is within valid bounds
     if (typeof state.actionsSpent === 'number' && !isNaN(state.actionsSpent)) {
-        state.actionsSpent = Math.min(3, Math.max(0, state.actionsSpent));
+        state.actionsSpent = Math.min(derived.maxActions, Math.max(0, state.actionsSpent));
     } else {
         state.actionsSpent = 0;
     }
@@ -454,8 +454,8 @@ function computeDerived(s) {
     // 7. Wounds (Class base + modifiers)
     let woundMax = Math.max(1, (classDerived.woundMax || 6) + (classOverrides.woundMax || 0) + (ancFeat?.modWounds || 0) + (bgFeat?.modWounds || 0) + (bgSelectedOpt?.modWounds || 0));
 
-    // 8. Actions (Standard 3, modified by Conditions)
-    let maxActions = 3;
+    // 8. Actions (Standard 3, modified by Class and Conditions)
+    let maxActions = 3 + (classOverrides.maxActions || 0);
     s.activeConditions.forEach(cId => {
         const c = CONDITIONS_LIST.find(cl => cl.id === cId);
         if (c) {

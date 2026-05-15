@@ -711,13 +711,14 @@ function createUtilityConfig(all = false, selectKey = null) {
  * @returns {Object} Resource definition object.
  */
 function createManaResource(stat = 'int', label = 'Mana Pool', options = {}) {
+    const multiplier = options.multiplier !== undefined ? options.multiplier : 3;
     return {
         id: 'mana',
         label,
         manual: true,
         options,
         calcMax: (level, stats) => {
-            return level >= 2 ? (stats[stat] * 3) + level : 0;
+            return level >= 2 ? (stats[stat] * multiplier) + level : 0;
         }
     };
 }
