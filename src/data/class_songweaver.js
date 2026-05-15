@@ -69,10 +69,6 @@ class SongweaverClass extends BaseClass {
             extraSchoolsKeys: ["secondarySchool"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14, ["selectedWindbag"]),
-            resources: [
-                createManaResource('int'),
-                createSimpleResource('inspiration', 'Inspiration', (level, stats) => stats.wil * 2, { visible: false, bonusKey: 'inspirationBonus', reset: 'Safe Rest' })
-            ],
             featuresData: SongweaverClass.FEATURES,
             optionsData: SongweaverClass.OPTIONS
         });
@@ -114,19 +110,19 @@ class SongweaverClass extends BaseClass {
         core[3] = [
             { id: "subclass", name: "Subclass", desc: "Choose a Songweaver subclass." },
             { id: "quick_wit", name: "Quick Wit", desc: "When you roll Initiative, you may regain 2 spent uses of your Songweaver’s Inspiration (these expire at the end of combat if left unused)." },
-            FeatureGen.createSpellChoiceFeature({ 
-                id: "windbag", 
-                name: "Windbag", 
-                level: 3, 
-                stateKey: "selectedWindbag", 
-                milestones: [3, 6, 14], 
-                getCount: (l) => l >= 14 ? 0 : 2, 
+            FeatureGen.createSpellChoiceFeature({
+                id: "windbag",
+                name: "Windbag",
+                level: 3,
+                stateKey: "selectedWindbag",
+                milestones: [3, 6, 14],
+                getCount: (l) => l >= 14 ? 0 : 2,
                 getSlots: (level, subclass, state) => {
                     if (level >= 14) return [];
                     const schools = ["Wind", state.secondarySchool || "Fire"];
                     return schools.map(s => ({ type: 'utility', schools: [s], label: `${s} Utility` }));
                 },
-                desc: (l) => l >= 14 ? "You know all Utility Spells from the spell schools you know." : "Choose 1 Utility Spell from each spell school you know." 
+                desc: (l) => l >= 14 ? "You know all Utility Spells from the spell schools you know." : "Choose 1 Utility Spell from each spell school you know."
             })
         ];
 

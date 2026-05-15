@@ -366,8 +366,8 @@ class SpellManager {
                     selections.forEach(val => {
                         if (!val || val === "None") return;
                         if (UTILITY_SPELLS[val]) { // If selecting a whole school
-                            Object.entries(UTILITY_SPELLS[val]).forEach(([name, desc]) => {
-                                if (!spells.find(s => s.name === name)) spells.push({ name: desc, tier: "Utility", school: val });
+                            Object.entries(UTILITY_SPELLS[val]).forEach(([uName, uDesc]) => {
+                                if (!spells.find(s => s.name === uName)) spells.push({ name: uName, desc: uDesc, tier: "Utility", school: val });
                             });
                         } else { // If selecting a specific spell
                             for (const [sSch, list] of Object.entries(UTILITY_SPELLS)) {
@@ -515,6 +515,7 @@ class BaseClass {
         this.mechanicPanelExtension = config.mechanicPanelExtension || null;
         
         // Declarative Extensions (v2.2)
+        this.lvl20StatBonus = config.lvl20StatBonus || 0;
         this.optionExtensions = config.optionExtensions || {}; 
         this.grantedSpells = config.grantedSpells || [];      
         this.statModifiers = config.statModifiers || [];      

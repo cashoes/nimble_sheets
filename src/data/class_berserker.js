@@ -41,12 +41,10 @@ class BerserkerClass extends BaseClass {
                 furyText: (level, subclass, state, derived) => `d${derived.furyFaces}`
             },
             statModifiers: [
-                { id: "berserker_unarmored", stat: "armorBase", condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state), getMod: (stats) => 10 + stats.dex + stats.str },
                 { id: "eager_init", stat: "initAdv", condition: (l, s, state) => (state.selectedArsenal || []).includes("Eager for Battle") },
                 { id: "mighty_wounds", stat: "woundMax", value: 4, condition: (l, s, state) => (state.selectedArsenal || []).includes("Mighty Endurance") },
                 { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "RedMist" && l >= 15 && (state.activeConditions || []).includes('raging') }
             ],
-            resources: [],
             featuresData: BerserkerClass.FEATURES,
             optionsData: BerserkerClass.OPTIONS
         });

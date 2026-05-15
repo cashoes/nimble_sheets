@@ -81,10 +81,6 @@ class StormshifterClass extends BaseClass {
             extraSchoolsKeys: ["selectedStudy"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14, ["selectedStormcaller"]),
-            resources: [
-                createManaResource('wil'),
-                createSimpleResource('shift', 'Beastshift', (l, stats, state, sub, derived) => derived.shiftMax, { visible: false, reset: 'Safe Rest' })
-            ],
             featuresData: StormshifterClass.FEATURES,
             optionsData: StormshifterClass.OPTIONS
         });

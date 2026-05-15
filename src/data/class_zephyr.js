@@ -28,9 +28,9 @@ class ZephyrClass extends BaseClass {
             initialStats: { baseStr: 1, baseDex: 3, baseInt: -1, baseWil: 0 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { 
-                    value: "WayPain", 
-                    label: "Way of Pain", 
+                {
+                    value: "WayPain",
+                    label: "Way of Pain",
                     accent: "#7f1d1d",
                     config: {
                         statModifiers: [
@@ -53,7 +53,7 @@ class ZephyrClass extends BaseClass {
                 let acVal = isUnarmored ? (statsMap.dex + statsMap.str) : 0;
                 if (level >= 13) acVal *= 2;
                 builder.addStatDisplay(isUnarmored ? acVal : '--', 'Armor', 'Iron Defense', { borderRight: true });
-                
+
                 const rbBonus = level >= 5 ? level : 0;
                 const totalBonus = statsMap.str + rbBonus;
                 const notation = `1d4+${totalBonus}`;
@@ -64,26 +64,24 @@ class ZephyrClass extends BaseClass {
                 const statsMap = getStatsMap(state);
                 const max = statsMap.dex + (level >= 20 ? 1 : 0);
                 state.resourceValues.bursts = max;
-                
+
                 const uMax = level >= 17 ? 3 : (level >= 10 ? 2 : (level >= 4 ? 1 : 0));
                 if (state.resourceValues.unyielding === undefined) {
                     state.resourceValues.unyielding = uMax;
                 }
             },
             statModifiers: [
-                { id: "iron_defense", stat: "armorBase", condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state), getMod: (stats, state, level) => {
-                    let ac = stats.dex + stats.str;
-                    if (level >= 13) ac *= 2;
-                    return ac;
-                }},
+                {
+                    id: "iron_defense", stat: "armorBase", condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state), getMod: (stats, state, level) => {
+                        let ac = stats.dex + stats.str;
+                        if (level >= 13) ac *= 2;
+                        return ac;
+                    }
+                },
                 { id: "swift_feet_speed", stat: "speed", level: 2, value: 2, condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state) },
                 { id: "swift_feet_speed_2", stat: "speed", level: 9, value: 2, condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state) },
                 { id: "swift_feet_init", stat: "init", level: 2, getMod: (stats, state, level) => level, condition: (l, s, state) => CLASS_CONFIG.isUnarmored(state) },
                 { id: "windborne_actions", stat: "maxActions", level: 20, value: 1 }
-            ],
-            resources: [
-                createSimpleResource('bursts', 'Bursts', (l, stats) => stats.dex + (l >= 20 ? 1 : 0), { visible: false, reset: 'Encounter' }),
-                createSimpleResource('unyielding', 'Unyielding', (l, stats, state, sub, derived) => derived.unyieldingMax, { visible: false, reset: 'Encounter' })
             ],
             featuresData: ZephyrClass.FEATURES,
             optionsData: ZephyrClass.OPTIONS

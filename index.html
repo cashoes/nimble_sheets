@@ -146,8 +146,8 @@
          */
         async function fetchCore() {
             const engineModules = [
-                'rolls.js', 'features.js', 'ui.js', 'core.js', 
-                'eventBus.js', 'view.js', 'state.js', 'app.js'
+                'solid.js', 'rolls.js', 'features.js', 'ui.js', 'core.js', 
+                'eventBus.js', 'state.js', 'bridge.js', 'components.js', 'app.js'
             ];
 
             const [
@@ -192,14 +192,17 @@
             jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
 
             // Map engine parts (ordered by fetchCore)
-            const [rolls, features, ui, corePart, eventBus, view, state, app] = core.engineParts;
+            const [solid, rolls, features, ui, corePart, eventBus, state, bridge, components, app] = core.engineParts;
 
+            jsContent += `// --- SolidJS Runtime ---\n${solid}\n\n`;
             jsContent += `// --- Engine Helpers & Base ---\n${rolls}\n${features}\n${ui}\n${corePart}\n${eventBus}\n\n`;
             jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
-            jsContent += `// --- Engine Logic ---\n${view}\n${state}\n${app}\n\n`;
+            jsContent += `// --- Engine Logic ---\n${state}\n${bridge}\n${components}\n${app}\n\n`;
 
             const fullScript = `<script>\n${jsContent}<\/script>`;
-            return core.template.replace('<!-- INJECT_SCRIPTS -->', fullScript);
+            const parts = core.template.split('<!-- INJECT_SCRIPTS -->');
+            if (parts.length < 2) throw new Error("Template is missing injection placeholder.");
+            return parts[0] + fullScript + parts[1];
         }
 
         /**

@@ -28,9 +28,9 @@ class MageClass extends BaseClass {
             initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { 
-                    value: "Control", 
-                    label: "Invoker of Control", 
+                {
+                    value: "Control",
+                    label: "Invoker of Control",
                     accent: "#3b82f6",
                     config: {
                         includeCantripSpells: ["selectedAtAnyCost"],
@@ -61,23 +61,15 @@ class MageClass extends BaseClass {
                         }
                     }
                 },
-                { 
-                    value: "Chaos", 
-                    label: "Invoker of Chaos", 
+                {
+                    value: "Chaos",
+                    label: "Invoker of Chaos",
                     accent: "#f59e0b",
                     config: {
                         includeCantripSpells: ["selectedTempestMage"],
                         includeTieredSpells: ["selectedTempestMage"],
                         mechanicPanelExtension: (builder) => {
-                            builder.addHtml(`
-                                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                    <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold;">Force of Chaos</label>
-                                    <button class="roll-link" onclick="dispatchRoll('1d20', 'Invoke Chaos')" 
-                                            style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fff; font-family: 'Cinzel'; font-size: 0.8em; font-weight: bold; padding: 6px 12px; border-radius: 4px; cursor: pointer; text-transform: uppercase;">
-                                        Invoke Chaos
-                                    </button>
-                                </div>
-                            `, { flex: 1.2, align: 'center' });
+                            builder.addRollDisplay('1d20', 'Invoke Chaos', '1d20', 'Force of Chaos');
                         }
                     }
                 }
@@ -98,19 +90,16 @@ class MageClass extends BaseClass {
             },
             mechanicPanelExtension: (builder, level, state, derived) => {
                 if (level >= 5) {
-                    builder.addRollDisplay(derived.surgeNotation, 'Elemental Surge', derived.surgeDisplay, 'Regain on Init', { flex: 1 });
+                    builder.addRollDisplay(derived.surgeNotation, 'Elemental Surge', derived.surgeDisplay, 'Regain on Init');
                 }
             },
             spellSchools: ["Fire", "Ice", "Lightning"],
             extraSchoolsKeys: ["selectedMastery"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
-            includeUtilitySpells: { 
+            includeUtilitySpells: {
                 all: (l) => l >= 14 ? ["Fire", "Ice", "Lightning"] : false,
-                selectKey: "selectedMastery" 
+                selectKey: "selectedMastery"
             },
-            resources: [
-                createManaResource('int', 'Mana Pool')
-            ],
             featuresData: MageClass.FEATURES,
             optionsData: MageClass.OPTIONS
         });
@@ -152,12 +141,12 @@ class MageClass extends BaseClass {
 
         core[2].push({ id: "researcher", name: "Talented Researcher", desc: "Advantage on Arcana/Lore checks when you have access to books/study time." });
 
-        core[3].push({ 
-            id: "mastery", 
-            name: "Elemental Mastery", 
-            type: "dynamic_choice", 
-            collection: "masterySchools", 
-            stateKey: "selectedMastery", 
+        core[3].push({
+            id: "mastery",
+            name: "Elemental Mastery",
+            type: "dynamic_choice",
+            collection: "masterySchools",
+            stateKey: "selectedMastery",
             milestones: [3, 6, 14],
             getCount: (l) => l >= 14 ? 0 : (l >= 6 ? 2 : 1),
             desc: (level) => FeatureGen.createScalingList("Learn all Utility spells from one elemental school of your choice.", [
@@ -167,15 +156,15 @@ class MageClass extends BaseClass {
         });
 
         // Modular choices (Spellshaper)
-        core[4].push({ 
-            id: "shaping", 
-            name: "Spellshaper", 
-            type: "dynamic_choice", 
-            collection: "spellshapers", 
-            stateKey: "selectedShaping", 
-            milestones: [4, 9, 13], 
-            desc: "Choose modular Spellshaper upgrades.", 
-            getCount: FeatureGen.createStandardCount([4, 9, 13]) 
+        core[4].push({
+            id: "shaping",
+            name: "Spellshaper",
+            type: "dynamic_choice",
+            collection: "spellshapers",
+            stateKey: "selectedShaping",
+            milestones: [4, 9, 13],
+            desc: "Choose modular Spellshaper upgrades.",
+            getCount: FeatureGen.createStandardCount([4, 9, 13])
         });
 
         subclasses["Control"] = {

@@ -47,9 +47,6 @@ class HunterClass extends BaseClass {
             grantedSpells: [
                 { level: 1, spells: ["Hunter's Mark"] }
             ],
-            resources: [
-                createSimpleResource('tothCharges', 'Thrill of the Hunt', (level, stats) => stats.wil)
-            ],
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
                 builder.addRollDisplay('1d20', 'Quarry Hit', `+${level}`, `Adv OR +${level} Damage`, { type: 'attack', context: 'Hunter\'s Mark' });
             },

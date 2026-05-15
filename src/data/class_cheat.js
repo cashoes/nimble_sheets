@@ -44,7 +44,6 @@ class CheatClass extends BaseClass {
                 },
                 { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "SilentBlade" && l >= 11 }
             ],
-            resources: [],
             featuresData: CheatClass.FEATURES,
             optionsData: CheatClass.OPTIONS
         });

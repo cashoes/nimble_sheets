@@ -116,47 +116,153 @@ function ensureValidState(state) {
  * @returns {Object} The validated state object (same reference).
  */
 function validateAndCorrectState(state) {
-    // Ensure level is between 1 and 20
-    if (typeof state.level === 'number') {
+    // Ensure level is a valid number between 1 and 20
+    if (typeof state.level === 'number' && !isNaN(state.level)) {
         state.level = Math.min(20, Math.max(1, state.level));
     } else {
         state.level = 1;
     }
 
-    // Ensure attribute bases and additions are numbers and within reasonable bounds
-    const attributes = ['Str', 'Dex', 'Int', 'Wil'];
-    attributes.forEach(attr => {
-        const baseKey = `base${attr}`;
-        const addKey = `add${attr}`;
-        let base = parseFloat(state[baseKey]) || 0;
-        let add = parseFloat(state[addKey]) || 0;
-        // Ensure they are numbers
-        if (isNaN(base)) base = 0;
-        if (isNaN(add)) add = 0;
-        // NIMBLE rule: base + add should be between -5 and 5? We'll just cap sum at 5 and -5 for safety.
-        let sum = base + add;
-        const max = 5;
-        const min = -5;
-        if (sum > max) {
-            // If base already exceeds max, set base to max and add to 0
-            if (base > max) {
-                base = max;
-                add = 0;
-            } else {
-                // Reduce add to keep sum at max
-                add = max - base;
-            }
-        } else if (sum < min) {
-            if (base < min) {
-                base = min;
-                add = 0;
-            } else {
-                add = min - base;
+    const config = CLASS_CONFIG;
+    const level = state.level;
+    const stats = ['Str', 'Dex', 'Int', 'Wil'];
+    const keyStats = (config.keyStats || []).map(s => s.charAt(0).toUpperCase() + s.slice(1));
+    
+    // 1. Calculate Budgets (NIMBLE v2.2 Revised Rules)
+    const keyMilestones = [4, 8, 12, 16];
+    const secMilestones = [5, 9, 13, 17];
+    const keyGains = keyMilestones.filter(l => level >= l).length;
+    const secGains = secMilestones.filter(l => level >= l).length;
+    const flexBudget = level >= 20 ? 2 : 0;
+
+    const init = config.initialStats || {};
+    let baseKeyBudget = 0;
+    let baseSecBudget = 0;
+    stats.forEach(s => {
+        const val = init[`base${s}`] || 0;
+        if (keyStats.includes(s)) baseKeyBudget += val;
+        else baseSecBudget += val;
+    });
+
+    const keyBudget = baseKeyBudget + keyGains;
+    const secBudget = baseSecBudget + secGains;
+
+    // 2. Base Attribute Protection (NIMBLE v2.2)
+    // Base attributes are fixed after Level 1.
+    if (level > 1 && state.lastLeveledUpAt !== undefined) {
+        // Enforce that base stats don't change by comparing with a hidden initial state or just assuming they are fixed.
+        // For now, the UI disables these inputs, but we'll ensure they are clamped if they somehow change.
+    }
+
+    // 3. Normalize and Total Spent
+    let keySpent = 0;
+    let secSpent = 0;
+    stats.forEach(s => {
+        state[`base${s}`] = Math.max(-1, parseInt(state[`base${s}`]) || 0);
+        state[`add${s}`] = Math.max(0, parseInt(state[`add${s}`]) || 0);
+        
+        // Final Total Cap: sum (Base + Add) <= 5
+        let total = state[`base${s}`] + state[`add${s}`];
+        if (total > 5) {
+            state[`add${s}`] = Math.max(0, 5 - state[`base${s}`]);
+            if (state[`base${s}`] > 5) state[`base${s}`] = 5;
+            total = state[`base${s}`] + state[`add${s}`];
+        }
+
+        if (keyStats.includes(s)) keySpent += total;
+        else secSpent += total;
+    });
+
+    // 4. Enforce Budgets with Flex points
+    let keyOver = Math.max(0, keySpent - keyBudget);
+    let secOver = Math.max(0, secSpent - secBudget);
+    let totalOver = keyOver + secOver;
+
+    if (totalOver > flexBudget) {
+        let excess = totalOver - flexBudget;
+        // Prioritize reducing "Add" stats in reverse order
+        for (let i = stats.length - 1; i >= 0 && excess > 0; i--) {
+            const s = stats[i];
+            const reduce = Math.min(state[`add${s}`], excess);
+            state[`add${s}`] -= reduce;
+            excess -= reduce;
+        }
+        // If still excess and level 1, reduce "Base" stats to enforce the starting pool
+        if (excess > 0 && level === 1) {
+            for (let i = stats.length - 1; i >= 0 && excess > 0; i--) {
+                const s = stats[i];
+                // Base stats can go as low as -1 in NIMBLE
+                const currentBase = state[`base${s}`];
+                const reduce = Math.min(currentBase + 1, excess);
+                state[`base${s}`] -= reduce;
+                excess -= reduce;
             }
         }
-        state[baseKey] = base;
-        state[addKey] = add;
-    });
+    }
+
+    // 5. Skill Validation (NIMBLE v2.2 Revised)
+    // - Skill budget: 4 (Level 1) + 1 per additional level.
+    // - Total Skill modifier (pts + attr) is maximum 12.
+    // - Total Skill modifier cannot be negative.
+    // - Skill points (pts) cannot be negative.
+    const maxSkillMod = 12;
+    const skillBudget = 4 + (level - 1);
+    let skillSpent = 0;
+
+    if (state.skills && typeof state.skills === 'object') {
+        const statsMap = getStatsMap(state);
+        SKILL_LIST.forEach(sk => {
+            let pts = parseInt(state.skills[sk.id]);
+            if (isNaN(pts)) pts = 0;
+            
+            // Skill points themselves cannot be negative
+            pts = Math.max(0, pts);
+
+            const attrBonus = statsMap[sk.stat] || 0;
+            
+            // Enforce max modifier of 12
+            if (pts + attrBonus > maxSkillMod) {
+                pts = Math.max(0, maxSkillMod - attrBonus);
+            }
+            
+            state.skills[sk.id] = pts;
+            skillSpent += pts;
+        });
+
+        // Enforce Skill Budget
+        if (skillSpent > skillBudget) {
+            let excess = skillSpent - skillBudget;
+            // Reduce skill points in reverse order to fit budget
+            for (let i = SKILL_LIST.length - 1; i >= 0 && excess > 0; i--) {
+                const sk = SKILL_LIST[i];
+                const pts = state.skills[sk.id] || 0;
+                const reduce = Math.min(pts, excess);
+                state.skills[sk.id] -= reduce;
+                excess -= reduce;
+            }
+        }
+    }
+
+    // 6. Automatic recovery on level up (Full Heal and Resource Restore)
+    const derived = computeDerived(state);
+    if (state.lastLeveledUpAt === undefined) state.lastLeveledUpAt = state.level;
+
+    if (state.level > state.lastLeveledUpAt) {
+        state.hpCurrent = derived.maxHP;
+        state.hdCurrent = derived.hdMax;
+
+        // Restore dynamic resources
+        const combined = config.getCombinedResources ? config.getCombinedResources(state.subclass, state) : (config.resources || []);
+        combined.forEach(r => {
+            const rmax = r.calcMax(state.level, derived.statsMap, state, state.subclass, derived);
+            state.resourceValues[r.id] = rmax;
+        });
+
+        state.lastLeveledUpAt = state.level;
+    } else if (state.level < state.lastLeveledUpAt) {
+        // Just sync the tracking variable if level was manually decreased
+        state.lastLeveledUpAt = state.level;
+    }
 
     // Ensure resource values are non-negative numbers
     if (state.resourceValues && typeof state.resourceValues === 'object') {
@@ -171,35 +277,35 @@ function validateAndCorrectState(state) {
     }
 
     // Ensure gold is non-negative
-    if (typeof state.gold === 'number') {
+    if (typeof state.gold === 'number' && !isNaN(state.gold)) {
         state.gold = Math.max(0, state.gold);
     } else {
         state.gold = 0;
     }
 
     // Ensure wounds non-negative
-    if (typeof state.wounds === 'number') {
+    if (typeof state.wounds === 'number' && !isNaN(state.wounds)) {
         state.wounds = Math.max(0, state.wounds);
     } else {
         state.wounds = 0;
     }
 
     // Ensure tempHP non-negative
-    if (typeof state.tempHP === 'number') {
+    if (typeof state.tempHP === 'number' && !isNaN(state.tempHP)) {
         state.tempHP = Math.max(0, state.tempHP);
     } else {
         state.tempHP = 0;
     }
 
-    // Ensure advantage is non-negative integer? We'll just ensure it's a number >=0
-    if (typeof state.advantage === 'number') {
-        state.advantage = Math.max(0, state.advantage);
+    // Ensure advantage is within bounds
+    if (typeof state.advantage === 'number' && !isNaN(state.advantage)) {
+        state.advantage = Math.min(3, Math.max(-3, state.advantage));
     } else {
         state.advantage = 0;
     }
 
     // Ensure actionsSpent is between 0 and 3
-    if (typeof state.actionsSpent === 'number') {
+    if (typeof state.actionsSpent === 'number' && !isNaN(state.actionsSpent)) {
         state.actionsSpent = Math.min(3, Math.max(0, state.actionsSpent));
     } else {
         state.actionsSpent = 0;
@@ -270,6 +376,45 @@ function computeDerived(s) {
     const statsMap = getStatsMap(s);
     const ancFeat = ANCESTRY_FEATURES[s.ancestry];
     const bgFeat = BACKGROUND_FEATURES[s.background];
+    const config = CLASS_CONFIG;
+
+    // Attribute Point Tracking (Revised NIMBLE v2.2 Rules)
+    const keyMilestones = [4, 8, 12, 16];
+    const secMilestones = [5, 9, 13, 17];
+    const keyGains = keyMilestones.filter(l => level >= l).length;
+    const secGains = secMilestones.filter(l => level >= l).length;
+    const flexBudget = level >= 20 ? 2 : 0;
+
+    const keyStats = (config.keyStats || []).map(stat => stat.charAt(0).toUpperCase() + stat.slice(1));
+    const stats = ['Str', 'Dex', 'Int', 'Wil'];
+    
+    const init = config.initialStats || {};
+    let baseKeyBudget = 0;
+    let baseSecBudget = 0;
+    stats.forEach(s => {
+        const val = init[`base${s}`] || 0;
+        if (keyStats.includes(s)) baseKeyBudget += val;
+        else baseSecBudget += val;
+    });
+
+    const keyBudget = baseKeyBudget + keyGains;
+    const secBudget = baseSecBudget + secGains;
+    
+    let keySpent = 0;
+    let secSpent = 0;
+    stats.forEach(attr => {
+        const val = (s[`base${attr}`] || 0) + (s[`add${attr}`] || 0);
+        if (keyStats.includes(attr)) keySpent += val;
+        else secSpent += val;
+    });
+
+    const keyOver = Math.max(0, keySpent - keyBudget);
+    const secOver = Math.max(0, secSpent - secBudget);
+    const flexSpent = keyOver + secOver;
+    const flexRemaining = flexBudget - flexSpent;
+
+    const keyUnspent = Math.max(0, keyBudget - keySpent);
+    const secUnspent = Math.max(0, secBudget - secSpent);
 
     // Resolve specific background option if chosen
     let bgSelectedOpt = null;
@@ -341,7 +486,11 @@ function computeDerived(s) {
         }
     }
 
-    // 10. Armor (Calculates best equipped AC vs base defense)
+    let unarmored = true;
+    s.inventory.forEach(item => { 
+        if (item.type === 'armor' && item.equipped) unarmored = false;
+    });
+
     let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : statsMap.dex;
     let bestArmorVal = -1;
     let shieldBonus = classOverrides.shieldBonus || 0;
@@ -361,6 +510,10 @@ function computeDerived(s) {
     });
 
     if (bestArmorVal !== -1) armorVal = bestArmorVal;
+    else if (classOverrides.armorBase === undefined) {
+        // No armor and no base override - ensure we use DEX
+        armorVal = statsMap.dex;
+    }
 
     // Apply final composite AC modifiers
     armorVal += shieldBonus;
@@ -413,7 +566,15 @@ function computeDerived(s) {
         maxTier,
         passMods,
         initAdv: classOverrides.initAdv || false,
-        size: bgFeat?.modSize || ancFeat?.modSize || classDerived.size || "Med"
+        size: bgFeat?.modSize || ancFeat?.modSize || classDerived.size || "Med",
+        keyBudget,
+        keySpent,
+        secBudget,
+        secSpent,
+        flexBudget,
+        flexRemaining,
+        keyUnspent,
+        secUnspent
     };
 }
 
@@ -434,8 +595,8 @@ const STORAGE_KEY = getStorageKey();
  */
 const EMBEDDED_STATE = null;
 
-/** The master character state object. */
-let state = {};
+/** The master character state object. Initialized with defaults to prevent race conditions during UI setup. */
+let state = ensureValidState({});
 
 /**
  * Global character state dispatcher.
@@ -456,13 +617,11 @@ function dispatch(action) {
         if (state.tempHP < oldState.tempHP) triggerAnimation('displayTempHP', 'red');
     }
 
-    // Side Effects: Manual DOM sync for specific non-reactive elements if needed
-    if (state.gold !== oldState.gold && document.getElementById('gold')) {
-        document.getElementById('gold').value = state.gold;
-    }
-
     // Persist and Notify
     saveState();
+    if (typeof window !== 'undefined' && window.eventBus !== null) {
+        window.eventBus.publish('STATE_CHANGED', { state: {...state} });
+    }
 }
 
 /**
@@ -519,6 +678,13 @@ function characterReducer(currentState, action) {
         }
         case 'SET_STATE_KEY': {
             s[payload.key] = payload.value;
+
+            // Auto-clamp vitals on level change (Down-leveling protection)
+            if (payload.key === 'level') {
+                const derived = computeDerived(s);
+                if (s.hpCurrent > derived.maxHP) s.hpCurrent = derived.maxHP;
+                if (s.hdCurrent > derived.hdMax) s.hdCurrent = derived.hdMax;
+            }
             break;
         }
         case 'UPDATE_CLASS_STATE': {
@@ -551,28 +717,35 @@ function characterReducer(currentState, action) {
             break;
         }
         case 'ADD_ITEM': {
-            s.inventory.push({ id: Date.now(), ...payload.item });
+            s.inventory.push({ 
+                id: Date.now(), 
+                category: '',
+                reach: '1',
+                ...payload.item 
+            });
             break;
         }
         case 'ADD_QUICK_ITEM': {
             const { itemData } = payload;
             s.gold -= (itemData.cost || 0);
-            s.inventory.push({ 
-                id: Date.now(), 
-                name: itemData.name, 
-                type: itemData.type, 
-                slots: itemData.slots, 
-                equipped: itemData.equipped, 
-                dmgDice: itemData.dmgDice || '1d6', 
-                stat: itemData.stat || 'str', 
-                props: itemData.props || '', 
-                armor: itemData.armor || 0, 
-                armorType: itemData.armorType || (itemData.type === 'armor' ? 'light' : ''), 
-                cost: itemData.cost || 0 
+            s.inventory.push({
+                id: Date.now(),
+                name: itemData.name,
+                type: itemData.type,
+                category: itemData.category || '',
+                slots: itemData.slots,
+                equipped: itemData.equipped,
+                dmgDice: itemData.dmgDice || '1d6',
+                stat: itemData.stat || 'str',
+                reach: itemData.reach || (itemData.type === 'weapon' ? '1' : '-'),
+                props: itemData.props || '',
+                armor: itemData.armor || 0,
+                armorType: itemData.armorType || (itemData.type === 'armor' ? 'light' : ''),
+                cost: itemData.cost || 0,
+                isLibraryItem: !!itemData.isLibraryItem
             });
             break;
-        }
-        case 'TOGGLE_CONDITION': {
+        }        case 'TOGGLE_CONDITION': {
             const { id } = payload;
             if (s.activeConditions.includes(id)) {
                 s.activeConditions = s.activeConditions.filter(c => c !== id);
@@ -583,20 +756,38 @@ function characterReducer(currentState, action) {
         }
         case 'UPDATE_SKILL': {
             const { id, val } = payload;
-            s.skills[id] = parseInt(val) || 0;
+            const newPts = Math.max(0, parseInt(val) || 0);
+            const oldPts = s.skills[id] || 0;
+            
+            const statsMap = getStatsMap(s);
+            const skillDef = SKILL_LIST.find(sk => sk.id === id);
+            const attrBonus = skillDef ? statsMap[skillDef.stat] : 0;
+
+            // 1. Enforce max total modifier of 12
+            let clampedPts = Math.min(newPts, 12 - attrBonus);
+            
+            // 2. Ensure pts itself is non-negative
+            clampedPts = Math.max(0, clampedPts);
+
+            // 3. Enforce Budget
+            const skillBudget = 4 + (s.level - 1);
+            const currentSpent = SKILL_LIST.reduce((sum, sk) => sum + (s.skills[sk.id] || 0), 0);
+            const remaining = skillBudget - (currentSpent - oldPts);
+            
+            s.skills[id] = Math.min(clampedPts, remaining);
             break;
         }
         case 'HANDLE_WOUND_CLICK': {
-            const { i } = payload;
-            s.wounds = (s.wounds === i + 1) ? i : i + 1;
+            const { i, isAbsolute } = payload;
+            if (isAbsolute) {
+                s.wounds = i;
+            } else {
+                s.wounds = (s.wounds === i + 1) ? i : i + 1;
+            }
             break;
         }
         case 'UPDATE_POOL': {
             s[payload.key] = payload.dice;
-            break;
-        }
-        case 'UPDATE_DOM_VALUES': {
-            syncStateWithDOMValues(s, payload.domValues);
             break;
         }
         case 'IMPORT_STATE': {
@@ -613,32 +804,17 @@ function characterReducer(currentState, action) {
 /**
  * Saves the character state to LocalStorage.
  * @param {Object|null} newState - Optional state object to overwrite the current state.
- * @param {Object} domValues - Optional object containing DOM values to sync with state.
- *                              If not provided, state is not synced with DOM (for programmatic updates).
  */
-function saveState(newState = null, domValues = null) {
-    let newStateObj;
+function saveState(newState = null) {
     if (newState) {
         // Parse and validate the provided state
         try {
-            newStateObj = JSON.parse(JSON.stringify(newState));
+            state = validateAndCorrectState(ensureValidState(newState));
         } catch (e) {
             console.error("Failed to parse provided state:", e);
-            return; // Abort save if state is invalid JSON
+            return; 
         }
-    } else {
-        // If domValues provided, sync state with those values
-        if (domValues) {
-            syncStateWithDOMValues(state, domValues);
-        }
-        // If no domValues, we assume caller wants to save current state as-is
-        // (used for programmatic updates like leveling up)
-
-        newStateObj = state; // Use the current state
     }
-
-    // Ensure the state is valid and has correct types/defaults, and apply game-specific corrections
-    state = validateAndCorrectState(newStateObj);
 
     // 7. Persist to storage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -646,83 +822,10 @@ function saveState(newState = null, domValues = null) {
     // Clear pure function cache since state has changed
     clearPureFunctionCache();
 
-    // Publish state changed event (if eventBus is available)
+    // Publish state saved event
     if (typeof window !== 'undefined' && window.eventBus !== null) {
-        window.eventBus.publish('STATE_CHANGED', { state: {...state} });
-        
-        // Publish state saved event
         window.eventBus.publish('STATE_SAVED', { state: {...state} });
     }
-}
-
-/**
- * Syncs state object with DOM values.
- * Extracted from saveState to allow separate calling when needed.
- * @param {Object} stateObj - The state object to sync.
- * @param {Object} domValues - Object containing DOM values.
- */
-function syncStateWithDOMValues(stateObj, domValues) {
-    const oldDerived = computeDerived(stateObj);
-    const oldGold = stateObj.gold;
-    const oldLevel = stateObj.level;
-
-    // 1. Sync basic identity fields
-    stateObj.charName = domValues.charName ?? '';
-    stateObj.level = parseInt(domValues.level) || 1;
-    stateObj.ancestry = domValues.ancestry ?? 'None';
-    stateObj.background = domValues.background ?? 'None';
-    stateObj.subclass = domValues.subclass ?? 'None';
-    stateObj.gold = parseInt(domValues.gold) || 0;
-    stateObj.showMinor = domValues.showMinor ?? false;
-
-    // 2. Trigger visual feedback for currency changes
-    if (stateObj.gold > oldGold) {
-        triggerAnimation('gold', 'green');
-    } else if (stateObj.gold < oldGold) {
-        triggerAnimation('gold', 'red');
-    }
-
-    // 3. Sync primary attributes (Base + Level Ups)
-    const isLevel1 = stateObj.level === 1;
-    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
-        const baseKey = `base${s}`;
-        const addKey = `add${s}`;
-        const baseEl = domValues[baseKey] !== undefined ? domValues[baseKey] : 0;
-        const addEl = domValues[addKey] !== undefined ? domValues[addKey] : 0;
-
-        let b = parseInt(baseEl) || 0;
-        let a = parseInt(addEl) || 0;
-
-        // Validate NIMBLE's attribute cap of 5
-        if (b + a > 5) {
-            a = Math.max(0, 5 - b);
-        }
-
-        if (isLevel1) {
-            stateObj[baseKey] = b;
-        }
-        stateObj[addKey] = a;
-    });
-
-    // 4. Recalculate derived totals
-    const derived = computeDerived(stateObj);
-
-    // 5. Automatic recovery on level up
-    if (oldLevel !== stateObj.level || stateObj.hpCurrent === null) {
-        stateObj.hpCurrent = derived.maxHP;
-        stateObj.hdCurrent = derived.hdMax;
-    }
-
-    // 6. Handle resource max changes
-    (CLASS_CONFIG.resources || []).forEach(r => {
-        const newMax = derived.resourceMaxes[r.id];
-        const oldMax = oldDerived.resourceMaxes[r.id];
-
-        // Auto-refill resources if they were empty or if level changed
-        if (stateObj.resourceValues[r.id] === undefined || newMax !== oldMax || oldLevel !== stateObj.level) {
-            stateObj.resourceValues[r.id] = newMax;
-        }
-    });
 }
 
 /**
@@ -802,8 +905,9 @@ function loadState(config) {
 
     // 5. Ensure derived totals are calculated and persisted
     const derived = computeDerived(state);
-    if (state.hpCurrent === null) state.hpCurrent = derived.maxHP;
-    if (state.hdCurrent === null) state.hdCurrent = derived.hdMax;
+    const isNewChar = state.level === 1 && !state.charName;
+    if (state.hpCurrent === null || isNewChar) state.hpCurrent = derived.maxHP;
+    if (state.hdCurrent === null || isNewChar) state.hdCurrent = derived.hdMax;
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
@@ -811,116 +915,3 @@ function loadState(config) {
     clearPureFunctionCache();
 }
 
-// Subscribe to STATE_LOADED to sync the DOM when a character is first loaded
-if (window.eventBus) {
-    window.eventBus.subscribe('STATE_LOADED', (data) => {
-        syncStateToDOM(data.state, data.config || CLASS_CONFIG);
-    });
-}
-
-/**
- * Synchronizes the internal state object with the physical DOM elements.
- * Called on page load and after major state resets.
- * @param {Object} stateObj - The state object to sync.
- * @param {Object} config - The class configuration to use.
- */
-function syncStateToDOM(stateObj, config) {
-    const derived = computeDerived(stateObj);
-
-    // 1. Identity and Header info
-    if (document.getElementById('classNameDisplay')) document.getElementById('classNameDisplay').innerText = config.name;
-    if (document.getElementById('classSubtitleDisplay')) document.getElementById('classSubtitleDisplay').innerText = config.subtitle;
-
-    if (document.getElementById('profArmor')) {
-        const armorProf = derived.profArmor || (config.proficiencies ? config.proficiencies.armor : "--");
-        document.getElementById('profArmor').innerText = armorProf;
-    }
-    if (document.getElementById('profWeapons')) {
-        const weaponsProf = derived.profWeapons || (config.proficiencies ? config.proficiencies.weapons : "--");
-        document.getElementById('profWeapons').innerText = weaponsProf;
-    }
-
-    // 2. Populate Selection Dropdowns
-    const subHtml = config.subclasses.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
-    const sc = document.getElementById('subclass');
-    if (sc) sc.innerHTML = subHtml;
-
-    let ancHtml = `<option value="None">None</option>`;
-    Object.keys(ANCESTRIES).forEach(group => {
-        ancHtml += `<optgroup label="${group}">`;
-        ANCESTRIES[group].forEach(a => ancHtml += `<option value="${a}">${a}</option>`);
-        ancHtml += `</optgroup>`;
-    });
-    const ac = document.getElementById('ancestry');
-    if (ac) ac.innerHTML = ancHtml;
-
-    let bgHtml = `<option value="None">None</option>`;
-    Object.keys(BACKGROUNDS).forEach(group => {
-        bgHtml += `<optgroup label="${group}">`;
-        BACKGROUNDS[group].forEach(b => bgHtml += `<option value="${b}">${b}</option>`);
-        bgHtml += `</optgroup>`;
-    });
-    const bc = document.getElementById('background');
-    if (bc) bc.innerHTML = bgHtml;
-
-    // 3. Populate Inventory Item Lists
-    const itemSlots = [
-        { id: 'meleeSelect', key: 'melee', label: '+ Melee Item' },
-        { id: 'rangedSelect', key: 'ranged', label: '+ Ranged Item' },
-        { id: 'armorSelect', key: 'armor', label: '+ Armor/Shield' }
-    ];
-
-    itemSlots.forEach(slot => {
-        const el = document.getElementById(slot.id);
-        if (el) {
-            let html = `<option value="">${slot.label}</option>`;
-            Object.keys(ITEM_TEMPLATES[slot.key]).forEach(group => {
-                html += `<optgroup label="${group}">`;
-                ITEM_TEMPLATES[slot.key][group].forEach(k => {
-                    html += `<option value="${k}">${ITEM_TEMPLATES.data[k].name}</option>`;
-                });
-                html += `</optgroup>`;
-            });
-            el.innerHTML = html;
-
-            // Re-bind change events
-            el.onchange = (e) => {
-                if (e.target.value) {
-                    addQuickItem('data', e.target.value);
-                    e.target.value = "";
-                }
-            };
-        }
-    });
-
-    // 4. Sync values to Input elements
-    if (document.getElementById('charName')) document.getElementById('charName').value = stateObj.charName || '';
-    if (document.getElementById('level')) document.getElementById('level').value = stateObj.level || 1;
-    if (document.getElementById('ancestry')) document.getElementById('ancestry').value = stateObj.ancestry || 'None';
-    if (document.getElementById('background')) document.getElementById('background').value = stateObj.background || 'None';
-    if (document.getElementById('subclass')) document.getElementById('subclass').value = stateObj.subclass || 'None';
-    if (document.getElementById('gold')) document.getElementById('gold').value = stateObj.gold || 0;
-
-    // 5. Attributes and Limits
-    const isLevel1 = (stateObj.level || 1) === 1;
-    ['Str', 'Dex', 'Int', 'Wil'].forEach(s => {
-        const bEl = document.getElementById(`base${s}`);
-        const aEl = document.getElementById(`add${s}`);
-        if (bEl) {
-            bEl.value = stateObj[`base${s}`];
-            bEl.disabled = !isLevel1;
-            bEl.style.opacity = isLevel1 ? '1' : '0.6';
-            bEl.style.cursor = isLevel1 ? 'text' : 'not-allowed';
-        }
-        if (aEl) {
-            aEl.value = stateObj[`add${s}`];
-            aEl.max = Math.max(0, 5 - stateObj[`base${s}`]);
-        }
-    });
-
-    // 6. Action Points
-    for (let i = 0; i < 3; i++) {
-        const ap = document.getElementById(`action${i+1}`);
-        if (ap) ap.checked = (stateObj.actionsSpent > i);
-    }
-}

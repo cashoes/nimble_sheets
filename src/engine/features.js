@@ -322,7 +322,9 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
         lvlFeats.forEach(f => {
             if (f.replaces) {
                 const r = Array.isArray(f.replaces) ? f.replaces : [f.replaces];
-                r.forEach(id => replacedIds.add(id));
+                r.forEach(id => {
+                    replacedIds.add(id);
+                });
             }
         });
     });
@@ -333,7 +335,8 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
         if (featuresRef.core[i]) {
             featuresRef.core[i].forEach(feat => {
                 if (!replacedIds.has(feat.id)) {
-                    fHtml += defaultRenderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, "", optionsRef, configRef, i);
+                    const html = defaultRenderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, "", optionsRef, configRef, i);
+                    fHtml += html;
                 }
             });
         }
@@ -341,7 +344,8 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
         // Render Subclass Features for this level
         if (subData[i]) {
             subData[i].forEach(feat => {
-                fHtml += defaultRenderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, sCls, optionsRef, configRef, i);
+                const html = defaultRenderFeature(feat, level, subclass, state, derived, buildFeatureHtml, iStats, formatPips, renderSingleSpellCard, sCls, optionsRef, configRef, i);
+                fHtml += html;
             });
         }
     }

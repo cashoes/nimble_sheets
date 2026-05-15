@@ -57,27 +57,14 @@ class ShepherdClass extends BaseClass {
                     const tierVal = state.resourceValues?.spirit_tier || Math.max(1, maxT);
 
                     const notation = `${sCount}${sDie}+${bonus}`;
-                    const label = `Spirit (Tier ${tierVal})`;
-                    const spiritHtml = `
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <label class="roll-link" onclick="dispatchRoll('${notation}', 'Lifebinding Spirit')" 
-                                  style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer;">
-                                ${label}
-                            </label>
-                            <div class="roll-link" onclick="dispatchRoll('${notation}', 'Lifebinding Spirit')" 
-                                 style="font-size: 2.2em; color: #fff; font-weight: bold; font-family: 'Cinzel', serif; line-height: 1; cursor: pointer;">
-                                ${sCount}${sDie}+${bonus}
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px;">
-                                <div class="dark-incrementer">
-                                    <button onclick="adjRes('spirit_tier', Math.max(1, ${tierVal} - 1), ${maxT}, true)">-</button>
-                                    <input type="number" id="res_spirit_tier" value="${tierVal}" onchange="adjRes('spirit_tier', Math.max(1, Math.min(${maxT}, parseInt(this.value))), ${maxT}, true)">
-                                    <button onclick="adjRes('spirit_tier', Math.min(${maxT}, ${tierVal} + 1), ${maxT}, true)">+</button>
-                                </div>
-                                <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">TIER CAST</div>
-                            </div>                        </div>
-                    `;
-                    builder.addHtml(spiritHtml, { flex: 1.2 });
+                    builder.addRollWithResource(
+                        notation,
+                        `Spirit (Tier ${tierVal})`,
+                        `${sCount}${sDie}+${bonus}`,
+                        'spirit_tier',
+                        maxT,
+                        { subtext: 'TIER CAST' }
+                    );
                 }
             },
             grantedSpells: [
@@ -87,12 +74,6 @@ class ShepherdClass extends BaseClass {
             spellSchools: ["Radiant", "Necrotic"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 11, ["selectedTwilight"]),
-            resources: [
-                createManaResource('wil'),
-                createSimpleResource('spirit_tier', 'Spirit Tier', (l) => l >= 8 ? 4 : (l >= 6 ? 3 : (l >= 4 ? 2 : (l >= 2 ? 1 : 0))), { visible: false }),
-                createSimpleResource('searing', 'Searing Light', (l, stats) => stats.wil, { visible: false, reset: 'Safe Rest' }),
-                createSimpleResource('powerful_healer', 'Powerful Healer', (l, stats) => stats.wil, { visible: false, reset: 'Safe Rest' })
-            ],
             featuresData: ShepherdClass.FEATURES,
             optionsData: ShepherdClass.OPTIONS
         });

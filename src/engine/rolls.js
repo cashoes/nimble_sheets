@@ -168,7 +168,11 @@ function iStats(text, level, statsMap, context = {}) {
         return "";
     }
     
-    const keyValue = Math.max(...CLASS_CONFIG.keyStats.map(s => statsMap[s]));
+    // Safeguard for uninitialized CLASS_CONFIG or keyStats
+    const keyStats = (CLASS_CONFIG && CLASS_CONFIG.keyStats) ? CLASS_CONFIG.keyStats : [];
+    const keyValue = keyStats.length > 0 
+        ? Math.max(...keyStats.map(s => statsMap[s] || 0))
+        : 0;
 
     /**
      * Replaces stat tokens with their numerical values in notation strings.

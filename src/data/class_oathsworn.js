@@ -28,9 +28,9 @@ class OathswornClass extends BaseClass {
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
-                { 
-                    value: "Vengeance", 
-                    label: "Oath of Vengeance", 
+                {
+                    value: "Vengeance",
+                    label: "Oath of Vengeance",
                     accent: "#ef4444",
                     config: {
                         scalingStats: {
@@ -38,9 +38,9 @@ class OathswornClass extends BaseClass {
                         }
                     }
                 },
-                { 
-                    value: "Refuge", 
-                    label: "Oath of Refuge", 
+                {
+                    value: "Refuge",
+                    label: "Oath of Refuge",
                     accent: "#f8fafc",
                     config: {
                         statModifiers: [
@@ -48,9 +48,9 @@ class OathswornClass extends BaseClass {
                         ]
                     }
                 },
-                { 
-                    value: "Oathbreaker", 
-                    label: "Oathbreaker (Extra)", 
+                {
+                    value: "Oathbreaker",
+                    label: "Oathbreaker (Extra)",
                     accent: "#a855f7",
                     config: {
                         statModifiers: [
@@ -113,13 +113,6 @@ class OathswornClass extends BaseClass {
             spellSchools: ["Radiant"],
             spellProgression: [2, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig(false, ["selectedSpells"]),
-            resources: [
-                createSimpleResource('mana', 'Mana Pool', (level, stats) => {
-                    if (level < 2) return 0;
-                    return stats.wil + level;
-                }, { subtext: "(Max Tier Limit)" }),
-                createSimpleResource('loh', 'Lay on Hands', (level) => 5 * level)
-            ],
             customHeaderStats: [
                 { id: 'auraContainer', label: 'Aura', position: 'left', color: 'var(--class-accent)', isVisible: (level) => level >= 3, getValue: (derived) => `R ${derived.auraReach}` }
             ],
@@ -244,12 +237,12 @@ class OathswornClass extends BaseClass {
     getMechanicPanelHTML(level, subclass, state, derived) {
         const builder = new PanelBuilder();
         const totalJD = (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
-        
+
         // 1. Mana Pool
         if (level >= 2) {
-            builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana, { subtext: "(Max Tier Limit)" });
+            builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
         }
-        
+
         // 2. JD Dice Pool
         builder.addDicePool(state.judgmentDice || [], 'Judgment', `d${derived.jdFaces}`, 'judgmentDice', derived.jdCount, {
             rollAll: true,

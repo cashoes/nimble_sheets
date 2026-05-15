@@ -110,14 +110,6 @@ class CommanderClass extends BaseClass {
                 { id: "move_it_bonus", stat: "initAdv", condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") },
                 { id: "move_it_speed", stat: "speed", value: 3, condition: (l, s, state) => (state.selectedOrders || []).includes("Move it! Move it!") }
             ],
-            resources: [
-                createSimpleResource('combatDice', 'Combat Dice', (level, stats, state, subclass, derived) => {
-                    if (level < 4 || subclass === "Spellblade") return 0;
-                    let max = stats.str + (derived.bonusCombatDice || 0);
-                    (state.selectedTactics || []).forEach(t => { if (t === "+1 Combat Die") max += 1; });
-                    return max;
-                })
-            ],
             featuresData: CommanderClass.FEATURES,
             optionsData: CommanderClass.OPTIONS
         });

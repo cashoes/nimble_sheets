@@ -95,32 +95,14 @@ class ShadowmancerClass extends BaseClass {
                 builder.addRollDisplay(`${derived.blastDice}d12+${bTotalBonus}`, derived.blastName, bDisplay, `${derived.blastRange} | Necrotic`, { type: 'attack', school: 'Necrotic', stat: bStat });
 
                 const minionVal = state.resourceValues?.minions || 0;
-                const notation = derived.minionDmg;
-                const label = `Minions (${minionVal})`;
-                const rollContext = { isMinion: true };
-                const contextStr = `, ${JSON.stringify(rollContext).replace(/"/g, '&quot;')}`;
-                
-                const minionHtml = `
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                        <label class="roll-link" onclick="dispatchRoll('${notation}', '${label}'${contextStr})" 
-                              style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer;">
-                            ${label}
-                        </label>
-                        <div class="roll-link" onclick="dispatchRoll('${notation}', '${label}'${contextStr})" 
-                             style="font-size: 2.2em; color: #fff; font-weight: bold; font-family: 'Cinzel', serif; line-height: 1; cursor: pointer;">
-                            ${derived.minionDmg}
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px;">
-                            <div class="dark-incrementer">
-                                <button onclick="adjRes('minions', -1, ${derived.minionMax})">-</button>
-                                <input type="number" id="res_minions" value="${minionVal}" onchange="adjRes('minions', parseInt(this.value), ${derived.minionMax}, true)">
-                                <button onclick="adjRes('minions', 1, ${derived.minionMax})">+</button>
-                            </div>
-                            <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${derived.minionMax}</div>
-                        </div>
-                    </div>
-                `;
-                builder.addHtml(minionHtml, { flex: 1.2 });
+                builder.addRollWithResource(
+                    derived.minionDmg,
+                    `Minions (${minionVal})`,
+                    derived.minionDmg,
+                    'minions',
+                    derived.minionMax,
+                    { rollContext: { isMinion: true } }
+                );
             },
             statModifiers: [
                 { id: "fiendish_boon_stats", stat: "addDex", value: 1, condition: (l, s, state) => (state.selectedGreater || []).includes("Fiendish Boon") },
@@ -132,11 +114,6 @@ class ShadowmancerClass extends BaseClass {
             spellSchools: ["Necrotic"],
             spellProgression: [2, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14 ? ["Necrotic"] : false, ["selectedShadowmastery"]),
-            resources: [
-                createManaResource('int'),
-                createSimpleResource('minions', 'Minions', (l, stats, state, subclass, derived) => derived.minionMax, { visible: false }),
-                createSimpleResource('pilfer', 'Pilfer', (l, stats, state, subclass, derived) => derived.pilferMax, { visible: false })
-            ],
             featuresData: ShadowmancerClass.FEATURES,
             optionsData: ShadowmancerClass.OPTIONS
         });
@@ -271,4 +248,3 @@ class ShadowmancerClass extends BaseClass {
 }
 
 const CLASS_CONFIG = new ShadowmancerClass();
-FIG = new ShadowmancerClass();

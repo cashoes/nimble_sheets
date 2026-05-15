@@ -5,25 +5,6 @@
  */
 
 /**
- * Creates a debounced version of a function.
- * @param {Function} fn - Function to debounce.
- * @param {number} ms - Delay in milliseconds.
- * @returns {Function} Debounced function.
- */
-const debounce = (fn, ms) => {
-    let timeout;
-    return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => fn.apply(this, args), ms);
-    };
-};
-
-const debouncedSaveAndRender = debounce(() => {
-    const domValues = extractDOMValues();
-    dispatch({ type: 'UPDATE_DOM_VALUES', payload: { domValues } });
-}, 300);
-
-/**
  * Imports character data from a JSON file.
  * @param {HTMLInputElement} input - File input element.
  * @returns {void}
@@ -89,60 +70,44 @@ const saveAsHTML = () => {
 };
 
 /**
- * Extracts DOM values into an object for state synchronization.
- * @returns {Object} Object containing current DOM values.
- */
-function extractDOMValues() {
-    return {
-        charName: document.getElementById('charName')?.value ?? '',
-        level: document.getElementById('level')?.value ?? '',
-        ancestry: document.getElementById('ancestry')?.value ?? 'None',
-        background: document.getElementById('background')?.value ?? 'None',
-        subclass: document.getElementById('subclass')?.value ?? 'None',
-        gold: document.getElementById('gold')?.value ?? '',
-        showMinor: document.getElementById('toggleMinorFeatures')?.checked ?? false,
-        // Attribute bases and additions
-        baseStr: document.getElementById('baseStr')?.value ?? '',
-        addStr: document.getElementById('addStr')?.value ?? '',
-        baseDex: document.getElementById('baseDex')?.value ?? '',
-        addDex: document.getElementById('addDex')?.value ?? '',
-        baseInt: document.getElementById('baseInt')?.value ?? '',
-        addInt: document.getElementById('addInt')?.value ?? '',
-        baseWil: document.getElementById('baseWil')?.value ?? '',
-        addWil: document.getElementById('addWil')?.value ?? ''
-    };
-}
-
-/**
  * Global Initialization on DOM Load.
  */
 document.addEventListener('DOMContentLoaded', () => {
     try {
         loadState(CLASS_CONFIG);
+        
+        // Mount SolidJS Components
+        if (window.NIMBLE_COMPONENTS) {
+            const { 
+                Header, AttributesSection, HPTracker, WoundTracker, 
+                ProficiencyRow, DynamicResources, InventorySection, Skills, Conditions, CombatControls, 
+                FeaturesAndSpellsLayout, MechanicPanel, IdentityBar
+            } = window.NIMBLE_COMPONENTS;
+
+            const headerMount = document.getElementById('solid-header');
+            if (headerMount) Solid.render(() => Solid.createComponent(Header, {}), headerMount);
+
+            const identityMount = document.getElementById('topBarContainer');
+            if (identityMount) Solid.render(() => Solid.createComponent(IdentityBar, {}), identityMount);
+
+            const attrMount = document.getElementById('solid-attributes');
+            if (attrMount) Solid.render(() => Solid.createComponent(AttributesSection, {}), attrMount);
+
+            Solid.render(() => Solid.createComponent(HPTracker, {}), document.getElementById('solid-hp'));
+            Solid.render(() => Solid.createComponent(WoundTracker, {}), document.getElementById('solid-wounds'));
+            Solid.render(() => Solid.createComponent(ProficiencyRow, {}), document.getElementById('solid-proficiency'));
+            Solid.render(() => Solid.createComponent(DynamicResources, {}), document.getElementById('solid-resources'));
+            Solid.render(() => Solid.createComponent(InventorySection, {}), document.getElementById('solid-inventory-section'));
+            Solid.render(() => Solid.createComponent(Skills, {}), document.getElementById('solid-skills'));
+            Solid.render(() => Solid.createComponent(Conditions, {}), document.getElementById('solid-conditions'));
+            Solid.render(() => Solid.createComponent(CombatControls, {}), document.getElementById('combatControlsContainer'));
+            Solid.render(() => Solid.createComponent(FeaturesAndSpellsLayout, {}), document.getElementById('solid-features-spells'));
+            Solid.render(() => Solid.createComponent(MechanicPanel, {}), document.getElementById('classMechanicPanel'));
+        }
     } catch (err) {
         console.error("Failed to initialize app:", err);
         alert("An error occurred while loading the character sheet. See console for details.");
     }
-
-    // Bind change listeners to all sheet inputs
-    document.querySelectorAll('input, select').forEach(el => {
-        // 1. Instant update for discrete choices (Level, Dropdowns, Toggles)
-        if (el.id === 'level' || el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'radio') {
-            const instantUpdate = () => {
-                const domValues = extractDOMValues();
-                dispatch({ type: 'UPDATE_DOM_VALUES', payload: { domValues } });
-            };
-            el.addEventListener('input', instantUpdate);
-            el.addEventListener('change', instantUpdate);
-        } else {
-            // 2. Debounced update for text fields to maintain performance while typing
-            el.addEventListener('change', () => {
-                const domValues = extractDOMValues();
-                dispatch({ type: 'UPDATE_DOM_VALUES', payload: { domValues } });
-            });
-            el.addEventListener('input', debouncedSaveAndRender);
-        }
-    });
 });
 
 /**
@@ -171,7 +136,8 @@ window.addEventListener('wheel', (e) => {
             
             let newVal = Math.min(max, Math.max(min, val)); 
             e.target.value = newVal; 
-            e.target.dispatchEvent(new Event('change')); 
+            e.target.dispatchEvent(new Event('input', { bubbles: true })); 
+            e.target.dispatchEvent(new Event('change', { bubbles: true })); 
         } 
     } 
 }, { passive: false });
