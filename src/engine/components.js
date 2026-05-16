@@ -206,7 +206,7 @@ function AttributeCard(props) {
     const getNotation = () => `1d20+${statVal()}`;
     const notation = getNotation;
     const rollLabel = statLabel.toUpperCase() + " Save";
-    const baseAdv = config.saves.adv === statKey ? 1 : 0;
+    const baseAdv = config.saves.adv === statKey ? 1 : (config.saves.dis === statKey ? -1 : 0);
     const handleRoll = () => dispatchRoll(notation(), rollLabel, { inherentAdv: baseAdv });
 
     const cardId = 'statCard_' + statKey;
@@ -317,6 +317,7 @@ function HPTracker() {
     const hdVal = () => s().hdCurrent ?? d().hdMax;
     const hdMaxVal = () => d().hdMax;
     const hdFace = () => d().hdFace;
+    const hdNot = () => d().hdNotation;
 
     const hpDown = () => adjHP(-1);
     const hpUp = () => adjHP(1);
@@ -330,9 +331,18 @@ function HPTracker() {
     const hdUp = () => adjHD(1);
     const hdSet = (e) => adjHD(parseInt(e.target.value), true);
 
+    const rollHD = () => {
+        if (hdVal() > 0) {
+            adjHD(-1);
+            dispatchRoll(hdNot(), 'Hit Die Recovery', { type: 'rest' });
+        } else {
+            alert("No Hit Dice remaining!");
+        }
+    };
+
     return html`
         <div class="res-row" style="align-items: stretch; margin-bottom: 12px;">
-            <div style="display: flex; flex: 1; justify-content: space-between; align-items: center; padding-right: 15px; border-right: 1px dashed rgba(255,255,255,0.15);">
+            <div style="display: flex; flex-1; justify-content: space-between; align-items: center; padding-right: 15px; border-right: 1px dashed rgba(255,255,255,0.15);">
                 <label style="color: var(--class-accent);">Hit Points</label>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <div class="res-val dark-incrementer">
@@ -354,7 +364,7 @@ function HPTracker() {
         </div>
 
         <div class="res-row">
-            <label id="hitDiceLabel">Hit Dice (d${hdFace})</label>
+            <label id="hitDiceLabel" class="roll-link" onclick=${rollHD}>Hit Dice (d${hdFace})</label>
             <div style="display: flex; align-items: center; gap: 8px;">
                 <div class="res-val dark-incrementer">
                     <button onclick=${hdDown}>-</button>
@@ -797,7 +807,15 @@ function Conditions() {
             const ctype = condition.type;
             const cname = condition.name;
             const cdesc = condition.desc;
-            const active = () => cid === 'bloodied' ? d().isBloodied : s().activeConditions.includes(cid);
+            
+            // Auto-activate certain conditions based on vitals
+            const active = () => {
+                if (cid === 'bloodied') return d().isBloodied;
+                if (cid === 'dying') return (s().hpCurrent ?? d().maxHP) === 0;
+                if (cid === 'wounded') return (s().wounds || 0) > 0;
+                return s().activeConditions.includes(cid);
+            };
+
             const css = () => `condition-btn ${ctype} ${active() ? 'active' : ''}`;
             const click = () => toggleCondition(cid);
             return html`
@@ -1598,6 +1616,53 @@ function ProficiencyRow() {
     `;
 }
 
+/**
+ * Subtle Debug Readout for OBR Roll Results
+ */
+function RollResultReadout() {
+    const data = lastRollResult;
+    
+    const getSummary = () => {
+        const d = data();
+        if (!d || !d.result) return null;
+        
+        // Extract label from notation if possible: "1d20+2 [WIL Save]" -> "WIL Save"
+        const notation = d.result.diceNotation || "";
+        const labelMatch = notation.match(/\[(.*?)\]/);
+        const label = labelMatch ? labelMatch[1] : "Roll";
+        
+        return {
+            label,
+            total: d.result.totalValue,
+            summary: d.result.rollSummary
+        };
+    };
+
+    const info = getSummary;
+    
+    return html`
+        <span style=${() => `
+            display: ${data() ? 'inline-flex' : 'none'};
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.95em;
+            opacity: 0.8;
+            animation: fadeIn 0.3s ease;
+        `}>
+            <span>|</span>
+            <span style="font-weight: bold; color: var(--gold-light);">${() => info()?.label}: ${() => info()?.total}</span>
+            <span style="font-size: 0.9em; font-style: italic; opacity: 0.6;">(${() => info()?.summary})</span>
+            <span onclick=${() => setLastRollResult(null)} 
+                    style="cursor: pointer; font-size: 1.2em; line-height: 1; padding: 0 4px; transition: 0.2s;"
+                    onmouseover=${(e) => e.target.style.color = '#fff'}
+                    onmouseout=${(e) => e.target.style.color = 'var(--text-muted)'}>
+                ×
+            </span>
+        </span>
+    `;
+}
+
 window.NIMBLE_COMPONENTS = {
     Header,
     IdentityBar,
@@ -1612,5 +1677,6 @@ window.NIMBLE_COMPONENTS = {
     ActionPip,
     Features,
     FeaturesAndSpellsLayout,
-    MechanicPanel
+    MechanicPanel,
+    RollResultReadout
 };

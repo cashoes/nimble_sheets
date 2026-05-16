@@ -76,6 +76,19 @@
                 else pokeDicePlus();
             }, 2000);
 
+            // 3. Listen for Roll Results from Dice+
+            // Per Dice+ API, results are broadcast to "{source}/roll-result"
+            OBR.broadcast.onMessage("nimble-bridge/roll-result", (delivery) => {
+                const result = delivery.data;
+                console.log("NIMBLE Bridge: Roll result received from Dice+:", result);
+                
+                // Forward the result back to the parent OBR tab content script
+                window.parent.postMessage({
+                    type: "NIMBLE_ROLL_RESULT",
+                    result: result
+                }, "*");
+            });
+
             let lastRollTime = 0;
 
             window.addEventListener("message", (event) => {

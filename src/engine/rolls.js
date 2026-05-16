@@ -356,7 +356,9 @@ function iStats(text, level, statsMap, context = {}) {
 
     // Pass 0: Handle Inline Usage Tokens [[uKey]] or [[uKey:idx]] (v2.4.0)
     let processed = text.replace(/\[\[u([a-zA-Z0-9_]+)(?::(\d+))?\]\]/g, (match, key, idx) => {
-        const val = state[key] || 0;
+        // Use the reactive state signal if available to ensure UI updates
+        const currentState = (typeof window !== 'undefined' && window.charState) ? window.charState() : state;
+        const val = currentState[key] || 0;
         const index = idx ? parseInt(idx) : 0;
         const isChecked = val > index;
         return `<input type="checkbox" class="pip pip-inline" ${isChecked ? 'checked' : ''} onclick="toggleBgPip('${key}', ${index})" title="Use ${index+1}">`;

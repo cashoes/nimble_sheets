@@ -23,3 +23,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 });
+
+// Listen for results coming back FROM the relay iframe
+window.addEventListener("message", (event) => {
+    if (event.data?.type === "NIMBLE_ROLL_RESULT") {
+        console.log("NIMBLE Bridge: Forwarding roll result to background script");
+        if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
+            chrome.runtime.sendMessage({
+                type: "NIMBLE_ROLL_RESULT",
+                result: event.data.result
+            });
+        }
+    }
+});

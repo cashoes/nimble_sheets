@@ -12,7 +12,7 @@ class ShadowmancerClass extends BaseClass {
             name: "Shadowmancer",
             subtitle: "Dark mystic who commands spirits & shadows",
             keyStats: ['int', 'dex'],
-            saves: { adv: 'int', dis: 'str' },
+            saves: { adv: 'int', dis: 'wil' },
             proficiencies: { armor: "Cloth Armor", weapons: "Blades, Staves, Wands" },
             baseHp: 13,
             hpPerLevel: 6,

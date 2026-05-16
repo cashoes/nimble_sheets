@@ -70,6 +70,15 @@ const saveAsHTML = () => {
 };
 
 /**
+ * Full character reset (Safe Rest).
+ */
+const safeRest = () => {
+    if (confirm("Perform a Safe Rest? This refills HP, Hit Dice, and all class resources.")) {
+        dispatch({ type: 'REST_CHARACTER' });
+    }
+};
+
+/**
  * Global Initialization on DOM Load.
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -81,8 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const {
                 Header, AttributesSection, HPTracker, WoundTracker,
                 ProficiencyRow, DynamicResources, InventorySection, Skills, Conditions, CombatControls,
-                FeaturesAndSpellsLayout, MechanicPanel, IdentityBar
+                FeaturesAndSpellsLayout, MechanicPanel, IdentityBar, RollResultReadout
             } = window.NIMBLE_COMPONENTS;
+
+            const debugMount = document.getElementById('solid-debug-roll');
+            if (debugMount) Solid.render(() => Solid.createComponent(RollResultReadout, {}), debugMount);
 
             const headerMount = document.getElementById('solid-header');
             if (headerMount) Solid.render(() => Solid.createComponent(Header, {}), headerMount);

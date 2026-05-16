@@ -15,4 +15,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     });
   }
+
+  if (message.type === "NIMBLE_ROLL_RESULT") {
+    // Find tracker tabs and forward the result
+    // We query for all tabs and filter by title/filename since trackers are local files
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        if (tab.title && tab.title.includes("NIMBLE")) {
+          chrome.tabs.sendMessage(tab.id, {
+            type: "FORWARD_NIMBLE_RESULT",
+            result: message.result
+          }, () => {
+              if (chrome.runtime.lastError) {
+                  // Ignore
+              }
+          });
+        }
+      });
+    });
+  }
 });

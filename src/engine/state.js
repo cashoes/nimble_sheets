@@ -509,10 +509,15 @@ function computeDerived(s) {
     // 3. Max Hit Dice (Level + racial/background bonuses)
     let maxHD = level + (ancFeat?.modHD || 0) + (bgFeat?.modHD || 0) + (bgSelectedOpt?.modHD || 0);
 
+    const strMod = statsMap.str;
+    const hdNotation = `1d${hdFace}${strMod >= 0 ? '+' : ''}${strMod}`;
+
     // 4. Base Stats & Overrides from Class logic
     const classDerived = CLASS_CONFIG.getDerivedStats ? CLASS_CONFIG.getDerivedStats(level, s.subclass, s) : {};
     const classOverrides = CLASS_CONFIG.getStatOverrides ? CLASS_CONFIG.getStatOverrides(level, s.subclass, s, statsMap, maxHP) : {};
     const isBloodied = CLASS_CONFIG.isBloodied(s, maxHP);
+    const isDying = (s.hpCurrent ?? maxHP) === 0;
+    const isWounded = (s.wounds || 0) > 0;
 
     // 5. Initiative (DEX + modifiers)
     let initiative = statsMap.dex + (classOverrides.init || 0) + (ancFeat?.modInit || 0) + (bgFeat?.modInit || 0) + (bgSelectedOpt?.modInit || 0);
@@ -527,7 +532,14 @@ function computeDerived(s) {
     // 8. Actions (Standard 3, modified by Class and Conditions)
     const potentialActions = 3 + (classOverrides.maxActions || 0);
     let maxActions = potentialActions;
-    s.activeConditions.forEach(cId => {
+    
+    // Auto-calculate effective conditions for mechanics
+    const effectiveConditions = [...(s.activeConditions || [])];
+    if (isBloodied && !effectiveConditions.includes('bloodied')) effectiveConditions.push('bloodied');
+    if (isDying && !effectiveConditions.includes('dying')) effectiveConditions.push('dying');
+    if (isWounded && !effectiveConditions.includes('wounded')) effectiveConditions.push('wounded');
+
+    effectiveConditions.forEach(cId => {
         const c = CONDITIONS_LIST.find(cl => cl.id === cId);
         if (c) {
             if (c.modSpeedMult !== undefined) {
@@ -620,6 +632,7 @@ function computeDerived(s) {
         potentialActions,
         resourceMaxes,
         maxTier,
+        hdNotation,
         passMods,
         initAdv: classOverrides.initAdv || false,
         size: bgFeat?.modSize || ancFeat?.modSize || classDerived.size || "Med",
@@ -877,6 +890,53 @@ function characterReducer(currentState, action) {
             return validateAndCorrectState(ensureValidState(payload.newState));
         }
         case 'SYNC_STATE': {
+            return validateAndCorrectState(s);
+        }
+        case 'REST_CHARACTER': {
+            // 1. Comprehensive Reset of Toggles and Pips
+            // We reset anything that isn't core identity, base stats, or vitals
+            const protectedKeys = ['version', 'charName', 'level', 'ancestry', 'background', 'subclass', 'gold', 'inventory', 'skills', 'activeConditions', 'resourceValues', 'spellUpcasts', 'bgSpell', 'showMinor', 'lastLeveledUpAt', 'hpCurrent', 'hdCurrent'];
+            
+            Object.keys(s).forEach(key => {
+                if (protectedKeys.includes(key)) return;
+                if (key.startsWith('base') || key.startsWith('add')) return;
+
+                // Reset Booms and choice strings
+                if (typeof s[key] === 'string') {
+                    if (s[key] === 'BOOM') s[key] = 'OFF';
+                }
+                // Reset numeric usage pips
+                else if (typeof s[key] === 'number') {
+                    s[key] = 0;
+                }
+            });
+
+            // 2. Vitals Reset (Calculated based on the clean state)
+            const dStat = computeDerived(s);
+            s.hpCurrent = dStat.maxHP;
+            s.hdCurrent = dStat.hdMax;
+            s.tempHP = 0;
+            s.wounds = 0;
+            s.activeConditions = []; // Clear all conditions on Safe Rest
+            s.actionsSpent = 0;
+            s.advantage = 0;
+            s.furyDice = [];
+            s.judgmentDice = [];
+            s.greedyResult = '';
+            s.greedyBonus = 'OFF';
+            s.freeCast = 'OFF';
+            
+            // 3. Refill resources
+            Object.keys(dStat.resourceMaxes).forEach(id => {
+                // Exception: Spellblade mana is gained on Initiative only
+                const isSpellbladeMana = id === 'mana' && CLASS_CONFIG.name === 'Commander' && s.subclass === 'Spellblade';
+                if (!isSpellbladeMana) {
+                    s.resourceValues[id] = dStat.resourceMaxes[id];
+                } else {
+                    s.resourceValues[id] = 0; // Clear it on safe rest so it can be gained fresh on init
+                }
+            });
+            
             return validateAndCorrectState(s);
         }
         default:
