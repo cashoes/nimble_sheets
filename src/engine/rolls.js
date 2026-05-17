@@ -92,12 +92,22 @@ function dispatchRoll(notation, label, options = {}) {
         let count = parseInt(dieMatch[1] || "1");
         let faces = dieMatch[2];
         let rest = dieMatch[3];
-        let diePart = (totalAdv > 0) ? `${count + totalAdv}d${faces}kh${count}` : (totalAdv < 0) ? `${count + Math.abs(totalAdv)}d${faces}kl${count}` : `${count}d${faces}`;
         
-        if (!isCheckOrSave) {
-            diePart += '!!';
+        if (isCheckOrSave) {
+            // Standard Advantage/Disadvantage for checks and saves
+            let diePart = (totalAdv > 0) ? `${count + totalAdv}d${faces}kh${count}` : (totalAdv < 0) ? `${count + Math.abs(totalAdv)}d${faces}kl${count}` : `${count}d${faces}`;
+            finalNotation = diePart + rest;
+        } else {
+            // NIMBLE Combat Logic: Decompose into Primary + Secondary
+            // Advantage/Disadvantage applies ONLY to the Primary die
+            let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}d${faces}kl1` : `1d${faces}`;
+            
+            // Primary die is the only one that explodes (!) and is named {primary}
+            primaryPart += `!{primary}`;
+            
+            let secondaryPart = (count > 1) ? ` + ${count - 1}d${faces}` : "";
+            finalNotation = primaryPart + secondaryPart + rest;
         }
-        finalNotation = diePart + rest;
     }
 
     const tableMatch = finalNotation.match(/^t(\d+)(.*)$/i);
@@ -122,7 +132,7 @@ function dispatchRoll(notation, label, options = {}) {
 }
 
 /**
- * Analyzes OBR roll results and triggers character automation (Natural 20s).
+ * Analyzes OBR roll results and triggers character automation.
  * @param {Object} data - Result data from OBR Dice+.
  */
 function handleRollResult(data) {
@@ -135,32 +145,78 @@ function handleRollResult(data) {
 
     const res = data.result;
     const notation = res.diceNotation || "";
-    const isD20 = notation.includes('d20');
-
-    // 2. Detect Natural 20 (Crit)
-    // format is usually "[20]" within the summary
     const summary = res.rollSummary || "";
-    const isCrit = summary.includes('[20]');
-
-    if (isD20 && isCrit) {
-        const char = CLASS_CONFIG.name;
-        const s = charState();
-        const sub = s.subclass;
-
-        // Automation A: Songweaver Inspiration Recharge
-        if (char === 'Songweaver') {
-            const derived = charDerived();
-            const max = derived.resourceMaxes['inspiration'] || 0;
-            dispatch({ type: 'ADJ_RES', payload: { id: 'inspiration', amount: 1, max } });
-            dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! +1 Inspiration recharged." } });
+    
+    // Detect if this was a NIMBLE Primary Die roll
+    const isPrimaryRoll = notation.includes('{primary}');
+    
+    if (isPrimaryRoll) {
+        // NIMBLE Crit: Primary die explodes (!)
+        const isCrit = summary.includes('!');
+        
+        // NIMBLE Miss: Primary die (after KH/KL) is a 1
+        let isMiss = false;
+        // Dice+ summary example: "([6, 2]kh1!) + [2, 3]" or "[1] + [2, 3]"
+        const firstGroupMatch = summary.match(/^[^\[]*\[(.*?)\](kh|kl|dh|dl)?(\d*)?/);
+        if (firstGroupMatch) {
+            const vals = firstGroupMatch[1].split(',').map(v => parseInt(v.trim()));
+            const op = firstGroupMatch[2];
+            const k = parseInt(firstGroupMatch[3] || "1");
+            
+            if (op) {
+                const sorted = [...vals].sort((a,b) => b-a);
+                const kept = (op === 'kh') ? sorted.slice(0, k) : sorted.slice(-k);
+                if (Math.max(...kept) === 1) isMiss = true;
+            } else {
+                if (vals[0] === 1) isMiss = true;
+            }
         }
 
-        // Automation B: Commander Spellblade Mana Recharge
-        if (char === 'Commander' && sub === 'Spellblade') {
-            const derived = charDerived();
-            const max = derived.resourceMaxes['mana'] || 0;
-            dispatch({ type: 'ADJ_RES', payload: { id: 'mana', amount: 1, max } });
-            dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! +1 Mana recharged." } });
+        const char = CLASS_CONFIG.name;
+        const s = charState();
+        const d = charDerived();
+        const sub = s.subclass;
+
+        if (isCrit) {
+            // Automation A: Berserker Red Mist Blood Frenzy (L3+)
+            // Maximizes one fury die (1/turn)
+            if (char === 'Berserker' && sub === 'RedMist' && s.level >= 3 && (s.activeConditions || []).includes('raging')) {
+                const dice = [...(s.furyDice || [])];
+                if (dice.length > 0) {
+                     const faces = d.furyFaces || 4;
+                     const idx = dice.findIndex(f => f.total < faces);
+                     if (idx !== -1) {
+                         dice[idx] = { ...dice[idx], total: faces };
+                         dispatch({ type: 'UPDATE_POOL', payload: { key: 'furyDice', dice } });
+                         dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Blood Frenzy maximized a Fury Die." } });
+                     }
+                }
+            }
+
+            // Reminder A: Shadowmancer Hungering Shadows
+            if (char === 'Shadowmancer' && (s.selectedGreater || []).includes("Hungering Shadows")) {
+                 dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Next tiered spell costs 0 Pilfered Power." } });
+            }
+        }
+
+        if (isMiss) {
+            // Automation B: Berserker Mountainheart Titan's Fury (L11+)
+            if (char === 'Berserker' && sub === 'Mountainheart' && s.level >= 11) {
+                if (!(s.activeConditions || []).includes('raging')) {
+                    dispatch({ type: 'TOGGLE_CONDITION', payload: { id: 'raging' } });
+                    dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Titan's Fury triggered Rage." } });
+                }
+            }
+
+            // Reminder B: Commander Inerrant Strike
+            if (char === 'Commander' && (s.selectedTactics || []).includes("Inerrant Strike")) {
+                 dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Inerrant Strike: Reroll, +1 Primary Die, +Combat Die dmg." } });
+            }
+
+            // Reminder C: Cheat Feinting Attack
+            if (char === 'Cheat' && (s.selectedUnderhanded || []).includes("Feinting Attack")) {
+                 dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Feinting Attack: If 2nd miss this round, change primary die." } });
+            }
         }
     }
 }
