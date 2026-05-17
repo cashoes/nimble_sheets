@@ -1678,7 +1678,7 @@ function LogFeed() {
     return html`
         <style>
             @keyframes nimble-ticker-scroll {
-                0% { transform: translateX(100%); }
+                0% { transform: translateX(620px); }
                 100% { transform: translateX(-100%); }
             }
             .action-ticker-container:hover .dismiss-icon { opacity: 1; }
@@ -1689,27 +1689,28 @@ function LogFeed() {
              style=${() => `
             display: ${visibleMsg() ? 'flex' : 'none'};
             align-items: center;
-            width: 100%;
-            height: 30px;
+            width: 600px;
+            height: 24px;
             overflow: hidden;
-            font-size: 1em;
+            font-size: 0.9em;
             font-family: 'Cinzel', serif;
             font-weight: bold;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
             cursor: pointer;
             white-space: nowrap;
             position: relative;
-            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.1), transparent);
-            border-bottom: 1px solid rgba(232, 184, 75, 0.2);
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 0 10px;
         `}>
-            <div style="animation: nimble-ticker-scroll 15s linear infinite; position: absolute; display: flex; align-items: center; gap: 30px; min-width: 100%;">
+            <div style="animation: nimble-ticker-scroll 12s linear infinite; position: absolute; display: flex; align-items: center; gap: 30px; min-width: 100%;">
                 <span style="display: flex; align-items: center; gap: 15px;">
-                    <span style="color: var(--gold-light); letter-spacing: 1px;">${() => visibleMsg()?.roll}</span>
-                    ${() => visibleMsg()?.log && visibleMsg()?.roll ? html`<span style="color: var(--class-accent); font-weight: 900; opacity: 0.6;">::</span>` : ''}
+                    <span style="color: var(--gold-light); letter-spacing: 0.5px;">${() => visibleMsg()?.roll}</span>
+                    ${() => visibleMsg()?.log && visibleMsg()?.roll ? html`<span style="color: var(--gold-light); font-weight: 900; opacity: 0.6;">::</span>` : ''}
                     <span style="color: #fff; font-style: italic; letter-spacing: 0.5px;">${() => visibleMsg()?.log}</span>
                 </span>
             </div>
-            <div class="dismiss-icon" style="position: absolute; right: 12px; opacity: 0; transition: 0.3s; color: var(--gold-light); font-size: 1.6em; font-weight: bold; text-shadow: 0 0 5px #000;">×</div>
+            <div class="dismiss-icon" style="position: absolute; right: 12px; opacity: 0; transition: 0.3s; color: var(--gold-light); font-size: 1.4em; font-weight: bold; text-shadow: 0 0 5px #000;">×</div>
         </div>
     `;
 }
