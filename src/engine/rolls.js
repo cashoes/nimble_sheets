@@ -122,13 +122,13 @@ function dispatchRoll(notation, label, options = {}) {
     console.log(`🎲 NIMBLE Roll: [${label}] => ${finalNotation}`, { options, autoMod });
     
     // Add label and context directly to notation using bracket syntax [label]
-    // This is the most reliable way to ensure labels appear in Dice+ logs
+    // Moving this to the FRONT (Label-First) as it is the most reliable Dice+ format
     let labeledNotation = finalNotation;
     if (label) {
         const cleanLabel = label.replace(/[\[\]]/g, '');
         const weaponType = options.metadata?.weaponType;
         const tag = weaponType ? ` (${weaponType})` : '';
-        labeledNotation += ` [${cleanLabel}${tag}]`;
+        labeledNotation = `[${cleanLabel}${tag}] ${finalNotation}`;
     }
 
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", {
@@ -173,13 +173,12 @@ function handleRollResult(data) {
         const d = charDerived();
         const sub = s.subclass;
 
-        // Extract context from notation tags: e.g. "1d8! [Dagger (melee)]"
+        // Extract context from notation tags: e.g. "[Dagger (melee)] 1d4!"
         const isMelee = notation.toLowerCase().includes('(melee)');
         const isRanged = notation.toLowerCase().includes('(ranged)');
 
         if (isCrit) {
             // Automation A: Berserker Red Mist Blood Frenzy (L3+)
-            // Maximizes one fury die (1/turn)
             if (char === 'Berserker' && sub === 'RedMist' && s.level >= 3 && (s.activeConditions || []).includes('raging')) {
                 const dice = [...(s.furyDice || [])];
                 if (dice.length > 0) {
@@ -198,21 +197,24 @@ function handleRollResult(data) {
                  dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Next tiered spell costs 0 Pilfered Power." } });
             }
 
-            // Automation B: Hunter Thrill of the Hunt (Ranged Crit)
+            // Automation B: Hunter Thrill of the Hunt (Ranged Crit Only)
+            // Note: Melee Crits are handled in the general 'isHit' block below
             if (char === 'Hunter' && isRanged && s.level >= 2) {
                 const max = d.resourceMaxes['tothCharges'] || 0;
                 dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
                 dispatch({ type: 'ADD_LOG', payload: { msg: "Ranged Crit! +1 Thrill charge gained." } });
             }
 
-            // Reminder C: Cheat Sneak Attack (Melee Crit)
+            // Automation C: Cheat Sneak Attack (Melee Crit)
             if (char === 'The Cheat' && isMelee && (s.level || 1) >= 1) {
-                dispatch({ type: 'ADD_LOG', payload: { msg: `Melee Crit! Add ${d.saDice} Sneak Attack dmg.` } });
+                const saDice = d.saDice || "1d6";
+                dispatchRoll(saDice, 'Sneak Attack', { type: 'pool' });
+                dispatch({ type: 'ADD_LOG', payload: { msg: `Melee Crit! Automated Sneak Attack roll (${saDice}).` } });
             }
         }
 
         if (isMiss) {
-            // Automation C: Berserker Mountainheart Titan's Fury (L11+)
+            // Automation D: Berserker Mountainheart Titan's Fury (L11+)
             if (char === 'Berserker' && sub === 'Mountainheart' && s.level >= 11) {
                 if (!(s.activeConditions || []).includes('raging')) {
                     dispatch({ type: 'TOGGLE_CONDITION', payload: { id: 'raging' } });
@@ -220,19 +222,19 @@ function handleRollResult(data) {
                 }
             }
 
-            // Reminder D: Commander Inerrant Strike
+            // Reminder B: Commander Inerrant Strike
             if (char === 'Commander' && (s.selectedTactics || []).includes("Inerrant Strike")) {
                  dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Inerrant Strike: Reroll, +1 Primary Die, +Combat Die dmg." } });
             }
 
-            // Reminder E: Cheat Feinting Attack
+            // Reminder C: Cheat Feinting Attack
             if (char === 'The Cheat' && (s.selectedUnderhanded || []).includes("Feinting Attack")) {
                  dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Feinting Attack: If 2nd miss this round, change primary die." } });
             }
         }
 
-        if (isHit && !isCrit) {
-            // Automation D: Hunter Thrill of the Hunt (Melee Hit)
+        if (isHit) {
+            // Automation E: Hunter Thrill of the Hunt (Melee Hit - includes Crits)
             if (char === 'Hunter' && isMelee && s.level >= 2) {
                 const max = d.resourceMaxes['tothCharges'] || 0;
                 dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
