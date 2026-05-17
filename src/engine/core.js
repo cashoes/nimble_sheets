@@ -586,6 +586,13 @@ class BaseClass {
     }
 
     /**
+     * Gets active state key limits for the given level, subclass, and state.
+     */
+    getActiveStateKeyLimits(level, subclass, state) {
+        return this.featureProcessor._getActiveStateKeyLimits(level, subclass, state);
+    }
+
+    /**
      * Gets all resources (Base + Subclass) by delegating to ResourceManager.
      */
     getCombinedResources(subclass, state) {

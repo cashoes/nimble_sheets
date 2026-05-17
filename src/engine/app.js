@@ -90,11 +90,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const {
                 Header, AttributesSection, HPTracker, WoundTracker,
                 ProficiencyRow, DynamicResources, InventorySection, Skills, Conditions, CombatControls,
-                FeaturesAndSpellsLayout, MechanicPanel, IdentityBar, RollResultReadout
+                FeaturesAndSpellsLayout, MechanicPanel, IdentityBar, RollResultReadout, LogFeed
             } = window.NIMBLE_COMPONENTS;
 
             const debugMount = document.getElementById('solid-debug-roll');
             if (debugMount) Solid.render(() => Solid.createComponent(RollResultReadout, {}), debugMount);
+
+            const logMount = document.getElementById('solid-action-log');
+            if (logMount) Solid.render(() => Solid.createComponent(LogFeed, {}), logMount);
 
             const headerMount = document.getElementById('solid-header');
             if (headerMount) Solid.render(() => Solid.createComponent(Header, {}), headerMount);

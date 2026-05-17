@@ -122,6 +122,50 @@ function dispatchRoll(notation, label, options = {}) {
 }
 
 /**
+ * Analyzes OBR roll results and triggers character automation (Natural 20s).
+ * @param {Object} data - Result data from OBR Dice+.
+ */
+function handleRollResult(data) {
+    if (!data || !data.result) return;
+    
+    // 1. Update the result readout signal
+    if (typeof setLastRollResult === 'function') {
+        setLastRollResult(data);
+    }
+
+    const res = data.result;
+    const notation = res.diceNotation || "";
+    const isD20 = notation.includes('d20');
+
+    // 2. Detect Natural 20 (Crit)
+    // format is usually "[20]" within the summary
+    const summary = res.rollSummary || "";
+    const isCrit = summary.includes('[20]');
+
+    if (isD20 && isCrit) {
+        const char = CLASS_CONFIG.name;
+        const s = charState();
+        const sub = s.subclass;
+
+        // Automation A: Songweaver Inspiration Recharge
+        if (char === 'Songweaver') {
+            const derived = charDerived();
+            const max = derived.resourceMaxes['inspiration'] || 0;
+            dispatch({ type: 'ADJ_RES', payload: { id: 'inspiration', amount: 1, max } });
+            dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! +1 Inspiration recharged." } });
+        }
+
+        // Automation B: Commander Spellblade Mana Recharge
+        if (char === 'Commander' && sub === 'Spellblade') {
+            const derived = charDerived();
+            const max = derived.resourceMaxes['mana'] || 0;
+            dispatch({ type: 'ADJ_RES', payload: { id: 'mana', amount: 1, max } });
+            dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! +1 Mana recharged." } });
+        }
+    }
+}
+
+/**
  * Robustly applies a scaling rule to a base value.
  * Supports recomputing dice counts, flat modifiers, and stat multipliers.
  */

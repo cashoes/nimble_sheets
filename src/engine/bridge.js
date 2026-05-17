@@ -32,7 +32,7 @@ const [lastRollResult, setLastRollResult] = Solid.createSignal(null);
 window.lastRollResult = lastRollResult;
 
 window.addEventListener("NIMBLE_ROLL_RESULT_RECEIVED", (event) => {
-    setLastRollResult(event.detail);
+    handleRollResult(event.detail);
 });
 
 // Reactive Effects

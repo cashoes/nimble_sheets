@@ -1663,6 +1663,49 @@ function RollResultReadout() {
     `;
 }
 
+/**
+ * Subtle Action Log Feed
+ * Displays auto-clearing notifications for background events.
+ */
+function LogFeed() {
+    const s = charState;
+    const [visibleMsg, setVisibleMsg] = Solid.createSignal(null);
+    let timer = null;
+
+    Solid.createEffect(() => {
+        const logs = s().logs || [];
+        if (logs.length > 0) {
+            const latest = logs[0];
+            setVisibleMsg(latest.msg);
+            
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => setVisibleMsg(null), 5000);
+        }
+    });
+
+    return html`
+        <span style=${() => `
+            display: ${visibleMsg() ? 'inline-flex' : 'none'};
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+            font-style: italic;
+            opacity: 0.8;
+            animation: fadeIn 0.3s ease;
+        `}>
+            <span>»</span>
+            <span>${visibleMsg}</span>
+            <span onclick=${() => setVisibleMsg(null)} 
+                  style="cursor: pointer; font-size: 1.1em; line-height: 1; padding: 0 4px; transition: 0.2s;"
+                  onmouseover=${(e) => e.target.style.color = '#fff'}
+                  onmouseout=${(e) => e.target.style.color = 'var(--text-muted)'}>
+                ×
+            </span>
+        </span>
+    `;
+}
+
 window.NIMBLE_COMPONENTS = {
     Header,
     IdentityBar,
@@ -1678,5 +1721,6 @@ window.NIMBLE_COMPONENTS = {
     Features,
     FeaturesAndSpellsLayout,
     MechanicPanel,
-    RollResultReadout
+    RollResultReadout,
+    LogFeed
 };

@@ -36,6 +36,7 @@ function ensureValidState(state) {
         resourceValues: {},
         bgSpell: 'None',
         showMinor: false,
+        logs: [], // New: Stores recent automated action logs
         greedyResult: '', // New: Stores the result text of Greedy Pact rolls
         // Multi-selection feature states
         selectedDecrees: [],
@@ -440,9 +441,21 @@ const getPassMods = (s) => {
  */
 function computeDerived(s) {
     const level = s.level || 1;
-    const statsMap = getStatsMap(s);
-    const ancFeat = ANCESTRY_FEATURES[s.ancestry];
-    const bgFeat = BACKGROUND_FEATURES[s.background];
+    const subclass = s.subclass || "None";
+    
+    // 0. Generate Clamped State (v2.5.0)
+    // Ensures selections beyond the current level's limits are ignored in calculations
+    const limits = CLASS_CONFIG.getActiveStateKeyLimits(level, subclass, s);
+    const state = { ...s }; // Shallow copy for local mutation
+    Object.keys(limits).forEach(key => {
+        if (Array.isArray(state[key])) {
+            state[key] = state[key].slice(0, limits[key]);
+        }
+    });
+
+    const statsMap = getStatsMap(state);
+    const ancFeat = ANCESTRY_FEATURES[state.ancestry];
+    const bgFeat = BACKGROUND_FEATURES[state.background];
     const config = CLASS_CONFIG;
 
     // Attribute Point Tracking (Revised NIMBLE v2.2 Rules)
@@ -928,14 +941,17 @@ function characterReducer(currentState, action) {
             
             // 3. Refill resources
             Object.keys(dStat.resourceMaxes).forEach(id => {
-                // Exception: Spellblade mana is gained on Initiative only
                 const isSpellbladeMana = id === 'mana' && CLASS_CONFIG.name === 'Commander' && s.subclass === 'Spellblade';
                 if (!isSpellbladeMana) {
                     s.resourceValues[id] = dStat.resourceMaxes[id];
                 } else {
-                    s.resourceValues[id] = 0; // Clear it on safe rest so it can be gained fresh on init
+                    s.resourceValues[id] = 0; 
                 }
             });
+
+            // Log the event
+            const logMsg = "Safe Rest: HP, HD, and Resources refilled.";
+            s.logs = [{ id: Date.now(), msg: logMsg }, ...(s.logs || [])].slice(0, 5);
             
             return validateAndCorrectState(s);
         }
@@ -1003,6 +1019,7 @@ function loadState(config) {
         resourceValues: {},
         bgSpell: 'None',
         showMinor: false,
+        logs: [], // New: Stores recent automated action logs
 
         // Multi-selection feature states
         selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: [],
