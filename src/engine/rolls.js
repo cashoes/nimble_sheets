@@ -121,13 +121,14 @@ function dispatchRoll(notation, label, options = {}) {
 
     console.log(`🎲 NIMBLE Roll: [${label}] => ${finalNotation}`, { options, autoMod });
     
-    // Add label and context directly to notation using Dice+ syntax (#label)
+    // Add label and context directly to notation using bracket syntax [label]
+    // This is the most reliable way to ensure labels appear in Dice+ logs
     let labeledNotation = finalNotation;
     if (label) {
-        labeledNotation += ` #${label.replace(/[#()]/g, '')}`;
-        if (options.metadata?.weaponType) {
-            labeledNotation += ` (${options.metadata.weaponType})`;
-        }
+        const cleanLabel = label.replace(/[\[\]]/g, '');
+        const weaponType = options.metadata?.weaponType;
+        const tag = weaponType ? ` (${weaponType})` : '';
+        labeledNotation += ` [${cleanLabel}${tag}]`;
     }
 
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", {
@@ -172,7 +173,7 @@ function handleRollResult(data) {
         const d = charDerived();
         const sub = s.subclass;
 
-        // Extract context from notation tags: e.g. "1d8! #Dagger (melee)"
+        // Extract context from notation tags: e.g. "1d8! [Dagger (melee)]"
         const isMelee = notation.toLowerCase().includes('(melee)');
         const isRanged = notation.toLowerCase().includes('(ranged)');
 
