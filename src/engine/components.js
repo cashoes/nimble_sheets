@@ -1623,77 +1623,57 @@ function ProficiencyRow() {
 }
 
 /**
- * Subtle Debug Readout for OBR Roll Results
- */
-function RollResultReadout() {
-    const data = lastRollResult;
-    
-    const getSummary = () => {
-        const d = data();
-        if (!d || !d.result) return null;
-        
-        // Extract label from notation if possible: "1d20+2 [WIL Save]" -> "WIL Save"
-        const notation = d.result.diceNotation || "";
-        const labelMatch = notation.match(/\[(.*?)\]/);
-        const label = labelMatch ? labelMatch[1] : "Roll";
-        
-        return {
-            label,
-            total: d.result.totalValue,
-            summary: d.result.rollSummary
-        };
-    };
-
-    const info = getSummary;
-    
-    return html`
-        <span style=${() => `
-            display: ${data() ? 'inline-flex' : 'none'};
-            align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-            font-size: 0.95em;
-            opacity: 0.8;
-            animation: fadeIn 0.3s ease;
-        `}>
-            <span>|</span>
-            <span style="font-weight: bold; color: var(--gold-light);">${() => info()?.label}: ${() => info()?.total}</span>
-            <span style="font-size: 0.9em; font-style: italic; opacity: 0.6;">(${() => info()?.summary})</span>
-            <span onclick=${() => setLastRollResult(null)} 
-                    style="cursor: pointer; font-size: 1.2em; line-height: 1; padding: 0 4px; transition: 0.2s;"
-                    onmouseover=${(e) => e.target.style.color = '#fff'}
-                    onmouseout=${(e) => e.target.style.color = 'var(--text-muted)'}>
-                ×
-            </span>
-        </span>
-    `;
-}
-
-/**
- * High-Visibility Action Log Feed
- * Displays auto-clearing scrolling notifications for background events.
+ * Unified Action Log & Roll Feed
+ * Displays OBR roll results and automated character events in a high-visibility scrolling marquee.
  */
 function LogFeed() {
     const s = charState;
+    const rollData = lastRollResult;
     const [visibleMsg, setVisibleMsg] = Solid.createSignal(null);
-    const [lastProcessedId, setLastProcessedId] = Solid.createSignal(0);
+    const [lastProcessedLogId, setLastProcessedLogId] = Solid.createSignal(0);
+    const [lastProcessedRollId, setLastProcessedRollId] = Solid.createSignal("");
     let timer = null;
 
     Solid.createEffect(() => {
+        const d = rollData();
         const logs = s().logs || [];
-        if (logs.length > 0) {
-            const latest = logs[0];
-            if (latest.id !== lastProcessedId()) {
-                setVisibleMsg(latest.msg);
-                setLastProcessedId(latest.id);
-                
+        const latestLog = logs[0];
+        
+        const hasNewRoll = d && d.result && d.result.rollId !== lastProcessedRollId();
+        const hasNewLog = latestLog && latestLog.id !== lastProcessedLogId();
+
+        if (hasNewRoll || hasNewLog) {
+            let combined = "";
+            
+            // 1. Format Roll Info
+            if (d && d.result) {
+                const notation = d.result.diceNotation || "";
+                // Extract label from notation: "1d8+2 #Dagger (melee)" -> "Dagger"
+                const labelMatch = notation.match(/#([^(\s]*)/);
+                const label = labelMatch ? labelMatch[1].trim() : "Roll";
+                combined = `[${label}]: ${d.result.totalValue} (${d.result.rollSummary})`;
+                if (hasNewRoll) setLastProcessedRollId(d.result.rollId);
+            }
+
+            // 2. Format Log Info
+            if (latestLog) {
+                if (combined) combined += " » ";
+                combined += latestLog.msg;
+                if (hasNewLog) setLastProcessedLogId(latestLog.id);
+            }
+
+            if (combined) {
+                setVisibleMsg(combined);
                 if (timer) clearTimeout(timer);
                 timer = setTimeout(() => setVisibleMsg(null), 15000);
             }
         }
     });
 
-    const dismiss = () => setVisibleMsg(null);
+    const dismiss = () => {
+        setVisibleMsg(null);
+        setLastRollResult(null);
+    };
 
     return html`
         <style>
@@ -1707,7 +1687,7 @@ function LogFeed() {
              style=${() => `
             display: ${visibleMsg() ? 'flex' : 'none'};
             align-items: center;
-            width: 300px;
+            width: 500px;
             height: 24px;
             overflow: hidden;
             color: var(--gold-light);
@@ -1719,8 +1699,8 @@ function LogFeed() {
             white-space: nowrap;
             position: relative;
         `}>
-            <div style="animation: nimble-marquee 12s linear infinite; position: absolute; min-width: 100%;">
-                » <span style="font-style: italic; color: #fff; margin-right: 40px;">${visibleMsg}</span>
+            <div style="animation: nimble-marquee 15s linear infinite; position: absolute; min-width: 100%;">
+                » <span style="font-style: italic; color: #fff; margin-right: 50px;">${visibleMsg}</span>
                 » <span style="font-style: italic; color: #fff;">${visibleMsg}</span>
             </div>
         </div>
@@ -1742,6 +1722,5 @@ window.NIMBLE_COMPONENTS = {
     Features,
     FeaturesAndSpellsLayout,
     MechanicPanel,
-    RollResultReadout,
     LogFeed
 };

@@ -93,9 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 FeaturesAndSpellsLayout, MechanicPanel, IdentityBar, RollResultReadout, LogFeed
             } = window.NIMBLE_COMPONENTS;
 
-            const debugMount = document.getElementById('solid-debug-roll');
-            if (debugMount) Solid.render(() => Solid.createComponent(RollResultReadout, {}), debugMount);
-
             const logMount = document.getElementById('solid-action-log');
             if (logMount) Solid.render(() => Solid.createComponent(LogFeed, {}), logMount);
 
