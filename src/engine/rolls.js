@@ -103,8 +103,8 @@ function dispatchRoll(notation, label, options = {}) {
             // Advantage/Disadvantage applies ONLY to the Primary die
             let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}d${faces}kl1` : `1d${faces}`;
             
-            // Primary die is the only one that explodes (!) and is named {primary}
-            primaryPart += `!{primary}`;
+            // Primary die is the only one that explodes (!!) and is named {primary}
+            primaryPart += `!!{primary}`;
             
             let secondaryPart = (count > 1) ? ` + ${count - 1}d${faces}` : "";
             finalNotation = primaryPart + secondaryPart + rest;
@@ -173,7 +173,7 @@ function handleRollResult(data) {
         const d = charDerived();
         const sub = s.subclass;
 
-        // Extract context from notation tags: e.g. "[Dagger (melee)] 1d4!"
+        // Extract context from notation tags: e.g. "1d8!! #Dagger (melee)"
         const isMelee = notation.toLowerCase().includes('(melee)');
         const isRanged = notation.toLowerCase().includes('(ranged)');
 
