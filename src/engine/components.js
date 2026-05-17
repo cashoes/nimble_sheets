@@ -1670,8 +1670,8 @@ function RollResultReadout() {
 }
 
 /**
- * Subtle Action Log Feed
- * Displays auto-clearing notifications for background events.
+ * High-Visibility Action Log Feed
+ * Displays auto-clearing scrolling notifications for background events.
  */
 function LogFeed() {
     const s = charState;
@@ -1696,29 +1696,34 @@ function LogFeed() {
     const dismiss = () => setVisibleMsg(null);
 
     return html`
-        <span onclick=${dismiss} 
-              title="Click to dismiss"
-              style=${() => `
-            display: ${visibleMsg() ? 'inline-flex' : 'none'};
+        <style>
+            @keyframes nimble-marquee {
+                0% { transform: translateX(100%); }
+                100% { transform: translateX(-100%); }
+            }
+        </style>
+        <div onclick=${dismiss} 
+             title="Click to dismiss"
+             style=${() => `
+            display: ${visibleMsg() ? 'flex' : 'none'};
             align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
+            width: 300px;
+            height: 24px;
+            overflow: hidden;
+            color: var(--gold-light);
             font-size: 0.9em;
-            font-style: italic;
-            opacity: 0.8;
-            animation: fadeIn 0.3s ease;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
             cursor: pointer;
+            white-space: nowrap;
+            position: relative;
         `}>
-            <span>»</span>
-            <span onmouseover=${(e) => e.target.style.color = '#fff'}
-                  onmouseout=${(e) => e.target.style.color = 'var(--text-muted)'}
-                  style="transition: 0.2s;">
-                ${visibleMsg}
-            </span>
-            <span style="font-size: 1.1em; line-height: 1; padding: 0 4px; opacity: 0.5;">
-                ×
-            </span>
-        </span>
+            <div style="animation: nimble-marquee 12s linear infinite; position: absolute; min-width: 100%;">
+                » <span style="font-style: italic; color: #fff; margin-right: 40px;">${visibleMsg}</span>
+                » <span style="font-style: italic; color: #fff;">${visibleMsg}</span>
+            </div>
+        </div>
     `;
 }
 
