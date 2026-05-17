@@ -121,14 +121,22 @@ function dispatchRoll(notation, label, options = {}) {
 
     console.log(`🎲 NIMBLE Roll: [${label}] => ${finalNotation}`, { options, autoMod });
     
+    // Add label and context directly to notation using Dice+ syntax (#label)
+    let labeledNotation = finalNotation;
+    if (label) {
+        labeledNotation += ` #${label.replace(/[#()]/g, '')}`;
+        if (options.metadata?.weaponType) {
+            labeledNotation += ` (${options.metadata.weaponType})`;
+        }
+    }
+
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", {
         detail: {
-            notation: finalNotation,
+            notation: labeledNotation,
             label: label,
             playerName: state.charName || "Adventurer",
             rollTarget: 'everyone',
-            timestamp: Date.now(),
-            metadata: metadata // Pass context to extension/VTT
+            timestamp: Date.now()
         }
     }));
 }
@@ -147,22 +155,16 @@ function handleRollResult(data) {
 
     const res = data.result;
     const groups = res.groups || [];
-    const metadata = res.metadata || {}; // Extract stateless context
-
+    const notation = res.diceNotation || "";
+    
     // 2. Identify NIMBLE Primary Die Group
-    // We look for the group where 'diceModel' was tagged as 'primary'
     const primaryGroup = groups.find(g => g.diceModel === 'primary');
 
     if (primaryGroup) {
         const faces = parseInt(primaryGroup.diceType.replace(/\D/g, '')) || 20;
 
-        // NIMBLE Crit: Primary group total >= faces (indicates an explosion occurred)
         const isCrit = primaryGroup.total >= faces;
-
-        // NIMBLE Miss: Primary group total == 1 (The kept primary die result was a 1)
         const isMiss = primaryGroup.total === 1;
-        
-        // NIMBLE Hit: Not a miss
         const isHit = !isMiss;
 
         const char = CLASS_CONFIG.name;
@@ -170,8 +172,9 @@ function handleRollResult(data) {
         const d = charDerived();
         const sub = s.subclass;
 
-        const isMelee = metadata.weaponType === 'melee';
-        const isRanged = metadata.weaponType === 'ranged';
+        // Extract context from notation tags: e.g. "1d8! #Dagger (melee)"
+        const isMelee = notation.toLowerCase().includes('(melee)');
+        const isRanged = notation.toLowerCase().includes('(ranged)');
 
         if (isCrit) {
             // Automation A: Berserker Red Mist Blood Frenzy (L3+)

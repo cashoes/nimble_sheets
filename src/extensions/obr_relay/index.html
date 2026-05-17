@@ -104,21 +104,15 @@
                     // If Dice+ isn't ready, poke it again right before the roll
                     if (!dicePlusReady) pokeDicePlus();
 
-                    // Construct the Dice+ request
-                    // We append the label in brackets to the notation as per Dice+ spec: [roll] [label]
-                    const cleanLabel = (roll.label || "").replace(/[\[\]]/g, ""); // strip internal brackets
-                    const diceNotation = cleanLabel ? `${roll.notation} [${cleanLabel}]` : roll.notation;
-
                     const rollRequest = {
                         rollId: crypto.randomUUID(),
                         playerId: id,
                         playerName: roll.playerName || name,
                         rollTarget: 'everyone',
-                        diceNotation: diceNotation,
+                        diceNotation: roll.notation,
                         showResults: true,
                         timestamp: Date.now(),
-                        source: "nimble-bridge",
-                        metadata: roll.metadata || {}
+                        source: "nimble-bridge"
                     };
 
                     // Force broadcast to ALL explicitly. This covers both local and remote.
