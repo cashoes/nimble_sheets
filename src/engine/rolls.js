@@ -121,14 +121,14 @@ function dispatchRoll(notation, label, options = {}) {
 
     console.log(`🎲 NIMBLE Roll: [${label}] => ${finalNotation}`, { options, autoMod });
     
-    // Add label and context directly to notation using bracket syntax [label]
-    // Moving this to the FRONT (Label-First) as it is the most reliable Dice+ format
+    // Add label and context directly to notation using Dice+ syntax (#label)
+    // Suffix hash format is the most compatible standard for Dice+
     let labeledNotation = finalNotation;
     if (label) {
-        const cleanLabel = label.replace(/[\[\]]/g, '');
+        const cleanLabel = label.replace(/[#\[\]()]/g, '');
         const weaponType = options.metadata?.weaponType;
         const tag = weaponType ? ` (${weaponType})` : '';
-        labeledNotation = `[${cleanLabel}${tag}] ${finalNotation}`;
+        labeledNotation = `${finalNotation} #${cleanLabel}${tag}`;
     }
 
     window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", {
