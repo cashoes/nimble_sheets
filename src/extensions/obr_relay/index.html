@@ -117,7 +117,8 @@
                         diceNotation: diceNotation,
                         showResults: true,
                         timestamp: Date.now(),
-                        source: "nimble-bridge"
+                        source: "nimble-bridge",
+                        metadata: roll.metadata || {}
                     };
 
                     // Force broadcast to ALL explicitly. This covers both local and remote.

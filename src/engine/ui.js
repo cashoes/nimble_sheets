@@ -167,7 +167,7 @@ function addQuickItem(cat, key) {
     let t = ITEM_TEMPLATES.data[key];
     if (!t) return;
 
-    dispatch({ type: 'ADD_QUICK_ITEM', payload: { itemData: t } });
+    dispatch({ type: 'ADD_QUICK_ITEM', payload: { itemData: t, category: cat } });
 }
 
 /** Spawns a blank custom item in the inventory. */

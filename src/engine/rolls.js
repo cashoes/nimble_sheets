@@ -20,6 +20,7 @@ function dispatchRoll(notation, label, options = {}) {
     }
 
     let finalNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
+    const metadata = options.metadata || {}; // Metadata for stateless round-trips
 
     // --- AUTOMATED CLASS MODIFIERS ---
     let autoMod = 0;
@@ -57,8 +58,8 @@ function dispatchRoll(notation, label, options = {}) {
     }
     // -------------------------
 
-    const isCheckOrSave = /check|save|rest|hit die/i.test(label);
     const isSave = /save/i.test(label);
+    const isCheckOrSaveOrPool = isSave || /check|rest|hit die|pool|fury|judgment/i.test(label) || options.type === 'pool';
     const derived = computeDerived(state);
 
     let condAdv = 0;
@@ -93,8 +94,8 @@ function dispatchRoll(notation, label, options = {}) {
         let faces = dieMatch[2];
         let rest = dieMatch[3];
         
-        if (isCheckOrSave) {
-            // Standard Advantage/Disadvantage for checks and saves
+        if (isCheckOrSaveOrPool) {
+            // Standard Advantage/Disadvantage for checks, saves, and pools
             let diePart = (totalAdv > 0) ? `${count + totalAdv}d${faces}kh${count}` : (totalAdv < 0) ? `${count + Math.abs(totalAdv)}d${faces}kl${count}` : `${count}d${faces}`;
             finalNotation = diePart + rest;
         } else {
@@ -126,7 +127,8 @@ function dispatchRoll(notation, label, options = {}) {
             label: label,
             playerName: state.charName || "Adventurer",
             rollTarget: 'everyone',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            metadata: metadata // Pass context to extension/VTT
         }
     }));
 }
@@ -137,45 +139,39 @@ function dispatchRoll(notation, label, options = {}) {
  */
 function handleRollResult(data) {
     if (!data || !data.result) return;
-    
+
     // 1. Update the result readout signal
     if (typeof setLastRollResult === 'function') {
         setLastRollResult(data);
     }
 
     const res = data.result;
-    const notation = res.diceNotation || "";
-    const summary = res.rollSummary || "";
-    
-    // Detect if this was a NIMBLE Primary Die roll
-    const isPrimaryRoll = notation.includes('{primary}');
-    
-    if (isPrimaryRoll) {
-        // NIMBLE Crit: Primary die explodes (!)
-        const isCrit = summary.includes('!');
+    const groups = res.groups || [];
+    const metadata = res.metadata || {}; // Extract stateless context
+
+    // 2. Identify NIMBLE Primary Die Group
+    // We look for the group where 'diceModel' was tagged as 'primary'
+    const primaryGroup = groups.find(g => g.diceModel === 'primary');
+
+    if (primaryGroup) {
+        const faces = parseInt(primaryGroup.diceType.replace(/\D/g, '')) || 20;
+
+        // NIMBLE Crit: Primary group total >= faces (indicates an explosion occurred)
+        const isCrit = primaryGroup.total >= faces;
+
+        // NIMBLE Miss: Primary group total == 1 (The kept primary die result was a 1)
+        const isMiss = primaryGroup.total === 1;
         
-        // NIMBLE Miss: Primary die (after KH/KL) is a 1
-        let isMiss = false;
-        // Dice+ summary example: "([6, 2]kh1!) + [2, 3]" or "[1] + [2, 3]"
-        const firstGroupMatch = summary.match(/^[^\[]*\[(.*?)\](kh|kl|dh|dl)?(\d*)?/);
-        if (firstGroupMatch) {
-            const vals = firstGroupMatch[1].split(',').map(v => parseInt(v.trim()));
-            const op = firstGroupMatch[2];
-            const k = parseInt(firstGroupMatch[3] || "1");
-            
-            if (op) {
-                const sorted = [...vals].sort((a,b) => b-a);
-                const kept = (op === 'kh') ? sorted.slice(0, k) : sorted.slice(-k);
-                if (Math.max(...kept) === 1) isMiss = true;
-            } else {
-                if (vals[0] === 1) isMiss = true;
-            }
-        }
+        // NIMBLE Hit: Not a miss
+        const isHit = !isMiss;
 
         const char = CLASS_CONFIG.name;
         const s = charState();
         const d = charDerived();
         const sub = s.subclass;
+
+        const isMelee = metadata.weaponType === 'melee';
+        const isRanged = metadata.weaponType === 'ranged';
 
         if (isCrit) {
             // Automation A: Berserker Red Mist Blood Frenzy (L3+)
@@ -183,10 +179,10 @@ function handleRollResult(data) {
             if (char === 'Berserker' && sub === 'RedMist' && s.level >= 3 && (s.activeConditions || []).includes('raging')) {
                 const dice = [...(s.furyDice || [])];
                 if (dice.length > 0) {
-                     const faces = d.furyFaces || 4;
-                     const idx = dice.findIndex(f => f.total < faces);
+                     const fFaces = d.furyFaces || 4;
+                     const idx = dice.findIndex(f => f.total < fFaces);
                      if (idx !== -1) {
-                         dice[idx] = { ...dice[idx], total: faces };
+                         dice[idx] = { ...dice[idx], total: fFaces };
                          dispatch({ type: 'UPDATE_POOL', payload: { key: 'furyDice', dice } });
                          dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Blood Frenzy maximized a Fury Die." } });
                      }
@@ -197,10 +193,22 @@ function handleRollResult(data) {
             if (char === 'Shadowmancer' && (s.selectedGreater || []).includes("Hungering Shadows")) {
                  dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Next tiered spell costs 0 Pilfered Power." } });
             }
+
+            // Automation B: Hunter Thrill of the Hunt (Ranged Crit)
+            if (char === 'Hunter' && isRanged && s.level >= 2) {
+                const max = d.resourceMaxes['tothCharges'] || 0;
+                dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
+                dispatch({ type: 'ADD_LOG', payload: { msg: "Ranged Crit! +1 Thrill charge gained." } });
+            }
+
+            // Reminder C: Cheat Sneak Attack (Melee Crit)
+            if (char === 'The Cheat' && isMelee && (s.level || 1) >= 1) {
+                dispatch({ type: 'ADD_LOG', payload: { msg: `Melee Crit! Add ${d.saDice} Sneak Attack dmg.` } });
+            }
         }
 
         if (isMiss) {
-            // Automation B: Berserker Mountainheart Titan's Fury (L11+)
+            // Automation C: Berserker Mountainheart Titan's Fury (L11+)
             if (char === 'Berserker' && sub === 'Mountainheart' && s.level >= 11) {
                 if (!(s.activeConditions || []).includes('raging')) {
                     dispatch({ type: 'TOGGLE_CONDITION', payload: { id: 'raging' } });
@@ -208,19 +216,27 @@ function handleRollResult(data) {
                 }
             }
 
-            // Reminder B: Commander Inerrant Strike
+            // Reminder D: Commander Inerrant Strike
             if (char === 'Commander' && (s.selectedTactics || []).includes("Inerrant Strike")) {
                  dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Inerrant Strike: Reroll, +1 Primary Die, +Combat Die dmg." } });
             }
 
-            // Reminder C: Cheat Feinting Attack
-            if (char === 'Cheat' && (s.selectedUnderhanded || []).includes("Feinting Attack")) {
+            // Reminder E: Cheat Feinting Attack
+            if (char === 'The Cheat' && (s.selectedUnderhanded || []).includes("Feinting Attack")) {
                  dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Feinting Attack: If 2nd miss this round, change primary die." } });
+            }
+        }
+
+        if (isHit && !isCrit) {
+            // Automation D: Hunter Thrill of the Hunt (Melee Hit)
+            if (char === 'Hunter' && isMelee && s.level >= 2) {
+                const max = d.resourceMaxes['tothCharges'] || 0;
+                dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
+                dispatch({ type: 'ADD_LOG', payload: { msg: "Melee Hit! +1 Thrill charge gained." } });
             }
         }
     }
 }
-
 /**
  * Robustly applies a scaling rule to a base value.
  * Supports recomputing dice counts, flat modifiers, and stat multipliers.

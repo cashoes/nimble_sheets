@@ -821,20 +821,20 @@ function characterReducer(currentState, action) {
         case 'ADD_ITEM': {
             s.inventory.push({ 
                 id: Date.now(), 
-                category: '',
+                category: 'melee', // Default for custom weapons
                 reach: '1',
                 ...payload.item 
             });
             break;
         }
         case 'ADD_QUICK_ITEM': {
-            const { itemData } = payload;
+            const { itemData, category } = payload;
             s.gold -= (itemData.cost || 0);
             s.inventory.push({
                 id: Date.now(),
                 name: itemData.name,
                 type: itemData.type,
-                category: itemData.category || '',
+                category: category || itemData.category || '',
                 slots: itemData.slots,
                 equipped: itemData.equipped,
                 dmgDice: itemData.dmgDice || '1d6',
@@ -911,6 +911,11 @@ function characterReducer(currentState, action) {
         }
         case 'SYNC_STATE': {
             return validateAndCorrectState(s);
+        }
+        case 'ADD_LOG': {
+            const newLog = { id: Date.now(), msg: payload.msg };
+            s.logs = [newLog, ...(s.logs || [])].slice(0, 5);
+            break;
         }
         case 'REST_CHARACTER': {
             // 1. Comprehensive Reset of Toggles and Pips

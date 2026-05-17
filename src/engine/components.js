@@ -484,7 +484,13 @@ function InventoryRow(props) {
         if (typeStr === 'weapon') {
             const mod = smap[statKey];
             const not = `${diceStr}${mod >= 0 ? '+' : ''}${mod}`;
-            const click = () => dispatchRoll(not, nameStr, { stat: statKey, type: 'attack' });
+            // Pass weapon context (melee/ranged) for automation
+            const weaponType = (item.category || "").toLowerCase().includes('ranged') ? 'ranged' : 'melee';
+            const click = () => dispatchRoll(not, nameStr, { 
+                stat: statKey, 
+                type: 'attack',
+                metadata: { weaponType } 
+            });
             return html`<span class="roll-link" onclick=${click}>⚔️ ${not}</span>`;
         }
         if (typeStr === 'armor') {
@@ -1670,21 +1676,29 @@ function RollResultReadout() {
 function LogFeed() {
     const s = charState;
     const [visibleMsg, setVisibleMsg] = Solid.createSignal(null);
+    const [lastProcessedId, setLastProcessedId] = Solid.createSignal(0);
     let timer = null;
 
     Solid.createEffect(() => {
         const logs = s().logs || [];
         if (logs.length > 0) {
             const latest = logs[0];
-            setVisibleMsg(latest.msg);
-            
-            if (timer) clearTimeout(timer);
-            timer = setTimeout(() => setVisibleMsg(null), 5000);
+            if (latest.id !== lastProcessedId()) {
+                setVisibleMsg(latest.msg);
+                setLastProcessedId(latest.id);
+                
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(() => setVisibleMsg(null), 15000);
+            }
         }
     });
 
+    const dismiss = () => setVisibleMsg(null);
+
     return html`
-        <span style=${() => `
+        <span onclick=${dismiss} 
+              title="Click to dismiss"
+              style=${() => `
             display: ${visibleMsg() ? 'inline-flex' : 'none'};
             align-items: center;
             gap: 8px;
@@ -1693,13 +1707,15 @@ function LogFeed() {
             font-style: italic;
             opacity: 0.8;
             animation: fadeIn 0.3s ease;
+            cursor: pointer;
         `}>
             <span>»</span>
-            <span>${visibleMsg}</span>
-            <span onclick=${() => setVisibleMsg(null)} 
-                  style="cursor: pointer; font-size: 1.1em; line-height: 1; padding: 0 4px; transition: 0.2s;"
-                  onmouseover=${(e) => e.target.style.color = '#fff'}
-                  onmouseout=${(e) => e.target.style.color = 'var(--text-muted)'}>
+            <span onmouseover=${(e) => e.target.style.color = '#fff'}
+                  onmouseout=${(e) => e.target.style.color = 'var(--text-muted)'}
+                  style="transition: 0.2s;">
+                ${visibleMsg}
+            </span>
+            <span style="font-size: 1.1em; line-height: 1; padding: 0 4px; opacity: 0.5;">
                 ×
             </span>
         </span>
