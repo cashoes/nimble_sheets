@@ -72,8 +72,8 @@ class StormshifterClass extends BaseClass {
                 }
             },
             statModifiers: [
-                { id: "nightmare_speed", stat: "speedBase", value: 2, condition: (l, s, state) => state.currentForm?.[0] === "Beast of Nightmares" },
-                { id: "pack_speed", stat: "speed", getMod: (stats, state) => state.currentForm?.[0] === "Beast of the Pack" ? stats.dex : 0 },
+                { id: "nightmare_speed", stat: "speedBase", value: 2, condition: (l, s, state) => l >= 5 && state.currentForm?.[0] === "Beast of Nightmares" },
+                { id: "pack_speed", stat: "speed", getMod: (stats, state, l) => (l >= 3 && state.currentForm?.[0] === "Beast of the Pack") ? stats.dex : 0 },
                 { id: "fleet_footed_speed", stat: "speed", value: 2, condition: (l, s, state) => (state.selectedBoons || []).includes("Fleet Footed") },
                 { id: "earthwalker_armor", stat: "armor", value: 2, condition: (l, s, state) => (state.selectedBoons || []).includes("Earthwalker") }
             ],
@@ -91,6 +91,17 @@ class StormshifterClass extends BaseClass {
             featuresData: StormshifterClass.FEATURES,
             optionsData: StormshifterClass.OPTIONS
         });
+    }
+
+    /**
+     * Reverts the active form to 'Normal' if the level requirement is no longer met.
+     */
+    validateState(state) {
+        const level = state.level;
+        const form = (state.currentForm || [])[0] || "Normal";
+        if (form === "Beast of the Pack" && level < 3) state.currentForm = ["Normal"];
+        if (form === "Beast of Nightmares" && level < 5) state.currentForm = ["Normal"];
+        if (form === "Fearsome" && level < 2) state.currentForm = ["Normal"];
     }
 
     static get OPTIONS() {

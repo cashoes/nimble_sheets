@@ -600,6 +600,14 @@ class BaseClass {
     }
 
     /**
+     * Validates and corrects class-specific state.
+     * Override this to implement 'revert' logic for level-dependent state (e.g. Beastforms).
+     */
+    validateState(state) {
+        // Default: No-op
+    }
+
+    /**
      * Generates HTML for the class mechanic panel.
      */
     getMechanicPanelHTML(level, subclass, state, derived) {

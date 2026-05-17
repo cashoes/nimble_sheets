@@ -119,6 +119,14 @@ function ensureValidState(state) {
  * @returns {Object} The validated state object (same reference).
  */
 function validateAndCorrectState(state) {
+    const config = CLASS_CONFIG;
+    
+    // 0. Class-specific validation hook (v2.6.0)
+    // Allows classes to implement 'revert' logic for level-dependent active state
+    if (config.validateState) {
+        config.validateState(state);
+    }
+
     // Ensure level is a valid number between 1 and 20
     if (typeof state.level === 'number' && !isNaN(state.level)) {
         state.level = Math.min(20, Math.max(1, state.level));
@@ -126,7 +134,6 @@ function validateAndCorrectState(state) {
         state.level = 1;
     }
 
-    const config = CLASS_CONFIG;
     const level = state.level;
     const stats = ['Str', 'Dex', 'Int', 'Wil'];
     const keyStats = (config.keyStats || []).map(s => s.charAt(0).toUpperCase() + s.slice(1));
