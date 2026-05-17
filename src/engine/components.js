@@ -899,7 +899,7 @@ function SpellCard(props) {
                                  style=${() => `cursor:${isShadowmancerCaster ? 'default' : 'pointer'}; 
                                         color:${isF ? 'var(--school-color)' : 'var(--text-muted)'}; 
                                         transition: 0.2s; ${pipStyBase}`}>
-                ${() => isF ? '●' : '○'}
+                ${() => iF ? '●' : '○'}
             </span>`);
         }
         return html`<div style="display:flex; gap:0; align-items:center;">${nodes}</div>`;
@@ -1623,8 +1623,8 @@ function ProficiencyRow() {
 }
 
 /**
- * Unified Action Log & Roll Feed
- * Displays OBR roll results and automated character events in a high-visibility scrolling marquee.
+ * High-Visibility Unified Action Ticker
+ * Displays OBR roll results and automated character events in a single scrolling marquee.
  */
 function LogFeed() {
     const s = charState;
@@ -1643,27 +1643,27 @@ function LogFeed() {
         const hasNewLog = latestLog && latestLog.id !== lastProcessedLogId();
 
         if (hasNewRoll || hasNewLog) {
-            let combined = "";
-            
+            let rollPart = "";
+            let logPart = "";
+
             // 1. Format Roll Info
             if (d && d.result) {
                 const notation = d.result.diceNotation || "";
                 // Extract label from notation: "1d8+2 #Dagger (melee)" -> "Dagger"
                 const labelMatch = notation.match(/#([^(\s]*)/);
                 const label = labelMatch ? labelMatch[1].trim() : "Roll";
-                combined = `[${label}]: ${d.result.totalValue} (${d.result.rollSummary})`;
+                rollPart = `[${label.toUpperCase()}]: ${d.result.totalValue} (${d.result.rollSummary})`;
                 if (hasNewRoll) setLastProcessedRollId(d.result.rollId);
             }
 
             // 2. Format Log Info
             if (latestLog) {
-                if (combined) combined += " » ";
-                combined += latestLog.msg;
+                logPart = latestLog.msg;
                 if (hasNewLog) setLastProcessedLogId(latestLog.id);
             }
 
-            if (combined) {
-                setVisibleMsg(combined);
+            if (rollPart || logPart) {
+                setVisibleMsg({ roll: rollPart, log: logPart });
                 if (timer) clearTimeout(timer);
                 timer = setTimeout(() => setVisibleMsg(null), 15000);
             }
@@ -1677,35 +1677,43 @@ function LogFeed() {
 
     return html`
         <style>
-            @keyframes nimble-marquee {
+            @keyframes nimble-ticker-scroll {
                 0% { transform: translateX(100%); }
                 100% { transform: translateX(-100%); }
             }
+            .action-ticker-container:hover .dismiss-icon { opacity: 1; }
         </style>
         <div onclick=${dismiss} 
+             class="action-ticker-container"
              title="Click to dismiss"
              style=${() => `
             display: ${visibleMsg() ? 'flex' : 'none'};
             align-items: center;
-            width: 600px;
-            height: 24px;
+            width: 100%;
+            height: 30px;
             overflow: hidden;
-            color: var(--gold-light);
-            font-size: 0.9em;
+            font-size: 1em;
             font-family: 'Cinzel', serif;
             font-weight: bold;
-            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
             cursor: pointer;
             white-space: nowrap;
             position: relative;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.1), transparent);
+            border-bottom: 1px solid rgba(232, 184, 75, 0.2);
         `}>
-            <div style="animation: nimble-marquee 15s linear infinite; position: absolute; min-width: 100%; display: flex; align-items: center;">
-                <span style="margin-right: 60px;">» <span style="font-style: italic; color: #fff;">${visibleMsg}</span></span>
-                <span>» <span style="font-style: italic; color: #fff;">${visibleMsg}</span></span>
+            <div style="animation: nimble-ticker-scroll 15s linear infinite; position: absolute; display: flex; align-items: center; gap: 30px; min-width: 100%;">
+                <span style="display: flex; align-items: center; gap: 15px;">
+                    <span style="color: var(--gold-light); letter-spacing: 1px;">${() => visibleMsg()?.roll}</span>
+                    ${() => visibleMsg()?.log && visibleMsg()?.roll ? html`<span style="color: var(--class-accent); font-weight: 900; opacity: 0.6;">::</span>` : ''}
+                    <span style="color: #fff; font-style: italic; letter-spacing: 0.5px;">${() => visibleMsg()?.log}</span>
+                </span>
             </div>
+            <div class="dismiss-icon" style="position: absolute; right: 12px; opacity: 0; transition: 0.3s; color: var(--gold-light); font-size: 1.6em; font-weight: bold; text-shadow: 0 0 5px #000;">×</div>
         </div>
     `;
 }
+
 window.NIMBLE_COMPONENTS = {
     Header,
     IdentityBar,
