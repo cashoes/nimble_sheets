@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const {
                 Header, AttributesSection, HPTracker, WoundTracker,
                 ProficiencyRow, DynamicResources, InventorySection, Skills, Conditions, CombatControls,
-                FeaturesAndSpellsLayout, MechanicPanel, IdentityBar, RollResultReadout, LogFeed
+                FeaturesAndSpellsLayout, MechanicPanel, IdentityBar, LogFeed
             } = window.NIMBLE_COMPONENTS;
 
             const logMount = document.getElementById('solid-action-log');

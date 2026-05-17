@@ -1687,7 +1687,7 @@ function LogFeed() {
              style=${() => `
             display: ${visibleMsg() ? 'flex' : 'none'};
             align-items: center;
-            width: 500px;
+            width: 600px;
             height: 24px;
             overflow: hidden;
             color: var(--gold-light);
@@ -1699,14 +1699,13 @@ function LogFeed() {
             white-space: nowrap;
             position: relative;
         `}>
-            <div style="animation: nimble-marquee 15s linear infinite; position: absolute; min-width: 100%;">
-                » <span style="font-style: italic; color: #fff; margin-right: 50px;">${visibleMsg}</span>
-                » <span style="font-style: italic; color: #fff;">${visibleMsg}</span>
+            <div style="animation: nimble-marquee 15s linear infinite; position: absolute; min-width: 100%; display: flex; align-items: center;">
+                <span style="margin-right: 60px;">» <span style="font-style: italic; color: #fff;">${visibleMsg}</span></span>
+                <span>» <span style="font-style: italic; color: #fff;">${visibleMsg}</span></span>
             </div>
         </div>
     `;
 }
-
 window.NIMBLE_COMPONENTS = {
     Header,
     IdentityBar,
