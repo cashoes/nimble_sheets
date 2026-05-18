@@ -32,12 +32,24 @@ class ShepherdClass extends BaseClass {
                 const hasLightBearer = (state.selectedGraces || []).includes("Light Bearer");
                 const isMercy15 = subclass === "Mercy" && level >= 15;
                 
-                if (hasLightBearer || isMercy15) {
+                let searingGain = 0;
+                let searingSources = [];
+                if (hasLightBearer) {
+                    searingGain += 1;
+                    searingSources.push("Light Bearer");
+                }
+                if (isMercy15) {
+                    searingGain += 1;
+                    searingSources.push("Empowered Conduit");
+                }
+                
+                if (searingGain > 0) {
                     const max = derived.resourceMaxes.searing || 0;
                     const current = state.resourceValues?.searing ?? max;
                     if (current < max) {
-                        adjRes('searing', 1, max);
-                        addLog(`Initiative: Regained 1 use of Searing Light (${hasLightBearer ? "Light Bearer" : "Empowered Conduit"}).`);
+                        const actualGain = Math.min(searingGain, max - current);
+                        adjRes('searing', actualGain, max);
+                        addLog(`Initiative: Regained ${actualGain} use${actualGain > 1 ? 's' : ''} of Searing Light (${searingSources.join(", ")}).`);
                     }
                 }
 
