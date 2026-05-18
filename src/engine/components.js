@@ -899,7 +899,7 @@ function SpellCard(props) {
                                  style=${() => `cursor:${isShadowmancerCaster ? 'default' : 'pointer'}; 
                                         color:${isF ? 'var(--school-color)' : 'var(--text-muted)'}; 
                                         transition: 0.2s; ${pipStyBase}`}>
-                ${() => iF ? '●' : '○'}
+                ${() => isF ? '●' : '○'}
             </span>`);
         }
         return html`<div style="display:flex; gap:0; align-items:center;">${nodes}</div>`;
