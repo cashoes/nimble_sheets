@@ -518,6 +518,7 @@ class BaseClass {
         this.spellProgression = config.spellProgression || null;
         this.customHeaderStats = config.customHeaderStats || [];
         this.mechanicPanelExtension = config.mechanicPanelExtension || null;
+        this.onInitiative = config.onInitiative || null;
         
         // Declarative Extensions (v2.2)
         this.lvl20StatBonus = config.lvl20StatBonus || 0;

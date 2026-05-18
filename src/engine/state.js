@@ -923,6 +923,7 @@ function characterReducer(currentState, action) {
             break;
         }
         case 'START_COMBAT': {
+            console.log("⚔️ NIMBLE: Starting Combat Transaction...");
             // 1. Reset all encounter-based powers (keys starting with 'u')
             Object.keys(s).forEach(key => {
                 if (key.startsWith('u')) {
@@ -934,9 +935,36 @@ function characterReducer(currentState, action) {
             // 2. Reset Actions
             s.actionsSpent = 0;
 
-            // Log it
+            // 3. Class-specific Initiative Logic (Atomic Transaction)
+            if (typeof CLASS_CONFIG.onInitiative === 'function') {
+                const derived = computeDerived(s);
+                
+                // Define local helpers that mutate the draft state 's' directly
+                // This prevents recursive dispatches and race conditions
+                const localAdjRes = (id, amt, max, isAbs = false) => {
+                    let currentVal = 0;
+                    if (s.resourceValues[id] !== undefined && s.resourceValues[id] !== null) {
+                        currentVal = parseFloat(s.resourceValues[id]) || 0;
+                    }
+                    const adjAmt = parseFloat(amt) || 0;
+                    const finalMax = parseFloat(max) || 999;
+                    const newVal = Math.min(finalMax, Math.max(0, isAbs ? adjAmt : currentVal + adjAmt));
+                    s.resourceValues[id] = newVal;
+                    console.log(`  - Atomic Recharge [${id}]: ${currentVal} -> ${newVal} (Max: ${finalMax})`);
+                };
+
+                const localAddLog = (msg) => {
+                    const newLog = { id: Date.now() + 1, msg };
+                    s.logs = [newLog, ...(s.logs || [])].slice(0, 5);
+                };
+
+                CLASS_CONFIG.onInitiative(s.level, s.subclass, s, derived, localAdjRes, localAddLog);
+            }
+
+            // Log the general reset
             const logMsg = "Initiative: Actions and Encounter powers reset.";
             s.logs = [{ id: Date.now(), msg: logMsg }, ...(s.logs || [])].slice(0, 5);
+            console.log("⚔️ NIMBLE: Combat Transaction Complete.");
             break;
         }
         case 'REST_CHARACTER': {

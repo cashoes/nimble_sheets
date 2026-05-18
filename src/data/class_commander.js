@@ -85,15 +85,13 @@ class CommanderClass extends BaseClass {
                     }
                 }
             ],
-            onInitiative: (level, subclass, state, derived) => {
+            onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 if (subclass === "Spellblade" && level >= 4) {
-                    const statsMap = getStatsMap(state);
-                    const intVal = statsMap.int;
+                    const intVal = derived.statsMap.int;
                     adjRes('mana', intVal, derived.resourceMaxes.mana);
-                    dispatch({ type: 'ADD_LOG', payload: { msg: `Initiative: Gained ${intVal} Mana (Arcane Command).` } });
+                    addLog(`Initiative: Gained ${intVal} Mana (Arcane Command).`);
                 }
-            },
-            scalingStats: {
+            },            scalingStats: {
                 cdType: { 4: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" },
                 bonusCombatDice: 0
             },

@@ -146,13 +146,13 @@ class ShadowmancerClass extends BaseClass {
                     { rollContext: { isMinion: true }, flex: 1 }
                 );
             },
-            onInitiative: (level, subclass, state, derived) => {
+            onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 if (subclass === 'RedDragon' && level >= 11) {
                     const max = derived.resourceMaxes.pilfer || 0;
                     const current = state.resourceValues?.pilfer ?? max;
                     if (current < max) {
                         adjRes('pilfer', 1, max); 
-                        dispatch({ type: 'ADD_LOG', payload: { msg: "Initiative: Regained 1 use of Pilfered Power (Heart of Burning Fire)." } });
+                        addLog("Initiative: Regained 1 use of Pilfered Power (Heart of Burning Fire).");
                     }
                 }
             },

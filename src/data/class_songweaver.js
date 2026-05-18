@@ -54,18 +54,17 @@ class SongweaverClass extends BaseClass {
                 const vmDisplay = `${derived.vmDice}+${derived.vmBonus}`;
                 builder.addRollDisplay(vmDisplay, 'Vicious Mockery', vmDisplay, 'Range 12 | Taunts | Psychic', { type: 'cantrip', school: 'Wind' });
             },
-            onInitiative: (level, subclass, state, derived) => {
+            onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 if (level >= 3) {
                     const max = derived.resourceMaxes.inspiration || 0;
                     const current = state.resourceValues?.inspiration ?? max;
                     if (current < max) {
                         const gain = Math.min(2, max - current);
                         adjRes('inspiration', gain, max);
-                        dispatch({ type: 'ADD_LOG', payload: { msg: `Initiative: Regained ${gain} Inspiration (Quick Wit).` } });
+                        addLog(`Initiative: Regained ${gain} Inspiration (Quick Wit).`);
                     }
                 }
-            },
-            statModifiers: [
+            },            statModifiers: [
                 { id: "heroic_ballad_max", stat: "inspirationBonus", value: 2, condition: (l, s, state) => (state.selectedLyrical || []).includes("Heroic Ballad") }
             ],
             grantedSpells: [
