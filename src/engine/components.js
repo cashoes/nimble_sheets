@@ -588,15 +588,21 @@ function InventoryRow(props) {
                 <input type="checkbox" checked=${isEquipped} onchange=${handleEquip} />
             </div>
             <div>
-                <input type="text" class="inv-input" value=${() => nameStr} style="text-align:left;" onchange=${handleName} />
+                ${() => isLib() ? 
+                    html`<div style="font-weight:bold; color:#fff; text-align:left; padding: 4px 0;">${nameStr}</div>` : 
+                    html`<input type="text" class="inv-input" value=${() => nameStr} style="text-align:left;" onchange=${handleName} />`
+                }
             </div>
             ${typeNode}
             <div>
-                <textarea ref=${el => taRef = el} class="inv-input" 
+                ${() => isLib() ? 
+                    html`<div style="font-size:0.85em; color:var(--text-muted); text-align:left; line-height:1.2; padding: 4px 0;">${propsVal || ''}</div>` : 
+                    html`<textarea ref=${el => taRef = el} class="inv-input" 
                           rows="1"
                           style="resize:none; overflow:hidden; text-align:left;" 
                           oninput=${handleAutoResize}
-                          onchange=${handleProps}>${() => propsVal || ''}</textarea>
+                          onchange=${handleProps}>${() => propsVal || ''}</textarea>`
+                }
             </div>
             <div style="text-align:center; color:var(--text-muted);">
                 ${reachNode}
