@@ -925,8 +925,9 @@ function characterReducer(currentState, action) {
         case 'START_COMBAT': {
             console.log("⚔️ NIMBLE: Starting Combat Transaction...");
             // 1. Reset all encounter-based powers (keys starting with 'u')
+            const protectedPips = CLASS_CONFIG.protectedPips || [];
             Object.keys(s).forEach(key => {
-                if (key.startsWith('u')) {
+                if (key.startsWith('u') && !protectedPips.includes(key)) {
                     if (typeof s[key] === 'string' && s[key] === 'BOOM') s[key] = 'OFF';
                     else if (typeof s[key] === 'number') s[key] = 0;
                 }
@@ -935,35 +936,35 @@ function characterReducer(currentState, action) {
             // 2. Reset Actions
             s.actionsSpent = 0;
 
-            // 3. Class-specific Initiative Logic (Atomic Transaction)
+            // 3. Log the general reset FIRST
+            const logMsg = "Initiative: Actions and Encounter powers reset.";
+            s.logs = [{ id: Date.now(), msg: logMsg }, ...(s.logs || [])].slice(0, 5);
+
+            // 4. Class-specific Initiative Logic (Atomic Transaction)
             if (typeof CLASS_CONFIG.onInitiative === 'function') {
                 const derived = computeDerived(s);
                 
                 // Define local helpers that mutate the draft state 's' directly
-                // This prevents recursive dispatches and race conditions
                 const localAdjRes = (id, amt, max, isAbs = false) => {
-                    let currentVal = 0;
-                    if (s.resourceValues[id] !== undefined && s.resourceValues[id] !== null) {
-                        currentVal = parseFloat(s.resourceValues[id]) || 0;
-                    }
+                    // Default to 0 for recharges if value is missing from state
+                    const currentVal = parseFloat(s.resourceValues[id] ?? 0) || 0;
                     const adjAmt = parseFloat(amt) || 0;
-                    const finalMax = parseFloat(max) || 999;
+                    const finalMax = parseFloat(max) || 0;
                     const newVal = Math.min(finalMax, Math.max(0, isAbs ? adjAmt : currentVal + adjAmt));
                     s.resourceValues[id] = newVal;
-                    console.log(`  - Atomic Recharge [${id}]: ${currentVal} -> ${newVal} (Max: ${finalMax})`);
+                    console.log(`  - Atomic Recharge [${id}]: Current=${currentVal}, Max=${finalMax}, New=${newVal}`);
                 };
 
                 const localAddLog = (msg) => {
+                    console.log(`  - Atomic Log: ${msg}`);
                     const newLog = { id: Date.now() + 1, msg };
-                    s.logs = [newLog, ...(s.logs || [])].slice(0, 5);
+                    s.logs = [newLog, ...s.logs].slice(0, 5);
                 };
 
+                console.log(`⚔️ Executing hook for ${CLASS_CONFIG.name}...`);
                 CLASS_CONFIG.onInitiative(s.level, s.subclass, s, derived, localAdjRes, localAddLog);
             }
 
-            // Log the general reset
-            const logMsg = "Initiative: Actions and Encounter powers reset.";
-            s.logs = [{ id: Date.now(), msg: logMsg }, ...(s.logs || [])].slice(0, 5);
             console.log("⚔️ NIMBLE: Combat Transaction Complete.");
             break;
         }

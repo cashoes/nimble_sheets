@@ -26,6 +26,7 @@ class OathswornClass extends BaseClass {
                 border: "rgba(232, 121, 249, 0.25)"
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
+            protectedPips: ["uBlinding"],
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 if ((state.selectedDecrees || []).includes("Stand Fast, Friends!")) {
                     const statsMap = derived.statsMap;

@@ -26,6 +26,7 @@ class ShadowmancerClass extends BaseClass {
                 border: "rgba(168, 85, 247, 0.3)"
             },
             initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
+            protectedPips: ["uBeguiling", "uBloodSight", "uWhispers"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 {
@@ -148,11 +149,16 @@ class ShadowmancerClass extends BaseClass {
             },
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 if (subclass === 'RedDragon' && level >= 11) {
-                    const max = derived.resourceMaxes.pilfer || 0;
+                    const max = derived.resourceMaxes?.pilfer || 0;
                     const current = state.resourceValues?.pilfer ?? max;
+                    
+                    console.log(`⚔️ Shadowmancer [Red Dragon] Init Hook:`, { max, current });
+
                     if (current < max) {
-                        adjRes('pilfer', 1, max); 
+                        adjRes('pilfer', 1, max);
                         addLog("Initiative: Regained 1 use of Pilfered Power (Heart of Burning Fire).");
+                    } else {
+                        console.log("⚔️ Shadowmancer: Pilfered Power already full.");
                     }
                 }
             },

@@ -26,13 +26,26 @@ class ShepherdClass extends BaseClass {
                 border: "rgba(217, 70, 239, 0.25)"
             },
             initialStats: { baseStr: 2, baseDex: -1, baseInt: 0, baseWil: 2 },
+            protectedPips: ["uVeilwalker", "uIlluminate"],
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
-                if (level >= 2) {
+                // 1. Searing Light Recharge (Light Bearer or Mercy 15)
+                const hasLightBearer = (state.selectedGraces || []).includes("Light Bearer");
+                const isMercy15 = subclass === "Mercy" && level >= 15;
+                
+                if (hasLightBearer || isMercy15) {
                     const max = derived.resourceMaxes.searing || 0;
                     const current = state.resourceValues?.searing ?? max;
                     if (current < max) {
                         adjRes('searing', 1, max);
-                        addLog("Initiative: Regained 1 use of Searing Light (Light Bearer).");
+                        addLog(`Initiative: Regained 1 use of Searing Light (${hasLightBearer ? "Light Bearer" : "Empowered Conduit"}).`);
+                    }
+                }
+
+                // 2. Veilwalker's Blessing Recharge (Malice 15)
+                if (subclass === "Malice" && level >= 15) {
+                    if (state.uVeilwalker > 0) {
+                        state.uVeilwalker = 0; 
+                        addLog("Initiative: Regained use of Veilwalker's Blessing (Conduit of Death).");
                     }
                 }
             },

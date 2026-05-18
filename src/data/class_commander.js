@@ -87,9 +87,20 @@ class CommanderClass extends BaseClass {
             ],
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 if (subclass === "Spellblade" && level >= 4) {
-                    const intVal = derived.statsMap.int;
-                    adjRes('mana', intVal, derived.resourceMaxes.mana);
-                    addLog(`Initiative: Gained ${intVal} Mana (Arcane Command).`);
+                    const stats = derived.statsMap;
+                    const intVal = stats.int || 0;
+                    const maxMana = derived.resourceMaxes?.mana || intVal;
+                    const currentMana = state.resourceValues?.mana ?? 0;
+                    
+                    console.log(`⚔️ Commander [Spellblade] Init Hook:`, { intVal, maxMana, currentMana });
+
+                    if (currentMana < maxMana) {
+                        const gain = Math.min(intVal, maxMana - currentMana);
+                        adjRes('mana', gain, maxMana);
+                        addLog(`Initiative: Gained ${gain} Mana (Arcane Command).`);
+                    } else {
+                        console.log("⚔️ Commander: Mana already full.");
+                    }
                 }
             },            scalingStats: {
                 cdType: { 4: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" },
