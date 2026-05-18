@@ -924,8 +924,7 @@ function characterReducer(currentState, action) {
         }
         case 'START_COMBAT': {
             console.log("⚔️ NIMBLE: Starting Combat Transaction...");
-            const transactionLogs = [];
-
+            
             // 1. Reset all encounter-based powers (keys starting with 'u')
             const protectedPips = CLASS_CONFIG.protectedPips || [];
             Object.keys(s).forEach(key => {
@@ -934,18 +933,19 @@ function characterReducer(currentState, action) {
                     else if (typeof s[key] === 'number') s[key] = 0;
                 }
             });
-            transactionLogs.push("Actions and Encounter powers reset.");
 
             // 2. Reset Actions
             s.actionsSpent = 0;
+            
+            // 3. General Reset Log
+            const baseId = Date.now();
+            s.logs = [{ id: baseId, msg: "Initiative: Actions and Encounter powers reset." }, ...(s.logs || [])].slice(0, 5);
 
-            // 3. Class-specific Initiative Logic (Atomic Transaction)
+            // 4. Class-specific Initiative Logic (Atomic Transaction)
             if (typeof CLASS_CONFIG.onInitiative === 'function') {
                 const derived = computeDerived(s);
                 
-                // Define local helpers that mutate the draft state 's' directly
                 const localAdjRes = (id, amt, max, isAbs = false) => {
-                    // Default to 0 for recharges if value is missing from state
                     const currentVal = parseFloat(s.resourceValues[id] ?? 0) || 0;
                     const adjAmt = parseFloat(amt) || 0;
                     const finalMax = parseFloat(max) || 0;
@@ -956,19 +956,14 @@ function characterReducer(currentState, action) {
 
                 const localAddLog = (msg) => {
                     console.log(`  - Atomic Log: ${msg}`);
-                    // Strip the "Initiative: " prefix for cleaner joining
-                    const clean = msg.replace(/^Initiative:\s*/i, '');
-                    transactionLogs.push(clean);
+                    // Use a unique ID based on current log length to ensure they sort correctly
+                    const logId = baseId + (s.logs.length * 10);
+                    s.logs = [{ id: logId, msg }, ...s.logs].slice(0, 10);
                 };
 
                 console.log(`⚔️ Executing hook for ${CLASS_CONFIG.name}...`);
                 CLASS_CONFIG.onInitiative(s.level, s.subclass, s, derived, localAdjRes, localAddLog);
             }
-
-            // Combine all transaction logs into ONE entry for the ticker
-            const combinedLog = "Initiative: " + transactionLogs.join(" » ");
-            const newLog = { id: Date.now(), msg: combinedLog };
-            s.logs = [newLog, ...(s.logs || [])].slice(0, 5);
 
             console.log("⚔️ NIMBLE: Combat Transaction Complete.");
             break;

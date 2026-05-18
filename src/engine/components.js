@@ -1624,70 +1624,101 @@ function ProficiencyRow() {
 
 /**
  * High-Visibility Unified Action Ticker
- * Displays OBR roll results and automated character events in a single scrolling marquee.
+ * Displays OBR roll results and automated character events in a persistent scrolling marquee.
+ * Each message is guaranteed to scroll across the screen at least twice before clearing.
  */
 function LogFeed() {
     const s = charState;
     const rollData = lastRollResult;
-    const [visibleMsg, setVisibleMsg] = Solid.createSignal(null);
-    const [lastProcessedLogId, setLastProcessedLogId] = Solid.createSignal(0);
+    
+    // We store items that are currently "in the train"
+    const [activeItems, setActiveItems] = Solid.createSignal([]);
+    const [lastProcessedLogId, setLastProcessedLogId] = Solid.createSignal(s().logs?.[0]?.id || 0);
     const [lastProcessedRollId, setLastProcessedRollId] = Solid.createSignal("");
-    let timer = null;
 
+    // Effect to catch incoming rolls and logs
     Solid.createEffect(() => {
         const d = rollData();
         const logs = s().logs || [];
-        const latestLog = logs[0];
+        const lastId = lastProcessedLogId();
+        
+        // Find all logs newer than the last processed one
+        const newLogs = [];
+        for (const l of logs) {
+            if (l.id > lastId) newLogs.push(l);
+            else break;
+        }
         
         const hasNewRoll = d && d.result && d.result.rollId !== lastProcessedRollId();
-        const hasNewLog = latestLog && latestLog.id !== lastProcessedLogId();
+        const hasNewLog = newLogs.length > 0;
 
         if (hasNewRoll || hasNewLog) {
-            let rollPart = "";
-            let logPart = "";
-
-            // 1. Format Roll Info
-            if (d && d.result) {
+            let nextItems = [...activeItems()];
+            
+            if (hasNewRoll) {
                 const notation = d.result.diceNotation || "";
                 // Extract label from notation: "1d8+2 #Dagger (melee)" -> "Dagger"
                 const labelMatch = notation.match(/#([^(\s]*)/);
                 const label = labelMatch ? labelMatch[1].trim() : "Roll";
-                rollPart = `[${label.toUpperCase()}]: ${d.result.totalValue} (${d.result.rollSummary})`;
-                if (hasNewRoll) setLastProcessedRollId(d.result.rollId);
+                const msg = `[${label.toUpperCase()}]: ${d.result.totalValue} (${d.result.rollSummary})`;
+                
+                nextItems.push({ id: d.result.rollId, msg, type: 'roll', passes: 0 });
+                setLastProcessedRollId(d.result.rollId);
             }
 
-            // 2. Format Log Info
-            if (latestLog) {
-                logPart = latestLog.msg;
-                if (hasNewLog) setLastProcessedLogId(latestLog.id);
+            if (hasNewLog) {
+                // Add new logs in order of creation (oldest to newest)
+                newLogs.reverse().forEach(l => {
+                    nextItems.push({ id: l.id, msg: l.msg, type: 'log', passes: 0 });
+                });
+                setLastProcessedLogId(logs[0].id);
             }
 
-            if (rollPart || logPart) {
-                setVisibleMsg({ roll: rollPart, log: logPart });
-                if (timer) clearTimeout(timer);
-                timer = setTimeout(() => setVisibleMsg(null), 15000);
-            }
+            setActiveItems(nextItems);
         }
     });
 
+    const handleIteration = () => {
+        const current = activeItems();
+        if (current.length === 0) return;
+
+        // Increment passes for all current items. 
+        // Filter out items that have already completed 2 full loops.
+        const updated = current.map(item => ({ ...item, passes: item.passes + 1 }))
+                               .filter(item => item.passes < 2);
+        
+        setActiveItems(updated);
+    };
+
     const dismiss = () => {
-        setVisibleMsg(null);
+        setActiveItems([]);
         setLastRollResult(null);
+    };
+
+    const renderItems = () => {
+        return activeItems().map((item, idx) => {
+            const isRoll = item.type === 'roll';
+            const color = isRoll ? 'var(--gold-light)' : '#fff';
+            const style = isRoll ? 'letter-spacing: 0.5px;' : 'font-style: italic;';
+            const sep = idx > 0 ? html`<span style="color: var(--gold-light); font-weight: 900; margin: 0 20px; opacity: 0.6;">::</span>` : '';
+            return html`${sep}<span style=${`color: ${color}; ${style}`}>${item.msg}</span>`;
+        });
     };
 
     return html`
         <style>
             @keyframes nimble-ticker-scroll {
-                0% { transform: translateX(620px); }
+                0% { transform: translateX(650px); }
                 100% { transform: translateX(-100%); }
             }
             .action-ticker-container:hover .dismiss-icon { opacity: 1; }
         </style>
         <div onclick=${dismiss} 
+             onAnimationIteration=${handleIteration}
              class="action-ticker-container"
              title="Click to dismiss"
              style=${() => `
-            display: ${visibleMsg() ? 'flex' : 'none'};
+            display: ${activeItems().length > 0 ? 'flex' : 'none'};
             align-items: center;
             width: 600px;
             height: 24px;
@@ -1703,12 +1734,8 @@ function LogFeed() {
             border-radius: 12px;
             padding: 0 10px;
         `}>
-            <div style="animation: nimble-ticker-scroll 12s linear infinite; position: absolute; display: flex; align-items: center; gap: 30px; min-width: 100%;">
-                <span style="display: flex; align-items: center; gap: 15px;">
-                    <span style="color: var(--gold-light); letter-spacing: 0.5px;">${() => visibleMsg()?.roll}</span>
-                    ${() => visibleMsg()?.log && visibleMsg()?.roll ? html`<span style="color: var(--gold-light); font-weight: 900; opacity: 0.6;">::</span>` : ''}
-                    <span style="color: #fff; font-style: italic; letter-spacing: 0.5px;">${() => visibleMsg()?.log}</span>
-                </span>
+            <div style="animation: nimble-ticker-scroll 15s linear infinite; position: absolute; display: flex; align-items: center;">
+                ${renderItems}
             </div>
             <div class="dismiss-icon" style="position: absolute; right: 12px; opacity: 0; transition: 0.3s; color: var(--gold-light); font-size: 1.4em; font-weight: bold; text-shadow: 0 0 5px #000;">×</div>
         </div>
