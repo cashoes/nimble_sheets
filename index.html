@@ -132,11 +132,12 @@
 
         /**
          * Helper to fetch a local file as text.
+         * Bypasses browser cache using a timestamp.
          * @param {string} path - Relative path to the file.
          * @returns {Promise<string>} File content.
          */
         async function fetchFile(path) {
-            const r = await fetch(path);
+            const r = await fetch(`${path}?t=${Date.now()}`);
             if (!r.ok) throw new Error(`Could not load ${path}`);
             return await r.text();
         }
