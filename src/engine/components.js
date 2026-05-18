@@ -471,9 +471,10 @@ function InventoryRow(props) {
     const handleReach = (e) => updateItem(id, 'reach', e.target.value);
 
     const isLib = () => !!item.isLibraryItem;
+    const isWeapon = () => typeStr === 'weapon' || typeStr === 'melee' || typeStr === 'ranged';
 
     const reachNode = () => {
-        if (typeStr !== 'weapon') return '-';
+        if (!isWeapon()) return '-';
         if (isLib()) return item.reach || '-';
         return html`<input type="text" class="inv-input" value=${() => item.reach || '1'} style="text-align:center;" onchange=${handleReach} />`;
     };
@@ -481,11 +482,16 @@ function InventoryRow(props) {
     const effectNode = () => {
         if (!isEquipped()) return '-';
         const smap = d().statsMap;
-        if (typeStr === 'weapon') {
+        if (isWeapon()) {
             const mod = smap[statKey];
             const not = `${diceStr}${mod >= 0 ? '+' : ''}${mod}`;
             // Pass weapon context (melee/ranged) for automation
-            const weaponType = (item.category || "").toLowerCase().includes('ranged') ? 'ranged' : 'melee';
+            // Prefer explicit type, fallback to category for lib items
+            let weaponType = typeStr === 'ranged' ? 'ranged' : (typeStr === 'melee' ? 'melee' : null);
+            if (!weaponType) {
+                weaponType = (item.category || "").toLowerCase().includes('ranged') ? 'ranged' : 'melee';
+            }
+            
             const click = () => dispatchRoll(not, nameStr, { 
                 stat: statKey, 
                 type: 'attack',
@@ -561,7 +567,8 @@ function InventoryRow(props) {
         return html`
             <div style="width:100%; text-align:center;">
                 <select class="inv-input" style="text-align-last: center;" onchange=${handleType}>
-                    <option value="weapon" selected=${() => typeStr === 'weapon'}>Weapon</option>
+                    <option value="melee" selected=${() => typeStr === 'melee'}>Melee</option>
+                    <option value="ranged" selected=${() => typeStr === 'ranged'}>Ranged</option>
                     <option value="armor" selected=${() => typeStr === 'armor'}>Armor</option>
                     <option value="shield" selected=${() => typeStr === 'shield'}>Shield</option>
                     <option value="misc" selected=${() => typeStr === 'misc'}>Misc</option>

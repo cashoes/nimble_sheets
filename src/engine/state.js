@@ -826,7 +826,8 @@ function characterReducer(currentState, action) {
         case 'ADD_ITEM': {
             s.inventory.push({ 
                 id: Date.now(), 
-                category: 'melee', // Default for custom weapons
+                type: 'melee', // Default for custom items
+                category: 'melee',
                 reach: '1',
                 ...payload.item 
             });

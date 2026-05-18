@@ -70,7 +70,7 @@
     "data": {
         "dagger": {
             "name": "Dagger",
-            "type": "weapon",
+            "type": "melee",
             "category": "DEX 1H",
             "dmgDice": "1d4",
             "stat": "dex",
@@ -83,7 +83,7 @@
         },
         "sickle": {
             "name": "Sickle",
-            "type": "weapon",
+            "type": "melee",
             "category": "DEX 1H",
             "dmgDice": "1d4",
             "stat": "dex",
@@ -96,7 +96,7 @@
         },
         "clubmace": {
             "name": "Club/Mace",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 1H",
             "dmgDice": "1d6",
             "stat": "str",
@@ -109,7 +109,7 @@
         },
         "handaxe": {
             "name": "Hand Axe",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 1H",
             "dmgDice": "1d6",
             "stat": "str",
@@ -122,7 +122,7 @@
         },
         "shortsword": {
             "name": "Short Sword",
-            "type": "weapon",
+            "type": "melee",
             "category": "DEX 1H",
             "dmgDice": "1d6",
             "stat": "dex",
@@ -135,7 +135,7 @@
         },
         "rapier": {
             "name": "Rapier",
-            "type": "weapon",
+            "type": "melee",
             "category": "DEX 1H",
             "dmgDice": "2d4",
             "stat": "dex",
@@ -148,7 +148,7 @@
         },
         "staff": {
             "name": "Staff",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "1d8",
             "stat": "str",
@@ -161,7 +161,7 @@
         },
         "longsword": {
             "name": "Longsword",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "1d8",
             "stat": "str",
@@ -174,7 +174,7 @@
         },
         "battleaxe": {
             "name": "Battleaxe",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "1d10",
             "stat": "str",
@@ -187,7 +187,7 @@
         },
         "polehammer": {
             "name": "Pole Hammer",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "1d10",
             "stat": "str",
@@ -200,7 +200,7 @@
         },
         "glaive": {
             "name": "Glaive",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "1d10",
             "stat": "str",
@@ -213,7 +213,7 @@
         },
         "spear": {
             "name": "Spear",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "1d10",
             "stat": "str",
@@ -226,7 +226,7 @@
         },
         "greatmaul": {
             "name": "Greatmaul",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "1d12",
             "stat": "str",
@@ -239,7 +239,7 @@
         },
         "greataxe": {
             "name": "Greataxe",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "2d6",
             "stat": "str",
@@ -252,7 +252,7 @@
         },
         "greatsword": {
             "name": "Greatsword",
-            "type": "weapon",
+            "type": "melee",
             "category": "STR 2H",
             "dmgDice": "3d4",
             "stat": "str",
@@ -265,7 +265,7 @@
         },
         "sling": {
             "name": "Sling",
-            "type": "weapon",
+            "type": "ranged",
             "category": "DEX Scaling",
             "dmgDice": "1d4",
             "stat": "dex",
@@ -278,7 +278,7 @@
         },
         "javelins": {
             "name": "Javelins",
-            "type": "weapon",
+            "type": "ranged",
             "category": "STR Scaling",
             "dmgDice": "1d6",
             "stat": "str",
@@ -291,7 +291,7 @@
         },
         "throwinghammers": {
             "name": "Throwing Hammers",
-            "type": "weapon",
+            "type": "ranged",
             "category": "STR Scaling",
             "dmgDice": "1d8",
             "stat": "str",
@@ -304,7 +304,7 @@
         },
         "shortbow": {
             "name": "Shortbow",
-            "type": "weapon",
+            "type": "ranged",
             "category": "DEX Scaling",
             "dmgDice": "1d6",
             "stat": "dex",
@@ -317,7 +317,7 @@
         },
         "longbow": {
             "name": "Longbow",
-            "type": "weapon",
+            "type": "ranged",
             "category": "DEX Scaling",
             "dmgDice": "1d8",
             "stat": "dex",
@@ -330,7 +330,7 @@
         },
         "crossbow": {
             "name": "Crossbow",
-            "type": "weapon",
+            "type": "ranged",
             "category": "DEX Scaling",
             "dmgDice": "4d4",
             "stat": "dex",
@@ -343,7 +343,7 @@
         },
         "handheldballista": {
             "name": "Handheld Ballista",
-            "type": "weapon",
+            "type": "ranged",
             "category": "DEX Scaling",
             "dmgDice": "1d20",
             "stat": "dex",
