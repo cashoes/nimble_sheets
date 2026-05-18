@@ -511,7 +511,7 @@ function InventoryRow(props) {
 
     const statsNode = () => {
         const smap = d().statsMap;
-        if (typeStr === 'weapon') {
+        if (isWeapon()) {
             if (isLib()) {
                 const val = smap[statKey];
                 const lab = (val >= 0 ? '+' : '') + val;
