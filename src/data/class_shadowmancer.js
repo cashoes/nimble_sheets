@@ -148,9 +148,11 @@ class ShadowmancerClass extends BaseClass {
             },
             onInitiative: (level, subclass, state, derived) => {
                 if (subclass === 'RedDragon' && level >= 11) {
-                    const current = state.resourceValues.pilfer ?? 0;
-                    if (current > 0) {
-                        adjRes('pilfer', -1, statsMap.dex);
+                    const max = derived.resourceMaxes.pilfer || 0;
+                    const current = state.resourceValues?.pilfer ?? max;
+                    if (current < max) {
+                        adjRes('pilfer', 1, max); 
+                        dispatch({ type: 'ADD_LOG', payload: { msg: "Initiative: Regained 1 use of Pilfered Power (Heart of Burning Fire)." } });
                     }
                 }
             },

@@ -767,8 +767,13 @@ function characterReducer(currentState, action) {
         }
         case 'ADJ_RES': {
             const { id, amount, max, isAbsolute } = payload;
-            let oldVal = s.resourceValues[id] || 0; 
-            s.resourceValues[id] = Math.min(max || 999, Math.max(0, isAbsolute ? amount : oldVal + amount));
+            let currentVal = max || 0;
+            if (s.resourceValues[id] !== undefined) {
+                currentVal = parseFloat(s.resourceValues[id]);
+                if (isNaN(currentVal)) currentVal = 0;
+            }
+            const adjAmount = parseFloat(amount) || 0;
+            s.resourceValues[id] = Math.min(max || 999, Math.max(0, isAbsolute ? adjAmount : currentVal + adjAmount));
             break;
         }
         case 'SET_STATE_KEY': {
@@ -915,6 +920,23 @@ function characterReducer(currentState, action) {
         case 'ADD_LOG': {
             const newLog = { id: Date.now(), msg: payload.msg };
             s.logs = [newLog, ...(s.logs || [])].slice(0, 5);
+            break;
+        }
+        case 'START_COMBAT': {
+            // 1. Reset all encounter-based powers (keys starting with 'u')
+            Object.keys(s).forEach(key => {
+                if (key.startsWith('u')) {
+                    if (typeof s[key] === 'string' && s[key] === 'BOOM') s[key] = 'OFF';
+                    else if (typeof s[key] === 'number') s[key] = 0;
+                }
+            });
+
+            // 2. Reset Actions
+            s.actionsSpent = 0;
+
+            // Log it
+            const logMsg = "Initiative: Actions and Encounter powers reset.";
+            s.logs = [{ id: Date.now(), msg: logMsg }, ...(s.logs || [])].slice(0, 5);
             break;
         }
         case 'REST_CHARACTER': {

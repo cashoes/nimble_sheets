@@ -89,7 +89,8 @@ class CommanderClass extends BaseClass {
                 if (subclass === "Spellblade" && level >= 4) {
                     const statsMap = getStatsMap(state);
                     const intVal = statsMap.int;
-                    adjRes('mana', intVal, derived.resourceMaxes.mana, true);
+                    adjRes('mana', intVal, derived.resourceMaxes.mana);
+                    dispatch({ type: 'ADD_LOG', payload: { msg: `Initiative: Gained ${intVal} Mana (Arcane Command).` } });
                 }
             },
             scalingStats: {

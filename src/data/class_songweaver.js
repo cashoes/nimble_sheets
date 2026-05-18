@@ -56,9 +56,13 @@ class SongweaverClass extends BaseClass {
             },
             onInitiative: (level, subclass, state, derived) => {
                 if (level >= 3) {
-                    const current = state.resourceValues?.inspiration || 0;
                     const max = derived.resourceMaxes.inspiration || 0;
-                    adjRes('inspiration', Math.min(max, current + 2), max, true);
+                    const current = state.resourceValues?.inspiration ?? max;
+                    if (current < max) {
+                        const gain = Math.min(2, max - current);
+                        adjRes('inspiration', gain, max);
+                        dispatch({ type: 'ADD_LOG', payload: { msg: `Initiative: Regained ${gain} Inspiration (Quick Wit).` } });
+                    }
                 }
             },
             statModifiers: [

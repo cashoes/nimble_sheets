@@ -25,7 +25,17 @@ class ShepherdClass extends BaseClass {
                 panelBg: "rgba(35, 15, 35, 0.8)",
                 border: "rgba(217, 70, 239, 0.25)"
             },
-            initialStats: { baseStr: 1, baseDex: -1, baseInt: -1, baseWil: 3 },
+            initialStats: { baseStr: 2, baseDex: -1, baseInt: 0, baseWil: 2 },
+            onInitiative: (level, subclass, state, derived) => {
+                if (level >= 2) {
+                    const max = derived.resourceMaxes.searing || 0;
+                    const current = state.resourceValues?.searing ?? max;
+                    if (current < max) {
+                        adjRes('searing', 1, max);
+                        dispatch({ type: 'ADD_LOG', payload: { msg: "Initiative: Regained 1 use of Searing Light (Light Bearer)." } });
+                    }
+                }
+            },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Mercy", label: "Luminary of Mercy", accent: "#f0f9ff" },

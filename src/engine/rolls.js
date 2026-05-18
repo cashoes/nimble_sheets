@@ -51,9 +51,14 @@ function dispatchRoll(notation, label, options = {}) {
     }
 
     // --- ON INITIATIVE HOOK ---
-    if (/initiative/i.test(label) && typeof CLASS_CONFIG.onInitiative === 'function') {
-        const derived = computeDerived(state);
-        CLASS_CONFIG.onInitiative(state.level, state.subclass, state, derived);
+    if (/initiative/i.test(label)) {
+        dispatch({ type: 'START_COMBAT' });
+        
+        if (typeof CLASS_CONFIG.onInitiative === 'function') {
+            const derived = computeDerived(state);
+            CLASS_CONFIG.onInitiative(state.level, state.subclass, state, derived);
+        }
+        
         dispatch({ type: 'SYNC_STATE' });
     }
     // -------------------------
