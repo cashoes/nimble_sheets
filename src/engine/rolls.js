@@ -24,9 +24,12 @@ function dispatchRoll(notation, label, options = {}) {
 
     // --- RULE-BREAKING OVERRIDES (v2.8.22) ---
     // Capture state flags BEFORE any triggers (like JD clearing) run
+    const charName = CLASS_CONFIG.name;
     const isMelee = options.metadata?.weaponType === 'melee' || /⚔️/.test(label) || options.stat === 'str';
-    const hasJD = CLASS_CONFIG.name === "Oathsworn" && (state.judgmentDice || []).length > 0;
-    const isHeadsIWin = CLASS_CONFIG.name === "The Cheat" && state.uHeadsIWin === 'BOOM';
+    const hasJD = charName === "Oathsworn" && (state.judgmentDice || []).length > 0;
+    const isHeadsIWin = charName === "The Cheat" && (state.uHeadsIWin > 0);
+
+    console.log(`🎲 dispatchRoll [${charName}]: Melee=${isMelee}, hasJD=${hasJD}, HeadsIWin=${isHeadsIWin}`);
 
     // --- AUTOMATED CLASS MODIFIERS ---
     let autoMod = 0;
@@ -187,18 +190,29 @@ function handleRollResult(data) {
     if (primaryGroup) {
         const faces = parseInt(primaryGroup.diceType.replace(/\D/g, '')) || 20;
 
-        const isCrit = primaryGroup.total >= faces;
-        const isMiss = primaryGroup.total === 1;
-        const isHit = !isMiss;
-
         const char = CLASS_CONFIG.name;
         const s = charState();
         const d = charDerived();
         const sub = s.subclass;
 
-        // Extract context from notation tags: e.g. "1d8!! #Dagger (melee)"
+        // Extract context from notation tags
         const isMelee = notation.toLowerCase().includes('(melee)');
         const isRanged = notation.toLowerCase().includes('(ranged)');
+
+        // Detect active rule-breakers
+        const isHeadsIWinActive = (char === "The Cheat" || char === "Cheat") && (s.uHeadsIWin > 0);
+        const hasJDActive = char === "Oathsworn" && isMelee && (s.judgmentDice || []).length > 0;
+
+        // NIMBLE Crit: Standard faces, or (faces - 1) if rule-breakers are active
+        const critThreshold = (isHeadsIWinActive || hasJDActive) ? (faces - 1) : faces;
+        
+        // Note: primaryGroup.total includes explosions. 
+        // If they roll (faces - 1) and explode, total will be >= faces.
+        const isCrit = primaryGroup.total >= critThreshold;
+        const isMiss = primaryGroup.total === 1 && !isHeadsIWinActive && !hasJDActive;
+        const isHit = !isMiss;
+
+        console.log(`🎲 handleRollResult [${char} / ${sub}]:`, { isCrit, isMiss, critThreshold, isMelee, isHeadsIWinActive });
 
         if (isCrit) {
             // Automation A: Berserker Red Mist Blood Frenzy (L3+)
@@ -221,7 +235,6 @@ function handleRollResult(data) {
             }
 
             // Automation B: Hunter Thrill of the Hunt (Ranged Crit Only)
-            // Note: Melee Crits are handled in the general 'isHit' block below
             if (char === 'Hunter' && isRanged && s.level >= 2) {
                 const max = d.resourceMaxes['tothCharges'] || 0;
                 dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
@@ -229,22 +242,22 @@ function handleRollResult(data) {
             }
 
             // Automation C: Cheat Sneak Attack (Melee Crit)
-            if (char === 'The Cheat' && isMelee && (s.level || 1) >= 1) {
+            if ((char === 'The Cheat' || char === 'Cheat') && isMelee && (s.level || 1) >= 1) {
                 const saDice = d.saDice || "1d6";
                 dispatchRoll(saDice, 'Sneak Attack', { type: 'pool' });
                 dispatch({ type: 'ADD_LOG', payload: { msg: `Melee Crit! Automated Sneak Attack roll (${saDice}).` } });
             }
 
             // Automation D: Zephyr Way of Flame (Crit)
-            if (char === 'Zephyr' && sub === 'Flame' && s.level >= 3) {
+            if (char === 'Zephyr' && sub === 'WayFlame' && s.level >= 3) {
                 const str = d.statsMap.str || 0;
                 const wounds = s.wounds || 0;
                 const count = str + wounds;
                 if (count > 0) {
                     const isBurning = s.level >= 15;
-                    const notation = `${count}d6${isBurning ? '*2' : ''}`;
-                    dispatchRoll(notation, 'Way of Flame', { type: 'pool' });
-                    dispatch({ type: 'ADD_LOG', payload: { msg: `Crit! Way of Flame triggered (${notation} Fire).` } });
+                    const fNot = `${count}d6${isBurning ? '*2' : ''}`;
+                    dispatchRoll(fNot, 'Way of Flame', { type: 'pool' });
+                    dispatch({ type: 'ADD_LOG', payload: { msg: `Crit! Way of Flame triggered (${fNot} Fire).` } });
                 }
             }
         }
