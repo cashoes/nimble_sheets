@@ -22,6 +22,12 @@ function dispatchRoll(notation, label, options = {}) {
     let finalNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
     const metadata = options.metadata || {}; // Metadata for stateless round-trips
 
+    // --- RULE-BREAKING OVERRIDES (v2.8.22) ---
+    // Capture state flags BEFORE any triggers (like JD clearing) run
+    const isMelee = options.metadata?.weaponType === 'melee' || /⚔️/.test(label) || options.stat === 'str';
+    const hasJD = CLASS_CONFIG.name === "Oathsworn" && (state.judgmentDice || []).length > 0;
+    const isHeadsIWin = CLASS_CONFIG.name === "The Cheat" && state.uHeadsIWin === 'BOOM';
+
     // --- AUTOMATED CLASS MODIFIERS ---
     let autoMod = 0;
     const isAttack = /attack|⚔️/i.test(label) || options.type === 'attack';
@@ -100,11 +106,11 @@ function dispatchRoll(notation, label, options = {}) {
         } else {
             // NIMBLE Combat Logic: Decompose into Primary + Secondary
             // Advantage/Disadvantage applies ONLY to the Primary die
-            const isMelee = options.metadata?.weaponType === 'melee';
             
             // --- Special Subclass Overrides (v2.8.22) ---
-            const cheatAutoHit = CLASS_CONFIG.name === "The Cheat" && state.uHeadsIWin === 'BOOM';
-            const oathUnerring = CLASS_CONFIG.name === "Oathsworn" && isMelee && (state.judgmentDice || []).length > 0;
+            // Use captured flags to prevent race conditions during JD clearing
+            const cheatAutoHit = isHeadsIWin;
+            const oathUnerring = hasJD && isMelee;
             
             let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}d${faces}kl1` : `1d${faces}`;
             
@@ -115,7 +121,7 @@ function dispatchRoll(notation, label, options = {}) {
 
             // Apply Dynamic Crit Thresholds
             if (cheatAutoHit || oathUnerring) {
-                primaryPart += `!>${faces - 1}`;
+                primaryPart += `!!>${faces - 2}`;
             } else {
                 primaryPart += `!!`;
             }
@@ -227,6 +233,19 @@ function handleRollResult(data) {
                 const saDice = d.saDice || "1d6";
                 dispatchRoll(saDice, 'Sneak Attack', { type: 'pool' });
                 dispatch({ type: 'ADD_LOG', payload: { msg: `Melee Crit! Automated Sneak Attack roll (${saDice}).` } });
+            }
+
+            // Automation D: Zephyr Way of Flame (Crit)
+            if (char === 'Zephyr' && sub === 'Flame' && s.level >= 3) {
+                const str = d.statsMap.str || 0;
+                const wounds = s.wounds || 0;
+                const count = str + wounds;
+                if (count > 0) {
+                    const isBurning = s.level >= 15;
+                    const notation = `${count}d6${isBurning ? '*2' : ''}`;
+                    dispatchRoll(notation, 'Way of Flame', { type: 'pool' });
+                    dispatch({ type: 'ADD_LOG', payload: { msg: `Crit! Way of Flame triggered (${notation} Fire).` } });
+                }
             }
         }
 
@@ -482,6 +501,7 @@ function iStats(text, level, statsMap, context = {}) {
     const resolveNotation = (notation, stripFormula = false) => {
         let res = notation.replace(/\bKEY\b/gi, keyValue)
             .replace(/\bLVL\b/gi, level)
+            .replace(/\bWOUNDS\b/gi, state.wounds || 0)
             .replace(/\bSTR\b/gi, statsMap.str)
             .replace(/\bDEX\b/gi, statsMap.dex)
             .replace(/\bINT\b/gi, statsMap.int)
@@ -504,19 +524,19 @@ function iStats(text, level, statsMap, context = {}) {
     });
 
     // Pass 1: Handle mathematical multipliers (e.g., 3x LVL)
-    processed = processed.replace(new RegExp(skipPattern.source + '|(\\b(?:\\d+)\\s*[xX×]\\s*(?:STR|DEX|INT|WIL|KEY|LVL)\\b)', 'gi'), (match, p1) => {
+    processed = processed.replace(new RegExp(skipPattern.source + '|(\\b(?:\\d+)\\s*[xX×]\\s*(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\b)', 'gi'), (match, p1) => {
         if (!p1) return match;
         
-        const m = p1.match(/(\d+)\s*[xX×]\s*(STR|DEX|INT|WIL|KEY|LVL)/i);
+        const m = p1.match(/(\d+)\s*[xX×]\s*(STR|DEX|INT|WIL|KEY|LVL|WOUNDS)/i);
         if (!m) return match;
         
         const statName = m[2].toUpperCase();
-        let val = (statName === 'STR' ? statsMap.str : statName === 'DEX' ? statsMap.dex : statName === 'INT' ? statsMap.int : statName === 'WIL' ? statsMap.wil : statName === 'LVL' ? level : keyValue);
+        let val = (statName === 'STR' ? statsMap.str : statName === 'DEX' ? statsMap.dex : statName === 'INT' ? statsMap.int : statName === 'WIL' ? statsMap.wil : statName === 'LVL' ? level : statName === 'WOUNDS' ? (state.wounds || 0) : keyValue);
         return `<span class="stat-hl">${parseInt(m[1]) * val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p1})</span>`;
     });
 
     // Pass 2: Handle Dice/Table rolls (e.g., 1d6+KEY, 2d100kh1)
-    const diceRegex = new RegExp(skipPattern.source + '|(\\b(?:(?:\\d+|STR|DEX|INT|WIL|KEY|LVL)\\s*d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!)*(?:[\\s\\+-]+(?:STR|DEX|INT|WIL|KEY|LVL|\\d+))*\\b)', 'gi');
+    const diceRegex = new RegExp(skipPattern.source + '|(\\b(?:(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\s*d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!)*(?:[\\s\\+-]+(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS|\\d+))*\\b)', 'gi');
     processed = processed.replace(diceRegex, (match, p1) => {
         if (!p1) return match;
         
@@ -529,13 +549,13 @@ function iStats(text, level, statsMap, context = {}) {
         }
         
         const label = (context.name || 'Roll').replace(/'/g, "\\'");
-        const hasStat = /STR|DEX|INT|WIL|KEY|LVL/i.test(p1);
+        const hasStat = /STR|DEX|INT|WIL|KEY|LVL|WOUNDS/i.test(p1);
         const formula = hasStat ? `<span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p1})</span>` : "";
         return `<span class="dice-hl roll-link" onclick="dispatchRoll('${cleanNotation}', '${label}', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${resolved}</span>${formula}`;
     });
 
     // Pass 3: Handle complex stat math (e.g. 10+KEY+1, LVL+WIL-1)
-    const mathRegex = new RegExp(skipPattern.source + '|(\\b(?:\\d+|STR|DEX|INT|WIL|KEY|LVL)(?:\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL))+\\b)', 'gi');
+    const mathRegex = new RegExp(skipPattern.source + '|(\\b(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)(?:\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS))+\\b)', 'gi');
     processed = processed.replace(mathRegex, (match, p1) => {
         if (!p1) return match;
         
@@ -560,13 +580,16 @@ function iStats(text, level, statsMap, context = {}) {
         return `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${escapedLabel} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
     };
 
-    const statTokenRegex = new RegExp(skipPattern.source + '|(\\b(STR|DEX|INT|WIL|KEY|LVL)\\b(?!\\s+(?:save|check)))', 'gi');
+    const statTokenRegex = new RegExp(skipPattern.source + '|(\\b(STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\b(?!\\s+(?:save|check)))', 'gi');
     return processed.replace(statTokenRegex, (match, p1) => {
         if (!p1) return match;
         
         const statKey = p1.toUpperCase();
         if (statKey === 'LVL') {
             return `<span class="stat-hl">${level}</span>`;
+        }
+        if (statKey === 'WOUNDS') {
+            return `<span class="stat-hl">${state.wounds || 0}</span>`;
         }
         if (statKey === 'STR') {
             return wrapStat(statsMap.str, 'STR');
