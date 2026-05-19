@@ -100,10 +100,28 @@ function dispatchRoll(notation, label, options = {}) {
         } else {
             // NIMBLE Combat Logic: Decompose into Primary + Secondary
             // Advantage/Disadvantage applies ONLY to the Primary die
+            const isMelee = options.metadata?.weaponType === 'melee';
+            
+            // --- Special Subclass Overrides (v2.8.22) ---
+            const cheatAutoHit = CLASS_CONFIG.name === "The Cheat" && state.uHeadsIWin === 'BOOM';
+            const oathUnerring = CLASS_CONFIG.name === "Oathsworn" && isMelee && (state.judgmentDice || []).length > 0;
+            
             let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}d${faces}kl1` : `1d${faces}`;
             
-            // Primary die is the only one that explodes (!!) and is named {primary}
-            primaryPart += `!!{primary}`;
+            // Apply Physical Miss Prevention (min2)
+            if (cheatAutoHit || oathUnerring) {
+                primaryPart += 'min2';
+            }
+
+            // Apply Dynamic Crit Thresholds
+            if (cheatAutoHit || oathUnerring) {
+                primaryPart += `!>${faces - 1}`;
+            } else {
+                primaryPart += `!!`;
+            }
+
+            // Named {primary} for result parsing
+            primaryPart += `{primary}`;
             
             let secondaryPart = (count > 1) ? ` + ${count - 1}d${faces}` : "";
             finalNotation = primaryPart + secondaryPart + rest;
