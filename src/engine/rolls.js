@@ -19,15 +19,22 @@ function dispatchRoll(notation, label, options = {}) {
         return;
     }
 
+    // Access fresh reactive state to prevent race conditions
+    const s = charState();
+    const charName = CLASS_CONFIG.name;
     let finalNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
-    const metadata = options.metadata || {}; // Metadata for stateless round-trips
+    const metadata = options.metadata || {};
 
     // --- RULE-BREAKING OVERRIDES (v2.8.22) ---
-    // Capture state flags BEFORE any triggers (like JD clearing) run
-    const charName = CLASS_CONFIG.name;
-    const isMelee = options.metadata?.weaponType === 'melee' || /⚔️/.test(label) || options.stat === 'str';
-    const hasJD = charName === "Oathsworn" && (state.judgmentDice || []).length > 0;
-    const isHeadsIWin = charName === "The Cheat" && (state.uHeadsIWin > 0);
+    // Capture state flags BEFORE any triggers run
+    const isMelee = metadata.weaponType === 'melee' || /⚔️/.test(label) || options.stat === 'str';
+    const hasJD = charName === "Oathsworn" && (s.judgmentDice || []).length > 0;
+    // Heads I Win: Detect when the 1/encounter pip is checked
+    const isHeadsIWin = /Cheat/i.test(charName) && (s.uHeadsIWin > 0 || s['uHeadsIWin'] > 0);
+
+    if (/Cheat/i.test(charName)) {
+        console.log(`🎲 dispatchRoll [Cheat Diagnostic]: uHeadsIWin=${s.uHeadsIWin}, active=${isHeadsIWin}`);
+    }
 
     console.log(`🎲 dispatchRoll [${charName}]: Melee=${isMelee}, hasJD=${hasJD}, HeadsIWin=${isHeadsIWin}`);
 
@@ -38,12 +45,12 @@ function dispatchRoll(notation, label, options = {}) {
 
     if (CLASS_CONFIG.rollTriggers) {
         CLASS_CONFIG.rollTriggers.forEach(trigger => {
-            if (trigger.condition(label, options, state)) {
-                const mod = trigger.getMod(state, options);
+            if (trigger.condition(label, options, s)) {
+                const mod = trigger.getMod(s, options);
                 if (mod) {
                     autoMod += mod;
                     if (trigger.onRoll) {
-                        trigger.onRoll(state);
+                        trigger.onRoll(s);
                         triggerRan = true;
                     }
                 }
@@ -68,7 +75,7 @@ function dispatchRoll(notation, label, options = {}) {
 
     const isSave = /save/i.test(label);
     const isCheckOrSaveOrPool = isSave || /check|rest|hit die|pool|fury|judgment/i.test(label) || options.type === 'pool';
-    const derived = computeDerived(state);
+    const derived = computeDerived(s);
 
     let condAdv = 0;
     if (!options.isMinion) {
@@ -77,7 +84,7 @@ function dispatchRoll(notation, label, options = {}) {
             if (derived.allSaveDis) condAdv--;
         }
 
-        state.activeConditions.forEach(cId => {
+        s.activeConditions.forEach(cId => {
             const condition = CONDITIONS_LIST.find(cl => cl.id === cId);
             if (condition && condition.modRolls) {
                 if (condition.modRolls.adv) {
@@ -94,7 +101,7 @@ function dispatchRoll(notation, label, options = {}) {
         });
     }
 
-    let totalAdv = state.advantage + condAdv + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
+    let totalAdv = s.advantage + condAdv + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
     
     const dieMatch = finalNotation.match(/^(\d+)?d(\d+)(.*)$/i);
     if (dieMatch) {
@@ -111,7 +118,6 @@ function dispatchRoll(notation, label, options = {}) {
             // Advantage/Disadvantage applies ONLY to the Primary die
             
             // --- Special Subclass Overrides (v2.8.22) ---
-            // Use captured flags to prevent race conditions during JD clearing
             const cheatAutoHit = isHeadsIWin;
             const oathUnerring = hasJD && isMelee;
             
@@ -122,7 +128,7 @@ function dispatchRoll(notation, label, options = {}) {
                 primaryPart += 'min2';
             }
 
-            // Apply Dynamic Crit Thresholds
+            // Apply Dynamic Crit Thresholds (!!>${faces-2} means max face AND one value below explode)
             if (cheatAutoHit || oathUnerring) {
                 primaryPart += `!!>${faces - 2}`;
             } else {
