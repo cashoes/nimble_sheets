@@ -139,8 +139,8 @@ function updateClassState(key, index, value) {
 /**
  * Toggles circular "pip" indicators in feature cards.
  */
-function toggleBgPip(key, idx) {
-    dispatch({ type: 'TOGGLE_BG_PIP', payload: { key, idx } });
+function toggleBgPip(key, idx, isArray = false, count = 1) {
+    dispatch({ type: 'TOGGLE_BG_PIP', payload: { key, idx, isArray, count } });
 }
 
 /** Updates a generic choice state key and refreshes UI. */

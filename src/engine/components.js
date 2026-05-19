@@ -950,7 +950,8 @@ function SpellCard(props) {
         const rollCtx = { 
             name: nameStr,
             ...(isCantrip ? { type: 'cantrip', school: spell.school } : {}),
-            ...bData 
+            ...bData,
+            metadata: { weaponType: 'ranged' } // Tiered spells are treated as ranged for automation
         };
         
         // HIGHLIGHT FIRST, then resolve stats

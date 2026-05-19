@@ -26,6 +26,7 @@ class SongweaverClass extends BaseClass {
                 border: "rgba(251, 191, 36, 0.25)"
             },
             initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
+            protectedPips: ["uSongRest"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "HeraldSnark", label: "Herald of Snark", accent: "#f59e0b" },
@@ -56,12 +57,25 @@ class SongweaverClass extends BaseClass {
             },
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 if (level >= 3) {
-                    const max = derived.resourceMaxes.inspiration || 0;
-                    const current = state.resourceValues?.inspiration ?? max;
-                    if (current < max) {
-                        const gain = Math.min(2, max - current);
-                        adjRes('inspiration', gain, max);
-                        addLog(`Initiative: Regained ${gain} Inspiration (Quick Wit).`);
+                    const statsMap = getStatsMap(state);
+                    const bonus = (state.selectedLyrical || []).includes("Heroic Ballad") ? 2 : 0;
+                    const max = (statsMap.wil * 2) + bonus;
+                    
+                    if (!Array.isArray(state.uInspiration)) {
+                        state.uInspiration = new Array(max).fill(1);
+                    }
+                    
+                    let gain = 2;
+                    let actualRegained = 0;
+                    for (let i = 0; i < state.uInspiration.length && actualRegained < gain; i++) {
+                        if (state.uInspiration[i] === 0) {
+                            state.uInspiration[i] = 1;
+                            actualRegained++;
+                        }
+                    }
+
+                    if (actualRegained > 0) {
+                        addLog(`Initiative: Regained ${actualRegained} Inspiration (Quick Wit).`);
                     }
                 }
             },            statModifiers: [
@@ -75,8 +89,7 @@ class SongweaverClass extends BaseClass {
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14, ["selectedWindbag"]),
             resources: [
-                createManaResource('int', 'Mana Pool', { hideMechanic: true }),
-                createSimpleResource('inspiration', 'Inspiration', (level, stats) => stats.wil * 2, { hideMechanic: true, bonusKey: 'inspirationBonus', reset: 'Safe Rest' })
+                createManaResource('int', 'Mana Pool', { hideMechanic: true })
             ],
             featuresData: SongweaverClass.FEATURES,
             optionsData: SongweaverClass.OPTIONS
@@ -107,12 +120,21 @@ class SongweaverClass extends BaseClass {
         core[1] = [
             FeatureGen.createSpellChoiceFeature({ id: "wind_spellcasting", name: "Wind Spellcasting and…", level: 1, spellType: "school", schools: ["Fire", "Ice", "Lightning", "Radiant", "Necrotic"], stateKey: "secondarySchool", desc: "You know cantrips from the Wind school and 1 other school of your choice." }),
             { id: "vicious_mockery", name: "Vicious Mockery", desc: (level) => `You know the unique Wind cantrip <strong>Vicious Mockery</strong>. Range: 12. Damage: 1d4+INT psychic (ignoring armor). On hit: the target is Taunted during their next turn. High Levels: +2 damage every 5 levels.` },
-            { id: "inspiration", name: "Songweaver’s Inspiration", resourceId: "inspiration", desc: "Free Reaction: Allow an ally to reroll a single die related to an attack or save (must keep either result)." }
+            { 
+                id: "inspiration", 
+                name: "Songweaver’s Inspiration", 
+                desc: (level, subclass, state, derived) => {
+                    const statsMap = getStatsMap(state);
+                    const hasBallad = (state.selectedLyrical || []).includes("Heroic Ballad");
+                    const count = (statsMap.wil * 2) + (hasBallad ? 2 : 0);
+                    return `Free Reaction: Allow an ally to reroll a single die related to an attack or save (must keep either result). You may do this ([[uInspiration:${count}]]) ${count} times/Safe Rest.`;
+                }
+            }
         ];
 
         core[2] = [
             { id: "mana", name: "Mana and Unlock Tier 1 Spells", desc: "You unlock tier 1 spells in the schools you know and gain a mana pool. This mana pool’s maximum is always equal to (INT×3)+LVL and recharges on a Safe Rest." },
-            { id: "jack", name: "Jack of All Trades", desc: "When you Safe Rest, you may move a skill point as if you just leveled up." },
+            { id: "jack", name: "Jack of All Trades", desc: "([[uJackOfTrades]] 1/Safe Rest) When you Safe Rest, you may move a skill point as if you just leveled up." },
             { id: "song_rest", name: "Song of Rest", desc: "([[uSongRest]] 1/day) Whenever you Field Rest, you may play a song and allow anyone who spends Hit Dice to heal additional HP equal to your WIL." }
         ];
 
@@ -137,9 +159,10 @@ class SongweaverClass extends BaseClass {
 
         core[4].push({ id: "lyrical", name: "Lyrical Weaponry", type: "dynamic_choice", collection: "lyricalWeaponry", stateKey: "selectedLyrical", milestones: [4, 9, 13, 17], desc: "Choose a Lyrical Weaponry ability.", getCount: FeatureGen.createStandardCount([4, 9, 13, 17]) });
 
-        core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "Choose 2 friends you know.", getCount: () => 2 });
+        core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "([[uPeoplePerson:2]] 2/Safe Rest) Choose 2 friends you know.", getCount: () => 2 });
 
-        core[20].push({ id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 of your stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." });
+        core[18] = [];
+        core[20] = [{ id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 of your stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." }];
 
         subclasses["HeraldSnark"] = {
             3: [{ id: "snark", name: "Opportunistic Snark", desc: "Reaction (when an enemy within Range 12 misses an attack): You may cast Vicious Mockery at them; it deals double damage when cast this way." }],

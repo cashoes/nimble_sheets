@@ -94,24 +94,38 @@ class OathswornClass extends BaseClass {
                 {
                     id: "radiant_judgment",
                     condition: (label, options, state) => {
-                        const isMelee = /⚔️/.test(label) || options.stat === 'str';
+                        const isMelee = options.metadata?.weaponType === 'melee' || (options.stat === 'str' && options.metadata?.weaponType !== 'ranged');
                         const hasJD = state.judgmentDice && state.judgmentDice.length > 0;
                         return isMelee && hasJD;
                     },
                     getMod: (state) => {
                         return (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
                     },
-                    onRoll: (state) => {
-                        state.judgmentDice = [];
+                    onRoll: (state, dispatch) => {
+                        const d = dispatch || window.dispatch;
+                        if (typeof d === 'function') {
+                            d({ type: 'UPDATE_POOL', payload: { key: 'judgmentDice', dice: [] } });
+                        }
                     }
+                },
+                {
+                    id: "unerring_judgment",
+                    condition: (label, options, state) => {
+                        const isMelee = options.metadata?.weaponType === 'melee' || (options.stat === 'str' && options.metadata?.weaponType !== 'ranged');
+                        const hasJD = state.judgmentDice && state.judgmentDice.length > 0;
+                        const isVengeance = state.subclass === 'Vengeance';
+                        const isLvl11 = (state.level || 1) >= 11;
+                        return isMelee && hasJD && isVengeance && isLvl11;
+                    },
+                    getFaceMod: () => 1
                 },
                 {
                     id: "unending_judgment",
                     condition: (label, options, state) => {
-                        const isMeleeAttack = /attack|⚔️/i.test(label) || options.type === 'attack';
+                        const isMelee = options.metadata?.weaponType === 'melee' || (options.stat === 'str' && options.metadata?.weaponType !== 'ranged');
                         const noJD = !state.judgmentDice || state.judgmentDice.length === 0;
                         const isLevel18 = (state.level || 1) >= 18;
-                        return isMeleeAttack && noJD && isLevel18;
+                        return isMelee && noJD && isLevel18;
                     },
                     getMod: () => 5
                 }
@@ -155,9 +169,6 @@ class OathswornClass extends BaseClass {
         });
     }
 
-    /**
-     * Defines choice-based options for the Oathsworn class.
-     */
     static get OPTIONS() {
         return {
             decrees: {
@@ -165,7 +176,11 @@ class OathswornClass extends BaseClass {
                 "Courage!": { desc: "([[uCourage]] 1/encounter) When you or an ally in your aura would drop to 0 HP, set their HP to 1 instead." },
                 "Explosive Judgment": { desc: "([[uExplosive]] 1/encounter) 2 actions: Expend your Judgment Dice, deal that much radiant damage to all enemies in your aura." },
                 "Improved Aura": { desc: "+2 aura Reach." },
-                "Radiant Aura": { desc: "Action: End any single harmful condition or effect on yourself or another willing creature within your aura. You may use this ability WIL times/Safe Rest." },
+                "Radiant Aura": { 
+                    desc: (level, subclass, state, derived) => {
+                        return `Action: End any single harmful condition or effect on yourself or another willing creature within your aura. You may use this ability WIL times/Safe Rest ([[uRadiant:WIL]])`;
+                    }
+                },
                 "Reliable Justice": { desc: "Whenever you roll Judgment Dice, roll with advantage (roll one extra and drop the lowest)." },
                 "Shining Mandate": { desc: "The first time each round you are attacked while you already have Judgment Dice, select an ally within your aura to roll one and apply it to their next attack. You have advantage on skill checks to see through illusions." },
                 "Stand Fast, Friends!": { desc: "When you roll Initiative, grant allies temp HP equal to your STR+WIL. You and allies within your aura have advantage against fear and effects that would move or knock Prone." },
@@ -208,7 +223,7 @@ class OathswornClass extends BaseClass {
 
         core[2] = [
             { id: "radiant_casting", name: "Mana and Radiant Spellcasting", desc: (level, subclass, state, derived) => `You learn all Radiant cantrips and unlock tier 1 Radiant spells. You gain a mana pool of <strong>${derived.resourceMaxes.mana}</strong> (WIL+LVL) to cast these spells; it recharges on a Safe Rest.` },
-            { id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target’s armor by 1 step for this attack.</li><li><strong>Righteous Defense:</strong> Gain +1 AC for each mana spent until the start of your next turn.</li></ul>" },
+            { id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target’s armor by 1 step for this attack.</li></ul>" },
             { id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." }
         ];
 

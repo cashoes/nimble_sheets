@@ -123,7 +123,7 @@
             "desc": "Choose a profession (Baker/Cook, Smith, Stonemason, Weaver, Leatherworker, etc.). Checks you make related to that profession are made with advantage. You also retain special knowledge related to your profession."
         },
         "What? I've Been Around": {
-            "desc": "1/per location (or at the GM's discretion). You happen to know JUST the person who has the information you're looking for, or could get you out of a jam, and... Roll 1d20:<ul><li><strong>1–5:</strong> They want you DEAD.</li><li><strong>6–12:</strong> You owe them money.</li><li><strong>13–19:</strong> They can be convinced to help you.</li><li><strong>20:</strong> They are your biggest fan/are madly in love with you.</li></ul>"
+            "desc": "([[uBeenAround]] 1/per location). You happen to know JUST the person who has the information you're looking for, or could get you out of a jam, and... Roll 1d20:<ul><li><strong>1–5:</strong> They want you DEAD.</li><li><strong>6–12:</strong> You owe them money.</li><li><strong>13–19:</strong> They can be convinced to help you.</li><li><strong>20:</strong> They are your biggest fan/are madly in love with you.</li></ul>"
         },
         "Wild One": {
             "desc": "Whether it is the sticks or flowers in your hair, your smell, or the way you carry yourself, wild creatures are less frightened of you and more willing to aid you. +1 Naturecraft. While Field Resting, roll your Hit Dice with advantage while in the wild.",

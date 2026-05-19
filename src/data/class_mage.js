@@ -25,7 +25,8 @@ class MageClass extends BaseClass {
                 panelBg: "rgba(15, 20, 35, 0.7)",
                 border: "rgba(59, 130, 246, 0.3)"
             },
-            initialStats: { baseStr: -1, baseDex: -1, baseInt: 3, baseWil: 1 },
+            initialStats: { baseStr: -1, baseDex: 0, baseInt: 3, baseWil: 1 },
+            protectedPips: ["uSteelWill", "uThriveChaos"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 {
@@ -172,6 +173,9 @@ class MageClass extends BaseClass {
             desc: "Choose modular Spellshaper upgrades.",
             getCount: FeatureGen.createStandardCount([4, 9, 13])
         });
+
+        core[18] = [];
+        core[20] = [{ id: "archmage", name: "Archmage", desc: "([[uArchmage]] 1/encounter) +1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 less action and 5 less mana." }];
 
         subclasses["Control"] = {
             3: [

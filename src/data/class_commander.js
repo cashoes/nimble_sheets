@@ -26,6 +26,45 @@ class CommanderClass extends BaseClass {
                 border: "rgba(245, 158, 11, 0.25)"
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: 2, baseWil: -1 },
+            protectedPips: ["uCoordStrike"],
+            onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
+                // ARCANE COMMAND (Spellblade L4)
+                if (subclass === "Spellblade" && level >= 4) {
+                    const stats = derived.statsMap;
+                    const intVal = stats.int || 0;
+                    const maxMana = derived.resourceMaxes?.mana || intVal;
+                    const currentMana = state.resourceValues?.mana ?? 0;
+                    
+                    if (currentMana < maxMana) {
+                        const gain = Math.min(intVal, maxMana - currentMana);
+                        adjRes('mana', gain, maxMana);
+                        addLog(`Initiative: Gained ${gain} Mana (Arcane Command).`);
+                    }
+                }
+
+                // MASTER COMMANDER (L5) or SURVEY BATTLEFIELD (Vanguard L11)
+                const hasMaster = level >= 5;
+                const hasSurvey = (subclass === "Vanguard" && level >= 11);
+                
+                if (hasMaster || hasSurvey) {
+                    const statsMap = derived.statsMap;
+                    const max = statsMap.int + (level >= 17 ? 3 : (level >= 13 ? 2 : (level >= 9 ? 1 : 0)));
+                    
+                    if (!Array.isArray(state.uCoordStrike)) state.uCoordStrike = [];
+                    let regained = false;
+                    for (let i = 0; i < max; i++) {
+                        // Multi-pips in array model: 0 (Spent), 1 (Available)
+                        if (state.uCoordStrike[i] === 0) {
+                            state.uCoordStrike[i] = 1;
+                            regained = true;
+                            break;
+                        }
+                    }
+                    if (regained) {
+                        addLog("Initiative: Regained 1 Coordinated Strike use.");
+                    }
+                }
+            },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Bulwark", label: "Champion of the Bulwark", accent: "#334155" },
@@ -85,24 +124,7 @@ class CommanderClass extends BaseClass {
                     }
                 }
             ],
-            onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
-                if (subclass === "Spellblade" && level >= 4) {
-                    const stats = derived.statsMap;
-                    const intVal = stats.int || 0;
-                    const maxMana = derived.resourceMaxes?.mana || intVal;
-                    const currentMana = state.resourceValues?.mana ?? 0;
-                    
-                    console.log(`⚔️ Commander [Spellblade] Init Hook:`, { intVal, maxMana, currentMana });
-
-                    if (currentMana < maxMana) {
-                        const gain = Math.min(intVal, maxMana - currentMana);
-                        adjRes('mana', gain, maxMana);
-                        addLog(`Initiative: Gained ${gain} Mana (Arcane Command).`);
-                    } else {
-                        console.log("⚔️ Commander: Mana already full.");
-                    }
-                }
-            },            scalingStats: {
+            scalingStats: {
                 cdType: { 4: "d6", 5: "d8", 9: "d10", 13: "d12", 17: "d20" },
                 bonusCombatDice: 0
             },
@@ -142,12 +164,10 @@ class CommanderClass extends BaseClass {
         const orders = {
             "Face Me!": { desc: "Reaction (after an ally is crit within 12 spaces): Taunt that enemy until you drop to 0 HP." },
             "Hold the Line!": {
-                desc: "([[uHoldLine]] 1/encounter) Reaction (when an ally drops to 0 HP): Command them to continue the fight! Set their HP to 3x LVL.",
-                uses: [{ label: "Encounter Usage", max: 1, stateKey: "uHoldLine" }]
+                desc: "([[uHoldLine]] 1/encounter) Reaction (when an ally drops to 0 HP): Command them to continue the fight! Set their HP to 3x LVL."
             },
             "I Can Do This ALL DAY!": {
-                desc: "([[uAllDay]] 1/encounter) Reaction (when you would drop to 0 HP): You may expend any number of Hit Dice and set your HP to the sum rolled instead (do not add your STR).",
-                uses: [{ label: "Encounter Usage", max: 1, stateKey: "uAllDay" }]
+                desc: "([[uAllDay]] 1/encounter) Reaction (when you would drop to 0 HP): You may expend any number of Hit Dice and set your HP to the sum rolled instead (do not add your STR)."
             },
             "Move it! Move it!": { desc: "When you roll Initiative you may give yourself and an ally advantage on the roll and +3 speed for 1 round." },
             "Reposition!": { desc: "Action/Reaction (on an ally’s turn): Command 1 ally to move up to their speed (or 2 allies up to half their speed) for free." }
@@ -181,7 +201,12 @@ class CommanderClass extends BaseClass {
             tactics,
             masteries,
             combatAbilities: {
-                "Coordinated Strike!": { desc: "1/round, Free action: you and an ally within 6 spaces both immediately make a weapon attack or cast a cantrip for free. You can do this INT times/Safe Rest." },
+                "Coordinated Strike!": { 
+                    desc: (level, subclass, state, derived) => {
+                        const count = derived.statsMap.int + (level >= 17 ? 3 : (level >= 13 ? 2 : (level >= 9 ? 1 : 0)));
+                        return `1/round, Free action: you and an ally within 6 spaces both immediately make a weapon attack or cast a cantrip for free. You can do this INT times/Safe Rest ([[uCoordStrike:INT]])`;
+                    }
+                },
                 ...orders,
                 ...tactics
             },
@@ -205,12 +230,9 @@ class CommanderClass extends BaseClass {
                 milestones: [1, 9, 13, 17],
                 desc: (level, subclass, state, derived, renderSingleSpellCard) => {
                     const statsMap = getStatsMap(state);
-                    const intVal = statsMap.int + (level >= 17 ? 3 : (level >= 13 ? 2 : (level >= 9 ? 1 : 0)));
-                    let pips = "";
-                    for (let i = 0; i < intVal; i++) {
-                        pips += `[[uCoordStrike:${i}]] `;
-                    }
-                    const baseRules = `1/round, Free action: you and an ally within 6 spaces both immediately make a weapon attack or cast a cantrip for free. You can do this (${pips.trim()}) ${intVal} times/Safe Rest.`;
+                    const vanBonus = (subclass === "Vanguard" && level >= 7) ? 1 : 0;
+                    const intVal = statsMap.int + vanBonus + (level >= 17 ? 3 : (level >= 13 ? 2 : (level >= 9 ? 1 : 0)));
+                    const baseRules = `1/round, Free action: you and an ally within 6 spaces both immediately make a weapon attack or cast a cantrip for free. You can do this ([[uCoordStrike:${intVal}]]) ${intVal} times/Safe Rest.`;
                     const orderCard = renderSingleSpellCard({ name: "Order: Coordinated Strike!", tier: "Order", school: "Commander", customHtml: baseRules }, level, derived.statsMap);
                     return FeatureGen.createScalingList(`Gain the Coordinated Strike! Commander's Order (see card below).<div style="margin-top:10px;">${orderCard}</div>`, [
                         { level: 9, text: "Rank 2: +1 use of Coordinated Strike/Safe Rest." },
@@ -311,8 +333,8 @@ class CommanderClass extends BaseClass {
 
         subclasses["Vanguard"] = {
             3: [{ id: "advance", name: "Advance!", desc: "(1/round) After you move toward an enemy, gain advantage on the first melee attack you make against it. When you use your Coordinated Strike, you and all allies within 12 spaces can first move up to half their speed for free." }],
-            7: [{ id: "experienced_commander", replaces: "coord_strike", name: "Experienced Commander", desc: "Your Coordinated Strike may target 1 additional ally. Gain +1 use of Coordinated Strike/Safe Rest." }],
-            11: [{ id: "survey_battlefield", name: "Survey the Battlefield", desc: "When you roll Initiative, regain 1 use of Coordinated Strike. +1 max Combat Dice." }],
+            7: [{ id: "experienced_commander", name: "Experienced Commander", desc: "Your Coordinated Strike may target 1 additional ally. Gain +1 use of Coordinated Strike/Safe Rest." }],
+            11: [{ id: "survey_battlefield", name: "Survey the Battlefield", desc: "([[uSurvey]] 1/encounter) When you roll Initiative, regain 1 use of Coordinated Strike. +1 max Combat Dice." }],
             15: [{ id: "as_one", name: "As One!", desc: "Attacks made with your Coordinated Strikes also grant advantage and ignore all disadvantage. Your chosen allies gain 1 additional action to use on their next turn." }]
         };
 

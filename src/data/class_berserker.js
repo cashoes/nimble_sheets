@@ -25,7 +25,8 @@ class BerserkerClass extends BaseClass {
                 panelBg: "rgba(25, 15, 15, 0.8)",
                 border: "rgba(239, 68, 68, 0.25)"
             },
-            initialStats: { baseStr: 3, baseDex: 1, baseInt: -1, baseWil: -1 },
+            initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
+            protectedPips: ["uAncients"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#451a03" },

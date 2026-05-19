@@ -15,7 +15,7 @@ function ensureValidState(state) {
 
     // Define defaults and validators
     const defaults = {
-        version: "2.5.0",
+        version: "2.9.0",
         charName: '',
         level: 1,
         ancestry: 'None',
@@ -713,6 +713,11 @@ function dispatch(action) {
     }
 }
 
+// Expose dispatch globally for non-module script access (e.g. rolls.js)
+if (typeof window !== 'undefined') {
+    window.dispatch = dispatch;
+}
+
 /**
  * Pure reducer function that handles all character state transitions.
  * @param {Object} currentState - The current character state.
@@ -722,6 +727,8 @@ function dispatch(action) {
 function characterReducer(currentState, action) {
     const s = JSON.parse(JSON.stringify(currentState)); // Deep copy for immutability
     const { type, payload } = action;
+
+    console.log(`📡 State Action: ${type}`, payload);
 
     switch (type) {
         case 'SET_SPELL_UPCAST': {
@@ -801,12 +808,39 @@ function characterReducer(currentState, action) {
             break;
         }
         case 'TOGGLE_BG_PIP': {
-            const { key, idx } = payload;
-            const val = s[key] || 0;
-            s[key] = (val === idx + 1) ? idx : idx + 1;
+            const { key, idx, isArray, count: payloadCount } = payload;
 
-            if (key === 'uHeadsIWin') {
-                console.log(`🎲 Heads I Win toggled: ${s[key] > 0 ? 'ACTIVE' : 'OFF'} (Value: ${s[key]})`);
+            if (!isArray) {
+                const val = s[key] !== undefined ? s[key] : 1;
+                const newVal = val === 1 ? 0 : 1;
+                s[key] = newVal;
+
+                if (key === 'uHeadsIWin' && newVal === 0) {
+                    if (!s.activeConditions.includes('heads_i_win')) {
+                        s.activeConditions.push('heads_i_win');
+                    }
+                    const d = computeDerived(s);
+                    const lvl = d.level || 1;
+                    s.tempHP = (s.tempHP || 0) + lvl;
+                    s.logs = [{ id: Date.now(), msg: `Heads I Win Activated! +${lvl} Temp HP gained.` }, ...(s.logs || [])].slice(0, 5);
+                }
+            } else {                // 'Fill Up To' logic (Action Point style)
+                if (!Array.isArray(s[key])) s[key] = [];
+                
+                // Logic: Match toggleAction(idx)
+                // If the clicked pip is ON (1), set count to idx (emptying this and everything right)
+                // If the clicked pip is OFF (0), set count to idx + 1 (filling this and everything left)
+                const isCurrentlyOn = (s[key][idx] === undefined) ? true : (s[key][idx] === 1);
+                const newCount = isCurrentlyOn ? idx : idx + 1;
+
+                // Apply the new count and pad to the full rendered count
+                // This prevents 'gaps' or scaling bugs when the rendered count is higher than the state array
+                const finalCount = payloadCount || Math.max(s[key].length, idx + 1);
+                const newArr = [];
+                for (let i = 0; i < finalCount; i++) {
+                    newArr[i] = (i < newCount) ? 1 : 0;
+                }
+                s[key] = newArr;
             }
             break;
         }        case 'UPDATE_ITEM': {
@@ -929,12 +963,20 @@ function characterReducer(currentState, action) {
         case 'START_COMBAT': {
             console.log("⚔️ NIMBLE: Starting Combat Transaction...");
             
-            // 1. Reset all encounter-based powers (keys starting with 'u')
-            const protectedPips = CLASS_CONFIG.protectedPips || [];
+            // 1. Refill all encounter-based powers (keys starting with 'u')
+            const classProtected = CLASS_CONFIG.protectedPips || [];
+            const globalProtected = ['ubg', 'uRelentless', 'uElusive', 'uNewFace', 'uBeenAround'];
+            
             Object.keys(s).forEach(key => {
-                if (key.startsWith('u') && !protectedPips.includes(key)) {
-                    if (typeof s[key] === 'string' && s[key] === 'BOOM') s[key] = 'OFF';
-                    else if (typeof s[key] === 'number') s[key] = 0;
+                if (key.startsWith('u')) {
+                    const isProtected = [...classProtected, ...globalProtected].some(p => key === p || key.startsWith(p + ':'));
+                    const isBgProtected = key.startsWith('ubg');
+
+                    if (!isProtected && !isBgProtected) {
+                        if (typeof s[key] === 'string' && s[key] === 'BOOM') s[key] = 'OFF';
+                        else if (Array.isArray(s[key])) s[key] = s[key].map(() => 1);
+                        else if (typeof s[key] === 'number') s[key] = 1;
+                    }
                 }
             });
 
@@ -943,7 +985,7 @@ function characterReducer(currentState, action) {
             
             // 3. General Reset Log
             const baseId = Date.now();
-            s.logs = [{ id: baseId, msg: "Initiative: Actions and Encounter powers reset." }, ...(s.logs || [])].slice(0, 5);
+            s.logs = [{ id: baseId, msg: "Initiative: Actions reset and Encounter powers refilled." }, ...(s.logs || [])].slice(0, 5);
 
             // 4. Class-specific Initiative Logic (Atomic Transaction)
             if (typeof CLASS_CONFIG.onInitiative === 'function') {
@@ -974,7 +1016,8 @@ function characterReducer(currentState, action) {
         }
         case 'REST_CHARACTER': {
             // 1. Comprehensive Reset of Toggles and Pips
-            // We reset anything that isn't core identity, base stats, or vitals
+            const dStat = computeDerived(s);
+
             const protectedKeys = ['version', 'charName', 'level', 'ancestry', 'background', 'subclass', 'gold', 'inventory', 'skills', 'activeConditions', 'resourceValues', 'spellUpcasts', 'bgSpell', 'showMinor', 'lastLeveledUpAt', 'hpCurrent', 'hdCurrent'];
             
             Object.keys(s).forEach(key => {
@@ -985,14 +1028,16 @@ function characterReducer(currentState, action) {
                 if (typeof s[key] === 'string') {
                     if (s[key] === 'BOOM') s[key] = 'OFF';
                 }
-                // Reset numeric usage pips
-                else if (typeof s[key] === 'number') {
+                // Refill numeric and array usage pips
+                else if (key.startsWith('u')) {
+                    if (Array.isArray(s[key])) s[key] = s[key].map(() => 1);
+                    else if (typeof s[key] === 'number') s[key] = 1;
+                } else if (typeof s[key] === 'number') {
                     s[key] = 0;
                 }
             });
 
             // 2. Vitals Reset (Calculated based on the clean state)
-            const dStat = computeDerived(s);
             s.hpCurrent = dStat.maxHP;
             s.hdCurrent = dStat.hdMax;
             s.tempHP = 0;
@@ -1017,7 +1062,7 @@ function characterReducer(currentState, action) {
             });
 
             // Log the event
-            const logMsg = "Safe Rest: HP, HD, and Resources refilled.";
+            const logMsg = "Safe Rest: HP, HD, and all powers refilled.";
             s.logs = [{ id: Date.now(), msg: logMsg }, ...(s.logs || [])].slice(0, 5);
             
             return validateAndCorrectState(s);
@@ -1066,7 +1111,7 @@ function saveState(newState = null) {
 function loadState(config) {
     // 1. Define standard state schema and defaults
     state = {
-        version: "2.5.0",
+        version: "2.9.0",
         charName: '',        level: 1,
         ancestry: 'None',
         background: 'None',
@@ -1119,6 +1164,9 @@ function loadState(config) {
             console.error("Failed to load character state:", e);
         }
     }
+    
+    console.log("💾 character state loaded:", state);
+
     // Ensure state is valid and has correct types/defaults, and apply game-specific corrections
     state = validateAndCorrectState(state);
 

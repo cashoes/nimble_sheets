@@ -26,7 +26,7 @@ class ShepherdClass extends BaseClass {
                 border: "rgba(217, 70, 239, 0.25)"
             },
             initialStats: { baseStr: 2, baseDex: -1, baseInt: 0, baseWil: 2 },
-            protectedPips: ["uVeilwalker", "uIlluminate"],
+            protectedPips: ["uVeilwalker", "uIlluminate", "uSearing", "uHealer"],
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 // 1. Searing Light Recharge (Light Bearer or Mercy 15)
                 const hasLightBearer = (state.selectedGraces || []).includes("Light Bearer");
@@ -44,19 +44,27 @@ class ShepherdClass extends BaseClass {
                 }
                 
                 if (searingGain > 0) {
-                    const max = derived.resourceMaxes.searing || 0;
-                    const current = state.resourceValues?.searing ?? max;
-                    if (current < max) {
-                        const actualGain = Math.min(searingGain, max - current);
-                        adjRes('searing', actualGain, max);
-                        addLog(`Initiative: Regained ${actualGain} use${actualGain > 1 ? 's' : ''} of Searing Light (${searingSources.join(", ")}).`);
+                    const statsMap = derived.statsMap;
+                    const max = statsMap.wil || 0;
+                    
+                    if (!Array.isArray(state.uSearing)) state.uSearing = [];
+                    let actualRegained = 0;
+                    for (let i = 0; i < max && actualRegained < searingGain; i++) {
+                        // Multi-pips in array model: 0 (Spent), 1 (Available)
+                        if (state.uSearing[i] === 0) {
+                            state.uSearing[i] = 1;
+                            actualRegained++;
+                        }
+                    }
+                    if (actualRegained > 0) {
+                        addLog(`Initiative: Regained ${actualRegained} use${actualRegained > 1 ? 's' : ''} of Searing Light (${searingSources.join(", ")}).`);
                     }
                 }
 
                 // 2. Veilwalker's Blessing Recharge (Malice 15)
                 if (subclass === "Malice" && level >= 15) {
-                    if (state.uVeilwalker > 0) {
-                        state.uVeilwalker = 0; 
+                    if (state.uVeilwalker === 0) {
+                        state.uVeilwalker = 1; 
                         addLog("Initiative: Regained use of Veilwalker's Blessing (Conduit of Death).");
                     }
                 }
@@ -112,9 +120,7 @@ class ShepherdClass extends BaseClass {
             includeUtilitySpells: createUtilityConfig((level) => level >= 11, ["selectedTwilight"]),
             resources: [
                 createManaResource('wil', 'Mana Pool', { hideMechanic: true }),
-                createSimpleResource('spirit_tier', 'Spirit Tier', (l) => l >= 8 ? 4 : (l >= 6 ? 3 : (l >= 4 ? 2 : (l >= 2 ? 1 : 0))), { hideMechanic: true }),
-                createSimpleResource('searing', 'Searing Light', (l, stats) => stats.wil, { hideMechanic: true, reset: 'Safe Rest' }),
-                createSimpleResource('powerful_healer', 'Powerful Healer', (l, stats) => stats.wil, { hideMechanic: true, reset: 'Safe Rest' })
+                createSimpleResource('spirit_tier', 'Spirit Tier', (l) => l >= 8 ? 4 : (l >= 6 ? 3 : (l >= 4 ? 2 : (l >= 2 ? 1 : 0))), { hideMechanic: true })
             ],
             featuresData: ShepherdClass.FEATURES,
             optionsData: ShepherdClass.OPTIONS
@@ -130,13 +136,7 @@ class ShepherdClass extends BaseClass {
                 "Hasty Companion": { desc: "+4 Reach for your Lifebinding Spirit. It can also act for free when summoned." },
                 "Illuminate Soul": {
                     desc: (level, subclass, state) => {
-                        const statsMap = getStatsMap(state);
-                        const wilVal = statsMap.wil;
-                        let pips = "";
-                        for (let i = 0; i < wilVal; i++) {
-                            pips += `[[uIlluminate:${i}]] `;
-                        }
-                        return `Action: A creature within 6 spaces begins to glow with radiant light. For 1 Round, attacks against them are made with your choice of advantage or disadvantage. You may do this (${pips.trim()}) ${wilVal} times per Safe Rest.`;
+                        return `Action: A creature within 6 spaces begins to glow with radiant light. For 1 Round, attacks against them are made with your choice of advantage or disadvantage. You may do this WIL times per Safe Rest ([[uIlluminate:WIL]]).`;
                     }
                 },
                 "Light Bearer": { desc: "Regain 1 use of Searing Light when you roll Initiative (this expires if unspent at the end of combat)." },
@@ -151,7 +151,13 @@ class ShepherdClass extends BaseClass {
 
         core[1] = [
             { id: "keeper", name: "Keeper of Life & Death", desc: "You know Radiant and Necrotic cantrips." },
-            { id: "searing", name: "Searing Light", resourceId: "searing", desc: "Action: Heal or Inflict grievous injuries: <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>" }
+            { 
+                id: "searing", 
+                name: "Searing Light", 
+                desc: (level, subclass, state, derived) => {
+                    return `Action: Heal or Inflict grievous injuries. You may use this WIL times/Safe Rest ([[uSearing:WIL]]): <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>`;
+                }
+            }
         ];
 
         core[2] = [
@@ -189,14 +195,20 @@ class ShepherdClass extends BaseClass {
             3: [{ id: "mercy_heal", name: "Merciful Healing", desc: "When an effect caused by you heals a Dying creature, they are healed for twice as much. (1/round) Your Lifebinding Spirit can act for free while you are Dying." },
             { id: "beautiful", name: "Life is Beautiful", desc: "Harmless and lovely creatures such as butterflies and humming birds are attracted to your presence and often follow you. Flowers bloom more vibrantly in your presence." }],
             7: [{ id: "conduit_light", name: "Conduit of Light", desc: "When an effect caused by you would heal HP, you may expend 1 use of Searing Light to heal (or damage, ignoring armor) another target within 6 spaces of yourself for the same amount." }],
-            11: [{ id: "powerful_healer", name: "Powerful Healer", resourceId: "powerful_healer", desc: "(WIL times/Safe Rest) Whenever you would roll dice to heal damage, you may instead heal the max amount you could roll, or give that many temp HP." }],
+            11: [{ 
+                id: "powerful_healer", 
+                name: "Powerful Healer", 
+                desc: (level, subclass, state, derived) => {
+                    return `Whenever you would roll dice to heal damage, you may instead heal the max amount you could roll, or give that many temp HP. You may do this WIL times/Safe Rest ([[uHealer:WIL]]).`;
+                }
+            }],
             15: [{ id: "empowered_conduit", name: "Empowered Conduit", desc: "Your Conduit of Light may target 1 additional creature. Regain 1 charge of Searing Light when you roll Initiative (this expires if unspent at the end of combat)." }]
         };
 
         subclasses["Malice"] = {
             3: [{ id: "soul_reaper", name: "Soul Reaper", desc: "When you use Searing Light to harm an enemy, make a 2nd enemy within range take the same amount of damage (ignoring armor)." },
             { id: "decay", name: "Harbinger of Decay", desc: "Vibrant colors and lovely smells are suppressed near you. Foods spoil more rapidly in your presence, and you frequently awaken to flies wherever you lodge. You may have your Lifebinding Spirit shift into a deathly version of itself (a zombie dog, a devious imp, etc.) and have its damage type become necrotic." }],
-            7: [{ id: "veilwalker", name: "Veilwalker’s Blessing", resourceId: "veilwalker", desc: "([[uVeilwalker]] 1/Safe Rest) Reaction (when you would drop to 0 HP): Drop to 1 HP instead and force an enemy within 6 spaces to make a STR save. On a failure, they become Bloodied, or if they are already Bloodied, they drop to 0 HP." }],
+            7: [{ id: "veilwalker", name: "Veilwalker’s Blessing", desc: "([[uVeilwalker]] 1/Safe Rest) Reaction (when you would drop to 0 HP): Drop to 1 HP instead and force an enemy within 6 spaces to make a STR save. On a failure, they become Bloodied, or if they are already Bloodied, they drop to 0 HP." }],
             11: [{ id: "death_touch", name: "Deathbringer’s Touch", desc: "Your first melee attack each round against a Bloodied creature is an automatic critical hit. Your Lifebinding Spirit deals additional damage equal to your STR." }],
             15: [{ id: "conduit_death", name: "Conduit of Death", desc: "Your Veilwalker’s Blessing ability recharges when you roll Initiative. This charge is lost if unspent at the end of combat." }]
         };

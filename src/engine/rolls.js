@@ -27,34 +27,37 @@ function dispatchRoll(notation, label, options = {}) {
 
     // --- RULE-BREAKING OVERRIDES (v2.8.22) ---
     // Capture state flags BEFORE any triggers run
-    const isMelee = metadata.weaponType === 'melee' || /⚔️/.test(label) || options.stat === 'str';
+    const isMelee = metadata.weaponType === 'melee' || (metadata.weaponType !== 'ranged' && (/⚔️/.test(label) || options.stat === 'str'));
+    const isRanged = metadata.weaponType === 'ranged' || (metadata.weaponType !== 'melee' && (/🏹|🎯/.test(label) || options.stat === 'dex'));
     const hasJD = charName === "Oathsworn" && (s.judgmentDice || []).length > 0;
-    const isHeadsIWin = /Cheat/i.test(charName) && (s.uHeadsIWin > 0);
+    const isHeadsIWin = /Cheat/i.test(charName) && s.activeConditions.includes('heads_i_win');
 
-    console.log(`🎲 dispatchRoll [${charName}]: Melee=${isMelee}, hasJD=${hasJD}, HeadsIWin=${isHeadsIWin} (uHeadsIWin=${s.uHeadsIWin})`);
+    console.log(`🎲 dispatchRoll [${charName}]: Melee=${isMelee}, Ranged=${isRanged}, hasJD=${hasJD}`);
 
     // --- AUTOMATED CLASS MODIFIERS ---
     let autoMod = 0;
+    let faceMod = 0;
     const isAttack = /attack|⚔️/i.test(label) || options.type === 'attack';
-    let triggerRan = false;
+    const matchedTriggers = [];
 
     if (CLASS_CONFIG.rollTriggers) {
         CLASS_CONFIG.rollTriggers.forEach(trigger => {
             if (trigger.condition(label, options, s)) {
-                const mod = trigger.getMod(s, options);
-                if (mod) {
-                    autoMod += mod;
-                    if (trigger.onRoll) {
-                        trigger.onRoll(s);
-                        triggerRan = true;
-                    }
+                // Modifiers to the total sum
+                const mod = (typeof trigger.getMod === 'function') ? trigger.getMod(s, options) : (trigger.getMod || 0);
+                autoMod += mod;
+
+                // Modifiers to the primary die face (e.g. Unerring Judgment)
+                if (trigger.getFaceMod) {
+                    faceMod += trigger.getFaceMod(s, options);
+                }
+
+                // Track for post-dispatch side effects
+                if (trigger.onRoll) {
+                    matchedTriggers.push(trigger);
                 }
             }
         });
-    }
-
-    if (triggerRan) {
-        dispatch({ type: 'SYNC_STATE' });
     }
 
     if (autoMod !== 0) {
@@ -64,7 +67,6 @@ function dispatchRoll(notation, label, options = {}) {
     // --- ON INITIATIVE HOOK ---
     if (/initiative/i.test(label)) {
         dispatch({ type: 'START_COMBAT' });
-        dispatch({ type: 'SYNC_STATE' });
     }
     // -------------------------
 
@@ -114,10 +116,19 @@ function dispatchRoll(notation, label, options = {}) {
             
             // --- Special Subclass Overrides (v2.8.22) ---
             const cheatAutoHit = isHeadsIWin;
-            const oathUnerring = hasJD && isMelee;
+            
+            // Oath of Vengeance L11: Unerring Judgment
+            const isVengeance = s.subclass === 'Vengeance';
+            const isLvl11 = (s.level || 1) >= 11;
+            const oathUnerring = charName === "Oathsworn" && isVengeance && isLvl11 && hasJD && isMelee;
             
             let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}d${faces}kl1` : `1d${faces}`;
             
+            // Apply Physical Modifiers to Primary Face (e.g. Unerring Judgment +1)
+            if (faceMod > 0) {
+                primaryPart += `+${faceMod}`;
+            }
+
             // Apply Physical Miss Prevention (min2)
             if (cheatAutoHit || oathUnerring) {
                 primaryPart += 'min2';
@@ -167,6 +178,19 @@ function dispatchRoll(notation, label, options = {}) {
             timestamp: Date.now()
         }
     }));
+
+    // --- POST-DISPATCH SIDE EFFECTS ---
+    // Run hooks after the event loop tick to ensure the roll event is "out the door" 
+    // and hasn't been interrupted by reactive UI re-renders.
+    if (matchedTriggers.length > 0) {
+        Promise.resolve().then(() => {
+            matchedTriggers.forEach(trigger => {
+                // Pass snapshot and global dispatcher for safe side-effects
+                const d = (typeof dispatch === 'function' ? dispatch : window.dispatch);
+                if (typeof d === 'function') trigger.onRoll(s, d);
+            });
+        });
+    }
 }
 
 /**
@@ -528,14 +552,46 @@ function iStats(text, level, statsMap, context = {}) {
     // Non-capturing groups used to ensure target is always p1
     const skipPattern = /(?:<span[^>]*class="[^"]*(?:dice-hl|stat-hl|formula-label|pip-inline)[^"]*"[^>]*>.*?<\/span>|<[^>]*>)/gi;
 
-    // Pass 0: Handle Inline Usage Tokens [[uKey]] or [[uKey:idx]] (v2.4.0)
-    let processed = text.replace(/\[\[(u[a-zA-Z0-9_]+)(?::(\d+))?\]\]/g, (match, key, idx) => {
-        // Use the reactive state signal if available to ensure UI updates
+    // Pass 0: Handle Inline Usage Tokens [[uKey]] or [[uKey:COUNT]] (v2.4.0)
+    // Array Model: [[uKey:3]] renders 3 pips linked to state.uKey array.
+    // Simple Model: [[uKey]] renders 1 pip linked to state.uKey number.
+    let processed = text.replace(/\[\[(u[a-zA-Z0-9_]+)(?::([^\]]+))?\]\]/g, (match, key, countToken) => {
         const currentState = (typeof window !== 'undefined' && window.charState) ? window.charState() : state;
-        const val = currentState[key] || 0;
-        const index = idx ? parseInt(idx) : 0;
-        const isChecked = val > index;
-        return `<input type="checkbox" class="pip pip-inline" ${isChecked ? 'checked' : ''} onclick="toggleBgPip('${key}', ${index})" title="Use ${index+1}">`;
+        
+        // 1. Resolve count
+        let count = 1;
+        if (countToken) {
+            const multiMatch = countToken.match(/(\d+)\s*[xX×]\s*(STR|DEX|INT|WIL|KEY|LVL)/i);
+            if (multiMatch) {
+                const multi = parseInt(multiMatch[1]);
+                const stat = multiMatch[2].toLowerCase();
+                count = multi * (stat === 'lvl' ? level : statsMap[stat] || 0);
+            } else if (/\d+/.test(countToken)) {
+                count = parseInt(countToken);
+            } else {
+                const stat = countToken.toLowerCase();
+                count = (stat === 'lvl' ? level : statsMap[stat] || 0);
+            }
+        }
+
+        // 2. Render pips
+        let htmlPips = "";
+        const stateVal = currentState[key];
+        
+        for (let i = 0; i < count; i++) {
+            // Default to Available (1) if undefined or array is too short
+            let isAvailable = true;
+            if (count > 1) {
+                if (Array.isArray(stateVal) && i < stateVal.length) isAvailable = (stateVal[i] === 1);
+            } else {
+                if (stateVal !== undefined) isAvailable = (stateVal === 1);
+            }
+
+            const title = count > 1 ? `Use ${i+1}` : "Toggle Power";
+            htmlPips += `<input type="checkbox" class="pip pip-inline" ${isAvailable ? 'checked' : ''} onclick="toggleBgPip('${key}', ${i}, ${count > 1}, ${count})" title="${title}"> `;
+        }
+
+        return htmlPips.trim();
     });
 
     // Pass 1: Handle mathematical multipliers (e.g., 3x LVL)

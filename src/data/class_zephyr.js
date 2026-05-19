@@ -26,6 +26,7 @@ class ZephyrClass extends BaseClass {
                 border: "rgba(6, 182, 212, 0.25)"
             },
             initialStats: { baseStr: 1, baseDex: 3, baseInt: -1, baseWil: -1 },
+            protectedPips: ["uEthereal"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 {
@@ -48,10 +49,7 @@ class ZephyrClass extends BaseClass {
                     return 0;
                 }
             },
-            resources: [
-                createSimpleResource('bursts', 'Bursts of Speed', (l, stats) => stats.dex + (l >= 20 ? 1 : 0), { hideMechanic: true }),
-                createSimpleResource('unyielding', 'Unyielding Resolve', (l, stats, state, sub, derived) => derived.unyieldingMax, { hideMechanic: true })
-            ],
+            resources: [],
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
                 const isUnarmored = this.isUnarmored(state);
                 let acVal = isUnarmored ? (statsMap.dex + statsMap.str) : 0;
@@ -122,7 +120,7 @@ class ZephyrClass extends BaseClass {
                 milestones: [2, 9],
                 desc: (l) => FeatureGen.createScalingList("While unarmored, gain +2 speed and +LVL Initiative.", [{ level: 9, text: "Rank 2: Gain an additional +2 speed as long as you are unarmored." }], l)
             },
-            { id: "bursts", name: "Burst of Speed", resourceId: "bursts", desc: "When you roll Initiative, gain DEX Bursts of Speed. (1/turn) You may spend 1 Burst of Speed for a free maneuver: <ul><li>Slipstream: Defend, and the attack misses.</li><li>Whirling Defense: Defend and apply your armor to every attack this round.</li><li>Swiftstrike: Attack on your turn, and ignore disadvantage from Rushed Attacks.</li><li>Windstep: Move on your turn, ignoring difficult terrain.</li></ul>" }
+            { id: "bursts", name: "Burst of Speed", desc: "When you roll Initiative, gain DEX Bursts of Speed. You may spend 1 Burst of Speed ([[uBursts:DEX]]) for a free maneuver: <ul><li>Slipstream: Defend, and the attack misses.</li><li>Whirling Defense: Defend and apply your armor to every attack this round.</li><li>Swiftstrike: Attack on your turn, and ignore disadvantage from Rushed Attacks.</li><li>Windstep: Move on your turn, ignoring difficult terrain.</li></ul>" }
         ];
 
         core[3] = [
@@ -136,11 +134,14 @@ class ZephyrClass extends BaseClass {
                 id: "resolve", 
                 name: "Unyielding Resolve",
                 milestones: [4, 10, 17], 
-                resourceId: "unyielding", 
-                desc: (l) => FeatureGen.createScalingList("Ignore the first Wound you would suffer each encounter.", [
-                    { level: 10, text: "Rank 2: You can use this ability twice per encounter." },
-                    { level: 17, text: "Rank 3: You can use this ability three times per encounter." }
-                ], l)
+                desc: (level, subclass, state, derived) => {
+                    const count = level >= 17 ? 3 : (level >= 10 ? 2 : (level >= 4 ? 1 : 0));
+                    const baseDesc = `Ignore the first Wound you would suffer each encounter. ([[uIgnoreWound:${count}]])`;
+                    return FeatureGen.createScalingList(baseDesc, [
+                        { level: 10, text: "Rank 2: You can use this ability twice per encounter." },
+                        { level: 17, text: "Rank 3: You can use this ability three times per encounter." }
+                    ], level);
+                }
             },
             { id: "martial", name: "Martial Master", type: "dynamic_choice", collection: "abilities", stateKey: "selectedMartial", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose a Martial Arts ability.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) }
         ];
@@ -157,14 +158,14 @@ class ZephyrClass extends BaseClass {
         core[20].push({ id: "windborne", name: "Windborne", desc: "+1 to any 2 of your stats. +1 additional burst of speed when you roll Initiative. Permanently gain 1 action (while Dying, you have a max of 2 actions)." });
 
         subclasses["WayPain"] = {
-            3: [{ id: "bring_pain", name: "Bring the Pain", desc: "([[uPain]] 1/round) You may turn any melee attack against you into a crit. Whenever you are crit, reduce the damage by half. The attacker takes the same amount of damage you took (ignoring armor). You may suffer 1 Wound to double the damage the enemy takes." }],
+            3: [{ id: "bring_pain", name: "Bring the Pain", desc: "1/round: You may turn any melee attack against you into a crit. Whenever you are crit, reduce the damage by half. The attacker takes the same amount of damage you took (ignoring armor). You may suffer 1 Wound to double the damage the enemy takes." }],
             7: [{ id: "share_pain", name: "Share My Pain", desc: "Your Swiftstrike can also target a 2nd creature within Reach 2." }],
             11: [{ id: "sharpens", name: "Pain Sharpens the Mind", desc: "While you are Bloodied, gain advantage on the first attack you make each turn, and on all saves." }],
             15: [{ id: "echoed", name: "Echoed Agony", desc: "Your Swiftstrike can also target a 3rd creature within Reach 4." }]
         };
 
         subclasses["WayFlame"] = {
-            3: [{ id: "exploding", name: "Exploding Soul", desc: "([[uExploding]] 1/round) On your turn, you may suffer a Wound. Whenever you gain a Wound, deal STR+Wounds damage to any creatures you choose within 2 spaces (ignoring armor) and give them the Smoldering condition." }],
+            3: [{ id: "exploding", name: "Exploding Soul", desc: "1/round: On your turn, you may suffer a Wound. Whenever you gain a Wound, deal STR+Wounds damage to any creatures you choose within 2 spaces (ignoring armor) and give them the Smoldering condition." }],
             7: [{ id: "blazing", name: "Blazing Speed", desc: "Gain +2 speed while using Windstep. After you cease movement with Windstep, enemies you passed through take STR+DEX fire damage. You may have Smoldering enemies take double, ending the condition." }],
             11: [{ id: "chain", name: "Chain Reaction", desc: "(1/turn) When you crit, deal fire damage equal to your STR+Wounds to creatures of your choice within 2 spaces of your target. Repeat any number of times, targeting creatures not yet damaged by this effect within 2 spaces of any already damaged." }],
             15: [{ id: "burning", name: "Burning Soul", desc: "Double any fire damage you deal." }]

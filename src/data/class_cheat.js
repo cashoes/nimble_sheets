@@ -25,7 +25,8 @@ class CheatClass extends BaseClass {
                 panelBg: "rgba(15, 23, 42, 0.8)",
                 border: "rgba(148, 163, 184, 0.25)"
             },
-            initialStats: { baseStr: -1, baseDex: 3, baseInt: 1, baseWil: -1 },
+            initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
+            protectedPips: ["uNotHappened", "uEscapePlan", "uQuickReadDay", "uCheatDay"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#be123c" },
@@ -145,7 +146,7 @@ class CheatClass extends BaseClass {
                 { id: "commotion", name: "Amidst All This Commotion...", desc: "If a creature dies while you Sneak Attack them, you may turn Invisible until you attack again or until the beginning of your next turn." },
                 { id: "trace", name: "Leave No Trace", desc: "Advantage on Stealth checks when you are at full health." }
             ],
-            7: [{ id: "cunning_strike", name: "Cunning Strike", desc: "([[uCunningStrike1]] [[uCunningStrike2]] 2/encounter) When you land a Sneak Attack, you may force the target to make a STR save (DC 10+INT). On a failure, instead of rolling your Sneak Attack dice, they deal the maximum amount of damage (if your target saves, regain 1 use)." }],
+            7: [{ id: "cunning_strike", name: "Cunning Strike", desc: "([[uCunningStrike:2]] 2/encounter) When you land a Sneak Attack, you may force the target to make a STR save (DC 10+INT). On a failure, instead of rolling your Sneak Attack dice, they deal the maximum amount of damage (if your target saves, regain 1 use)." }],
             11: [{ id: "pro_skulker", name: "Professional Skulker", desc: "Gain a climbing speed and advantage on Stealth checks (replaces Leave No Trace)." }],
             15: [{ id: "kill", name: "KILL", desc: "When you crit an enemy with fewer max HP than you, it dies." }]
         };
@@ -155,12 +156,21 @@ class CheatClass extends BaseClass {
                 { id: "low_blow", name: "Low Blow", desc: "When you Sneak Attack, you may spend 2 additional actions to Incapacitate your target for their next turn on a failed STR save (DC 10+INT). Save or fail, they are Taunted by you until you drop to 0 HP." },
                 { id: "sweet_talk", name: "Sweet Talk", desc: "You may gain advantage on all Influence checks with NPCs you’ve just met for the first time. This lasts until you fail an Influence check with them or until you meet a 2nd time. You have disadvantage on Influence checks with them after you use this ability." }
             ],
-            7: [{ id: "pocket_sand", name: "Pocket Sand", desc: "([[uPocketSand1]] [[uPocketSand2]] 2/encounter) When you Defend against a melee attack, Blind the attacker until the start of their next turn and force them to reroll the attack (Blinded creatures attack with disadvantage)." }],
+            7: [{ id: "pocket_sand", name: "Pocket Sand", desc: "([[uPocketSand:2]] 2/encounter) When you Defend against a melee attack, Blind the attacker until the start of their next turn and force them to reroll the attack (Blinded creatures attack with disadvantage)." }],
             11: [{ id: "escape_plan", name: "Escape Plan", desc: "([[uEscapePlan]] 1/Safe Rest) When you would drop to 0 HP or gain a Wound, you don’t. Instead, you turn Invisible for 1 minute or until you attack." }],
             15: [{ id: "heads_win", name: "Heads I Win, Tails You Lose", desc: "([[uHeadsIWin]] 1/encounter) Attacks you make this round don’t miss, you crit on 1 less than normally needed, and you gain LVL temp HP." }]
         };
 
         return { core, subclasses };
+    }
+
+    getExtraConditions(level, subclass, state, derived) {
+        if (subclass === "Scoundrel" && level >= 15) {
+            return [
+                { id: 'heads_i_win', name: 'Heads I Win!', type: 'buff', desc: 'Attacks this round cannot miss and crit on 1 less. (Requires spending uHeadsIWin charge).' }
+            ];
+        }
+        return [];
     }
 }
 

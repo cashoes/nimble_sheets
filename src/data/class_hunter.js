@@ -26,6 +26,7 @@ class HunterClass extends BaseClass {
                 border: "rgba(22, 163, 74, 0.2)"
             },
             initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
+            protectedPips: ["uOverHere"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Shadowpath", label: "Keeper of the Shadowpath", accent: "#1e1b4b" },
@@ -48,7 +49,7 @@ class HunterClass extends BaseClass {
                 { level: 1, spells: ["Hunter's Mark"] }
             ],
             resources: [
-                createSimpleResource('tothCharges', 'Thrill of the Hunt', (level, stats) => stats.wil, { hideMechanic: true })
+                createSimpleResource('tothCharges', 'TotH Momentum', (level, stats) => 10, { hideMechanic: true })
             ],
             rollTriggers: [
                 {
@@ -59,7 +60,7 @@ class HunterClass extends BaseClass {
             ],
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
                 if (level >= 2) {
-                    builder.addResource('tothCharges', 'Thrill of the Hunt', state.resourceValues.tothCharges, derived.resourceMaxes.tothCharges);
+                    builder.addResource('tothCharges', 'TotH Momentum', state.resourceValues.tothCharges, 10);
                 }
                 builder.addRollDisplay('1d20', 'Quarry Hit', `+${level}`, `Adv OR +${level} Damage`, { type: 'attack', context: 'Hunter\'s Mark' });
             },
@@ -87,29 +88,23 @@ class HunterClass extends BaseClass {
                 "Snare Trap": { desc: "([[uSnareTrap]] 1/encounter) Reaction (when an enemy moves adjacent to you or an ally within 6 spaces): Move them back 1 space, they are Restrained until they can escape (DC 10+WIL)." },
                 "Sharpshooter": { desc: "Action: If you have not moved this turn and your quarry is 4 or more spaces away, attack them for double damage." },
                 "Vital Shot": { desc: "(Half Range) Action: Attack your Hampered quarry with a ranged weapon, ignoring their armor or doubling your Hunter's Mark damage bonus if they have none." },
-                "Wild Instinct": { desc: "(1/round, costs 0 TotH charges if you have none.) Assess for free, with advantage." }
+                "Wild Instinct": { desc: "1/round: (costs 0 TotH charges if you have none.) Assess for free, with advantage." }
             },
             companions: {
                 "Small Companion": {
                     desc: (level) => {
-                        const getPips = (key, count) => {
-                            let p = "";
-                            for (let i = 0; i < count; i++) p += `[[uSmall${key}:${i}]] `;
-                            return `(${p.trim()})`;
-                        };
-
                         const keenCount = level >= 11 ? 3 : (level >= 7 ? 2 : 1);
                         const protectCount = level >= 7 ? 2 : 1;
                         const throatCount = level >= 15 ? 3 : (level >= 11 ? 2 : 1);
 
-                        const keen = FeatureGen.createScalingList(`${getPips('Keen', keenCount)} Mark a target for free (1/encounter).`, [
+                        const keen = FeatureGen.createScalingList(`Mark a target for free (1/encounter) ([[uSmallKeen:${keenCount}]]).`, [
                             { level: 7, text: "Keen Eyes (2): 2/encounter." },
                             { level: 11, text: "Keen Eyes (3): 3/encounter." }
                         ], level);
-                        const protect = FeatureGen.createScalingList(`${getPips('Protect', protectCount)} Whenever you Defend, companion distracts the attacker (attack misses) and you move up to half your speed away (1/encounter).`, [
+                        const protect = FeatureGen.createScalingList(`Whenever you Defend, companion distracts the attacker (attack misses) and you move up to half your speed away (1/encounter) ([[uSmallProtect:${protectCount}]]).`, [
                             { level: 7, text: "Protect Me! (2): 2/encounter." }
                         ], level);
-                        const throat = FeatureGen.createScalingList(`${getPips('Throat', throatCount)} Companion attacks your quarry for 1d4+LVL damage for free (ignoring armor) (1/encounter). Costs 1 TotH charge.`, [
+                        const throat = FeatureGen.createScalingList(`Companion attacks your quarry for 1d4+LVL damage for free (ignoring armor) (1/encounter) ([[uSmallThroat:${throatCount}]]). Costs 1 TotH charge.`, [
                             { level: 11, text: "Go for the Throat! (2): 2/encounter, 1/round." },
                             { level: 15, text: "Go for the Throat! (3): 3/encounter, 1/round." }
                         ], level);
@@ -124,14 +119,12 @@ class HunterClass extends BaseClass {
                 "Medium Companion": {
                     desc: (level) => {
                         const throatCount = level >= 11 ? 2 : 1;
-                        let throatPips = "";
-                        for (let i = 0; i < throatCount; i++) throatPips += `[[uMedThroat:${i}]] `;
 
                         const ferocious = FeatureGen.createScalingList("Whenever you or your companion crit your quarry, companion attacks again for LVL damage (ignoring armor), and you can move up to 2 spaces for free.", [
                             { level: 7, text: "Ferocious (2): Move up to 4 spaces for free." },
                             { level: 15, text: "Ferocious (3): Move up to 6 spaces for free." }
                         ], level);
-                        const throat = FeatureGen.createScalingList(`(${throatPips.trim()}) Companion attacks your quarry for 1d8+(3xLVL) damage (ignoring armor) (1/encounter). Costs 1 TotH charge.`, [
+                        const throat = FeatureGen.createScalingList(`Companion attacks your quarry for 1d8+(3xLVL) damage (ignoring armor) (1/encounter) ([[uMedThroat:${throatCount}]]). Costs 1 TotH charge.`, [
                             { level: 11, text: "Go for the Throat! (2): 2/encounter." }
                         ], level);
 
@@ -146,16 +139,12 @@ class HunterClass extends BaseClass {
                     desc: (level) => {
                         const protectCount = level >= 15 ? 2 : 1;
                         const throatCount = level >= 11 ? 2 : 1;
-                        let protectPips = "";
-                        for (let i = 0; i < protectCount; i++) protectPips += `[[uLargeProtect:${i}]] `;
-                        let throatPips = "";
-                        for (let i = 0; i < throatCount; i++) throatPips += `[[uLargeThroat:${i}]] `;
 
-                        const protect = FeatureGen.createScalingList(`(${protectPips.trim()}) After you gain a Wound, your companion can whisk you away to safety up to 12 spaces (1/encounter).`, [
+                        const protect = FeatureGen.createScalingList(`After you gain a Wound, your companion can whisk you away to safety up to 12 spaces (1/encounter) ([[uLargeProtect:${protectCount}]]).`, [
                             { level: 7, text: "Protect Me! (Improved): You are whisked away before gaining the Wound." },
                             { level: 15, text: "Protect Me! (2): 2/encounter." }
                         ], level);
-                        const throat = FeatureGen.createScalingList(`(${throatPips.trim()}) Companion attacks your quarry for 1d12+(4xLVL) damage (ignoring armor) (1/encounter). If that creature dies, you may deal half as much to another creature within Reach 4. Costs 2 TotH charges.`, [
+                        const throat = FeatureGen.createScalingList(`Companion attacks your quarry for 1d12+(4xLVL) damage (ignoring armor) (1/encounter) ([[uLargeThroat:${throatCount}]]). If that creature dies, you may deal half as much to another creature within Reach 4. Costs 2 TotH charges.`, [
                             { level: 11, text: "Go for the Throat! (2): 2/encounter." }
                         ], level);
 
@@ -190,7 +179,7 @@ class HunterClass extends BaseClass {
                 stateKey: "selectedToth",
                 milestones: [2, 4, 6, 8, 12, 14],
                 desc: (level, subclass, state, derived) => {
-                    const baseDesc = `(<strong>${derived.resourceMaxes.tothCharges}</strong> charges/encounter) Choose Thrill of the Hunt (TotH) abilities. Unless otherwise noted, each costs 1 charge to use and cannot miss. Gain a charge during an encounter whenever:<ul><li>Your quarry dies.</li><li>You hit your quarry in melee or crit your quarry at range.</li></ul>`;
+                    const baseDesc = `Choose Thrill of the Hunt (TotH) abilities. Unless otherwise noted, each costs 1 charge to use and cannot miss. Gain a charge during an encounter whenever:<ul><li>Your quarry dies.</li><li>You hit your quarry in melee or crit your quarry at range.</li></ul>`;
                     if (subclass === "Beastmaster") {
                         return `${baseDesc}<div class='empowered-subcard' style='margin-top:10px; border-color:var(--subclass-accent);'><strong>Beastmaster:</strong> Your first 2 TotH abilities are replaced by your companion's <em>Go for the Throat!</em> and <em>Protect Me!</em> abilities.</div>`;
                     }
@@ -239,7 +228,10 @@ class HunterClass extends BaseClass {
                 { id: "skilled_tracker", name: "Skilled Tracker", desc: "You have advantage on skill checks to track creatures." },
                 { id: "skilled_navigator", name: "Skilled Navigator", desc: "You cannot become lost by nonmagical means." }
             ],
-            7: [{ id: "primal_predator", name: "Primal Predator", desc: "([[uPrimalPred:0]] 1/encounter) Your weapon attacks ignore cover and armor this turn." }],
+            7: [{ id: "primal_predator", name: "Primal Predator", desc: (level) => {
+                const count = level >= 15 ? 2 : 1;
+                return `([[uPrimal:${count}]]) Your weapon attacks ignore cover and armor this turn (1/encounter).`;
+            }}],
             11: [{ id: "pack_hunter", name: "Pack Hunter", desc: "Whenever you mark a creature, you may also mark another creature within 6 spaces of them for free." }],
             15: [{ id: "apex_predator_shadow", name: "Apex Predator", desc: "You may use your Primal Predator ability twice each encounter. Gain 1 Thrill of the Hunt charge when you roll Initiative." }]
         };

@@ -85,8 +85,7 @@ class StormshifterClass extends BaseClass {
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14, ["selectedStormcaller"]),
             resources: [
-                createManaResource('wil', 'Mana Pool', { hideMechanic: true }),
-                createSimpleResource('shift', 'Beastshift', (l, stats, state, sub, derived) => derived.shiftMax, { hideMechanic: true, reset: 'Safe Rest' })
+                createManaResource('wil', 'Mana Pool', { hideMechanic: true })
             ],
             featuresData: StormshifterClass.FEATURES,
             optionsData: StormshifterClass.OPTIONS
@@ -125,7 +124,14 @@ class StormshifterClass extends BaseClass {
 
         core[1] = [
             { id: "storms", name: "Master of Storms", desc: "You know cantrips from the Lightning and Wind schools." },
-            { id: "shift", name: "Beastshift", resourceId: "shift", desc: "Action: You can transform into a harmless beast (squirrel, pigeon, etc.). While transformed, you can speak with animals. This form lasts until you drop to 0 HP, cast a spell, or if you end it on your turn for free." }
+            { 
+                id: "shift", 
+                name: "Beastshift", 
+                desc: (level, subclass, state, derived) => {
+                    const max = derived.resourceMaxes.shift || 0;
+                    return `Action: You can transform into a harmless beast (squirrel, pigeon, etc.). While transformed, you can speak with animals. You may do this ([[uShift:${max}]]) ${max} times/Safe Rest. This form lasts until you drop to 0 HP, cast a spell, or if you end it on your turn for free.`;
+                }
+            }
         ];
 
         core[2] = [
@@ -194,6 +200,9 @@ class StormshifterClass extends BaseClass {
         core[13] = [];
 
         core[20].push({ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. ([[uArchdruid]] 1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." });
+
+        core[18] = [];
+        core[20] = [{ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. ([[uArchdruid]] 1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." }];
 
         subclasses["SkyStorm"] = {
             3: [
