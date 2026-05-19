@@ -802,11 +802,14 @@ function characterReducer(currentState, action) {
         }
         case 'TOGGLE_BG_PIP': {
             const { key, idx } = payload;
-            const val = s[key] || 0; 
+            const val = s[key] || 0;
             s[key] = (val === idx + 1) ? idx : idx + 1;
+
+            if (key === 'uHeadsIWin') {
+                console.log(`🎲 Heads I Win toggled: ${s[key] > 0 ? 'ACTIVE' : 'OFF'} (Value: ${s[key]})`);
+            }
             break;
-        }
-        case 'UPDATE_ITEM': {
+        }        case 'UPDATE_ITEM': {
             const { id, field, val, check } = payload;
             let item = s.inventory.find(i => i.id === id); 
             if (item) { 

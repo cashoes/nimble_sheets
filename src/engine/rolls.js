@@ -29,14 +29,9 @@ function dispatchRoll(notation, label, options = {}) {
     // Capture state flags BEFORE any triggers run
     const isMelee = metadata.weaponType === 'melee' || /⚔️/.test(label) || options.stat === 'str';
     const hasJD = charName === "Oathsworn" && (s.judgmentDice || []).length > 0;
-    // Heads I Win: Detect when the 1/encounter pip is checked
-    const isHeadsIWin = /Cheat/i.test(charName) && (s.uHeadsIWin > 0 || s['uHeadsIWin'] > 0);
+    const isHeadsIWin = /Cheat/i.test(charName) && (s.uHeadsIWin > 0);
 
-    if (/Cheat/i.test(charName)) {
-        console.log(`🎲 dispatchRoll [Cheat Diagnostic]: uHeadsIWin=${s.uHeadsIWin}, active=${isHeadsIWin}`);
-    }
-
-    console.log(`🎲 dispatchRoll [${charName}]: Melee=${isMelee}, hasJD=${hasJD}, HeadsIWin=${isHeadsIWin}`);
+    console.log(`🎲 dispatchRoll [${charName}]: Melee=${isMelee}, hasJD=${hasJD}, HeadsIWin=${isHeadsIWin} (uHeadsIWin=${s.uHeadsIWin})`);
 
     // --- AUTOMATED CLASS MODIFIERS ---
     let autoMod = 0;
@@ -167,7 +162,7 @@ function dispatchRoll(notation, label, options = {}) {
         detail: {
             notation: labeledNotation,
             label: label,
-            playerName: state.charName || "Adventurer",
+            playerName: s.charName || "Adventurer",
             rollTarget: 'everyone',
             timestamp: Date.now()
         }
@@ -256,7 +251,8 @@ function handleRollResult(data) {
 
             // Automation D: Zephyr Way of Flame (Crit)
             if (char === 'Zephyr' && sub === 'WayFlame' && s.level >= 3) {
-                const str = d.statsMap.str || 0;
+                const statsMap = d.statsMap;
+                const str = statsMap.str || 0;
                 const wounds = s.wounds || 0;
                 const count = str + wounds;
                 if (count > 0) {
@@ -283,7 +279,7 @@ function handleRollResult(data) {
             }
 
             // Reminder C: Cheat Feinting Attack
-            if (char === 'The Cheat' && (s.selectedUnderhanded || []).includes("Feinting Attack")) {
+            if ((char === 'The Cheat' || char === 'Cheat') && (s.selectedUnderhanded || []).includes("Feinting Attack")) {
                  dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Feinting Attack: If 2nd miss this round, change primary die." } });
             }
         }
@@ -533,7 +529,7 @@ function iStats(text, level, statsMap, context = {}) {
     const skipPattern = /(?:<span[^>]*class="[^"]*(?:dice-hl|stat-hl|formula-label|pip-inline)[^"]*"[^>]*>.*?<\/span>|<[^>]*>)/gi;
 
     // Pass 0: Handle Inline Usage Tokens [[uKey]] or [[uKey:idx]] (v2.4.0)
-    let processed = text.replace(/\[\[u([a-zA-Z0-9_]+)(?::(\d+))?\]\]/g, (match, key, idx) => {
+    let processed = text.replace(/\[\[(u[a-zA-Z0-9_]+)(?::(\d+))?\]\]/g, (match, key, idx) => {
         // Use the reactive state signal if available to ensure UI updates
         const currentState = (typeof window !== 'undefined' && window.charState) ? window.charState() : state;
         const val = currentState[key] || 0;
