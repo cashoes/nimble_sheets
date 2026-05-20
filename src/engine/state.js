@@ -15,7 +15,7 @@ function ensureValidState(state) {
 
     // Define defaults and validators
     const defaults = {
-        version: "2.9.0",
+        version: "3.0.0",
         charName: '',
         level: 1,
         ancestry: 'None',
@@ -1111,7 +1111,7 @@ function saveState(newState = null) {
 function loadState(config) {
     // 1. Define standard state schema and defaults
     state = {
-        version: "2.9.0",
+        version: "3.0.0",
         charName: '',        level: 1,
         ancestry: 'None',
         background: 'None',

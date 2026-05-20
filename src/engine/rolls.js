@@ -103,8 +103,17 @@ function dispatchRoll(notation, label, options = {}) {
     const dieMatch = finalNotation.match(/^(\d+)?d(\d+)(.*)$/i);
     if (dieMatch) {
         let count = parseInt(dieMatch[1] || "1");
-        let faces = dieMatch[2];
+        let faces = parseInt(dieMatch[2]);
         let rest = dieMatch[3];
+        
+        // Combine consecutive flat math modifiers (e.g., +2+10) into a single modifier (+12)
+        // to prevent parsing errors in VTT dice extensions.
+        if (rest && /^[\s\+\-\d]+$/.test(rest)) {
+            try {
+                let combined = eval(rest.replace(/\s+/g, ''));
+                rest = combined === 0 ? '' : (combined > 0 ? '+' : '') + combined;
+            } catch(e) {}
+        }
         
         if (isCheckOrSaveOrPool) {
             // Standard Advantage/Disadvantage for checks, saves, and pools
@@ -124,25 +133,27 @@ function dispatchRoll(notation, label, options = {}) {
             
             let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}d${faces}kl1` : `1d${faces}`;
             
-            // Apply Physical Modifiers to Primary Face (e.g. Unerring Judgment +1)
-            if (faceMod > 0) {
-                primaryPart += `+${faceMod}`;
-            }
-
-            // Apply Physical Miss Prevention (min2)
-            if (cheatAutoHit || oathUnerring) {
-                primaryPart += 'min2';
-            }
-
-            // Apply Dynamic Crit Thresholds (!!>${faces-2} means max face AND one value below explode)
+            // Order is critical for Dice+ parsing: !! (explosion) -> min (floor) -> {primary} -> + (face modifiers)
+            
+            // 1. Apply Dynamic Crit Thresholds (!!>${faces-2} means max face AND one value below explode)
             if (cheatAutoHit || oathUnerring) {
                 primaryPart += `!!>${faces - 2}`;
             } else {
                 primaryPart += `!!`;
             }
 
-            // Named {primary} for result parsing
+            // 2. Apply Physical Miss Prevention (min2)
+            if (cheatAutoHit || oathUnerring) {
+                primaryPart += 'min2';
+            }
+
+            // 3. Named {primary} for result parsing (MUST follow functional modifiers)
             primaryPart += `{primary}`;
+
+            // 4. Apply Physical Modifiers to Primary Face (e.g. Unerring Judgment +1)
+            if (faceMod > 0) {
+                primaryPart += `+${faceMod}`;
+            }
             
             let secondaryPart = (count > 1) ? ` + ${count - 1}d${faces}` : "";
             finalNotation = primaryPart + secondaryPart + rest;
@@ -183,13 +194,16 @@ function dispatchRoll(notation, label, options = {}) {
     // Run hooks after the event loop tick to ensure the roll event is "out the door" 
     // and hasn't been interrupted by reactive UI re-renders.
     if (matchedTriggers.length > 0) {
-        Promise.resolve().then(() => {
-            matchedTriggers.forEach(trigger => {
-                // Pass snapshot and global dispatcher for safe side-effects
-                const d = (typeof dispatch === 'function' ? dispatch : window.dispatch);
-                if (typeof d === 'function') trigger.onRoll(s, d);
-            });
-        });
+        setTimeout(() => {
+            const d = (typeof dispatch === 'function' ? dispatch : window.dispatch);
+            if (typeof d === 'function') {
+                matchedTriggers.forEach(trigger => {
+                    if (typeof trigger.onRoll === 'function') {
+                        trigger.onRoll(s, d);
+                    }
+                });
+            }
+        }, 50);
     }
 }
 
@@ -651,16 +665,16 @@ function iStats(text, level, statsMap, context = {}) {
         return `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${escapedLabel} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
     };
 
-    const statTokenRegex = new RegExp(skipPattern.source + '|(\\b(STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\b(?!\\s+(?:save|check)))', 'gi');
+    const statTokenRegex = new RegExp(skipPattern.source + '|(\\b(STR|DEX|INT|WIL|KEY|LVL)\\b(?!\\s+(?:save|check))|\\+\\s*WOUNDS\\b)', 'gi');
     return processed.replace(statTokenRegex, (match, p1) => {
         if (!p1) return match;
         
-        const statKey = p1.toUpperCase();
+        const statKey = p1.toUpperCase().replace(/\s+/g, '');
         if (statKey === 'LVL') {
             return `<span class="stat-hl">${level}</span>`;
         }
-        if (statKey === 'WOUNDS') {
-            return `<span class="stat-hl">${state.wounds || 0}</span>`;
+        if (statKey === '+WOUNDS') {
+            return `+ <span class="stat-hl">${state.wounds || 0}</span>`;
         }
         if (statKey === 'STR') {
             return wrapStat(statsMap.str, 'STR');

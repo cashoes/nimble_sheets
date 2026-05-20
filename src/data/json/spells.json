@@ -104,7 +104,13 @@
             },
             "Dragonform": {
                 "tier": "Tier 9",
-                "desc": "5 Actions, Self. Transform into a Huge dragon. Gain 3 actions, a fly speed of 12, LVL Armor, 10x LVL temp HP, and:<ul><li>Tooth & Claw. Action: (Reach 2) 1d20+LVL damage (ignoring armor). Inflicts Smoldering.</li><li>Immolating Breath. 2 Actions: (Reach: Cone 8). DC 20 DEX save, KEY d20 damage, half on save. Smoldering targets fail.</li></ul>You can maintain this form for as long as the temp HP granted by this spell remain (max. 10 minutes). When it ends, you drop to 0 HP."
+                "desc": "5 Actions, Self. Transform into a Huge dragon. Gain 3 actions, a fly speed of 12, {armor} Armor, {temp} temp HP, and:<ul><li>Tooth & Claw. Action: (Reach 2) {dmg} damage (ignoring armor). Inflicts Smoldering.</li><li>Immolating Breath. 2 Actions: (Reach: Cone 8). DC 20 DEX save, {breath} damage, half on save. Smoldering targets fail.</li></ul>You can maintain this form for as long as the temp HP granted by this spell remain (max. 10 minutes). When it ends, you drop to 0 HP.",
+                "base": {
+                    "armor": "LVL",
+                    "temp": "10xLVL",
+                    "dmg": "1d20+LVL",
+                    "breath": "KEYd20"
+                }
             }
         },
         "Ice": {
@@ -155,14 +161,16 @@
             },
             "Rimeblades": {
                 "tier": "Tier 4",
-                "desc": "3 Actions, AoE. Concentration: Up to 1 minute. Reach: 12. Conjure razor-sharp icy spikes in {spaces} contiguous spaces within Reach; this area is difficult terrain. Creatures that enter these spaces (or who are in the area when you conjure them) suffer 2d6 damage for each space they touch. {upcastDesc}",
+                "desc": "3 Actions, AoE. Concentration: Up to 1 minute. Reach: 12. Conjure razor-sharp icy spikes in {spaces} contiguous spaces within Reach; this area is difficult terrain. Creatures that enter these spaces (or who are in the area when you conjure them) suffer {dmg} damage for each space they touch. {upcastDesc}",
                 "base": {
-                    "spaces": 5
+                    "spaces": 5,
+                    "dmg": "2d6"
                 },
                 "scaling": {
-                    "spaces": 1
+                    "spaces": 1,
+                    "dmg": "+1"
                 },
-                "upcastDesc": "Upcast: +1 damage per space touched."
+                "upcastDesc": "Upcast: Damage increases per space touched."
             },
             "Arctic Blast": {
                 "tier": "Tier 5",

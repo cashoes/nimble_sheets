@@ -101,10 +101,9 @@ class OathswornClass extends BaseClass {
                     getMod: (state) => {
                         return (state.judgmentDice || []).reduce((sum, d) => sum + (d ? d.total : 0), 0);
                     },
-                    onRoll: (state, dispatch) => {
-                        const d = dispatch || window.dispatch;
-                        if (typeof d === 'function') {
-                            d({ type: 'UPDATE_POOL', payload: { key: 'judgmentDice', dice: [] } });
+                    onRoll: (state) => {
+                        if (typeof window.dispatch === 'function') {
+                            window.dispatch({ type: 'UPDATE_POOL', payload: { key: 'judgmentDice', dice: [] } });
                         }
                     }
                 },
