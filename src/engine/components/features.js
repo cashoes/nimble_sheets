@@ -43,7 +43,32 @@ function Features() {
             const ancHtml = renderAncestryFeature(state, buildBound);
 
             const final = bgHtml + ancHtml + htmlStr;
-            setHtmlContent(final);
+            
+            const hasSpells = (() => {
+                if (!config.getAvailableSpells) return false;
+                const list = config.getAvailableSpells(lvl, sub, state, der);
+                return list && list.length > 0;
+            })();
+
+            if (hasSpells) {
+                setHtmlContent(`<div class="features-col-single">${final}</div>`);
+            } else {
+                // Split final HTML into individual feature cards using lookahead split
+                const cards = final.split(/(?=<div class="feature)/).filter(Boolean);
+                const leftCards = [];
+                const rightCards = [];
+                cards.forEach((card, idx) => {
+                    if (idx % 2 === 0) leftCards.push(card);
+                    else rightCards.push(card);
+                });
+                
+                setHtmlContent(`
+                    <div class="martial-features-container">
+                        <div class="features-col-left">${leftCards.join('')}</div>
+                        <div class="features-col-right">${rightCards.join('')}</div>
+                    </div>
+                `);
+            }
         } catch (e) {
             console.error("Error generating features HTML:", e);
             setHtmlContent(`<div style="color:var(--save-dis); padding: 10px; border: 1px solid var(--save-dis); border-radius: 4px; font-style: italic;">Error loading features. Please check console.</div>`);
