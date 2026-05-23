@@ -148,12 +148,20 @@
         async function fetchCore() {
             const engineModules = [
                 'solid.js', 'attributes.js', 'rolls.js', 'features.js', 'ui.js', 'core.js', 'base_class.js', 
-                'eventBus.js', 'state.js', 'bridge.js', 'components.js', 'app.js'
+                'eventBus.js', 'state.js', 'bridge.js', 'app.js'
+            ];
+
+            const componentModules = [
+                'helpers.js', 'NumberSpinner.js', 'ActionPip.js', 'Die.js', 'Header.js', 'AttributeCard.js',
+                'HPTracker.js', 'WoundTracker.js', 'CombatControls.js', 'Inventory.js', 'Skills.js',
+                'Conditions.js', 'SpellCard.js', 'Features.js', 'IdentityBar.js', 'MechanicPanel.js',
+                'LogFeed.js', 'exports.js'
             ];
 
             const [
                 template, itemsJson, skillsJson, conditionsJson,
                 ancestriesJson, backgroundsJson, spellsJson,
+                componentParts,
                 ...engineParts
             ] = await Promise.all([
                 fetchFile('src/base_template.html'),
@@ -163,8 +171,12 @@
                 fetchFile('src/data/json/ancestries.json'),
                 fetchFile('src/data/json/backgrounds.json'),
                 fetchFile('src/data/json/spells.json'),
+                Promise.all(componentModules.map(m => fetchFile(`src/engine/components/${m}`))),
                 ...engineModules.map(m => fetchFile(`src/engine/${m}`))
             ]);
+
+            const componentsContent = componentParts.join('\n\n');
+            engineParts.splice(10, 0, componentsContent);
 
             return {
                 template, itemsJson, skillsJson, conditionsJson,
