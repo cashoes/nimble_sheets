@@ -412,6 +412,17 @@
       margin-bottom: 12px;
     }
 
+    .layout-1col #featuresContainer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      align-items: start;
+    }
+
+    .layout-1col #featuresContainer .feature {
+      margin-bottom: 0;
+    }
+
     .left-col,
     .right-col {
       min-width: 0;
@@ -1274,6 +1285,10 @@
 
     @media (max-width: 850px) {
       .layout-2col {
+        grid-template-columns: 1fr;
+      }
+
+      .layout-1col #featuresContainer {
         grid-template-columns: 1fr;
       }
 
