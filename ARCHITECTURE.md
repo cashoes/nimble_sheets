@@ -1,8 +1,8 @@
 # NIMBLE Tracker - Architecture Documentation
 
-**Version**: 2.2.4  
-**Date**: 2026-05-13  
-**Status**: Production Ready (SolidJS Refactor) ✅
+**Version**: 3.0.0  
+**Date**: 2026-05-23  
+**Status**: Production Ready (Modular SolidJS + Dynamic Decoupling) ✅
 
 ---
 
@@ -18,35 +18,53 @@ The system utilizes **SolidJS** for high-performance, fine-grained reactive UI r
 
 ```
 nimble/
-├── index.html                    # Builder UI
+├── index.html                    # Builder UI & Dynamic Compiler
 ├── README.md                    # User documentation
 ├── ARCHITECTURE.md             # This file
 ├── src/
 │   ├── base_template.html       # HTML template for trackers
-│   ├── engine/                 # Shared engine modules
+│   ├── engine/                 # Shared engine modules (standard snake_case)
 │   │   ├── app.js              # Entry point & mounting logic
+│   │   ├── attributes.js       # Base attributes schema & visual utilities
+│   │   ├── base_class.js       # BaseClass definition with spell & features configs
 │   │   ├── bridge.js           # SolidJS reactive state bridge
-│   │   ├── components.js       # Core UI components (SolidJS + HTM)
-│   │   ├── core.js             # BaseClass with spell config
-│   │   ├── eventBus.js         # Pub-sub system for decoupling
-│   │   ├── typedefs.js         # Type definitions (CharacterState, etc.)
-│   │   ├── features.js         # Feature definition & rendering
-│   │   ├── ui.js               # MechanicPanel structured builder
-│   │   ├── view.js             # Legacy rendering (deprecated shim)
-│   │   ├── rolls.js            # Dice rolling engine
+│   │   ├── core.js             # Core rules calculations
+│   │   ├── event_bus.js        # Pub-sub system for decoupled event triggers
+│   │   ├── features.js         # Feature card formatting & rendering logic
+│   │   ├── rolls.js            # Extensible dice rolling engine & hooks
 │   │   ├── solid.js            # SolidJS + HTM Runtime (bundled)
-│   │   └── state.js            # State persistence & logic
-│   ├── data/                   # Class definitions
+│   │   ├── state.js            # State persistence, budgets, & reducer logic
+│   │   ├── typedefs.js         # Type definitions (CharacterState, etc.)
+│   │   ├── ui.js               # MechanicPanel structured builder & triggers
+│   │   └── components/         # 18 Modular Single-Responsibility SolidJS Components
+│   │       ├── action_pip.js
+│   │       ├── attribute_card.js
+│   │       ├── combat_controls.js
+│   │       ├── conditions.js
+│   │       ├── die.js
+│   │       ├── exports.js
+│   │       ├── features.js
+│   │       ├── header.js
+│   │       ├── helpers.js
+│   │       ├── hp_tracker.js
+│   │       ├── identity_bar.js
+│   │       ├── inventory.js
+│   │       ├── log_feed.js
+│   │       ├── mechanic_panel.js
+│   │       ├── number_spinner.js
+│   │       ├── skills.js
+│   │       ├── spell_card.js
+│   │       └── wound_tracker.js
+│   ├── data/                   # Dynamic Class Configuration Files
 │   │   ├── class_berserker.js
 │   │   ├── ...
-│   └── data/json/              # Game data
+│   └── data/json/              # Relational Game Data Databases
 │       ├── ancestries.json
 │       ├── backgrounds.json
 │       ├── conditions.json
 │       ├── items.json
 │       ├── skills.json
 │       └── spells.json
-└── src/extensions/             # Browser extension (optional)
 ```
 
 ---
@@ -54,20 +72,20 @@ nimble/
 ## 2. Core Design Principles
 
 ### 2.1 Self-Contained Output
-- **Single HTML file**: Each tracker is a complete, standalone HTML file.
-- **No external dependencies**: Pure vanilla JS + bundled SolidJS runtime + Google Fonts.
+- **Single HTML file**: Each tracker compiles into a completely standalone HTML file.
+- **No external dependencies**: Bundles the SolidJS runtime and local assets, requiring only standard browser support.
 
 ### 2.2 Unidirectional & Reactive Data Flow
-The system follows a predictable state management pattern:
+The system follows a strict unidirectional state management pattern:
 1. **User Action**: Triggered via DOM event or component method.
-2. **Dispatch**: Action sent to `dispatch({ type, payload })`.
-3. **Reducer**: `characterReducer` in `state.js` produces a new state.
-4. **Publish**: `eventBus` notifies subscribers (e.g., `STATE_CHANGED`).
-5. **Bridge**: `bridge.js` updates Solid signals (`charState`).
-6. **Reactive Render**: Solid components in `components.js` automatically re-render changed nodes.
+2. **Dispatch**: Action dispatched globally via `dispatch({ type, payload })`.
+3. **Reducer**: `characterReducer` in `state.js` produces a new immutable state.
+4. **Publish**: eventBus notifies subscribers (e.g. `STATE_CHANGED`).
+5. **Bridge**: `bridge.js` updates SolidJS reactive signals (`charState`).
+6. **Reactive Render**: Modular components under `components/` automatically re-render target nodes.
 
-### 2.3 Configuration Over Inheritance
-Classes declare **what they are** (config), not **how to do things** (logic).
+### 2.3 Configuration Over Inheritance (Decoupling)
+Classes declare **what they are** (declarative configs, subclass overrides, resources, and custom hooks) rather than overriding engine code. The core engine exposes generic hooks (`onTogglePip`, `onSafeRest`, `getUpcastBonus`, `poolOverrides.allowExplode`) which classes hook into to execute custom rules dynamically.
 
 ---
 
@@ -75,60 +93,31 @@ Classes declare **what they are** (config), not **how to do things** (logic).
 
 ### 3.1 State Bridge (`src/engine/bridge.js`)
 **Purpose**: Connects the legacy event-driven state to SolidJS reactivity.
-- Creates `charState` signal and `charDerived` memo.
-- Subscribes to `eventBus` to synchronize signals with global state.
-- Handles global effects like theme application and subclass availability.
+- Maintains global reactive signals: `charState` (the active character state) and `charDerived` (calculated memos).
+- Automatically publishes state updates on global transitions.
 
-### 3.2 UI Components (`src/engine/components.js`)
-**Purpose**: Reactive UI library using SolidJS and HTM (Hyperscript Tagged Markup).
-- **Core**: `<Header />`, `<AttributesSection />`, `<HPTracker />`, etc.
-- **Dynamic**: `<MechanicPanel />` renders structured data from the builder.
-- **Lists**: `<Inventory />`, `<Skills />`, `<FeaturesAndSpellsLayout />`.
+### 3.2 UI Component Folder (`src/engine/components/`)
+**Purpose**: De-monolhed SolidJS + HTM component library.
+- Completely deleted legacy monolithic `components.js` and split UI elements into 18 highly cohesive, single-responsibility files under `src/engine/components/`.
+- Flat features are dynamically split and balanced using a **predictive max-potential weight-balancing algorithm** that guarantees 100% stable spatial positioning for players with visual column symmetry.
 
-### 3.3 Mechanic Builder (`src/engine/ui.js`)
-**Purpose**: Structured API for class-specific UI.
-- Methods (`addResource`, `addDicePool`, etc.) now return **structured data objects** instead of HTML strings.
-- Allows classes to remain 100% config-driven while benefiting from component-based rendering.
-
-### 3.4 State Manager (`src/engine/state.js`)
-**Purpose**: The source of truth and game logic.
-- `characterReducer`: The only place where state is mutated.
-- `computeDerived`: Mathematical engine converting state into `DerivedStats`.
-- `ensureValidState` & `validateAndCorrectState`: Automated data integrity and rule enforcement.
+### 3.3 State Manager (`src/engine/state.js`)
+**Purpose**: The central mathematical engine and rule coordinator.
+- **Proactive Budget Guard**: Under `SET_STATE_KEY`, the reducer intercepts all attribute point allocations and clamps increments to the remaining level budget, preventing point-stealing side-effects in the UI.
+- `computeDerived`: Evaluates level-dependent derived statistics dynamically.
+- `validateAndCorrectState`: Fallback state correction and level-down/import budget integrity coordinator.
 
 ---
 
-## 4. Character State Flow
+## 4. Key Design Decisions
 
-1. **Load**: `loadState()` fetches from `localStorage` or `EMBEDDED_STATE`.
-2. **Init**: `eventBus.publish('STATE_LOADED')` triggers initial sync.
-3. **Loop**:
-   - `input` event -> `dispatch({ type: 'UPDATE_DOM_VALUES' })`.
-   - `characterReducer` calculates new state.
-   - `saveState()` persists to `localStorage`.
-   - `eventBus.publish('STATE_CHANGED')` -> `bridge.js` updates Solid signals -> UI re-renders.
+### 4.1 Why SolidJS?
+- **Performance**: High-performance fine-grained updates without Virtual DOM overhead.
+- **Size**: Extremely lightweight footprint (~30kb).
+- **Portability**: Perfect fit for generating single-file self-contained character trackers.
 
----
-
-## 5. Key Design Decisions
-
-### 5.1 Why SolidJS?
-- **Performance**: Fine-grained reactivity means no Virtual DOM overhead.
-- **Size**: Small footprint (bundled with HTM at ~30kb).
-- **Portability**: Compiles directly to DOM operations, perfect for single-file trackers.
-
-### 5.2 Why HTM (Hyperscript Tagged Markup)?
-- **No Build Step**: Allows writing JSX-like syntax directly in vanilla JS strings.
-- **Readability**: Keeps component code declarative and visual.
-
----
-
-## 6. References
-
-- **Spell Data**: `src/data/json/spells.json`
-- **Item Data**: `src/data/json/items.json`
-- **Template**: `src/base_template.html`
-- **Builder**: `index.html`
+### 4.2 Why HTM (Hyperscript Tagged Markup)?
+- **No Build Step**: Native ES template strings compile to real DOM operations at runtime, enabling standard browsers to execute UI builds without node bundlers.
 
 ---
 
