@@ -54,7 +54,7 @@ function Features() {
                 setHtmlContent(`<div class="features-col-single">${final}</div>`);
             } else {
                 // Split final HTML into individual feature cards using lookahead split
-                const cards = final.split(/(?=<div class="feature)/).filter(Boolean);
+                const cards = final.split(/(?=<div class="feature[\s"])/).filter(Boolean);
                 const leftCards = [];
                 const rightCards = [];
                 cards.forEach((card, idx) => {
