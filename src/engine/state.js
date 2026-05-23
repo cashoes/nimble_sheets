@@ -1100,7 +1100,6 @@ function saveState(newState = null) {
     }
 }
 
-/**
 function loadState(config) {
     // 1. Define standard state schema and defaults
     state = {
