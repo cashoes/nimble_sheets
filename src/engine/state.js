@@ -349,27 +349,6 @@ function validateAndCorrectState(state) {
         }
     }
 
-    // Ensure furyDice is an array of objects with total property? We'll just ensure it's an array.
-    if (!Array.isArray(state.furyDice)) {
-        state.furyDice = [];
-    } else {
-        // Optionally validate each element, but skip for brevity.
-    }
-
-    // Ensure selected* arrays are arrays
-    const selectionKeys = [
-        'selectedDecrees', 'selectedSpells', 'selectedArsenal', 'selectedToth',
-        'selectedMastery', 'selectedGreater', 'selectedLesser', 'selectedGraces',
-        'selectedLyrical', 'selectedBoons', 'selectedMartial', 'selectedUnderhanded',
-        'selectedDeepKnowledge', 'secondarySchool', 'selectedSubclassSpells',
-        'selectedStudy', 'selectedTwilight', 'selectedShadowmastery', 'currentForm'
-    ];
-    selectionKeys.forEach(key => {
-        if (!Array.isArray(state[key])) {
-            state[key] = [];
-        }
-    });
-
     return state;
 }
 
@@ -1151,7 +1130,7 @@ function loadState(config) {
     console.log("💾 character state loaded:", state);
 
     // Ensure state is valid and has correct types/defaults, and apply game-specific corrections
-    state = validateAndCorrectState(state);
+    state = validateAndCorrectState(ensureValidState(state));
 
     // Correct stuck level 1 vitals if the loaded character is level > 1 but vitals match level 1 max values
     if (state.level > 1) {
