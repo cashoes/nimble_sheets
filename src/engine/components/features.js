@@ -55,11 +55,30 @@ function Features() {
             } else {
                 // Split final HTML into individual feature cards using lookahead split
                 const cards = final.split(/(?=<div class="feature[\s"])/).filter(Boolean);
+                
                 const leftCards = [];
                 const rightCards = [];
-                cards.forEach((card, idx) => {
-                    if (idx % 2 === 0) leftCards.push(card);
-                    else rightCards.push(card);
+                let leftWeight = 0;
+                let rightWeight = 0;
+
+                // Strips HTML/inputs to find the plain text length + header baseline
+                const getCleanWeight = (htmlStr) => {
+                    let clean = htmlStr.replace(/<select[\s\S]*?<\/select>/gi, '');
+                    clean = clean.replace(/<button[\s\S]*?<\/button>/gi, '');
+                    clean = clean.replace(/<input[\s\S]*?>/gi, '');
+                    clean = clean.replace(/<[^>]*>/g, '');
+                    return clean.trim().length + 150; // text weight + card box baseline
+                };
+
+                cards.forEach((card) => {
+                    const weight = getCleanWeight(card);
+                    if (leftWeight <= rightWeight) {
+                        leftCards.push(card);
+                        leftWeight += weight;
+                    } else {
+                        rightCards.push(card);
+                        rightWeight += weight;
+                    }
                 });
                 
                 setHtmlContent(`
