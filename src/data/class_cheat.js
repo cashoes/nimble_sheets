@@ -26,6 +26,19 @@ class CheatClass extends BaseClass {
                 border: "rgba(148, 163, 184, 0.25)"
             },
             initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
+            classDefaults: {
+                selectedUnderhanded: []
+            },
+            onTogglePip: (key, newVal, state, derived) => {
+                if (key === 'uHeadsIWin' && newVal === 0) {
+                    if (!state.activeConditions.includes('heads_i_win')) {
+                        state.activeConditions.push('heads_i_win');
+                    }
+                    const lvl = derived.level || 1;
+                    state.tempHP = (state.tempHP || 0) + lvl;
+                    state.logs = [{ id: Date.now(), msg: `Heads I Win Activated! +${lvl} Temp HP gained.` }, ...(state.logs || [])].slice(0, 5);
+                }
+            },
             protectedPips: ["uNotHappened", "uEscapePlan", "uQuickReadDay", "uCheatDay"],
             rollOverrides: {
                 forceAutoHit: (label, options, state) => {

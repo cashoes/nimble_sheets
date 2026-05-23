@@ -26,6 +26,14 @@ class BerserkerClass extends BaseClass {
                 border: "rgba(239, 68, 68, 0.25)"
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
+            classDefaults: {
+                furyDice: [],
+                furyBoom: 'OFF',
+                selectedArsenal: []
+            },
+            onSafeRest: (state, derived) => {
+                state.furyDice = [];
+            },
             protectedPips: ["uAncients"],
             onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
                 if (context.isCrit && state.subclass === 'RedMist' && (state.level || 1) >= 3 && (state.activeConditions || []).includes('raging')) {
@@ -50,6 +58,9 @@ class BerserkerClass extends BaseClass {
             poolOverrides: {
                 getDieFloor: (key, state) => {
                     return (key === 'furyDice' && (state.level || 1) >= 20) ? 6 : 1;
+                },
+                allowExplode: (key, state) => {
+                    return key === 'furyDice' && state.furyBoom === 'BOOM';
                 }
             },
             subclasses: [

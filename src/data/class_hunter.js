@@ -26,6 +26,10 @@ class HunterClass extends BaseClass {
                 border: "rgba(22, 163, 74, 0.2)"
             },
             initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
+            classDefaults: {
+                selectedToth: [],
+                selectedCompanion: []
+            },
             protectedPips: ["uOverHere"],
             onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
                 if ((state.level || 1) < 2) return;

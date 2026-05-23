@@ -26,6 +26,9 @@ class ZephyrClass extends BaseClass {
                 border: "rgba(6, 182, 212, 0.25)"
             },
             initialStats: { baseStr: 1, baseDex: 3, baseInt: -1, baseWil: -1 },
+            classDefaults: {
+                selectedMartial: []
+            },
             protectedPips: ["uEthereal"],
             onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
                 if (context.isCrit && state.subclass === 'WayFlame' && (state.level || 1) >= 11) {

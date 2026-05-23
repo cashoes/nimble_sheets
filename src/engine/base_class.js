@@ -34,6 +34,7 @@ class BaseClass {
         this.optionExtensions = config.optionExtensions || {}; 
         this.grantedSpells = config.grantedSpells || [];      
         this.statModifiers = config.statModifiers || [];      
+        this.classDefaults = config.classDefaults || {};
 
         // Spell configuration
         this.spellSchools = config.spellSchools || []; 

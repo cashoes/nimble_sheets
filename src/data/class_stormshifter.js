@@ -26,6 +26,12 @@ class StormshifterClass extends BaseClass {
                 border: "rgba(20, 184, 166, 0.25)"
             },
             initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
+            classDefaults: {
+                currentForm: [],
+                selectedStormcaller: [],
+                selectedBoons: [],
+                selectedStudy: []
+            },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "SkyStorm", label: "Circle of Sky & Storm", accent: "#38bdf8" },

@@ -26,6 +26,22 @@ class ShadowmancerClass extends BaseClass {
                 border: "rgba(168, 85, 247, 0.3)"
             },
             initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
+            classDefaults: {
+                selectedLesser: [],
+                selectedGreater: [],
+                selectedShadowmastery: [],
+                selectedRedDragonUtility: [],
+                selectedAbyssalUtility: [],
+                greedyResult: '',
+                greedyBonus: 'OFF'
+            },
+            onSafeRest: (state, derived) => {
+                state.greedyResult = '';
+                state.greedyBonus = 'OFF';
+            },
+            getUpcastBonus: (spell, state) => {
+                return state.greedyBonus === 'BOOM' ? 1 : 0;
+            },
             protectedPips: ["uBeguiling", "uBloodSight", "uWhispers"],
             onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
                 if (context.isCrit && (state.selectedGreater || []).includes("Hungering Shadows")) {

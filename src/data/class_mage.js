@@ -26,6 +26,16 @@ class MageClass extends BaseClass {
                 border: "rgba(59, 130, 246, 0.3)"
             },
             initialStats: { baseStr: -1, baseDex: 0, baseInt: 3, baseWil: 1 },
+            classDefaults: {
+                selectedMastery: [],
+                selectedShaping: [],
+                selectedAtAnyCost: [],
+                selectedTempestMage: [],
+                freeCast: 'OFF'
+            },
+            onSafeRest: (state, derived) => {
+                state.freeCast = 'OFF';
+            },
             protectedPips: ["uSteelWill", "uThriveChaos"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },

@@ -26,6 +26,12 @@ class CommanderClass extends BaseClass {
                 border: "rgba(245, 158, 11, 0.25)"
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: 2, baseWil: -1 },
+            classDefaults: {
+                selectedOrders: [],
+                selectedTactics: [],
+                selectedDeepKnowledge: [],
+                selectedTraining: []
+            },
             protectedPips: ["uCoordStrike"],
             onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
                 if (context.isMiss && (state.selectedTactics || []).includes("Inerrant Strike")) {

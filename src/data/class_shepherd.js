@@ -26,6 +26,10 @@ class ShepherdClass extends BaseClass {
                 border: "rgba(217, 70, 239, 0.25)"
             },
             initialStats: { baseStr: 2, baseDex: -1, baseInt: 0, baseWil: 2 },
+            classDefaults: {
+                selectedGraces: [],
+                selectedTwilight: []
+            },
             protectedPips: ["uVeilwalker", "uIlluminate", "uSearing", "uHealer"],
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 // 1. Searing Light Recharge (Light Bearer or Mercy 15)

@@ -36,37 +36,16 @@ function ensureValidState(state) {
         resourceValues: {},
         bgSpell: 'None',
         showMinor: false,
-        logs: [], // New: Stores recent automated action logs
-        greedyResult: '', // New: Stores the result text of Greedy Pact rolls
-        // Multi-selection feature states
-        selectedDecrees: [],
-        selectedSpells: [],
-        selectedArsenal: [],
-        selectedToth: [],
-        selectedMastery: [],
-        selectedGreater: [],
-        selectedLesser: [],
-        selectedGraces: [],
-        selectedLyrical: [],
-        selectedBoons: [],
-        selectedMartial: [],
-        selectedUnderhanded: [],
-        selectedDeepKnowledge: [],
-        secondarySchool: [],
-        selectedSubclassSpells: [],
-        selectedStudy: [],
-        selectedTwilight: [],
-        selectedShadowmastery: [],
-        currentForm: [],
-        furyDice: [],
-        judgmentDice: null,
-        judgmentBoom: 'OFF',
-        judgmentMode: 'Single',
-        furyBoom: 'OFF',
+        logs: [], // Stores recent automated action logs
         advantage: 0,
         actionsSpent: 0,
         spellUpcasts: {} // stores { [spellName]: { tier: number, choiceId: string } }
     };
+
+    // Dynamically merge class-specific defaults
+    if (typeof CLASS_CONFIG !== 'undefined' && CLASS_CONFIG.classDefaults) {
+        Object.assign(defaults, CLASS_CONFIG.classDefaults);
+    }
 
     // Apply defaults for missing or incorrect types
     for (const [key, defaultValue] of Object.entries(defaults)) {
@@ -812,14 +791,9 @@ function characterReducer(currentState, action) {
                 const newVal = val === 1 ? 0 : 1;
                 s[key] = newVal;
 
-                if (key === 'uHeadsIWin' && newVal === 0) {
-                    if (!s.activeConditions.includes('heads_i_win')) {
-                        s.activeConditions.push('heads_i_win');
-                    }
+                if (typeof CLASS_CONFIG !== 'undefined' && typeof CLASS_CONFIG.onTogglePip === 'function') {
                     const d = computeDerived(s);
-                    const lvl = d.level || 1;
-                    s.tempHP = (s.tempHP || 0) + lvl;
-                    s.logs = [{ id: Date.now(), msg: `Heads I Win Activated! +${lvl} Temp HP gained.` }, ...(s.logs || [])].slice(0, 5);
+                    CLASS_CONFIG.onTogglePip(key, newVal, s, d);
                 }
             } else {                // 'Fill Up To' logic (Action Point style)
                 if (!Array.isArray(s[key])) s[key] = [];
@@ -1057,12 +1031,10 @@ function characterReducer(currentState, action) {
             s.activeConditions = []; // Clear all conditions on Safe Rest
             s.actionsSpent = 0;
             s.advantage = 0;
-            s.furyDice = [];
-            s.judgmentDice = [];
-            s.greedyResult = '';
-            s.greedyBonus = 'OFF';
-            s.freeCast = 'OFF';
-            
+            // 4. Class-specific Safe Rest Logic
+            if (typeof CLASS_CONFIG !== 'undefined' && typeof CLASS_CONFIG.onSafeRest === 'function') {
+                CLASS_CONFIG.onSafeRest(s, dStat);
+            }
             // 3. Refill resources
             const combinedResources = CLASS_CONFIG.getCombinedResources ? CLASS_CONFIG.getCombinedResources(s.subclass, s) : (CLASS_CONFIG.resources || []);
             combinedResources.forEach(res => {
@@ -1129,16 +1101,12 @@ function saveState(newState = null) {
 }
 
 /**
- * Initializes the character state.
- * Loads from EMBEDDED_STATE (export mode) or LocalStorage.
- * Falls back to class defaults for new characters.
- * @param {Object} config - The class configuration to use.
- */
 function loadState(config) {
     // 1. Define standard state schema and defaults
     state = {
         version: "3.0.0",
-        charName: '',        level: 1,
+        charName: '',
+        level: 1,
         ancestry: 'None',
         background: 'None',
         subclass: 'None',
@@ -1157,26 +1125,16 @@ function loadState(config) {
         resourceValues: {},
         bgSpell: 'None',
         showMinor: false,
-        logs: [], // New: Stores recent automated action logs
-
-        // Multi-selection feature states
-        selectedDecrees: [], selectedSpells: [], selectedArsenal: [], selectedToth: [],
-        selectedMastery: [], selectedGreater: [], selectedLesser: [], selectedGraces: [],
-        selectedLyrical: [], selectedBoons: [], selectedMartial: [], selectedUnderhanded: [],
-        selectedDeepKnowledge: [], secondarySchool: [], selectedSubclassSpells: [],
-        selectedStudy: [], selectedTwilight: [], selectedShadowmastery: [],
-
-        currentForm: [],
-        furyDice: [],
-        judgmentDice: null,
-        judgmentBoom: 'OFF',
-        judgmentMode: 'Single',
-        furyBoom: 'OFF',
-
+        logs: [], // Stores recent automated action logs
         advantage: 0,
         actionsSpent: 0,
         spellUpcasts: {}
     };
+
+    // Dynamically merge class-specific defaults
+    if (config && config.classDefaults) {
+        Object.assign(state, config.classDefaults);
+    }
 
     // 2. Load from storage
     const raw = localStorage.getItem(STORAGE_KEY);

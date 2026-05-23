@@ -26,6 +26,12 @@ class SongweaverClass extends BaseClass {
                 border: "rgba(251, 191, 36, 0.25)"
             },
             initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
+            classDefaults: {
+                secondarySchool: [],
+                selectedLyrical: [],
+                selectedFriends: [],
+                selectedWindbag: []
+            },
             protectedPips: ["uSongRest"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },

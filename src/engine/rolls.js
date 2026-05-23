@@ -382,9 +382,11 @@ function resolveUpcast(spell, castTier, choiceId = null) {
     const baseTier = parseInt(spell.tier.replace(/\D/g, '')) || 0;
     const tiersUp = Math.max(0, castTier - baseTier);
     
-    // Check for Greedy Pact Tier Bonus (Level 12 Shadowmancer)
-    const hasGreedyBonus = state.greedyBonus === 'BOOM';
-    const finalTiersUp = tiersUp + (hasGreedyBonus ? 1 : 0);
+    // Check for dynamic class/subclass upcast bonuses
+    const upcastBonus = (typeof CLASS_CONFIG !== 'undefined' && typeof CLASS_CONFIG.getUpcastBonus === 'function')
+        ? CLASS_CONFIG.getUpcastBonus(spell, state)
+        : 0;
+    const finalTiersUp = tiersUp + upcastBonus;
 
     let resolvedData = { ...(spell.base || {}), tiers: finalTiersUp };
     let desc = spell.desc;

@@ -26,6 +26,16 @@ class OathswornClass extends BaseClass {
                 border: "rgba(232, 121, 249, 0.25)"
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
+            classDefaults: {
+                selectedDecrees: [],
+                selectedSpells: [],
+                judgmentDice: [],
+                judgmentBoom: 'OFF',
+                judgmentMode: 'Single'
+            },
+            onSafeRest: (state, derived) => {
+                state.judgmentDice = [];
+            },
             protectedPips: ["uBlinding"],
             rollOverrides: {
                 forceAutoHit: (label, options, state) => {
@@ -53,6 +63,9 @@ class OathswornClass extends BaseClass {
             poolOverrides: {
                 hasAdvantage: (key, state) => {
                     return key === 'judgmentDice' && (state.selectedDecrees || []).includes("Reliable Justice");
+                },
+                allowExplode: (key, state) => {
+                    return key === 'judgmentDice' && state.judgmentBoom === 'BOOM';
                 }
             },
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {

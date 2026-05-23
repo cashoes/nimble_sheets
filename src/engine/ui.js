@@ -259,8 +259,9 @@ function addPoolDie(key, max, faces) {
     if (!state[key]) state[key] = []; // Guard for reducer logic if needed
     const currentPool = state[key] || [];
 
-    const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') ||
-        (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
+    const allowExplode = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.allowExplode === 'function')
+        ? CLASS_CONFIG.poolOverrides.allowExplode(key, state)
+        : false;
 
     const floor = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.getDieFloor === 'function')
         ? CLASS_CONFIG.poolOverrides.getDieFloor(key, state)
@@ -321,8 +322,9 @@ function rollPool(key, count, faces) {
     const hasAdv = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.hasAdvantage === 'function')
         ? CLASS_CONFIG.poolOverrides.hasAdvantage(key, state)
         : false;
-    const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') ||
-        (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
+    const allowExplode = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.allowExplode === 'function')
+        ? CLASS_CONFIG.poolOverrides.allowExplode(key, state)
+        : false;
 
     const floor = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.getDieFloor === 'function')
         ? CLASS_CONFIG.poolOverrides.getDieFloor(key, state)
