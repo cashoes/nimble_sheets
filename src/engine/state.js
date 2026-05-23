@@ -741,7 +741,70 @@ function characterReducer(currentState, action) {
             break;
         }
         case 'SET_STATE_KEY': {
-            s[payload.key] = payload.value;
+            let val = payload.value;
+            const key = payload.key;
+            if (key.startsWith('add') && ['addStr', 'addDex', 'addInt', 'addWil'].includes(key)) {
+                // Determine which stat we are changing
+                const statName = key.slice(3); // 'Str', 'Dex', 'Int', 'Wil'
+                const baseKey = 'base' + statName;
+                const baseVal = s[baseKey] || 0;
+                
+                // Calculate budgets using the exact same rules as validateAndCorrectState
+                const level = s.level || 1;
+                const keyMilestones = [4, 8, 12, 16];
+                const secMilestones = [5, 9, 13, 17];
+                const keyGains = keyMilestones.filter(l => level >= l).length;
+                const secGains = secMilestones.filter(l => level >= l).length;
+                const flexBudget = level >= 20 ? 2 : 0;
+
+                const config = CLASS_CONFIG;
+                const keyStats = (config.keyStats || []).map(stat => stat.charAt(0).toUpperCase() + stat.slice(1));
+                const stats = ['Str', 'Dex', 'Int', 'Wil'];
+                
+                const init = config.initialStats || {};
+                let baseKeyBudget = 0;
+                let baseSecBudget = 0;
+                stats.forEach(st => {
+                    const v = init[`base${st}`] || 0;
+                    if (keyStats.includes(st)) baseKeyBudget += v;
+                    else baseSecBudget += v;
+                });
+
+                const keyBudget = baseKeyBudget + keyGains;
+                const secBudget = baseSecBudget + secGains;
+
+                // Calculate spent of ALL OTHER stats (excluding S)
+                let keySpentOthers = 0;
+                let secSpentOthers = 0;
+                stats.forEach(st => {
+                    if (st === statName) return;
+                    const v = (s[`base${st}`] || 0) + (s[`add${st}`] || 0);
+                    if (keyStats.includes(st)) keySpentOthers += v;
+                    else secSpentOthers += v;
+                });
+
+                let maxAdd = 0;
+                const isKeyStat = keyStats.includes(statName);
+                if (isKeyStat) {
+                    // S is a KEY stat
+                    const secSpent = secSpentOthers;
+                    const secOver = Math.max(0, secSpent - secBudget);
+                    maxAdd = keyBudget + flexBudget - secOver - keySpentOthers - baseVal;
+                } else {
+                    // S is a SEC stat
+                    const keySpent = keySpentOthers;
+                    const keyOver = Math.max(0, keySpent - keyBudget);
+                    maxAdd = secBudget + flexBudget - keyOver - secSpentOthers - baseVal;
+                }
+
+                // Clamp between 0 and 5 - baseVal, and also clamp to maxAdd
+                const limit = Math.max(0, 5 - baseVal);
+                const allowedMax = Math.max(0, Math.min(limit, maxAdd));
+                
+                // Clamp the incoming value
+                val = Math.max(0, Math.min(allowedMax, val));
+            }
+            s[key] = val;
 
             // Auto-reset class resources on level change
             if (payload.key === 'level') {
