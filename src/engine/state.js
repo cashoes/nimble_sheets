@@ -290,14 +290,11 @@ function validateAndCorrectState(state) {
         }
     }
 
-    // 6. Automatic recovery on level change (Full Heal and Resource Restore)
+    // 6. Automatic recovery on level change (Resource Restore)
     const derived = computeDerived(state);
     if (state.lastLeveledUpAt === undefined) state.lastLeveledUpAt = state.level;
 
     if (state.level !== state.lastLeveledUpAt) {
-        state.hpCurrent = derived.maxHP;
-        state.hdCurrent = derived.hdMax;
-
         // Restore dynamic resources
         if (derived.resourceMaxes) {
             Object.keys(derived.resourceMaxes).forEach(id => {
@@ -355,11 +352,11 @@ function validateAndCorrectState(state) {
         state.actionsSpent = 0;
     }
 
-    // Ensure hpCurrent and hdCurrent are either null or non-negative numbers
+    // Ensure hpCurrent and hdCurrent are either null or non-negative numbers, clamped to their maximums
     if (state.hpCurrent !== null) {
         const hp = parseFloat(state.hpCurrent);
         if (!isNaN(hp) && hp >= 0) {
-            state.hpCurrent = hp;
+            state.hpCurrent = Math.min(derived.maxHP, hp);
         } else {
             state.hpCurrent = null;
         }
@@ -367,7 +364,7 @@ function validateAndCorrectState(state) {
     if (state.hdCurrent !== null) {
         const hd = parseFloat(state.hdCurrent);
         if (!isNaN(hd) && hd >= 0) {
-            state.hdCurrent = hd;
+            state.hdCurrent = Math.min(derived.hdMax, hd);
         } else {
             state.hdCurrent = null;
         }
@@ -509,122 +506,118 @@ function computeDerived(s) {
         bgSelectedOpt = bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === s[bgFeat.stateKey]);
     }
 
-    // 1. Hit Dice Face (Class-based, modified by Ancestry)
-    let hdFace = CLASS_CONFIG.hitDie || 10;
+    // 1. Baseline Hit Dice Face (Class-based, modified by Ancestry)
+    let hdFaceBase = CLASS_CONFIG.hitDie || 10;
     if (ancFeat && ancFeat.modHDStep) {
         const dieSteps = [6, 8, 10, 12, 20];
-        let idx = dieSteps.indexOf(hdFace);
+        let idx = dieSteps.indexOf(hdFaceBase);
         if (idx !== -1) {
             idx = Math.min(dieSteps.length - 1, idx + ancFeat.modHDStep);
-            hdFace = dieSteps[idx];
+            hdFaceBase = dieSteps[idx];
         }
     }
 
-    // 2. HP per Level & Max HP
-    // Standard NIMBLE mapping of Hit Die size to HP growth
     const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
-    const hpPerLevel = hpPerLevelMap[hdFace] || CLASS_CONFIG.hpPerLevel;
-    const maxHP = (CLASS_CONFIG.baseHp || 10) + ((level - 1) * hpPerLevel);
 
-    // 3. Max Hit Dice (Level + racial/background bonuses)
-    let maxHD = level + (ancFeat?.modHD || 0) + (bgFeat?.modHD || 0) + (bgSelectedOpt?.modHD || 0);
+    // 2. Define standard base values for all attributes in ATTRIBUTE_SCHEMA
+    const derivedBase = {
+        baseHp: CLASS_CONFIG.baseHp || 10,
+        hpPerLevel: hpPerLevelMap[hdFaceBase] || CLASS_CONFIG.hpPerLevel || 5,
+        hdFace: hdFaceBase,
+        hdMax: level + (ancFeat?.modHD || 0) + (bgFeat?.modHD || 0) + (bgSelectedOpt?.modHD || 0),
+        init: statsMap.dex + (ancFeat?.modInit || 0) + (bgFeat?.modInit || 0) + (bgSelectedOpt?.modInit || 0),
+        initAdv: false,
+        speedBase: 6,
+        speed: (ancFeat?.modSpeed || 0) + (bgFeat?.modSpeed || 0) + (bgSelectedOpt?.modSpeed || 0),
+        woundMax: 6 + (ancFeat?.modWounds || 0) + (bgFeat?.modWounds || 0) + (bgSelectedOpt?.modWounds || 0),
+        maxActions: 0,
+        armorBase: statsMap.dex,
+        armor: (ancFeat?.modArmor || 0) + (bgFeat?.modArmor || 0) + (bgSelectedOpt?.modArmor || 0),
+        shieldBonus: 0,
+        allSaveAdv: false,
+        allSaveDis: false,
+        profArmor: CLASS_CONFIG.proficiencies?.armor ? [CLASS_CONFIG.proficiencies.armor] : [],
+        profWeapons: CLASS_CONFIG.proficiencies?.weapons ? [CLASS_CONFIG.proficiencies.weapons] : [],
+        modFlySpeed: false,
+        quickRestLoh: false,
+        panel_surge: false
+    };
 
-    const strMod = statsMap.str;
-    const hdNotation = `1d${hdFace}${strMod >= 0 ? '+' : ''}${strMod}`;
+    // 3. Fold Class and Subclass Modifiers
+    const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
+    const combinedModifiers = [...(CLASS_CONFIG.statModifiers || []), ...(subConfig.statModifiers || [])];
+    const folded = typeof reduceModifiers === 'function' 
+        ? reduceModifiers(combinedModifiers, level, subclass, state, statsMap, derivedBase)
+        : { ...derivedBase };
 
-    // 4. Base Stats & Overrides from Class logic
-    const classDerived = CLASS_CONFIG.getDerivedStats ? CLASS_CONFIG.getDerivedStats(level, s.subclass, s) : {};
-    const classOverrides = CLASS_CONFIG.getStatOverrides ? CLASS_CONFIG.getStatOverrides(level, s.subclass, s, statsMap, maxHP) : {};
-    const isBloodied = CLASS_CONFIG.isBloodied(s, maxHP);
-    const isDying = (s.hpCurrent ?? maxHP) === 0;
-    const isWounded = (s.wounds || 0) > 0;
+    // 4. Sequential Resolution (HP, HD scaling dependencies)
+    folded.hpPerLevel = hpPerLevelMap[folded.hdFace] || CLASS_CONFIG.hpPerLevel || 5;
+    folded.maxHP = folded.baseHp + ((level - 1) * folded.hpPerLevel);
 
-    // 5. Initiative (DEX + modifiers)
-    let initiative = statsMap.dex + (classOverrides.init || 0) + (ancFeat?.modInit || 0) + (bgFeat?.modInit || 0) + (bgSelectedOpt?.modInit || 0);
-
-    // 6. Speed (Base 6 + modifiers)
-    let speed = (classDerived.speed || 6) + (classOverrides.speed || 0) + (ancFeat?.modSpeed || 0) + (bgFeat?.modSpeed || 0) + (bgSelectedOpt?.modSpeed || 0);
+    // 5. Resolve AC with inventory and modifiers
     let armorIsLight = true;
-
-    // 7. Wounds (Class base + modifiers)
-    let woundMax = Math.max(1, (classDerived.woundMax || 6) + (classOverrides.woundMax || 0) + (ancFeat?.modWounds || 0) + (bgFeat?.modWounds || 0) + (bgSelectedOpt?.modWounds || 0));
-
-    // 8. Actions (Standard 3, modified by Class and Conditions)
-    const potentialActions = 3 + (classOverrides.maxActions || 0);
-    let maxActions = potentialActions;
-    
-    // Auto-calculate effective conditions for mechanics
-    const effectiveConditions = [...(s.activeConditions || [])];
-    if (isBloodied && !effectiveConditions.includes('bloodied')) effectiveConditions.push('bloodied');
-    if (isDying && !effectiveConditions.includes('dying')) effectiveConditions.push('dying');
-    if (isWounded && !effectiveConditions.includes('wounded')) effectiveConditions.push('wounded');
-
-    effectiveConditions.forEach(cId => {
-        const c = CONDITIONS_LIST.find(cl => cl.id === cId);
-        if (c) {
-            if (c.modSpeedMult !== undefined) {
-                if (typeof speed === 'number') speed = Math.floor(speed * c.modSpeedMult);
-            }
-            if (c.modMaxActions) maxActions += c.modMaxActions;
-        }
-    });
-    maxActions = Math.max(0, maxActions);
-
-    // 9. Skill Passives (Ancestry and Background bonuses)
-    const passMods = getPassMods(s);
-
-    let unarmored = true;
-    s.inventory.forEach(item => { 
-        if (item.type === 'armor' && item.equipped) unarmored = false;
-    });
-
-    let armorVal = classOverrides.armorBase !== undefined ? classOverrides.armorBase : statsMap.dex;
     let bestArmorVal = -1;
-    let shieldBonus = classOverrides.shieldBonus || 0;
-
-    s.inventory.forEach(item => {
+    let inventoryShieldBonus = 0;
+    (state.inventory || []).forEach(item => {
         if (!item.equipped) return;
         if (item.type === 'armor') {
             const base = parseInt(item.armor) || 0;
-            // DEX cap logic: Light (no cap), Medium (max 2), Heavy (max 0)
             const dMax = item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0);
             const currentArmor = base + Math.min(statsMap.dex, dMax);
             if (currentArmor > bestArmorVal) bestArmorVal = currentArmor;
             if (item.armorType !== 'light') armorIsLight = false;
         } else if (item.type === 'shield') {
-            shieldBonus += (parseInt(item.armor) || 0);
+            inventoryShieldBonus += (parseInt(item.armor) || 0);
         }
     });
 
-    if (bestArmorVal !== -1) armorVal = bestArmorVal;
-    else if (classOverrides.armorBase === undefined) {
-        // No armor and no base override - ensure we use DEX
-        armorVal = statsMap.dex;
+    let foldedArmor = folded.armorBase !== null ? folded.armorBase : statsMap.dex;
+    if (bestArmorVal !== -1) {
+        foldedArmor = bestArmorVal;
+    }
+    foldedArmor += inventoryShieldBonus + folded.shieldBonus + folded.armor;
+
+    // 6. Resolve Conditions for Speed and Actions
+    const isBloodied = state.hpCurrent !== null ? state.hpCurrent <= (folded.maxHP / 2) : false;
+    const isDying = (state.hpCurrent ?? folded.maxHP) === 0;
+    const isWounded = (state.wounds || 0) > 0;
+    
+    const effectiveConditions = [...(state.activeConditions || [])];
+    if (isBloodied && !effectiveConditions.includes('bloodied')) effectiveConditions.push('bloodied');
+    if (isDying && !effectiveConditions.includes('dying')) effectiveConditions.push('dying');
+    if (isWounded && !effectiveConditions.includes('wounded')) effectiveConditions.push('wounded');
+
+    let foldedSpeed = (folded.speedBase !== null ? folded.speedBase : 6) + folded.speed;
+    let foldedMaxActions = 3 + folded.maxActions;
+
+    effectiveConditions.forEach(cId => {
+        const c = CONDITIONS_LIST.find(cl => cl.id === cId);
+        if (c) {
+            if (c.modSpeedMult !== undefined) {
+                if (typeof foldedSpeed === 'number') foldedSpeed = Math.floor(foldedSpeed * c.modSpeedMult);
+            }
+            if (c.modMaxActions) foldedMaxActions += c.modMaxActions;
+        }
+    });
+    foldedMaxActions = Math.max(0, foldedMaxActions);
+
+    if ((folded.modFlySpeed) && armorIsLight) {
+        foldedSpeed = `${foldedSpeed} (${foldedSpeed} Fly)`;
     }
 
-    // Apply final composite AC modifiers
-    armorVal += shieldBonus;
-    if (classOverrides.armor) armorVal += classOverrides.armor;
-    if (ancFeat?.modArmor) armorVal += ancFeat.modArmor;
-    if (bgFeat?.modArmor) armorVal += bgFeat.modArmor;
-    if (bgSelectedOpt?.modArmor) armorVal += bgSelectedOpt.modArmor;
+    const classDerived = CLASS_CONFIG.getDerivedStats ? CLASS_CONFIG.getDerivedStats(level, subclass, state) : {};
+    const passMods = getPassMods(state);
 
-    // Flight check (only works in light/no armor)
-    if ((ancFeat?.modFlySpeed || classOverrides.modFlySpeed) && armorIsLight) {
-        speed = `${speed} (${speed} Fly)`;
-    }
-
-    // 11. Resource Maxes (Mana, Class-specific pools)
+    // 7. Resource Maxes (Mana, Class-specific pools)
     const resourceMaxes = {};
-    const combinedResources = CLASS_CONFIG.getCombinedResources ? CLASS_CONFIG.getCombinedResources(s.subclass, s) : (CLASS_CONFIG.resources || []);
+    const combinedResources = CLASS_CONFIG.getCombinedResources ? CLASS_CONFIG.getCombinedResources(subclass, state) : (CLASS_CONFIG.resources || []);
     combinedResources.forEach(r => {
-        resourceMaxes[r.id] = r.calcMax(level, statsMap, s, s.subclass, classDerived);
+        resourceMaxes[r.id] = r.calcMax(level, statsMap, state, subclass, classDerived);
     });
 
-    // 12. Spell Tier (Calculates highest unlocked spell tier based on level)
+    // 8. Spell Tier (Calculates highest unlocked spell tier based on level)
     let maxTier = 0;
     if (CLASS_CONFIG.getAvailableSpells || CLASS_CONFIG.spellProgression) {
-        const subConfig = CLASS_CONFIG.getSubclassConfig ? CLASS_CONFIG.getSubclassConfig(s.subclass) : {};
         const progress = subConfig.spellProgression || CLASS_CONFIG.spellProgression || [0, 2, 4, 6, 8, 10, 12, 14, 16, 18];
 
         for (let i = progress.length - 1; i >= 0; i--) {
@@ -635,27 +628,30 @@ function computeDerived(s) {
         }
     }
 
+    const strMod = statsMap.str;
+    const hdNotation = `1d${folded.hdFace}${strMod >= 0 ? '+' : ''}${strMod}`;
+
     return {
-        ...classOverrides,
+        ...folded,
         ...classDerived,
         level,
         statsMap,
-        hdFace,
-        maxHP,
+        hdFace: folded.hdFace,
+        maxHP: folded.maxHP,
         isBloodied,
-        hdMax: maxHD,
-        armor: armorVal,
-        speed,
-        initiative,
-        woundMax,
-        maxActions,
-        potentialActions,
+        hdMax: folded.hdMax,
+        armor: foldedArmor,
+        speed: foldedSpeed,
+        initiative: folded.init,
+        woundMax: folded.woundMax,
+        maxActions: foldedMaxActions,
+        potentialActions: 3 + folded.maxActions,
         resourceMaxes,
         maxTier,
         hdNotation,
         passMods,
-        initAdv: classOverrides.initAdv || false,
-        size: bgFeat?.modSize || ancFeat?.modSize || classDerived.size || "Med",
+        initAdv: folded.initAdv || false,
+        size: bgFeat?.modSize || ancFeat?.modSize || classDerived.size || folded.size || "Med",
         keyBudget,
         keySpent,
         secBudget,
@@ -719,6 +715,14 @@ if (typeof window !== 'undefined') {
 }
 
 /**
+ * Helper to perform absolute or relative adjustments on numeric vitals/resources with min/max clamping.
+ */
+function adjustNumericField(val, amt, max, abs) {
+    const v = parseFloat(amt) || 0;
+    return Math.min(max, Math.max(0, abs ? v : (val ?? max) + v));
+}
+
+/**
  * Pure reducer function that handles all character state transitions.
  * @param {Object} currentState - The current character state.
  * @param {Object} action - The action to perform.
@@ -726,6 +730,7 @@ if (typeof window !== 'undefined') {
  */
 function characterReducer(currentState, action) {
     const s = JSON.parse(JSON.stringify(currentState)); // Deep copy for immutability
+    const oldDerived = computeDerived(currentState);
     const { type, payload } = action;
 
     console.log(`📡 State Action: ${type}`, payload);
@@ -739,58 +744,50 @@ function characterReducer(currentState, action) {
         }
         case 'ADJ_HP': {
             const { amount, isAbsolute } = payload;
-            const derived = computeDerived(s);
-            const max = derived.maxHP;
-            const current = s.hpCurrent ?? max;
+            const maxHP = computeDerived(s).maxHP;
             
-            if (isAbsolute) {
-                s.hpCurrent = Math.min(max, Math.max(0, amount));
-            } else if (amount < 0) {
-                let dmg = Math.abs(amount);
-                if ((s.tempHP || 0) > 0) {
-                    const absorbed = Math.min(s.tempHP, dmg);
-                    s.tempHP -= absorbed;
-                    dmg -= absorbed;
+            // Damage handling: absorb via tempHP first if not absolute
+            if (amount < 0 && !isAbsolute) {
+                let damage = Math.abs(amount);
+                const temp = s.tempHP || 0;
+                if (temp > 0) {
+                    const absorbed = Math.min(temp, damage);
+                    s.tempHP = temp - absorbed;
+                    damage -= absorbed;
                 }
-                if (dmg > 0) {
-                    s.hpCurrent = Math.max(0, current - dmg);
+                if (damage > 0) {
+                    s.hpCurrent = adjustNumericField(s.hpCurrent, -damage, maxHP, false);
                 }
             } else {
-                s.hpCurrent = Math.min(max, current + amount);
+                s.hpCurrent = adjustNumericField(s.hpCurrent, amount, maxHP, isAbsolute);
             }
             break;
         }
         case 'ADJ_TEMP_HP': {
             const { amount, isAbsolute } = payload;
-            s.tempHP = Math.max(0, isAbsolute ? amount : (s.tempHP || 0) + amount);
+            s.tempHP = adjustNumericField(s.tempHP || 0, amount, Infinity, isAbsolute);
             break;
         }
         case 'ADJ_HD': {
             const { amount, isAbsolute } = payload;
-            const derived = computeDerived(s);
-            const max = derived.hdMax;
-            s.hdCurrent = Math.min(max, Math.max(0, isAbsolute ? amount : (s.hdCurrent === null ? max : s.hdCurrent) + amount));
+            const hdMax = computeDerived(s).hdMax;
+            s.hdCurrent = adjustNumericField(s.hdCurrent ?? hdMax, amount, hdMax, isAbsolute);
             break;
         }
         case 'ADJ_RES': {
-            const { id, amount, max, isAbsolute } = payload;
-            let currentVal = max || 0;
-            if (s.resourceValues[id] !== undefined) {
-                currentVal = parseFloat(s.resourceValues[id]);
-                if (isNaN(currentVal)) currentVal = 0;
-            }
-            const adjAmount = parseFloat(amount) || 0;
-            s.resourceValues[id] = Math.min(max || 999, Math.max(0, isAbsolute ? adjAmount : currentVal + adjAmount));
+            const { id, amount, isAbsolute, max } = payload;
+            const maxLimit = max || 999;
+            const raw = s.resourceValues[id];
+            const current = raw === undefined ? (max || 0) : (parseFloat(raw) || 0);
+            s.resourceValues[id] = adjustNumericField(current, amount, maxLimit, isAbsolute);
             break;
         }
         case 'SET_STATE_KEY': {
             s[payload.key] = payload.value;
 
-            // Auto-reset vitals and class resources on level change
+            // Auto-reset class resources on level change
             if (payload.key === 'level') {
                 const derived = computeDerived(s);
-                s.hpCurrent = derived.maxHP;
-                s.hdCurrent = derived.hdMax;
 
                 // Reset dynamic class resources (Mana, Lay on Hands, etc.)
                 if (derived.resourceMaxes) {
@@ -950,7 +947,25 @@ function characterReducer(currentState, action) {
             break;
         }
         case 'IMPORT_STATE': {
-            return validateAndCorrectState(ensureValidState(payload.newState));
+            const imported = validateAndCorrectState(ensureValidState(payload.newState));
+            if (imported.level > 1) {
+                const derived = computeDerived(imported);
+                const level1State = { ...imported, level: 1 };
+                const level1Derived = computeDerived(level1State);
+                const classBaseHp = CLASS_CONFIG.baseHp || 10;
+                
+                if ((imported.hpCurrent === level1Derived.maxHP || imported.hpCurrent === classBaseHp) && derived.maxHP > imported.hpCurrent) {
+                    const oldHp = imported.hpCurrent;
+                    imported.hpCurrent = derived.maxHP;
+                    console.log(`🩺 Corrected stuck level 1 HP on import from ${oldHp} to ${derived.maxHP}`);
+                }
+                if ((imported.hdCurrent === level1Derived.hdMax || imported.hdCurrent === 1) && derived.hdMax > imported.hdCurrent) {
+                    const oldHd = imported.hdCurrent;
+                    imported.hdCurrent = derived.hdMax;
+                    console.log(`🩺 Corrected stuck level 1 HD on import from ${oldHd} to ${derived.hdMax}`);
+                }
+            }
+            return imported;
         }
         case 'SYNC_STATE': {
             return validateAndCorrectState(s);
@@ -992,12 +1007,9 @@ function characterReducer(currentState, action) {
                 const derived = computeDerived(s);
                 
                 const localAdjRes = (id, amt, max, isAbs = false) => {
-                    const currentVal = parseFloat(s.resourceValues[id] ?? 0) || 0;
-                    const adjAmt = parseFloat(amt) || 0;
                     const finalMax = parseFloat(max) || 0;
-                    const newVal = Math.min(finalMax, Math.max(0, isAbs ? adjAmt : currentVal + adjAmt));
-                    s.resourceValues[id] = newVal;
-                    console.log(`  - Atomic Recharge [${id}]: Current=${currentVal}, Max=${finalMax}, New=${newVal}`);
+                    s.resourceValues[id] = adjustNumericField(parseFloat(s.resourceValues[id] ?? 0) || 0, amt, finalMax, isAbs);
+                    console.log(`  - Atomic Recharge [${id}]: Max=${finalMax}, New=${s.resourceValues[id]}`);
                 };
 
                 const localAddLog = (msg) => {
@@ -1052,12 +1064,14 @@ function characterReducer(currentState, action) {
             s.freeCast = 'OFF';
             
             // 3. Refill resources
-            Object.keys(dStat.resourceMaxes).forEach(id => {
-                const isSpellbladeMana = id === 'mana' && CLASS_CONFIG.name === 'Commander' && s.subclass === 'Spellblade';
-                if (!isSpellbladeMana) {
+            const combinedResources = CLASS_CONFIG.getCombinedResources ? CLASS_CONFIG.getCombinedResources(s.subclass, s) : (CLASS_CONFIG.resources || []);
+            combinedResources.forEach(res => {
+                const id = res.id;
+                if (dStat.resourceMaxes[id] === undefined) return;
+                if (res.refillOnSafeRest !== false) {
                     s.resourceValues[id] = dStat.resourceMaxes[id];
                 } else {
-                    s.resourceValues[id] = 0; 
+                    s.resourceValues[id] = res.safeRestValue !== undefined ? res.safeRestValue : 0;
                 }
             });
 
@@ -1070,6 +1084,18 @@ function characterReducer(currentState, action) {
         default:
             console.warn(`Unknown action type: ${type}`);
             return s;
+    }
+
+    // Calculate and apply differences in maximum HP/HD
+    const newDerived = computeDerived(s);
+    const diffHP = newDerived.maxHP - oldDerived.maxHP;
+    const diffHD = newDerived.hdMax - oldDerived.hdMax;
+
+    if (diffHP !== 0 && s.hpCurrent !== null) {
+        s.hpCurrent = Math.max(0, Math.min(newDerived.maxHP, s.hpCurrent + diffHP));
+    }
+    if (diffHD !== 0 && s.hdCurrent !== null) {
+        s.hdCurrent = Math.max(0, Math.min(newDerived.hdMax, s.hdCurrent + diffHD));
     }
 
     return validateAndCorrectState(s);
@@ -1169,6 +1195,25 @@ function loadState(config) {
 
     // Ensure state is valid and has correct types/defaults, and apply game-specific corrections
     state = validateAndCorrectState(state);
+
+    // Correct stuck level 1 vitals if the loaded character is level > 1 but vitals match level 1 max values
+    if (state.level > 1) {
+        const derived = computeDerived(state);
+        const level1State = { ...state, level: 1 };
+        const level1Derived = computeDerived(level1State);
+        const classBaseHp = CLASS_CONFIG.baseHp || 10;
+        
+        if ((state.hpCurrent === level1Derived.maxHP || state.hpCurrent === classBaseHp) && derived.maxHP > state.hpCurrent) {
+            const oldHp = state.hpCurrent;
+            state.hpCurrent = derived.maxHP;
+            console.log(`🩺 Corrected stuck level 1 HP on load from ${oldHp} to ${derived.maxHP}`);
+        }
+        if ((state.hdCurrent === level1Derived.hdMax || state.hdCurrent === 1) && derived.hdMax > state.hdCurrent) {
+            const oldHd = state.hdCurrent;
+            state.hdCurrent = derived.hdMax;
+            console.log(`🩺 Corrected stuck level 1 HD on load from ${oldHd} to ${derived.hdMax}`);
+        }
+    }
 
     // 3. Apply class-specific initial stats for brand new characters
     if (state.level === 1 && !state.charName) {

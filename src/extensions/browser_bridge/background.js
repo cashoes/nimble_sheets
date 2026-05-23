@@ -1,4 +1,10 @@
 // Background script to route messages from the Tracker tab to OBR tabs
+
+// Open the NIMBLE Tracker when the extension icon is clicked
+chrome.action.onClicked.addListener((tab) => {
+  chrome.tabs.create({ url: "https://cashoes.github.io/nimble_sheets/" });
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "NIMBLE_ROLL") {
     // Find all Owlbear Rodeo tabs and forward the message

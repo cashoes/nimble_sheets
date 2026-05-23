@@ -147,7 +147,7 @@
          */
         async function fetchCore() {
             const engineModules = [
-                'solid.js', 'rolls.js', 'features.js', 'ui.js', 'core.js', 
+                'solid.js', 'attributes.js', 'rolls.js', 'features.js', 'ui.js', 'core.js', 'base_class.js', 
                 'eventBus.js', 'state.js', 'bridge.js', 'components.js', 'app.js'
             ];
 
@@ -193,10 +193,10 @@
             jsContent += `const SPELL_REGISTRY = ${JSON.stringify(spells.registry)};\n\n`;
 
             // Map engine parts (ordered by fetchCore)
-            const [solid, rolls, features, ui, corePart, eventBus, state, bridge, components, app] = core.engineParts;
+            const [solid, attributes, rolls, features, ui, corePart, baseClass, eventBus, state, bridge, components, app] = core.engineParts;
 
             jsContent += `// --- SolidJS Runtime ---\n${solid}\n\n`;
-            jsContent += `// --- Engine Helpers & Base ---\n${rolls}\n${features}\n${ui}\n${corePart}\n${eventBus}\n\n`;
+            jsContent += `// --- Engine Helpers & Base ---\n${attributes}\n${rolls}\n${features}\n${ui}\n${corePart}\n${baseClass}\n${eventBus}\n\n`;
             jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
             jsContent += `// --- Engine Logic ---\n${state}\n${bridge}\n${components}\n${app}\n\n`;
 

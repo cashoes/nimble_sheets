@@ -12,6 +12,13 @@ function buildFeatureHtml(title, levelTag, description, theme = "", skip = false
     return `<div class="feature ${theme}"><h3>${title} ${levelTag ? `<span class="level-tag">Lvl ${levelTag}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; 
 }
 
+
+/**
+ * Helper to render a vanilla HTML string for a number spinner tracker.
+ * Used inside feature card descriptions.
+ */
+function renderNumberSpinnerHtml(id, current, max) { return `<div class="dark-incrementer"><button onclick="adjRes('${id}',-1,${max})">-</button><input type="number" value="${current}" onchange="adjRes('${id}',parseInt(this.value),${max},true)" style="width: 35px; text-align: center; background: transparent; border: none; color: #fff; font-family: 'Cinzel'; font-weight: bold; font-size: 1em;"><button onclick="adjRes('${id}',1,${max})">+</button></div>`; }
+
 /**
  * Default renderer for individual features.
  */
@@ -47,11 +54,7 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
                 <div style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid var(--class-border); display: flex; align-items: center; justify-content: space-between;">
                     <label style="font-size: 0.75em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel'; font-weight: bold;">Remaining ${resConfig.label}</label>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <div class="dark-incrementer">
-                            <button onclick="adjRes('${feat.resourceId}', -1, ${max})">-</button>
-                            <input type="number" value="${current}" onchange="adjRes('${feat.resourceId}', parseInt(this.value), ${max}, true)" style="width: 35px; text-align: center; background: transparent; border: none; color: #fff; font-family: 'Cinzel'; font-weight: bold; font-size: 1em;">
-                            <button onclick="adjRes('${feat.resourceId}', 1, ${max})">+</button>
-                        </div>
+                        ${renderNumberSpinnerHtml(feat.resourceId, current, max)}
                         <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">/ ${max}</div>
                     </div>
                 </div>`;

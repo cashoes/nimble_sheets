@@ -66,7 +66,7 @@ class MechanicPanelBuilder {
         return this;
     }
 
-    build(minHeight = 100) {
+    build(minHeight = 120) {
         return {
             minHeight,
             sections: this.sections
@@ -262,10 +262,9 @@ function addPoolDie(key, max, faces) {
     const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') ||
         (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
 
-    let floor = 1;
-    if (key === 'furyDice' && CLASS_CONFIG.name === 'Berserker' && state.level >= 20) {
-        floor = 6;
-    }
+    const floor = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.getDieFloor === 'function')
+        ? CLASS_CONFIG.poolOverrides.getDieFloor(key, state)
+        : 1;
 
     const roll = _rollDie(faces, allowExplode, floor);
 
@@ -319,14 +318,15 @@ function maximizePoolDie(key, idx, faces) {
  */
 function rollPool(key, count, faces) {
     let finalDice = [];
-    const hasAdv = (key === 'judgmentDice' && state.selectedDecrees?.includes("Reliable Justice"));
+    const hasAdv = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.hasAdvantage === 'function')
+        ? CLASS_CONFIG.poolOverrides.hasAdvantage(key, state)
+        : false;
     const allowExplode = (key === 'furyDice' && state.furyBoom === 'BOOM') ||
         (key === 'judgmentDice' && state.judgmentBoom === 'BOOM');
 
-    let floor = 1;
-    if (key === 'furyDice' && CLASS_CONFIG.name === 'Berserker' && state.level >= 20) {
-        floor = 6;
-    }
+    const floor = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.getDieFloor === 'function')
+        ? CLASS_CONFIG.poolOverrides.getDieFloor(key, state)
+        : 1;
 
     let rollCount = hasAdv ? count + 1 : count;
 

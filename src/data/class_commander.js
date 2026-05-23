@@ -27,6 +27,11 @@ class CommanderClass extends BaseClass {
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: 2, baseWil: -1 },
             protectedPips: ["uCoordStrike"],
+            onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
+                if (context.isMiss && (state.selectedTactics || []).includes("Inerrant Strike")) {
+                    dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Inerrant Strike: Reroll, +1 Primary Die, +Combat Die dmg." } });
+                }
+            },
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 // ARCANE COMMAND (Spellblade L4)
                 if (subclass === "Spellblade" && level >= 4) {
@@ -90,7 +95,7 @@ class CommanderClass extends BaseClass {
                             createSimpleResource('mana', 'Mana Pool', (level, stats) => {
                                 if (level < 4) return 0;
                                 return stats.int;
-                            }, { subtext: "(on Initiative)" })
+                            }, { subtext: "(on Initiative)", refillOnSafeRest: false, safeRestValue: 0 })
                         ],
                         statModifiers: [
                             {

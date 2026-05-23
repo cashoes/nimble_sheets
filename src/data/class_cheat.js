@@ -27,6 +27,24 @@ class CheatClass extends BaseClass {
             },
             initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
             protectedPips: ["uNotHappened", "uEscapePlan", "uQuickReadDay", "uCheatDay"],
+            rollOverrides: {
+                forceAutoHit: (label, options, state) => {
+                    return (state.activeConditions || []).includes('heads_i_win');
+                },
+                getCritThresholdOffset: (label, options, state, faces) => {
+                    return (state.activeConditions || []).includes('heads_i_win') ? 1 : 0;
+                }
+            },
+            onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
+                if (context.isCrit && context.isMelee && (state.level || 1) >= 1) {
+                    const saDice = derived.saDice || "1d6";
+                    dispatchRoll(saDice, 'Sneak Attack', { type: 'pool' });
+                    dispatch({ type: 'ADD_LOG', payload: { msg: `Melee Crit! Automated Sneak Attack roll (${saDice}).` } });
+                }
+                if (context.isMiss && (state.selectedUnderhanded || []).includes("Feinting Attack")) {
+                    dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Feinting Attack: If 2nd miss this round, change primary die." } });
+                }
+            },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "SilentBlade", label: "Tools of the Silent Blade", accent: "#be123c" },

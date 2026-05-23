@@ -27,6 +27,20 @@ class ZephyrClass extends BaseClass {
             },
             initialStats: { baseStr: 1, baseDex: 3, baseInt: -1, baseWil: -1 },
             protectedPips: ["uEthereal"],
+            onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
+                if (context.isCrit && state.subclass === 'WayFlame' && (state.level || 1) >= 11) {
+                    const statsMap = derived.statsMap || {};
+                    const str = statsMap.str || 0;
+                    const wounds = state.wounds || 0;
+                    const count = str + wounds;
+                    if (count > 0) {
+                        const isBurning = (state.level || 1) >= 15;
+                        const fNot = `${count}d6${isBurning ? '*2' : ''}`;
+                        dispatchRoll(fNot, 'Way of Flame', { type: 'pool' });
+                        dispatch({ type: 'ADD_LOG', payload: { msg: `Crit! Way of Flame Chain Reaction triggered (${fNot} Fire).` } });
+                    }
+                }
+            },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 {

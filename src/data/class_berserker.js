@@ -27,6 +27,31 @@ class BerserkerClass extends BaseClass {
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
             protectedPips: ["uAncients"],
+            onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
+                if (context.isCrit && state.subclass === 'RedMist' && (state.level || 1) >= 3 && (state.activeConditions || []).includes('raging')) {
+                    const dice = [...(state.furyDice || [])];
+                    if (dice.length > 0) {
+                        const fFaces = derived.furyFaces || 4;
+                        const idx = dice.findIndex(f => f.total < fFaces);
+                        if (idx !== -1) {
+                            dice[idx] = { ...dice[idx], total: fFaces };
+                            dispatch({ type: 'UPDATE_POOL', payload: { key: 'furyDice', dice } });
+                            dispatch({ type: 'ADD_LOG', payload: { msg: `Crit! Blood Frenzy maximized a Fury Die to ${fFaces}.` } });
+                        }
+                    }
+                }
+                if (context.isMiss && state.subclass === 'Mountainheart' && (state.level || 1) >= 11) {
+                    if (!(state.activeConditions || []).includes('raging')) {
+                        dispatch({ type: 'TOGGLE_CONDITION', payload: { id: 'raging' } });
+                        dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Titan's Fury triggered Rage." } });
+                    }
+                }
+            },
+            poolOverrides: {
+                getDieFloor: (key, state) => {
+                    return (key === 'furyDice' && (state.level || 1) >= 20) ? 6 : 1;
+                }
+            },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Mountainheart", label: "Path of the Mountainheart", accent: "#451a03" },

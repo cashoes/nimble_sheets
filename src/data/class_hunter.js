@@ -27,6 +27,17 @@ class HunterClass extends BaseClass {
             },
             initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
             protectedPips: ["uOverHere"],
+            onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
+                if ((state.level || 1) < 2) return;
+                const max = derived.resourceMaxes['tothCharges'] || 10;
+                if (context.isCrit && context.isRanged) {
+                    dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
+                    dispatch({ type: 'ADD_LOG', payload: { msg: "Ranged Crit! +1 Thrill charge gained." } });
+                } else if (context.isHit && context.isMelee) {
+                    dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
+                    dispatch({ type: 'ADD_LOG', payload: { msg: "Melee Hit! +1 Thrill charge gained." } });
+                }
+            },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "Shadowpath", label: "Keeper of the Shadowpath", accent: "#1e1b4b" },
@@ -36,7 +47,7 @@ class HunterClass extends BaseClass {
                     accent: "#ea580c",
                     config: {
                         statModifiers: [
-                            { id: "wildheart_hd", stat: "hdFace", value: 2, level: 3 },
+                            { id: "wildheart_hd", stat: "hdFace", value: 10, level: 3 },
                             { id: "wildheart_hp", stat: "baseHp", value: 5, level: 3 },
                             { id: "wildheart_armor", stat: "armor", level: 15, getMod: (stats) => stats.wil }
                         ]

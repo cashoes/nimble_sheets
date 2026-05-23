@@ -46,6 +46,23 @@ function highlightMechanicalTerms(text) {
     return processed;
 }
 
+
+/**
+ * Generic Number Spinner Component
+ * Reusable control for adjusting resource, HP, Temp HP, or Hit Dice.
+ * 
+ * Props:
+ *  - id: optional string for element ID
+ *  - value: Solid accessor or value
+ *  - onAdjust: function(amount) to increment/decrement
+ *  - onSet: function(value) to set a specific numeric value
+ *  - class: optional css class string
+ *  - style: optional css style string
+ */
+function NumberSpinner(props) {
+    return html`<div class=${`dark-incrementer ${props.class || ''}`}><button onclick=${() => props.onAdjust(-1)}>-</button><input type="number" id=${props.id || ''} value=${() => typeof props.value === 'function' ? props.value() : props.value} onchange=${(e) => { const v = parseInt(e.target.value); props.onSet(isNaN(v) ? 0 : v); }} style=${props.style || ''} /><button onclick=${() => props.onAdjust(1)}>+</button></div>`;
+}
+
 /**
  * Generic Action Pip Component
  */
@@ -319,18 +336,6 @@ function HPTracker() {
     const hdFace = () => d().hdFace;
     const hdNot = () => d().hdNotation;
 
-    const hpDown = () => adjHP(-1);
-    const hpUp = () => adjHP(1);
-    const hpSet = (e) => adjHP(parseInt(e.target.value), true);
-
-    const thpDown = () => adjTempHP(-1);
-    const thpUp = () => adjTempHP(1);
-    const thpSet = (e) => adjTempHP(parseInt(e.target.value), true);
-
-    const hdDown = () => adjHD(-1);
-    const hdUp = () => adjHD(1);
-    const hdSet = (e) => adjHD(parseInt(e.target.value), true);
-
     const rollHD = () => {
         if (hdVal() > 0) {
             adjHD(-1);
@@ -345,32 +350,20 @@ function HPTracker() {
             <div style="display: flex; flex-1; justify-content: space-between; align-items: center; padding-right: 15px; border-right: 1px dashed rgba(255,255,255,0.15);">
                 <label style="color: var(--class-accent);">Hit Points</label>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <div class="res-val dark-incrementer">
-                        <button onclick=${hpDown}>-</button>
-                        <input type="number" id="displayCurrentHP" value=${hpVal} onchange=${hpSet} />
-                        <button onclick=${hpUp}>+</button>
-                    </div>
+                    <${NumberSpinner} id="displayCurrentHP" value=${hpVal} onAdjust=${adjHP} onSet=${(val) => adjHP(val, true)} />
                     <div class="max-text">/ <span id="displayMaxHP" style="color:var(--text-main);">${hpMaxVal}</span></div>
                 </div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; padding-left: 15px; gap: 8px;">
                 <label style="color: var(--text-muted); font-size: 0.8em; margin:0;">Temp HP</label>
-                <div class="dark-incrementer">
-                    <button onclick=${thpDown}>-</button>
-                    <input type="number" id="displayTempHP" value=${tempVal} onchange=${thpSet} style="color: var(--class-accent);" />
-                    <button onclick=${thpUp}>+</button>
-                </div>
+                <${NumberSpinner} id="displayTempHP" value=${tempVal} onAdjust=${adjTempHP} onSet=${(val) => adjTempHP(val, true)} style="color: var(--class-accent);" />
             </div>
         </div>
 
         <div class="res-row">
             <label id="hitDiceLabel" class="roll-link" onclick=${rollHD}>Hit Dice (d${hdFace})</label>
             <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="res-val dark-incrementer">
-                    <button onclick=${hdDown}>-</button>
-                    <input type="number" id="displayHD" value=${hdVal} onchange=${hdSet} />
-                    <button onclick=${hdUp}>+</button>
-                </div>
+                <${NumberSpinner} id="displayHD" value=${hdVal} onAdjust=${adjHD} onSet=${(val) => adjHD(val, true)} />
                 <div class="max-text">/ <span id="maxHD" style="color:var(--text-main);">${hdMaxVal}</span></div>
             </div>
         </div>
@@ -1281,19 +1274,11 @@ const PanelComponents = {
         const opt = props.options;
         const sub = opt.subtext;
 
-        const down = () => adjRes(id, -1, max);
-        const up = () => adjRes(id, 1, max);
-        const set = (e) => adjRes(id, parseInt(e.target.value), max, true);
-
         return html`
             <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                 <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${label}</label>
                 <div style="display: flex; align-items: center; gap: 4px;">
-                    <div class="dark-incrementer">
-                        <button onclick=${down}>-</button>
-                        <input type="number" value=${val} onchange=${set} />
-                        <button onclick=${up}>+</button>
-                    </div>
+                    <${NumberSpinner} value=${val} onAdjust=${(amt) => adjRes(id, amt, max)} onSet=${(value) => adjRes(id, value, max, true)} />
                     <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${max}</span></div>
                 </div>
                 ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-style: italic; margin-top: 4px; line-height: 1.1;">${sub}</div>` : ''}
@@ -1527,14 +1512,11 @@ const PanelComponents = {
 
         const curVal = () => s().resourceValues[rid] || 0;
         const clickFn = () => dispatchRoll(not, lab, rctx);
-        const handleDown = () => adjRes(rid, -1, rmax);
-        const handleUp = () => adjRes(rid, 1, rmax);
-        const handleSet = (e) => adjRes(rid, parseInt(e.target.value), rmax, true);
 
         return html`
             <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1.2;">
                 <label class="roll-link" onclick=${clickFn} 
-                      style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px; cursor: pointer;">
+                       style="font-size: 0.8em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px; cursor: pointer;">
                     ${lab}
                 </label>
                 <div class="roll-link" onclick=${clickFn} 
@@ -1542,11 +1524,7 @@ const PanelComponents = {
                     ${disp}
                 </div>
                 <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px;">
-                    <div class="dark-incrementer">
-                        <button onclick=${handleDown}>-</button>
-                        <input type="number" value=${curVal} onchange=${handleSet} />
-                        <button onclick=${handleUp}>+</button>
-                    </div>
+                    <${NumberSpinner} value=${curVal} onAdjust=${(amt) => adjRes(rid, amt, rmax)} onSet=${(value) => adjRes(rid, value, rmax, true)} />
                     <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ ${rmax}</div>
                 </div>
             </div>
@@ -1624,8 +1602,14 @@ function ProficiencyRow() {
     const d = charDerived;
     const config = CLASS_CONFIG;
 
-    const weapons = () => d().profWeapons || config.proficiencies?.weapons || "--";
-    const armor = () => d().profArmor || config.proficiencies?.armor || "--";
+    const weapons = () => {
+        const val = d().profWeapons;
+        return (Array.isArray(val) && val.length > 0) ? val.join(', ') : (config.proficiencies?.weapons || "--");
+    };
+    const armor = () => {
+        const val = d().profArmor;
+        return (Array.isArray(val) && val.length > 0) ? val.join(', ') : (config.proficiencies?.armor || "--");
+    };
 
     return html`
         <div class="proficiency-row"

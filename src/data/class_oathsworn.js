@@ -27,6 +27,34 @@ class OathswornClass extends BaseClass {
             },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
             protectedPips: ["uBlinding"],
+            rollOverrides: {
+                forceAutoHit: (label, options, state) => {
+                    const isVengeance = state.subclass === 'Vengeance';
+                    const isLvl11 = (state.level || 1) >= 11;
+                    const hasJD = state.judgmentDice && state.judgmentDice.length > 0;
+                    const isMelee = options.metadata?.weaponType === 'melee' || (options.stat === 'str' && options.metadata?.weaponType !== 'ranged');
+                    return isVengeance && isLvl11 && hasJD && isMelee;
+                },
+                getExplosionThresholdOffset: (label, options, state, faces) => {
+                    const isVengeance = state.subclass === 'Vengeance';
+                    const isLvl11 = (state.level || 1) >= 11;
+                    const hasJD = state.judgmentDice && state.judgmentDice.length > 0;
+                    const isMelee = options.metadata?.weaponType === 'melee' || (options.stat === 'str' && options.metadata?.weaponType !== 'ranged');
+                    return (isVengeance && isLvl11 && hasJD && isMelee) ? 1 : 0;
+                },
+                getCritThresholdOffset: (notation, primaryGroup, state, faces) => {
+                    const isMelee = notation.toLowerCase().includes('(melee)');
+                    const hasJD = state.judgmentDice && state.judgmentDice.length > 0;
+                    const isVengeance = state.subclass === 'Vengeance';
+                    const isLvl11 = (state.level || 1) >= 11;
+                    return (isMelee && hasJD && isVengeance && isLvl11) ? 1 : 0;
+                }
+            },
+            poolOverrides: {
+                hasAdvantage: (key, state) => {
+                    return key === 'judgmentDice' && (state.selectedDecrees || []).includes("Reliable Justice");
+                }
+            },
             onInitiative: (level, subclass, state, derived, adjRes, addLog) => {
                 if ((state.selectedDecrees || []).includes("Stand Fast, Friends!")) {
                     const statsMap = derived.statsMap;

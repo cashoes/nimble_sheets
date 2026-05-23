@@ -27,6 +27,11 @@ class ShadowmancerClass extends BaseClass {
             },
             initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
             protectedPips: ["uBeguiling", "uBloodSight", "uWhispers"],
+            onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
+                if (context.isCrit && (state.selectedGreater || []).includes("Hungering Shadows")) {
+                    dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Hungering Shadows: Next tiered spell costs 0 Pilfered Power." } });
+                }
+            },
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 {

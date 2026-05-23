@@ -25,14 +25,12 @@ function dispatchRoll(notation, label, options = {}) {
     let finalNotation = notation.replace(/[⚔️🛡️]/g, '').trim();
     const metadata = options.metadata || {};
 
-    // --- RULE-BREAKING OVERRIDES (v2.8.22) ---
+    // --- RULE-BREAKING OVERRIDES ---
     // Capture state flags BEFORE any triggers run
     const isMelee = metadata.weaponType === 'melee' || (metadata.weaponType !== 'ranged' && (/⚔️/.test(label) || options.stat === 'str'));
     const isRanged = metadata.weaponType === 'ranged' || (metadata.weaponType !== 'melee' && (/🏹|🎯/.test(label) || options.stat === 'dex'));
-    const hasJD = charName === "Oathsworn" && (s.judgmentDice || []).length > 0;
-    const isHeadsIWin = /Cheat/i.test(charName) && s.activeConditions.includes('heads_i_win');
 
-    console.log(`🎲 dispatchRoll [${charName}]: Melee=${isMelee}, Ranged=${isRanged}, hasJD=${hasJD}`);
+    console.log(`🎲 dispatchRoll [${charName}]: Melee=${isMelee}, Ranged=${isRanged}`);
 
     // --- AUTOMATED CLASS MODIFIERS ---
     let autoMod = 0;
@@ -123,27 +121,28 @@ function dispatchRoll(notation, label, options = {}) {
             // NIMBLE Combat Logic: Decompose into Primary + Secondary
             // Advantage/Disadvantage applies ONLY to the Primary die
             
-            // --- Special Subclass Overrides (v2.8.22) ---
-            const cheatAutoHit = isHeadsIWin;
-            
-            // Oath of Vengeance L11: Unerring Judgment
-            const isVengeance = s.subclass === 'Vengeance';
-            const isLvl11 = (s.level || 1) >= 11;
-            const oathUnerring = charName === "Oathsworn" && isVengeance && isLvl11 && hasJD && isMelee;
-            
+            // --- Decoupled Roll Overrides ---
+            const forceAutoHit = (CLASS_CONFIG.rollOverrides && typeof CLASS_CONFIG.rollOverrides.forceAutoHit === 'function')
+                ? CLASS_CONFIG.rollOverrides.forceAutoHit(label, options, s)
+                : false;
+
+            const explosionOffset = (CLASS_CONFIG.rollOverrides && typeof CLASS_CONFIG.rollOverrides.getExplosionThresholdOffset === 'function')
+                ? CLASS_CONFIG.rollOverrides.getExplosionThresholdOffset(label, options, s, faces)
+                : 0;
+
             let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}d${faces}kl1` : `1d${faces}`;
-            
+
             // Order is critical for Dice+ parsing: !! (explosion) -> min (floor) -> {primary} -> + (face modifiers)
-            
-            // 1. Apply Dynamic Crit Thresholds (!!>${faces-2} means max face AND one value below explode)
-            if (cheatAutoHit || oathUnerring) {
-                primaryPart += `!!>${faces - 2}`;
+
+            // 1. Apply Dynamic Crit Thresholds
+            if (explosionOffset > 0) {
+                primaryPart += `!!>${faces - explosionOffset}`;
             } else {
                 primaryPart += `!!`;
             }
 
             // 2. Apply Physical Miss Prevention (min2)
-            if (cheatAutoHit || oathUnerring) {
+            if (forceAutoHit) {
                 primaryPart += 'min2';
             }
 
@@ -238,97 +237,37 @@ function handleRollResult(data) {
         const isMelee = notation.toLowerCase().includes('(melee)');
         const isRanged = notation.toLowerCase().includes('(ranged)');
 
-        // Detect active rule-breakers
-        const isHeadsIWinActive = (char === "The Cheat" || char === "Cheat") && (s.uHeadsIWin > 0);
-        const hasJDActive = char === "Oathsworn" && isMelee && (s.judgmentDice || []).length > 0;
-
-        // NIMBLE Crit: Standard faces, or (faces - 1) if rule-breakers are active
-        const critThreshold = (isHeadsIWinActive || hasJDActive) ? (faces - 1) : faces;
+        // NIMBLE Crit: Standard faces, or (faces - offset) if rule-breakers are active
+        const critOffset = (CLASS_CONFIG.rollOverrides && typeof CLASS_CONFIG.rollOverrides.getCritThresholdOffset === 'function')
+            ? CLASS_CONFIG.rollOverrides.getCritThresholdOffset(notation, primaryGroup, s, faces)
+            : 0;
+        const critThreshold = faces - critOffset;
         
         // Note: primaryGroup.total includes explosions. 
-        // If they roll (faces - 1) and explode, total will be >= faces.
+        // If they roll (faces - offset) and explode, total will be >= faces.
         const isCrit = primaryGroup.total >= critThreshold;
-        const isMiss = primaryGroup.total === 1 && !isHeadsIWinActive && !hasJDActive;
+
+        // Auto-hit rule-breaker bypasses natural 1 miss check
+        const forceAutoHit = (CLASS_CONFIG.rollOverrides && typeof CLASS_CONFIG.rollOverrides.forceAutoHit === 'function')
+            ? CLASS_CONFIG.rollOverrides.forceAutoHit(notation, { metadata: { weaponType: isMelee ? 'melee' : (isRanged ? 'ranged' : '') } }, s)
+            : false;
+        const isMiss = primaryGroup.total === 1 && !forceAutoHit;
         const isHit = !isMiss;
 
-        console.log(`🎲 handleRollResult [${char} / ${sub}]:`, { isCrit, isMiss, critThreshold, isMelee, isHeadsIWinActive });
+        console.log(`🎲 handleRollResult [${CLASS_CONFIG.name}]:`, { isCrit, isMiss, critThreshold, isMelee, forceAutoHit });
 
-        if (isCrit) {
-            // Automation A: Berserker Red Mist Blood Frenzy (L3+)
-            if (char === 'Berserker' && sub === 'RedMist' && s.level >= 3 && (s.activeConditions || []).includes('raging')) {
-                const dice = [...(s.furyDice || [])];
-                if (dice.length > 0) {
-                     const fFaces = d.furyFaces || 4;
-                     const idx = dice.findIndex(f => f.total < fFaces);
-                     if (idx !== -1) {
-                         dice[idx] = { ...dice[idx], total: fFaces };
-                         dispatch({ type: 'UPDATE_POOL', payload: { key: 'furyDice', dice } });
-                         dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Blood Frenzy maximized a Fury Die." } });
-                     }
-                }
-            }
-
-            // Reminder A: Shadowmancer Hungering Shadows
-            if (char === 'Shadowmancer' && (s.selectedGreater || []).includes("Hungering Shadows")) {
-                 dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Next tiered spell costs 0 Pilfered Power." } });
-            }
-
-            // Automation B: Hunter Thrill of the Hunt (Ranged Crit Only)
-            if (char === 'Hunter' && isRanged && s.level >= 2) {
-                const max = d.resourceMaxes['tothCharges'] || 0;
-                dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
-                dispatch({ type: 'ADD_LOG', payload: { msg: "Ranged Crit! +1 Thrill charge gained." } });
-            }
-
-            // Automation C: Cheat Sneak Attack (Melee Crit)
-            if ((char === 'The Cheat' || char === 'Cheat') && isMelee && (s.level || 1) >= 1) {
-                const saDice = d.saDice || "1d6";
-                dispatchRoll(saDice, 'Sneak Attack', { type: 'pool' });
-                dispatch({ type: 'ADD_LOG', payload: { msg: `Melee Crit! Automated Sneak Attack roll (${saDice}).` } });
-            }
-
-            // Automation D: Zephyr Way of Flame (Crit)
-            if (char === 'Zephyr' && sub === 'WayFlame' && s.level >= 3) {
-                const statsMap = d.statsMap;
-                const str = statsMap.str || 0;
-                const wounds = s.wounds || 0;
-                const count = str + wounds;
-                if (count > 0) {
-                    const isBurning = s.level >= 15;
-                    const fNot = `${count}d6${isBurning ? '*2' : ''}`;
-                    dispatchRoll(fNot, 'Way of Flame', { type: 'pool' });
-                    dispatch({ type: 'ADD_LOG', payload: { msg: `Crit! Way of Flame triggered (${fNot} Fire).` } });
-                }
-            }
-        }
-
-        if (isMiss) {
-            // Automation D: Berserker Mountainheart Titan's Fury (L11+)
-            if (char === 'Berserker' && sub === 'Mountainheart' && s.level >= 11) {
-                if (!(s.activeConditions || []).includes('raging')) {
-                    dispatch({ type: 'TOGGLE_CONDITION', payload: { id: 'raging' } });
-                    dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Titan's Fury triggered Rage." } });
-                }
-            }
-
-            // Reminder B: Commander Inerrant Strike
-            if (char === 'Commander' && (s.selectedTactics || []).includes("Inerrant Strike")) {
-                 dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Inerrant Strike: Reroll, +1 Primary Die, +Combat Die dmg." } });
-            }
-
-            // Reminder C: Cheat Feinting Attack
-            if ((char === 'The Cheat' || char === 'Cheat') && (s.selectedUnderhanded || []).includes("Feinting Attack")) {
-                 dispatch({ type: 'ADD_LOG', payload: { msg: "Miss! Feinting Attack: If 2nd miss this round, change primary die." } });
-            }
-        }
-
-        if (isHit) {
-            // Automation E: Hunter Thrill of the Hunt (Melee Hit - includes Crits)
-            if (char === 'Hunter' && isMelee && s.level >= 2) {
-                const max = d.resourceMaxes['tothCharges'] || 0;
-                dispatch({ type: 'ADJ_RES', payload: { id: 'tothCharges', amount: 1, max } });
-                dispatch({ type: 'ADD_LOG', payload: { msg: "Melee Hit! +1 Thrill charge gained." } });
-            }
+        // Run Decoupled Lifecycle Hooks
+        if (typeof CLASS_CONFIG.onRollResult === 'function') {
+            const context = {
+                isMelee,
+                isRanged,
+                isCrit,
+                isMiss,
+                isHit,
+                faces,
+                primaryGroup
+            };
+            CLASS_CONFIG.onRollResult(data, s, d, dispatch, dispatchRoll, context);
         }
     }
 }
@@ -535,88 +474,63 @@ function applyCantripScaling(notation, name, school, level) {
  * @returns {string} The HTML-enriched text.
  */
 function iStats(text, level, statsMap, context = {}) {
-    if (!text) {
-        return "";
-    }
+    if (!text) return "";
     
-    // Safeguard for uninitialized CLASS_CONFIG or keyStats
     const keyStats = (CLASS_CONFIG && CLASS_CONFIG.keyStats) ? CLASS_CONFIG.keyStats : [];
-    const keyValue = keyStats.length > 0 
-        ? Math.max(...keyStats.map(s => statsMap[s] || 0))
-        : 0;
+    const keyValue = keyStats.length > 0 ? Math.max(...keyStats.map(s => statsMap[s] || 0)) : 0;
 
-    /**
-     * Replaces stat tokens with their numerical values in notation strings.
-     * @param {string} notation - The notation string to resolve.
-     * @param {boolean} stripFormula - If true, returns only the clean numeric value.
-     * @returns {string} Resolved notation string.
-     */
-    const resolveNotation = (notation, stripFormula = false) => {
-        let res = notation.replace(/\bKEY\b/gi, keyValue)
-            .replace(/\bLVL\b/gi, level)
-            .replace(/\bWOUNDS\b/gi, state.wounds || 0)
-            .replace(/\bSTR\b/gi, statsMap.str)
-            .replace(/\bDEX\b/gi, statsMap.dex)
-            .replace(/\bINT\b/gi, statsMap.int)
-            .replace(/\bWIL\b/gi, statsMap.wil);
-        return res;
+    const tokens = {
+        str: statsMap.str,
+        dex: statsMap.dex,
+        int: statsMap.int,
+        wil: statsMap.wil,
+        lvl: level,
+        wounds: state.wounds || 0,
+        key: keyValue
     };
 
-    // Skip Pattern: Ignores existing highlighted spans (except prop-hl) or any HTML tags
-    // Non-capturing groups used to ensure target is always p1
+    const resolveNotation = (notation) => {
+        return notation.replace(/\b(KEY|LVL|WOUNDS|STR|DEX|INT|WIL)\b/gi, (match) => tokens[match.toLowerCase()]);
+    };
+
     const skipPattern = /(?:<span[^>]*class="[^"]*(?:dice-hl|stat-hl|formula-label|pip-inline)[^"]*"[^>]*>.*?<\/span>|<[^>]*>)/gi;
 
-    // Pass 0: Handle Inline Usage Tokens [[uKey]] or [[uKey:COUNT]] (v2.4.0)
-    // Array Model: [[uKey:3]] renders 3 pips linked to state.uKey array.
-    // Simple Model: [[uKey]] renders 1 pip linked to state.uKey number.
+    // Pass 0: Handle Inline Usage Tokens [[uKey]] or [[uKey:COUNT]]
     let processed = text.replace(/\[\[(u[a-zA-Z0-9_]+)(?::([^\]]+))?\]\]/g, (match, key, countToken) => {
         const currentState = (typeof window !== 'undefined' && window.charState) ? window.charState() : state;
-        
-        // 1. Resolve count
         let count = 1;
         if (countToken) {
             const multiMatch = countToken.match(/(\d+)\s*[xX×]\s*(STR|DEX|INT|WIL|KEY|LVL)/i);
             if (multiMatch) {
-                const multi = parseInt(multiMatch[1]);
-                const stat = multiMatch[2].toLowerCase();
-                count = multi * (stat === 'lvl' ? level : statsMap[stat] || 0);
+                count = parseInt(multiMatch[1]) * tokens[multiMatch[2].toLowerCase()];
             } else if (/\d+/.test(countToken)) {
                 count = parseInt(countToken);
             } else {
-                const stat = countToken.toLowerCase();
-                count = (stat === 'lvl' ? level : statsMap[stat] || 0);
+                count = tokens[countToken.toLowerCase()] || 0;
             }
         }
 
-        // 2. Render pips
         let htmlPips = "";
         const stateVal = currentState[key];
-        
         for (let i = 0; i < count; i++) {
-            // Default to Available (1) if undefined or array is too short
             let isAvailable = true;
             if (count > 1) {
                 if (Array.isArray(stateVal) && i < stateVal.length) isAvailable = (stateVal[i] === 1);
-            } else {
-                if (stateVal !== undefined) isAvailable = (stateVal === 1);
+            } else if (stateVal !== undefined) {
+                isAvailable = (stateVal === 1);
             }
-
             const title = count > 1 ? `Use ${i+1}` : "Toggle Power";
             htmlPips += `<input type="checkbox" class="pip pip-inline" ${isAvailable ? 'checked' : ''} onclick="toggleBgPip('${key}', ${i}, ${count > 1}, ${count})" title="${title}"> `;
         }
-
         return htmlPips.trim();
     });
 
     // Pass 1: Handle mathematical multipliers (e.g., 3x LVL)
     processed = processed.replace(new RegExp(skipPattern.source + '|(\\b(?:\\d+)\\s*[xX×]\\s*(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\b)', 'gi'), (match, p1) => {
         if (!p1) return match;
-        
         const m = p1.match(/(\d+)\s*[xX×]\s*(STR|DEX|INT|WIL|KEY|LVL|WOUNDS)/i);
         if (!m) return match;
-        
-        const statName = m[2].toUpperCase();
-        let val = (statName === 'STR' ? statsMap.str : statName === 'DEX' ? statsMap.dex : statName === 'INT' ? statsMap.int : statName === 'WIL' ? statsMap.wil : statName === 'LVL' ? level : statName === 'WOUNDS' ? (state.wounds || 0) : keyValue);
+        const val = tokens[m[2].toLowerCase()] || 0;
         return `<span class="stat-hl">${parseInt(m[1]) * val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p1})</span>`;
     });
 
@@ -624,15 +538,12 @@ function iStats(text, level, statsMap, context = {}) {
     const diceRegex = new RegExp(skipPattern.source + '|(\\b(?:(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\s*d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!)*(?:[\\s\\+-]+(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS|\\d+))*\\b)', 'gi');
     processed = processed.replace(diceRegex, (match, p1) => {
         if (!p1) return match;
-        
         const resolved = resolveNotation(p1);
         const cleanNotation = resolved.replace(/\s+/g, '');
-        
         if (context.type === 'cantrip') {
             const scaled = applyCantripScaling(cleanNotation, context.name, context.school, level);
             return `<span class="dice-hl roll-link" onclick="dispatchRoll('${scaled}', '${context.name}', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${resolved}</span>`;
         }
-        
         const label = (context.name || 'Roll').replace(/'/g, "\\'");
         const hasStat = /STR|DEX|INT|WIL|KEY|LVL|WOUNDS/i.test(p1);
         const formula = hasStat ? `<span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p1})</span>` : "";
@@ -643,7 +554,6 @@ function iStats(text, level, statsMap, context = {}) {
     const mathRegex = new RegExp(skipPattern.source + '|(\\b(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)(?:\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS))+\\b)', 'gi');
     processed = processed.replace(mathRegex, (match, p1) => {
         if (!p1) return match;
-        
         const resolvedExpr = resolveNotation(p1);
         try {
             const result = eval(resolvedExpr.replace(/\s+/g, ''));
@@ -654,12 +564,7 @@ function iStats(text, level, statsMap, context = {}) {
         }
     });
 
-    /**
-     * Wraps a stat value in a clickable roll-link span.
-     * @param {number} val - The stat value.
-     * @param {string} label - The stat label.
-     * @returns {string} HTML span string.
-     */
+    // Pass 4: Wrap individual stat values in clickable check links
     const wrapStat = (val, label) => {
         const escapedLabel = (context.name || 'Roll').replace(/'/g, "\\'");
         return `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${escapedLabel} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
@@ -668,29 +573,9 @@ function iStats(text, level, statsMap, context = {}) {
     const statTokenRegex = new RegExp(skipPattern.source + '|(\\b(STR|DEX|INT|WIL|KEY|LVL)\\b(?!\\s+(?:save|check))|\\+\\s*WOUNDS\\b)', 'gi');
     return processed.replace(statTokenRegex, (match, p1) => {
         if (!p1) return match;
-        
         const statKey = p1.toUpperCase().replace(/\s+/g, '');
-        if (statKey === 'LVL') {
-            return `<span class="stat-hl">${level}</span>`;
-        }
-        if (statKey === '+WOUNDS') {
-            return `+ <span class="stat-hl">${state.wounds || 0}</span>`;
-        }
-        if (statKey === 'STR') {
-            return wrapStat(statsMap.str, 'STR');
-        }
-        if (statKey === 'DEX') {
-            return wrapStat(statsMap.dex, 'DEX');
-        }
-        if (statKey === 'INT') {
-            return wrapStat(statsMap.int, 'INT');
-        }
-        if (statKey === 'WIL') {
-            return wrapStat(statsMap.wil, 'WIL');
-        }
-        if (statKey === 'KEY') {
-            return wrapStat(keyValue, 'KEY');
-        }
-        return match;
+        if (statKey === 'LVL') return `<span class="stat-hl">${level}</span>`;
+        if (statKey === '+WOUNDS') return `+ <span class="stat-hl">${state.wounds || 0}</span>`;
+        return wrapStat(tokens[statKey.toLowerCase()], statKey);
     });
 }
