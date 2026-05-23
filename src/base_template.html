@@ -413,14 +413,16 @@
     }
 
     .layout-1col #featuresContainer {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      align-items: start;
+      column-count: 2;
+      column-gap: 15px;
+      width: 100%;
     }
 
     .layout-1col #featuresContainer .feature {
-      margin-bottom: 0;
+      break-inside: avoid;
+      display: inline-block;
+      margin-bottom: 12px;
+      width: 100%;
     }
 
     .left-col,
@@ -1289,7 +1291,7 @@
       }
 
       .layout-1col #featuresContainer {
-        grid-template-columns: 1fr;
+        column-count: 1;
       }
 
       .top-bar {
