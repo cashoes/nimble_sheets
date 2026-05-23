@@ -9,7 +9,8 @@
 function buildFeatureHtml(title, levelTag, description, theme = "", skip = false, level, statsMap, context = {}) { 
     const featContext = { ...context, name: title };
     const desc = skip ? description : iStats(description, level, statsMap, featContext); 
-    return `<div class="feature ${theme}"><h3>${title} ${levelTag ? `<span class="level-tag">Lvl ${levelTag}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; 
+    const weightAttr = context.finalWeight ? ` data-final-weight="${context.finalWeight}"` : '';
+    return `<div class="feature ${theme}"${weightAttr}><h3>${title} ${levelTag ? `<span class="level-tag">Lvl ${levelTag}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; 
 }
 
 
@@ -307,6 +308,13 @@ function defaultRenderFeature(feat, level, subclass, state, derived, buildFeatur
     if (feat.milestones && Array.isArray(feat.milestones)) {
         displayLevel = feat.milestones.filter(m => level >= m).pop() || displayLevel;
     }
+
+    // Estimate final Level 20 potential weight to balance scaling card sizes
+    const maxLevelCount = (feat.type === "dynamic_choice" || feat.type === "spell_choice") 
+        ? (typeof feat.getCount === 'function' ? feat.getCount(20, subclass, state) : (feat.count || 1)) 
+        : (feat.count || 1);
+    const cleanText = desc.replace(/<[^>]*>/g, '').trim();
+    context.finalWeight = cleanText.length + 150 + (maxLevelCount * 200);
 
     return buildFeatureHtml(fName, displayLevel, desc, finalCssClass, false, level, statsMap, context);
 }

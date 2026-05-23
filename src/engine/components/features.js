@@ -63,6 +63,10 @@ function Features() {
 
                 // Strips HTML/inputs to find the plain text length + header baseline
                 const getCleanWeight = (htmlStr) => {
+                    const match = htmlStr.match(/data-final-weight="(\d+)"/);
+                    if (match) {
+                        return parseInt(match[1]);
+                    }
                     let clean = htmlStr.replace(/<select[\s\S]*?<\/select>/gi, '');
                     clean = clean.replace(/<button[\s\S]*?<\/button>/gi, '');
                     clean = clean.replace(/<input[\s\S]*?>/gi, '');
