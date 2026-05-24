@@ -482,15 +482,15 @@ function computeDerived(s) {
         baseHp: CLASS_CONFIG.baseHp || 10,
         hpPerLevel: hpPerLevelMap[hdFaceBase] || CLASS_CONFIG.hpPerLevel || 5,
         hdFace: hdFaceBase,
-        hdMax: level + (ancFeat?.modHD || 0) + (bgFeat?.modHD || 0) + (bgSelectedOpt?.modHD || 0),
-        init: statsMap.dex + (ancFeat?.modInit || 0) + (bgFeat?.modInit || 0) + (bgSelectedOpt?.modInit || 0),
+        hdMax: level,
+        init: statsMap.dex,
         initAdv: false,
         speedBase: 6,
-        speed: (ancFeat?.modSpeed || 0) + (bgFeat?.modSpeed || 0) + (bgSelectedOpt?.modSpeed || 0),
-        woundMax: 6 + (ancFeat?.modWounds || 0) + (bgFeat?.modWounds || 0) + (bgSelectedOpt?.modWounds || 0),
+        speed: 0,
+        woundMax: 6,
         maxActions: 0,
         armorBase: statsMap.dex,
-        armor: (ancFeat?.modArmor || 0) + (bgFeat?.modArmor || 0) + (bgSelectedOpt?.modArmor || 0),
+        armor: 0,
         shieldBonus: 0,
         allSaveAdv: false,
         allSaveDis: false,
@@ -501,10 +501,33 @@ function computeDerived(s) {
         panel_surge: false
     };
 
-    // 3. Fold Class and Subclass Modifiers
+    // 3. Convert active Ancestry, Background, and Background Option to standard modifiers
+    const externalModifiers = [];
+    const addExternalMod = (feat) => {
+        if (!feat) return;
+        if (feat.modHD) externalModifiers.push({ stat: 'hdMax', value: feat.modHD });
+        if (feat.modInit) externalModifiers.push({ stat: 'init', value: feat.modInit });
+        if (feat.modInitAdv) externalModifiers.push({ stat: 'initAdv', value: true });
+        if (feat.modSpeed) externalModifiers.push({ stat: 'speed', value: feat.modSpeed });
+        if (feat.modWounds) externalModifiers.push({ stat: 'woundMax', value: feat.modWounds });
+        if (feat.modArmor) externalModifiers.push({ stat: 'armor', value: feat.modArmor });
+        if (feat.profArmor) externalModifiers.push({ stat: 'profArmor', value: feat.profArmor });
+        if (feat.profWeapons) externalModifiers.push({ stat: 'profWeapons', value: feat.profWeapons });
+    };
+
+    addExternalMod(ancFeat);
+    addExternalMod(bgFeat);
+    addExternalMod(bgSelectedOpt);
+
+    // First fold pass: fold class, subclass, ancestry, and background modifiers to determine baseline metrics (e.g. maxHP)
     const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
-    const combinedModifiers = [...(CLASS_CONFIG.statModifiers || []), ...(subConfig.statModifiers || [])];
-    const folded = typeof reduceModifiers === 'function' 
+    let combinedModifiers = [
+        ...(CLASS_CONFIG.statModifiers || []), 
+        ...(subConfig.statModifiers || []),
+        ...externalModifiers
+    ];
+
+    let folded = typeof reduceModifiers === 'function' 
         ? reduceModifiers(combinedModifiers, level, subclass, state, statsMap, derivedBase)
         : { ...derivedBase };
 
@@ -512,7 +535,40 @@ function computeDerived(s) {
     folded.hpPerLevel = hpPerLevelMap[folded.hdFace] || CLASS_CONFIG.hpPerLevel || 5;
     folded.maxHP = folded.baseHp + ((level - 1) * folded.hpPerLevel);
 
-    // 5. Resolve AC with inventory and modifiers
+    // 5. Resolve Conditions for Speed and Actions
+    const isBloodied = state.hpCurrent !== null ? state.hpCurrent <= (folded.maxHP / 2) : false;
+    const isDying = (state.hpCurrent ?? folded.maxHP) === 0;
+    const isWounded = (state.wounds || 0) > 0;
+    
+    const effectiveConditions = [...(state.activeConditions || [])];
+    if (isBloodied && !effectiveConditions.includes('bloodied')) effectiveConditions.push('bloodied');
+    if (isDying && !effectiveConditions.includes('dying')) effectiveConditions.push('dying');
+    if (isWounded && !effectiveConditions.includes('wounded')) effectiveConditions.push('wounded');
+
+    // Fold active condition maxActions reductions
+    effectiveConditions.forEach(cId => {
+        const c = CONDITIONS_LIST.find(cl => cl.id === cId);
+        if (c && c.modMaxActions) {
+            externalModifiers.push({ stat: 'maxActions', value: c.modMaxActions });
+        }
+    });
+
+    // Re-fold including dynamically determined active condition modifiers
+    combinedModifiers = [
+        ...(CLASS_CONFIG.statModifiers || []), 
+        ...(subConfig.statModifiers || []),
+        ...externalModifiers
+    ];
+
+    folded = typeof reduceModifiers === 'function' 
+        ? reduceModifiers(combinedModifiers, level, subclass, state, statsMap, derivedBase)
+        : { ...derivedBase };
+
+    // Re-resolve sequential HP/HD dependencies with fully reduced stats
+    folded.hpPerLevel = hpPerLevelMap[folded.hdFace] || CLASS_CONFIG.hpPerLevel || 5;
+    folded.maxHP = folded.baseHp + ((level - 1) * folded.hpPerLevel);
+
+    // 6. Resolve AC with inventory and modifiers
     const allowedArmor = new Set();
     const profArmorList = folded.profArmor || [];
     profArmorList.forEach(p => {
@@ -569,26 +625,14 @@ function computeDerived(s) {
     foldedArmor += inventoryShieldBonus + folded.shieldBonus + folded.armor;
     folded.hasNonProficientEquipped = hasNonProficientEquipped;
 
-    // 6. Resolve Conditions for Speed and Actions
-    const isBloodied = state.hpCurrent !== null ? state.hpCurrent <= (folded.maxHP / 2) : false;
-    const isDying = (state.hpCurrent ?? folded.maxHP) === 0;
-    const isWounded = (state.wounds || 0) > 0;
-    
-    const effectiveConditions = [...(state.activeConditions || [])];
-    if (isBloodied && !effectiveConditions.includes('bloodied')) effectiveConditions.push('bloodied');
-    if (isDying && !effectiveConditions.includes('dying')) effectiveConditions.push('dying');
-    if (isWounded && !effectiveConditions.includes('wounded')) effectiveConditions.push('wounded');
-
+    // 7. Resolve Condition Speed Multipliers and final actions
     let foldedSpeed = (folded.speedBase !== null ? folded.speedBase : 6) + folded.speed;
     let foldedMaxActions = 3 + folded.maxActions;
 
     effectiveConditions.forEach(cId => {
         const c = CONDITIONS_LIST.find(cl => cl.id === cId);
-        if (c) {
-            if (c.modSpeedMult !== undefined) {
-                if (typeof foldedSpeed === 'number') foldedSpeed = Math.floor(foldedSpeed * c.modSpeedMult);
-            }
-            if (c.modMaxActions) foldedMaxActions += c.modMaxActions;
+        if (c && c.modSpeedMult !== undefined) {
+            if (typeof foldedSpeed === 'number') foldedSpeed = Math.floor(foldedSpeed * c.modSpeedMult);
         }
     });
     foldedMaxActions = Math.max(0, foldedMaxActions);
