@@ -35,6 +35,8 @@ class BaseClass {
         this.grantedSpells = config.grantedSpells || [];      
         this.statModifiers = config.statModifiers || [];      
         this.classDefaults = config.classDefaults || {};
+        this.rollOverrides = config.rollOverrides || {};
+        this.poolOverrides = config.poolOverrides || {};
 
         // Spell configuration
         this.spellSchools = config.spellSchools || []; 

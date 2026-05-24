@@ -76,6 +76,13 @@ class MechanicPanelBuilder {
 
 const PanelBuilder = MechanicPanelBuilder;
 
+const getState = () => {
+    if (typeof charState === 'function') return charState();
+    if (typeof window !== 'undefined' && typeof window.charState === 'function') return window.charState();
+    if (typeof state !== 'undefined') return state;
+    return {};
+};
+
 /**
  * Updates the upcast state for a specific spell.
  */
@@ -87,7 +94,8 @@ function setSpellUpcast(name, tier, choiceId = null) {
  * Adjusts the global Advantage/Disadvantage level.
  */
 function adjAdv(amt) {
-    dispatch({ type: 'SET_STATE_KEY', payload: { key: 'advantage', value: Math.min(3, Math.max(-3, state.advantage + amt)) } });
+    const currentState = getState();
+    dispatch({ type: 'SET_STATE_KEY', payload: { key: 'advantage', value: Math.min(3, Math.max(-3, currentState.advantage + amt)) } });
 }
 
 /**
@@ -113,7 +121,8 @@ function formatPips(tier, school) {
  * Toggles an action point on the tracker.
  */
 function toggleAction(idx) {
-    dispatch({ type: 'SET_STATE_KEY', payload: { key: 'actionsSpent', value: (state.actionsSpent > idx) ? idx : idx + 1 } });
+    const currentState = getState();
+    dispatch({ type: 'SET_STATE_KEY', payload: { key: 'actionsSpent', value: (currentState.actionsSpent > idx) ? idx : idx + 1 } });
 }
 
 /**
@@ -256,15 +265,15 @@ function _rollDie(faces, allowExplode = false, floor = 1) {
  * Adds a die to a specified pool.
  */
 function addPoolDie(key, max, faces) {
-    if (!state[key]) state[key] = []; // Guard for reducer logic if needed
-    const currentPool = state[key] || [];
+    const currentState = getState();
+    const currentPool = currentState[key] || [];
 
     const allowExplode = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.allowExplode === 'function')
-        ? CLASS_CONFIG.poolOverrides.allowExplode(key, state)
+        ? CLASS_CONFIG.poolOverrides.allowExplode(key, currentState)
         : false;
 
     const floor = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.getDieFloor === 'function')
-        ? CLASS_CONFIG.poolOverrides.getDieFloor(key, state)
+        ? CLASS_CONFIG.poolOverrides.getDieFloor(key, currentState)
         : 1;
 
     const roll = _rollDie(faces, allowExplode, floor);
@@ -284,7 +293,8 @@ function addPoolDie(key, max, faces) {
  * Removes a die from a pool.
  */
 function removePoolDie(key, idx, isStatic = false) {
-    const currentPool = state[key] || [];
+    const currentState = getState();
+    const currentPool = currentState[key] || [];
     if (!currentPool.length) return;
 
     const newDice = [...currentPool];
@@ -303,7 +313,8 @@ function clearPool(key) {
 
 /** Manually sets a die to its maximum possible value. */
 function maximizePoolDie(key, idx, faces) {
-    const currentPool = state[key] || [];
+    const currentState = getState();
+    const currentPool = currentState[key] || [];
     if (!currentPool[idx]) return;
 
     const newDice = [...currentPool];
@@ -318,16 +329,17 @@ function maximizePoolDie(key, idx, faces) {
  * Rolls an entire pool at once.
  */
 function rollPool(key, count, faces) {
+    const currentState = getState();
     let finalDice = [];
     const hasAdv = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.hasAdvantage === 'function')
-        ? CLASS_CONFIG.poolOverrides.hasAdvantage(key, state)
+        ? CLASS_CONFIG.poolOverrides.hasAdvantage(key, currentState)
         : false;
     const allowExplode = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.allowExplode === 'function')
-        ? CLASS_CONFIG.poolOverrides.allowExplode(key, state)
+        ? CLASS_CONFIG.poolOverrides.allowExplode(key, currentState)
         : false;
 
     const floor = (CLASS_CONFIG.poolOverrides && typeof CLASS_CONFIG.poolOverrides.getDieFloor === 'function')
-        ? CLASS_CONFIG.poolOverrides.getDieFloor(key, state)
+        ? CLASS_CONFIG.poolOverrides.getDieFloor(key, currentState)
         : 1;
 
     let rollCount = hasAdv ? count + 1 : count;

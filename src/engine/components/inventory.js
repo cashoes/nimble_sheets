@@ -87,7 +87,10 @@ function InventoryRow(props) {
         });
 
         const targetCat = catLower.includes("shield") ? "shields" : catLower;
-        return allowed.has(targetCat);
+        return Array.from(allowed).some(a => {
+            if (a === 'shields') return targetCat.includes('shield');
+            return targetCat.includes(a);
+        });
     };
 
     const weaponStatsEdit = () => html`
