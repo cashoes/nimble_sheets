@@ -737,6 +737,7 @@ function characterReducer(currentState, action) {
         case 'ADJ_HP': {
             const { amount, isAbsolute } = payload;
             const maxHP = computeDerived(s).maxHP;
+            const oldHP = s.hpCurrent ?? maxHP;
             
             // Damage handling: absorb via tempHP first if not absolute
             if (amount < 0 && !isAbsolute) {
@@ -752,6 +753,11 @@ function characterReducer(currentState, action) {
                 }
             } else {
                 s.hpCurrent = adjustNumericField(s.hpCurrent, amount, maxHP, isAbsolute);
+            }
+
+            // Check if HP transitioned to 0
+            if (oldHP > 0 && s.hpCurrent === 0) {
+                s.wounds = Math.min(6, (s.wounds || 0) + 2);
             }
             break;
         }
