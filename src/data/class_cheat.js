@@ -115,11 +115,11 @@ class CheatClass extends BaseClass {
                 desc: (level, subclass, state, derived) => {
                     const upgrades = [
                         { level: 3, text: "Rank 2: Dice becomes 1d8." },
-                        { level: 7, text: "Rank 3: Dice becomes 1d10." },
-                        { level: 9, text: "Rank 4: Dice becomes 1d12." },
-                        { level: 11, text: "Rank 5: Dice becomes 1d20." },
-                        { level: 15, text: "Rank 6: Dice becomes 2d12." },
-                        { level: 17, text: "Rank 7: Dice becomes 2d20." }
+                        { level: 7, text: "Rank 3: Dice becomes 2d8." },
+                        { level: 9, text: "Rank 4: Dice becomes 2d10." },
+                        { level: 11, text: "Rank 5: Dice becomes 2d12." },
+                        { level: 15, text: "Rank 6: Dice becomes 2d20." },
+                        { level: 17, text: "Rank 7: Dice becomes 3d20." }
                     ];
                     return FeatureGen.createScalingList(`(1/turn) When you land a critical hit with a melee weapon, deal <strong>+${derived.saDice}</strong> additional damage.`, upgrades, level);
                 }
@@ -136,11 +136,7 @@ class CheatClass extends BaseClass {
             { id: "thieves_cant", name: "Thieves’ Cant", desc: "You learn the secret language of rogues and scoundrels." }
         ];
 
-        core[7] = [];
-        core[9] = [];
-        core[11] = [];
-        core[15] = [];
-        core[17] = [];
+
 
         core[4].push({
             id: "underhanded",
@@ -153,10 +149,10 @@ class CheatClass extends BaseClass {
             getCount: createStandardCount([4, 6, 8, 10, 12, 14, 16, 18])
         });
 
-        core[5] = [
+        core[5].push(
             { id: "twist", name: "Twist the Blade", desc: "Action: Change one of your Sneak Attack dice to whatever you like. (Lvl 13: You can do this 1/turn for free)." },
             { id: "quick_read", replaces: ["quick_read"], name: "Quick Read", desc: "<ul><li>([[uQuickReadEnc]] 1/encounter) Gain advantage on an Assess check.</li><li>([[uQuickReadDay]] 1/day) Gain advantage on an Examination check.</li></ul>" }
-        ];
+        );
 
         core[6] = [
             { id: "not_happened", name: "THAT'S Not What Happened!", desc: "([[uNotHappened]] 1/Safe Rest) Action: After a Distracted enemy attacks you, you may change the Primary Die roll to whatever you like (changing the die to the minimum value counts as a miss)." }

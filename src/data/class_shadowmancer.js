@@ -183,11 +183,11 @@ class ShadowmancerClass extends BaseClass {
                 { level: 1, spells: ["Shadow Blast", "Summon Shadows"] }
             ],
             spellSchools: ["Necrotic"],
-            spellProgression: [2, 2, 4, 6, 8, 10, 12, 14, 16, 18],
+            spellProgression: [2, 2, 5, 7, 10, 13, 16, 19],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14 ? ["Necrotic"] : false, ["selectedShadowmastery"]),
             resources: [
                 createSimpleResource('minions', 'Minions', (l, stats, state, subclass, derived) => derived.minionMax, { hideMechanic: true }),
-                createSimpleResource('pilfer', 'Pilfer', (l, stats, state, subclass, derived) => stats.dex, { hideMechanic: true })
+                createSimpleResource('pilfer', 'Pilfer', (l, stats, state, subclass, derived) => derived.pilferMax, { hideMechanic: true })
             ],
             featuresData: ShadowmancerClass.FEATURES, optionsData: ShadowmancerClass.OPTIONS
         });
@@ -230,7 +230,7 @@ class ShadowmancerClass extends BaseClass {
      * Defines the core and subclass features for the Shadowmancer class.
      */
     static get FEATURES() {
-        const { core, subclasses } = FeatureGen.generateStandardFeatures('INT or DEX', 'STR or WIL', true, [1, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('INT or DEX', 'STR or WIL', true, [1, 2, 5, 7, 10, 13, 16, 19]);
 
         core[1] = [
             {
@@ -269,9 +269,9 @@ class ShadowmancerClass extends BaseClass {
             desc: (l) => FeatureGen.createScalingList("Choose a Necrotic Utility Spell.", [{ level: 14, text: "Rank 3: You know all Necrotic Utility spells." }], l)
         }));
 
-        core[12] = [{ id: "greedy", name: "Greedy Pact", desc: "When you would take damage from Pilfer Power, make a STR save: <ul><li>1–9: Suffer damage as normal.</li><li>10–19: Suffer only 10 HP of damage.</li><li>20+: Suffer no damage and cast the spell as if it were 1 tier higher.</li></ul>" }];
+        core[12].push({ id: "greedy", name: "Greedy Pact", desc: "When you would take damage from Pilfer Power, make a STR save: <ul><li>1–9: Suffer damage as normal.</li><li>10–19: Suffer only 10 HP of damage.</li><li>20+: Suffer no damage and cast the spell as if it were 1 tier higher.</li></ul>" });
 
-        core[17] = [{ id: "dire", name: "Dire Shadows", desc: "Attacks against your shadow minions are made with disadvantage. They take no damage from successful saves." }];
+        core[17].push({ id: "dire", name: "Dire Shadows", desc: "Attacks against your shadow minions are made with disadvantage. They take no damage from successful saves." });
 
         core[20].push({ id: "overlord", name: "Eldritch Usurper", desc: "+1 to any 2 of your stats. Whenever you summon a single shadow minion, summon 2 instead. They die only when they receive 12 or more damage at one time." });
 

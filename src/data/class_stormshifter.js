@@ -181,7 +181,7 @@ class StormshifterClass extends BaseClass {
             desc: (l) => l >= 14 ? "You know all Utility Spells from each spell school you know." : "Learn a Utility Spell from each spell school you know."
         }));
 
-        core[5] = [];
+
 
         core[6].push({ id: "boon", name: "Chimeric Boon", type: "dynamic_choice", collection: "boons", stateKey: "selectedBoons", milestones: [6, 9, 12, 17], desc: "Choose Chimeric Boons.", getCount: FeatureGen.createStandardCount([6, 9, 12, 17]) });
         core[6].push({ id: "expert", name: "Expert Shifter", desc: "Gain 1 additional use of Beastshift per Safe Rest." });
@@ -195,12 +195,11 @@ class StormshifterClass extends BaseClass {
             ], l)
         });
 
-        core[13] = [];
+
 
         core[20].push({ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. ([[uArchdruid]] 1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." });
 
-        core[18] = [];
-        core[20] = [{ id: "archdruid", name: "Archdruid", desc: "+1 to any 2 of your stats. ([[uArchdruid]] 1/encounter) Cast a spell up to tier 4 for free when you enter or leave a Beastshift form." }];
+
 
         subclasses["SkyStorm"] = {
             3: [

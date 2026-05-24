@@ -176,8 +176,8 @@ class MageClass extends BaseClass {
             getCount: FeatureGen.createStandardCount([4, 9, 13])
         });
 
-        core[18] = [];
-        core[20] = [{ id: "archmage", name: "Archmage", desc: "([[uArchmage]] 1/encounter) +1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 less action and 5 less mana." }];
+
+        core[20].push({ id: "archmage", name: "Archmage", desc: "([[uArchmage]] 1/encounter) +1 to any 2 of your stats. The first tiered spell you cast each encounter costs 1 less action and 5 less mana." });
 
         subclasses["Control"] = {
             3: [

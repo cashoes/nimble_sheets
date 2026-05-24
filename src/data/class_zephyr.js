@@ -110,7 +110,7 @@ class ZephyrClass extends BaseClass {
     }
 
     static get FEATURES() {
-        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or STR', 'INT or WIL', true, [1, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or STR', 'INT or WIL', false);
 
         core[1] = [
             { 
@@ -138,7 +138,7 @@ class ZephyrClass extends BaseClass {
             { id: "ethereal", name: "Ethereal Projection", desc: "([[uEthereal]] 1/day) By meditating for at least 10 minutes, you can project an ethereal version of yourself up to 30 ft. away." }
         ];
 
-        core[4] = [
+        core[4].push(
             { 
                 id: "resolve", 
                 name: "Unyielding Resolve",
@@ -153,16 +153,13 @@ class ZephyrClass extends BaseClass {
                 }
             },
             { id: "martial", name: "Martial Master", type: "dynamic_choice", collection: "abilities", stateKey: "selectedMartial", milestones: [4, 6, 8, 10, 12, 14, 16, 18], desc: "Choose a Martial Arts ability.", getCount: FeatureGen.createStandardCount([4, 6, 8, 10, 12, 14, 16, 18]) }
-        ];
+        );
 
-        core[5] = [{ id: "reverb", name: "Reverberating Strikes", desc: "Add LVL bludgeoning damage to all of your melee attacks." }];
+        core[5].push({ id: "reverb", name: "Reverberating Strikes", desc: "Add LVL bludgeoning damage to all of your melee attacks." });
 
         core[6].push({ id: "infuse", name: "Infuse Strength", desc: "Action: Make an unarmed strike against an ally and infuse them with strength instead of harming them. Expend Hit Dice to heal them (roll and add STR)." });
 
-        core[9] = [];
-        core[10] = [];
-        core[13] = [];
-        core[17] = [];
+
 
         core[20].push({ id: "windborne", name: "Windborne", desc: "+1 to any 2 of your stats. +1 additional burst of speed when you roll Initiative. Permanently gain 1 action (while Dying, you have a max of 2 actions)." });
 

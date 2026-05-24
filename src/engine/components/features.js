@@ -75,7 +75,8 @@ function Features() {
                 };
 
                 cards.forEach((card) => {
-                    const weight = getCleanWeight(card);
+                    const isMinor = card.includes('minor-feature');
+                    const weight = (isMinor && !s().showMinor) ? 0 : getCleanWeight(card);
                     if (leftWeight <= rightWeight) {
                         leftCards.push(card);
                         leftWeight += weight;

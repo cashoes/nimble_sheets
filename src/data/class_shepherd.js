@@ -72,14 +72,29 @@ class ShepherdClass extends BaseClass {
             ],
             scalingStats: {
                 spiritDie: (level, subclass, state) => {
-                    const maxT = level >= 8 ? 4 : (level >= 6 ? 3 : (level >= 4 ? 2 : (level >= 2 ? 1 : 0)));
-                    const manaSpent = state.resourceValues?.spirit_tier || Math.max(1, maxT);
                     const sizes = ["d6", "d8", "d10", "d12", "d20"];
-                    let idx = Math.max(1, manaSpent) - 1;
-                    if ((state.selectedGraces || []).includes("Empowered Companion")) idx++;
-                    return sizes[Math.min(sizes.length - 1, idx)] || "d6";
+                    let baseIdx = 0;
+                    if (level >= 14) baseIdx = 4; // d20
+                    else if (level >= 12) baseIdx = 3; // d12
+                    else if (level >= 10) baseIdx = 4; // d20
+                    else if (level >= 8) baseIdx = 3; // d12
+                    else if (level >= 6) baseIdx = 2; // d10
+                    else if (level >= 4) baseIdx = 1; // d8
+                    
+                    if ((state.selectedGraces || []).includes("Empowered Companion")) {
+                        baseIdx = Math.min(4, baseIdx + 1);
+                    }
+                    return sizes[baseIdx];
                 },
-                spiritDiceCount: (level) => level >= 20 ? 2 : 1,
+                spiritDiceCount: (level, subclass, state) => {
+                    let baseCount = 1;
+                    if (level >= 18) baseCount = 4;
+                    else if (level >= 16) baseCount = 3;
+                    else if (level >= 12) baseCount = 2;
+                    
+                    if (level >= 20) baseCount *= 2;
+                    return baseCount;
+                },
                 manaMax: (level, subclass, state) => {
                     const statsMap = getStatsMap(state);
                     return level >= 2 ? (statsMap.wil * 3) + level : 0;
@@ -183,7 +198,7 @@ class ShepherdClass extends BaseClass {
 
         core[5].push({ id: "graces", name: "Sacred Grace", type: "dynamic_choice", collection: "graces", stateKey: "selectedGraces", milestones: [5, 9, 13], desc: "Choose a Sacred Grace.", getCount: FeatureGen.createStandardCount([5, 9, 13]) });
 
-        core[17] = [{ id: "revitalizing", name: "Revitalizing Blessing", desc: "(1/round) Whenever you roll a 6 or higher on one or more healing die, the target may recover one Wound." }];
+        core[17].push({ id: "revitalizing", name: "Revitalizing Blessing", desc: "(1/round) Whenever you roll a 6 or higher on one or more healing die, the target may recover one Wound." });
 
         core[20].push({ id: "sage", name: "Twilight Sage", desc: "+1 to any 2 of your stats. Your Lifebinding Spirit rolls twice as many dice." });
 

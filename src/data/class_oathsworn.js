@@ -163,7 +163,7 @@ class OathswornClass extends BaseClass {
                 }
             ],
             spellSchools: ["Radiant"],
-            spellProgression: [2, 2, 4, 6, 8, 10, 12, 14, 16, 18],
+            spellProgression: [2, 2, 4, 6, 8, 10, 13, 17],
             includeUtilitySpells: createUtilityConfig(false, ["selectedSpells"]),
             resources: [
                 createManaResource('wil', 'Mana Pool', { multiplier: 1, hideMechanic: true }),
@@ -226,7 +226,7 @@ class OathswornClass extends BaseClass {
      * Defines the core and subclass features for the Oathsworn class.
      */
     static get FEATURES() {
-        const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or WIL', 'DEX or INT', true, [2, 2, 4, 6, 8, 10, 12, 14, 16, 18]);
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('STR or WIL', 'DEX or INT', true, [2, 2, 4, 6, 8, 10, 13, 17]);
 
         core[1] = [
             {
@@ -294,7 +294,7 @@ class OathswornClass extends BaseClass {
             )
         }));
 
-        core[18] = [{ id: "unending", name: "Unending Judgment", desc: "While you have no Judgment Dice, gain +5 damage to melee attacks." }];
+        core[18].push({ id: "unending", name: "Unending Judgment", desc: "While you have no Judgment Dice, gain +5 damage to melee attacks." });
         core[20].push({ id: "glorious_paragon", name: "Glorious Paragon", desc: "+1 to any 2 stats. Defend for free whenever you Interpose." });
 
         subclasses["Vengeance"] = {

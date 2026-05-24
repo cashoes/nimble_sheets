@@ -159,8 +159,8 @@ class SongweaverClass extends BaseClass {
 
         core[5].push({ id: "people", name: "A “People“ Person", type: "dynamic_choice", collection: "friends", stateKey: "selectedFriends", milestones: [5], desc: "([[uPeoplePerson:2]] 2/Safe Rest) Choose 2 friends you know.", getCount: () => 2 });
 
-        core[18] = [];
-        core[20] = [{ id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 of your stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." }];
+
+        core[20].push({ id: "famous", name: "I’m So Famous!", desc: "+1 to any 2 stats. Your Songweaver’s Inspiration cannot fail (your target succeeds)." });
 
         subclasses["HeraldSnark"] = {
             3: [{ id: "snark", name: "Opportunistic Snark", desc: "Reaction (when an enemy within Range 12 misses an attack): You may cast Vicious Mockery at them; it deals double damage when cast this way." }],

@@ -207,23 +207,23 @@ class HunterClass extends BaseClass {
 
         core[4].push({ id: "explorer", name: "Explorer of the Wilds", desc: "+2 speed; gain a climbing speed." });
 
-        core[5] = [
+        core[5].push(
             { id: "resolve", name: "Hunter's Resolve", desc: "Whenever you have no Thrill of the Hunt charges, gain Hunter's Resolve until the end of your turn: treat all creatures as your quarry for the purposes of movement and melee attacks." },
             { id: "final_takedown", name: "Final Takedown", desc: "Action: Spend 1 Thrill of the Hunt charge to make a melee attack against your Bloodied quarry. Turn it into a crit and double the damage of your Hunter’s Mark. If they survive, they crit you back." }
-        ];
+        );
 
         core[6].push({ id: "versatile_bow", name: "Versatile Bowmaster", desc: "Whenever you attack with a Longbow, you may roll 2d4 instead of 1d8; or with a Crossbow, 2d8 instead of 4d4." });
 
-        core[9] = [{ id: "no_escape", name: "No Escape", desc: "Whenever you see one or more allies make an opportunity attack, you may also make a ranged opportunity attack against the same target." }];
+        core[9].push({ id: "no_escape", name: "No Escape", desc: "Whenever you see one or more allies make an opportunity attack, you may also make a ranged opportunity attack against the same target." });
 
         core[10] = [
             { id: "veteran_stalker", name: "Veteran Stalker", desc: "Gain a Thrill of the Hunt charge whenever you are first Bloodied in an encounter and for every Wound you gain." },
             { id: "keen_eye", name: "Keen Eye, Steady Hand", desc: "Add WIL to your ranged weapon damage." }
         ];
 
-        core[13] = [{ id: "keen_sight", name: "Keen Sight", desc: "Advantage on Perception checks." }];
+        core[13].push({ id: "keen_sight", name: "Keen Sight", desc: "Advantage on Perception checks." });
 
-        core[17] = [{ id: "peerless_hunter", name: "Peerless Hunter", desc: "You can Defend against your quarry for free." }];
+        core[17].push({ id: "peerless_hunter", name: "Peerless Hunter", desc: "You can Defend against your quarry for free." });
 
         core[18] = [{ id: "wild_endurance", name: "Wild Endurance", desc: "Gain 1 Thrill of the Hunt charge at the start of your turns." }];
 

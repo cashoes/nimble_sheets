@@ -14,7 +14,7 @@ function SpellCard(props) {
     const isTiered = !isCantrip && !isUtility;
     
     // Shadowmancer forces max tier
-    const isShadowmancerCaster = CLASS_CONFIG.name === "Shadowmancer" && s().subclass !== "Reaver";
+    const isShadowmancerCaster = CLASS_CONFIG.name === "Shadowmancer";
     const maxUnlocked = d().maxTier;
 
     // 2. Get Upcast State
