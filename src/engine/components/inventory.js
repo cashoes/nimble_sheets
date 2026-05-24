@@ -87,7 +87,8 @@ function InventoryRow(props) {
         });
 
         const targetCat = catLower.includes("shield") ? "shields" : catLower;
-        return Array.from(allowed).some(a => {
+        const hasAllArmorProf = allowed.has("plate") && allowed.has("shields");
+        return hasAllArmorProf || Array.from(allowed).some(a => {
             if (a === 'shields') return targetCat.includes('shield');
             return targetCat.includes(a);
         });

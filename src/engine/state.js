@@ -613,7 +613,8 @@ function computeDerived(s) {
         if (isArmorItem || isShieldItem) {
             const cat = (item.category || "").toLowerCase();
             const targetCat = cat.includes("shield") ? "shields" : cat;
-            const isProficient = Array.from(allowedArmor).some(allowed => {
+            const hasAllArmorProf = allowedArmor.has("plate") && allowedArmor.has("shields");
+            const isProficient = hasAllArmorProf || Array.from(allowedArmor).some(allowed => {
                 if (allowed === 'shields') return targetCat.includes('shield');
                 return targetCat.includes(allowed);
             });
