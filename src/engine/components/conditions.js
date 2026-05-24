@@ -22,10 +22,10 @@ function Conditions() {
             
             // Auto-activate certain conditions based on vitals
             const active = () => {
-                if (cid === 'bloodied') return d().isBloodied || s().activeConditions.includes(cid);
-                if (cid === 'dying') return (s().hpCurrent ?? d().maxHP) === 0 || s().activeConditions.includes(cid);
-                if (cid === 'wounded') return (s().wounds || 0) > 0 || s().activeConditions.includes(cid);
-                return s().activeConditions.includes(cid);
+                if (cid === 'bloodied') return d().isBloodied || s().activeConditions.includes(cid) || (d().effectiveConditions && d().effectiveConditions.includes(cid));
+                if (cid === 'dying') return (s().hpCurrent ?? d().maxHP) === 0 || s().activeConditions.includes(cid) || (d().effectiveConditions && d().effectiveConditions.includes(cid));
+                if (cid === 'wounded') return (s().wounds || 0) > 0 || s().activeConditions.includes(cid) || (d().effectiveConditions && d().effectiveConditions.includes(cid));
+                return s().activeConditions.includes(cid) || (d().effectiveConditions && d().effectiveConditions.includes(cid));
             };
 
             const css = () => `condition-btn ${ctype} ${active() ? 'active' : ''}`;

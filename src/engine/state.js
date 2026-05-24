@@ -547,6 +547,15 @@ function computeDerived(s) {
     if (isDying && !effectiveConditions.includes('dying')) effectiveConditions.push('dying');
     if (isWounded && !effectiveConditions.includes('wounded')) effectiveConditions.push('wounded');
 
+    // Resolve implied conditions (implied triggers & tag-alongs)
+    if (effectiveConditions.includes('petrified') && !effectiveConditions.includes('incapacitated')) {
+        effectiveConditions.push('incapacitated');
+    }
+    const hamperedTriggers = ['dazed', 'grappled', 'prone', 'slowed', 'incapacitated', 'petrified', 'dying', 'frightened'];
+    if (hamperedTriggers.some(c => effectiveConditions.includes(c)) && !effectiveConditions.includes('hampered')) {
+        effectiveConditions.push('hampered');
+    }
+
     // Fold active condition maxActions reductions
     effectiveConditions.forEach(cId => {
         const c = CONDITIONS_LIST.find(cl => cl.id === cId);
@@ -684,6 +693,7 @@ function computeDerived(s) {
         woundMax: folded.woundMax,
         maxActions: foldedMaxActions,
         potentialActions: 3 + baseMaxActions,
+        effectiveConditions,
         resourceMaxes,
         maxTier,
         hdNotation,
