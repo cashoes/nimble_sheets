@@ -17,14 +17,6 @@ class MageClass extends BaseClass {
             baseHp: 10,
             hpPerLevel: 6,
             hitDie: 6,
-            theme: {
-                accent: "#3b82f6",
-                accentDim: "#1d4ed8",
-                bodyBg: "#05060a",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 100%), linear-gradient(180deg, #0a0c1a 0%, #05060a 100%)",
-                panelBg: "rgba(15, 20, 35, 0.7)",
-                border: "rgba(59, 130, 246, 0.3)"
-            },
             initialStats: { baseStr: -1, baseDex: 0, baseInt: 3, baseWil: 1 },
             classDefaults: {
                 selectedMastery: [],

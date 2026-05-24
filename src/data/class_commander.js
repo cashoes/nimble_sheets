@@ -17,14 +17,6 @@ class CommanderClass extends BaseClass {
             baseHp: 17,
             hpPerLevel: 8,
             hitDie: 10,
-            theme: {
-                accent: "#f59e0b",
-                accentDim: "#b45309",
-                bodyBg: "#0f0a0a",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0f11 0%, #0f0a0a 100%)",
-                panelBg: "rgba(35, 20, 20, 0.8)",
-                border: "rgba(245, 158, 11, 0.25)"
-            },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: 2, baseWil: -1 },
             classDefaults: {
                 selectedOrders: [],

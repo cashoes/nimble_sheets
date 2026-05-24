@@ -513,18 +513,51 @@ function computeDerived(s) {
     folded.maxHP = folded.baseHp + ((level - 1) * folded.hpPerLevel);
 
     // 5. Resolve AC with inventory and modifiers
+    const allowedArmor = new Set();
+    const profArmorList = folded.profArmor || [];
+    profArmorList.forEach(p => {
+        const pLower = p.toLowerCase();
+        if (pLower.includes("all armor") || pLower.includes("plate")) {
+            allowedArmor.add("cloth").add("leather").add("mail").add("plate").add("shields");
+        }
+        if (pLower.includes("mail")) {
+            allowedArmor.add("cloth").add("leather").add("mail");
+        }
+        if (pLower.includes("leather")) {
+            allowedArmor.add("cloth").add("leather");
+        }
+        if (pLower.includes("cloth")) {
+            allowedArmor.add("cloth");
+        }
+        if (pLower.includes("shields") || pLower.includes("shield")) {
+            allowedArmor.add("shields");
+        }
+    });
+
+    let hasNonProficientEquipped = false;
     let armorIsLight = true;
     let bestArmorVal = -1;
     let inventoryShieldBonus = 0;
     (state.inventory || []).forEach(item => {
         if (!item.equipped) return;
-        if (item.type === 'armor') {
+        
+        const isArmorItem = item.type === 'armor';
+        const isShieldItem = item.type === 'shield';
+        if (isArmorItem || isShieldItem) {
+            const cat = (item.category || "").toLowerCase();
+            const targetCat = cat.includes("shield") ? "shields" : cat;
+            if (!allowedArmor.has(targetCat)) {
+                hasNonProficientEquipped = true;
+            }
+        }
+
+        if (isArmorItem) {
             const base = parseInt(item.armor) || 0;
             const dMax = item.armorType === 'light' ? 99 : (item.armorType === 'medium' ? 2 : 0);
             const currentArmor = base + Math.min(statsMap.dex, dMax);
             if (currentArmor > bestArmorVal) bestArmorVal = currentArmor;
             if (item.armorType !== 'light') armorIsLight = false;
-        } else if (item.type === 'shield') {
+        } else if (isShieldItem) {
             inventoryShieldBonus += (parseInt(item.armor) || 0);
         }
     });
@@ -534,6 +567,7 @@ function computeDerived(s) {
         foldedArmor = bestArmorVal;
     }
     foldedArmor += inventoryShieldBonus + folded.shieldBonus + folded.armor;
+    folded.hasNonProficientEquipped = hasNonProficientEquipped;
 
     // 6. Resolve Conditions for Speed and Actions
     const isBloodied = state.hpCurrent !== null ? state.hpCurrent <= (folded.maxHP / 2) : false;

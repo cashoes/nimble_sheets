@@ -17,14 +17,6 @@ class StormshifterClass extends BaseClass {
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
-            theme: {
-                accent: "#14b8a6",
-                accentDim: "#0d9488",
-                bodyBg: "#050806",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(20, 184, 166, 0.05) 0%, transparent 100%), linear-gradient(180deg, #0f1a18 0%, #050a09 100%)",
-                panelBg: "rgba(15, 25, 20, 0.8)",
-                border: "rgba(20, 184, 166, 0.25)"
-            },
             initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
             classDefaults: {
                 currentForm: [],

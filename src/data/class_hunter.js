@@ -17,14 +17,6 @@ class HunterClass extends BaseClass {
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
-            theme: {
-                accent: "#16a34a",
-                accentDim: "#15803d",
-                bodyBg: "#050805",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(22, 163, 74, 0.05) 0%, transparent 100%), linear-gradient(180deg, #0a120a 0%, #050805 100%)",
-                panelBg: "rgba(15, 25, 15, 0.8)",
-                border: "rgba(22, 163, 74, 0.2)"
-            },
             initialStats: { baseStr: 0, baseDex: 2, baseInt: -1, baseWil: 2 },
             classDefaults: {
                 selectedToth: [],

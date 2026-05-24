@@ -7,6 +7,12 @@ function IdentityBar() {
 
     const handleSet = (key, val) => dispatch({ type: 'SET_STATE_KEY', payload: { key, value: val } });
 
+    const handleLevel = (e) => {
+        const val = parseInt(e.target.value) || 1;
+        handleSet('level', val);
+        e.target.value = s().level;
+    };
+
     const ancGroups = () => {
         let items = [html`<option value="None">None</option>`];
         Object.keys(ANCESTRIES).forEach(group => {
@@ -36,7 +42,7 @@ function IdentityBar() {
             </div>
             <div class="panel">
                 <label class="panel-title">Level</label>
-                <input type="number" id="level" min="1" max="20" value=${() => s().level} oninput=${(e) => handleSet('level', parseInt(e.target.value))} />
+                <input type="number" id="level" min="1" max="20" value=${() => s().level} oninput=${handleLevel} />
             </div>
             <div class="panel">
                 <label class="panel-title">Ancestry</label>

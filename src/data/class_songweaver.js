@@ -17,14 +17,6 @@ class SongweaverClass extends BaseClass {
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
-            theme: {
-                accent: "#fbbf24",
-                accentDim: "#d97706",
-                bodyBg: "#05070a",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a160f 0%, #05070a 100%)",
-                panelBg: "rgba(35, 25, 15, 0.8)",
-                border: "rgba(251, 191, 36, 0.25)"
-            },
             initialStats: { baseStr: -1, baseDex: 0, baseInt: 2, baseWil: 2 },
             classDefaults: {
                 secondarySchool: [],

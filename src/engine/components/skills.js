@@ -20,7 +20,10 @@ function SkillRow(props) {
         return `1d20${v >= 0 ? '+' : ''}${v}`;
     };
     const click = () => dispatchRoll(notation(), `${sname} Skill Check`);
-    const change = (e) => updateSkill(sid, e.target.value);
+    const change = (e) => {
+        updateSkill(sid, e.target.value);
+        e.target.value = curPts();
+    };
 
     return html`
         <div class="skill-row">

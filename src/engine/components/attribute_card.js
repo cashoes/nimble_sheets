@@ -51,8 +51,14 @@ function AttributeCard(props) {
     const addVal = () => s()[addId] || 0;
     const isLevel1 = () => s().level === 1;
 
-    const handleBase = (e) => dispatch({ type: 'SET_STATE_KEY', payload: { key: baseId, value: parseInt(e.target.value) || 0 } });
-    const handleAdd = (e) => dispatch({ type: 'SET_STATE_KEY', payload: { key: addId, value: parseInt(e.target.value) || 0 } });
+    const handleBase = (e) => {
+        dispatch({ type: 'SET_STATE_KEY', payload: { key: baseId, value: parseInt(e.target.value) || 0 } });
+        e.target.value = baseVal();
+    };
+    const handleAdd = (e) => {
+        dispatch({ type: 'SET_STATE_KEY', payload: { key: addId, value: parseInt(e.target.value) || 0 } });
+        e.target.value = addVal();
+    };
 
     return html`
         <div id=${cardId} class=${cardCss}>

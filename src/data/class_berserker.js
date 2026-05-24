@@ -17,14 +17,6 @@ class BerserkerClass extends BaseClass {
             baseHp: 20,
             hpPerLevel: 10,
             hitDie: 12,
-            theme: {
-                accent: "#ef4444",
-                accentDim: "#991b1b",
-                bodyBg: "#0a0505",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0a1a 0%, #0a0505 100%)",
-                panelBg: "rgba(25, 15, 15, 0.8)",
-                border: "rgba(239, 68, 68, 0.25)"
-            },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
             classDefaults: {
                 furyDice: [],

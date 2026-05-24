@@ -17,14 +17,6 @@ class OathswornClass extends BaseClass {
             baseHp: 17,
             hpPerLevel: 8,
             hitDie: 10,
-            theme: {
-                accent: "#e879f9",
-                accentDim: "#a21caf",
-                bodyBg: "#09090b",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(232, 121, 249, 0.1) 0%, transparent 100%), linear-gradient(180deg, #1a0b1e 0%, #09090b 100%)",
-                panelBg: "rgba(25, 10, 30, 0.8)",
-                border: "rgba(232, 121, 249, 0.25)"
-            },
             initialStats: { baseStr: 2, baseDex: 0, baseInt: -1, baseWil: 2 },
             classDefaults: {
                 selectedDecrees: [],

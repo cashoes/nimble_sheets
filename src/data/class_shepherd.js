@@ -17,14 +17,6 @@ class ShepherdClass extends BaseClass {
             baseHp: 17,
             hpPerLevel: 7,
             hitDie: 10,
-            theme: {
-                accent: "#d946ef",
-                accentDim: "#a21caf",
-                bodyBg: "#080508",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(217, 70, 239, 0.05) 0%, transparent 100%), linear-gradient(180deg, #1a0a1a 0%, #080508 100%)",
-                panelBg: "rgba(35, 15, 35, 0.8)",
-                border: "rgba(217, 70, 239, 0.25)"
-            },
             initialStats: { baseStr: 2, baseDex: -1, baseInt: 0, baseWil: 2 },
             classDefaults: {
                 selectedGraces: [],

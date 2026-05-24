@@ -17,14 +17,6 @@ class ShadowmancerClass extends BaseClass {
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
-            theme: {
-                accent: "#a855f7",
-                accentDim: "#7e22ce",
-                bodyBg: "#050308",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.08) 0%, transparent 100%), linear-gradient(180deg, #120a1a 0%, #050308 100%)",
-                panelBg: "rgba(25, 15, 35, 0.7)",
-                border: "rgba(168, 85, 247, 0.3)"
-            },
             initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
             classDefaults: {
                 selectedLesser: [],

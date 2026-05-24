@@ -17,14 +17,6 @@ class CheatClass extends BaseClass {
             baseHp: 10,
             hpPerLevel: 6,
             hitDie: 6,
-            theme: {
-                accent: "#94a3b8",
-                accentDim: "#475569",
-                bodyBg: "#0a0c12",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(148, 163, 184, 0.05) 0%, transparent 100%), linear-gradient(180deg, #0f172a 0%, #0a0c12 100%)",
-                panelBg: "rgba(15, 23, 42, 0.8)",
-                border: "rgba(148, 163, 184, 0.25)"
-            },
             initialStats: { baseStr: -1, baseDex: 2, baseInt: 2, baseWil: 0 },
             classDefaults: {
                 selectedUnderhanded: []

@@ -17,14 +17,6 @@ class ZephyrClass extends BaseClass {
             baseHp: 13,
             hpPerLevel: 6,
             hitDie: 8,
-            theme: {
-                accent: "#06b6d4",
-                accentDim: "#0891b2",
-                bodyBg: "#05070a",
-                containerBg: "radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.05) 0%, transparent 100%), linear-gradient(180deg, #0a101a 0%, #050809 100%)",
-                panelBg: "rgba(15, 20, 35, 0.8)",
-                border: "rgba(6, 182, 212, 0.25)"
-            },
             initialStats: { baseStr: 1, baseDex: 3, baseInt: -1, baseWil: -1 },
             classDefaults: {
                 selectedMartial: []
