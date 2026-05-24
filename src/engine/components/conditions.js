@@ -22,9 +22,9 @@ function Conditions() {
             
             // Auto-activate certain conditions based on vitals
             const active = () => {
-                if (cid === 'bloodied') return d().isBloodied;
-                if (cid === 'dying') return (s().hpCurrent ?? d().maxHP) === 0;
-                if (cid === 'wounded') return (s().wounds || 0) > 0;
+                if (cid === 'bloodied') return d().isBloodied || s().activeConditions.includes(cid);
+                if (cid === 'dying') return (s().hpCurrent ?? d().maxHP) === 0 || s().activeConditions.includes(cid);
+                if (cid === 'wounded') return (s().wounds || 0) > 0 || s().activeConditions.includes(cid);
                 return s().activeConditions.includes(cid);
             };
 

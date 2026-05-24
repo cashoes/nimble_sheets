@@ -531,6 +531,8 @@ function computeDerived(s) {
         ? reduceModifiers(combinedModifiers, level, subclass, state, statsMap, derivedBase)
         : { ...derivedBase };
 
+    const baseMaxActions = folded.maxActions;
+
     // 4. Sequential Resolution (HP, HD scaling dependencies)
     folded.hpPerLevel = hpPerLevelMap[folded.hdFace] || CLASS_CONFIG.hpPerLevel || 5;
     folded.maxHP = folded.baseHp + ((level - 1) * folded.hpPerLevel);
@@ -681,7 +683,7 @@ function computeDerived(s) {
         initiative: folded.init,
         woundMax: folded.woundMax,
         maxActions: foldedMaxActions,
-        potentialActions: 3 + folded.maxActions,
+        potentialActions: 3 + baseMaxActions,
         resourceMaxes,
         maxTier,
         hdNotation,
