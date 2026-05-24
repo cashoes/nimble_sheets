@@ -183,6 +183,33 @@ function runTests() {
     // Remove heavy plate
     dispatch({ type: 'DELETE_ITEM', payload: { id: 999 } });
 
+    // Test Oathsworn proficiency for Plate & Shields
+    const oathCtx = createSandbox('oathsworn');
+    oathCtx.dispatch({
+        type: 'ADD_ITEM', payload: {
+            item: {
+                id: 888,
+                name: 'Plate Armor',
+                type: 'armor',
+                category: 'Plate',
+                equipped: true
+            }
+        }
+    });
+    oathCtx.dispatch({
+        type: 'ADD_ITEM', payload: {
+            item: {
+                id: 777,
+                name: 'Shield',
+                type: 'shield',
+                category: 'Shields',
+                equipped: true
+            }
+        }
+    });
+    assert.strictEqual(oathCtx.charDerived().hasNonProficientEquipped, false, "Oathsworn should be proficient in Plate and Shields");
+
+
     // --- TEST 4: Dynamic Level Resources & Safe Rest ---
     console.log("  [Dynamic Resources] Testing level scaling and Safe Rest resets...");
     // Load Mage class to test dynamic Mana resource pool

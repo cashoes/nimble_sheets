@@ -70,16 +70,16 @@ function InventoryRow(props) {
         profs.forEach(p => {
             const pLower = p.toLowerCase();
             if (pLower.includes("all armor") || pLower.includes("plate")) {
-                allowed.add("cloth").add("leather").add("mail").add("plate").add("shields");
+                allowed.add("cloth").add("leather").add("mail").add("plate").add("shields").add("light").add("medium").add("heavy");
             }
             if (pLower.includes("mail")) {
-                allowed.add("cloth").add("leather").add("mail");
+                allowed.add("cloth").add("leather").add("mail").add("light").add("medium");
             }
             if (pLower.includes("leather")) {
-                allowed.add("cloth").add("leather");
+                allowed.add("cloth").add("leather").add("light");
             }
             if (pLower.includes("cloth")) {
-                allowed.add("cloth");
+                allowed.add("cloth").add("light");
             }
             if (pLower.includes("shields") || pLower.includes("shield")) {
                 allowed.add("shields");

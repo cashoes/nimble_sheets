@@ -585,16 +585,16 @@ function computeDerived(s) {
     profArmorList.forEach(p => {
         const pLower = p.toLowerCase();
         if (pLower.includes("all armor") || pLower.includes("plate")) {
-            allowedArmor.add("cloth").add("leather").add("mail").add("plate").add("shields");
+            allowedArmor.add("cloth").add("leather").add("mail").add("plate").add("shields").add("light").add("medium").add("heavy");
         }
         if (pLower.includes("mail")) {
-            allowedArmor.add("cloth").add("leather").add("mail");
+            allowedArmor.add("cloth").add("leather").add("mail").add("light").add("medium");
         }
         if (pLower.includes("leather")) {
-            allowedArmor.add("cloth").add("leather");
+            allowedArmor.add("cloth").add("leather").add("light");
         }
         if (pLower.includes("cloth")) {
-            allowedArmor.add("cloth");
+            allowedArmor.add("cloth").add("light");
         }
         if (pLower.includes("shields") || pLower.includes("shield")) {
             allowedArmor.add("shields");
