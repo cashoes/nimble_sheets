@@ -17,8 +17,19 @@ function Features() {
         const isCantrip = (t || "").toLowerCase().includes("cantrip") || n === "Vicious Mockery";
         const ctx = { name: n, type: isCantrip ? 'cantrip' : undefined, school: sch };
         const dsc = spell.customHtml ? spell.customHtml : (spell.desc ? iStats(spell.desc, level, statsMap, ctx) : "");
+        // Issue #36 (stored XSS): `n` (spell.name) is HTML-escaped before interpolation via the
+        // same text-content-only escapeHtmlText used by buildFeatureHtml (engine/features.js;
+        // see its doc comment for why quotes/apostrophes are deliberately NOT escaped here). Most
+        // callers pass a static spell name from SPELL_REGISTRY/UTILITY_SPELLS (trusted), but
+        // renderBackgroundFeature (features.js) also calls this with
+        // `name: state.bgSpell !== "None" ? state.bgSpell : state.background` -- and while
+        // ensureValidState now whitelists bgSpell against UTILITY_SPELLS, this escape is the
+        // render-sink half of that fix (defense in depth). `dsc`/`customHtml` are intentionally
+        // left raw -- both are class-authored trusted HTML (customHtml literally contains the
+        // <select> markup), never user input.
+        const safeName = escapeHtmlText(n);
         return `<div class="${cls}" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
-            <h4>${n} <span class="tier-tag">${pips}</span></h4>
+            <h4>${safeName} <span class="tier-tag">${pips}</span></h4>
             <div class="spell-desc" style="font-size: 0.85em;">${dsc}</div>
         </div>`;
     };

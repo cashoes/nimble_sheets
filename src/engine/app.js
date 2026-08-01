@@ -23,7 +23,11 @@ const importCharacter = (input) => {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const imported = JSON.parse(e.target.result);
+            // Issue #36: an imported file is fully untrusted input. stripPrototypePollutionReviver
+            // (state.js) strips __proto__/constructor/prototype at every depth so IMPORT_STATE's
+            // ensureValidState/Object.assign/bridge.js merge chain can never use them to hijack an
+            // object's prototype or (via bridge.js) reach the live Object.prototype.
+            const imported = JSON.parse(e.target.result, stripPrototypePollutionReviver);
             dispatch({ type: 'IMPORT_STATE', payload: { newState: imported } });
             alert("Character imported successfully!");
         } catch (err) {

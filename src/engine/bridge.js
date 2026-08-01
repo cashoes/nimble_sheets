@@ -130,8 +130,26 @@ function reconcile(src) {
 
                 // Update or add keys from source
                 for (const key of sKeys) {
+                    // Explicit named-key skip PLUS a generic own-property check (issue #36's full
+                    // hardening pass): never let a merge assignment walk the prototype chain.
+                    // `Object.keys(s)` never yields `__proto__`/`constructor`/`prototype` for a
+                    // normal object, so this skip is realistically only reachable via a
+                    // JSON.parse'd `s` (where JSON.parse creates a literal OWN property of that
+                    // name) that slipped past the parse-time reviver -- kept anyway as
+                    // belt-and-suspenders since `merge()` is also called directly by tests/other
+                    // callers, not just the STATE_CHANGED/STATE_LOADED pipeline.
+                    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
+
                     const subPath = path ? `${path}.${key}` : key;
-                    if (!(key in t)) {
+                    // hasOwnProperty, not `key in t`: `in` also matches keys `t` only INHERITS
+                    // (e.g. `__proto__`, `hasOwnProperty`, `toString` -- true for every plain
+                    // object via Object.prototype). The old `!(key in t)` branch was true for
+                    // those, so `t[key] = s[key]` ran a plain `[[Set]]`, which for `key ===
+                    // "__proto__"` invokes the inherited accessor and reassigns `t`'s real
+                    // prototype instead of setting a data property (issue #36). The explicit skip
+                    // above already screens out the three named poison keys before this line is
+                    // reached, but hasOwnProperty is the structurally correct check regardless.
+                    if (!Object.prototype.hasOwnProperty.call(t, key)) {
                         t[key] = s[key]; // Triggers Proxy set
                     } else if (typeof s[key] === 'object' && s[key] !== null) {
                         merge(t[key], s[key], subPath);
@@ -142,7 +160,7 @@ function reconcile(src) {
 
                 // Delete keys not in source
                 for (const key of tKeys) {
-                    if (!(key in s)) {
+                    if (!Object.prototype.hasOwnProperty.call(s, key)) {
                         delete t[key]; // Triggers Proxy deleteProperty
                     }
                 }

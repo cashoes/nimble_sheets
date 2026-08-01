@@ -4,13 +4,43 @@
  */
 
 /**
- * Builds the HTML structure for a feature block.
+ * Escapes the 3 characters that matter when interpolating a string into an HTML TEXT-CONTENT
+ * position (never an attribute value) -- `&`, `<`, `>` (issue #36). Deliberately narrower than
+ * html_export.js's `escapeHtml` (which also escapes quotes): quotes are irrelevant outside an
+ * attribute value, and several real feature/spell titles legitimately contain an apostrophe
+ * (e.g. "It's All Fun and Games", "I've Got JUST the thing!") -- escaping `'`/`"` there would
+ * turn those into `&#39;`/`&quot;` in the raw HTML source, which still *renders* correctly in a
+ * browser but breaks every existing test asserting on the literal title substring. Escaping `<`
+ * alone is what actually neutralizes a payload like `<img src=x onerror=...>`: the browser's HTML
+ * parser needs a literal `<` to open a tag, and `&lt;` can never be re-parsed as one.
+ * @param {*} value
+ * @returns {string}
  */
-function buildFeatureHtml(title, levelTag, description, theme = "", skip = false, level, statsMap, context = {}) { 
+function escapeHtmlText(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+/**
+ * Builds the HTML structure for a feature block.
+ *
+ * `title` is HTML-escaped before interpolation (issue #36): every real caller passes a static
+ * feature name from class JSON data EXCEPT renderAncestryFeature/renderBackgroundFeature, which
+ * build it as `"Ancestry: " + state.ancestry` / `"Background: " + state.background` -- and while
+ * ensureValidState now whitelists those two fields against their registries, escaping here is the
+ * render-sink half of that fix (defense in depth, per the issue's suggested fix) rather than
+ * relying solely on upstream validation. `description`/`desc` is intentionally NOT escaped here:
+ * it is either skipped raw (class-authored HTML, trusted) or run through `iStats` (also
+ * class-authored HTML with token substitution), neither of which is user-controlled input.
+ */
+function buildFeatureHtml(title, levelTag, description, theme = "", skip = false, level, statsMap, context = {}) {
     const featContext = { ...context, name: title };
-    const desc = skip ? description : iStats(description, level, statsMap, featContext); 
+    const desc = skip ? description : iStats(description, level, statsMap, featContext);
     const weightAttr = context.finalWeight ? ` data-final-weight="${context.finalWeight}"` : '';
-    return `<div class="feature ${theme}"${weightAttr}><h3>${title} ${levelTag ? `<span class="level-tag">Lvl ${levelTag}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`; 
+    const safeTitle = escapeHtmlText(title);
+    return `<div class="feature ${theme}"${weightAttr}><h3>${safeTitle} ${levelTag ? `<span class="level-tag">Lvl ${levelTag}</span>` : ''}</h3><div class="feature-desc">${desc}</div></div>`;
 }
 
 

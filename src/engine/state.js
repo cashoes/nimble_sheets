@@ -5,11 +5,70 @@
  */
 
 /**
+ * JSON.parse `reviver` argument that strips `__proto__`/`constructor`/`prototype` keys from
+ * EVERY level of a parsed value (issue #36). `JSON.parse` never touches an object's real
+ * `[[Prototype]]` internal slot -- it creates a literal OWN property named `"__proto__"` via
+ * `CreateDataProperty` -- but that inert-looking own property is exactly what later lets a plain
+ * `Object.assign(target, parsed)` or `{...parsed}` (which both go through the normal `[[Set]]`
+ * path) invoke the inherited `Object.prototype.__proto__` accessor and actually reassign
+ * `target`'s prototype, or (via bridge.js's `merge()`) walk all the way up into the live,
+ * globally-shared `Object.prototype` and pollute every object in the page. The reviver runs
+ * bottom-up for every key at every depth; returning `undefined` for a poison key makes
+ * `JSON.parse`'s internal algorithm `Delete` that property from its holder before the object is
+ * ever handed back to caller code, so no trust boundary downstream (Object.assign, spread,
+ * bridge.js's merge, etc.) ever sees it. Pass as JSON.parse's second argument at every point
+ * untrusted character JSON enters the app: `importCharacter`'s file read (app.js), the
+ * `EMBEDDED_STATE` `#nimble-state` island parse below, and the localStorage load path in
+ * `loadState()`.
+ * @param {string} key
+ * @param {*} value
+ * @returns {*} `value` unchanged, or `undefined` for `__proto__`/`constructor`/`prototype` (which
+ *   JSON.parse then omits from the parsed object entirely).
+ */
+function stripPrototypePollutionReviver(key, value) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+    return value;
+}
+
+/**
+ * Defense-in-depth twin of `stripPrototypePollutionReviver` above, for objects that reach
+ * `ensureValidState` WITHOUT having gone through one of the guarded `JSON.parse` call sites --
+ * e.g. a future/alternate call to `dispatch({type:'IMPORT_STATE', payload:{newState}})` that
+ * built `newState` some other way. Recursively deletes any `__proto__`/`constructor`/`prototype`
+ * OWN key (never touches an object's real prototype chain -- `delete obj[key]` uses `[[Delete]]`,
+ * not `[[Set]]`, so it can't trigger the `__proto__` accessor) before `ensureValidState`'s shallow
+ * spread copies the object's keys onward (issue #36). Mutates `value` in place; `seen` guards
+ * against infinite recursion on a (non-JSON-representable, but defensively handled anyway)
+ * circular reference.
+ * @param {*} value
+ * @param {Set<object>} [seen]
+ * @returns {*} `value`.
+ */
+function stripPrototypePollutionKeys(value, seen) {
+    if (!value || typeof value !== 'object') return value;
+    seen = seen || new Set();
+    if (seen.has(value)) return value;
+    seen.add(value);
+    for (const key of Object.keys(value)) {
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+            delete value[key];
+            continue;
+        }
+        stripPrototypePollutionKeys(value[key], seen);
+    }
+    return value;
+}
+
+/**
  * Ensures the state object is valid by setting defaults and correcting types.
  * @param {Object|null|undefined} state - The state object to validate.
  * @returns {Object} A valid state object with default values for missing or incorrect types.
  */
 function ensureValidState(state) {
+    // Issue #36: strip any __proto__/constructor/prototype own keys BEFORE the spread below ever
+    // copies them onto `valid` -- see stripPrototypePollutionKeys' doc comment for why this is
+    // still needed even when the JSON.parse-time reviver already ran.
+    stripPrototypePollutionKeys(state);
     // If state is null or undefined, start with an empty object
     const valid = { ...(state || {}) };
 
@@ -87,6 +146,37 @@ function ensureValidState(state) {
     }
 
     // Additional validation: ensure arrays of strings for certain fields? Not necessary.
+
+    // Issue #36: whitelist enum-like string fields against their known-good registries before
+    // they can reach a render sink. The generic string-type-correction loop above only ran
+    // `String()` on these -- any well-formed string (including a crafted HTML payload) passed
+    // straight through. This is what let an attacker-controlled `bgSpell` reach
+    // renderBackgroundFeature -> spellGen's `<h4>${n}...` interpolation -> #featuresContainer
+    // innerHTML unescaped (the verified stored-XSS path). Runs AFTER the legacy ancestry rename
+    // above so a pre-rename legacy value still resolves correctly. An out-of-registry value is
+    // rejected outright (coerced back to the field's safe default), never partially matched or
+    // passed through -- registries are read from the build-time-injected data globals, guarded by
+    // `typeof` so this degrades safely if a global is ever missing (e.g. a minimal test context).
+    if (typeof ANCESTRY_FEATURES !== 'undefined' && valid.ancestry !== 'None' && !Object.prototype.hasOwnProperty.call(ANCESTRY_FEATURES, valid.ancestry)) {
+        valid.ancestry = 'None';
+    }
+    if (typeof BACKGROUND_FEATURES !== 'undefined' && valid.background !== 'None' && !Object.prototype.hasOwnProperty.call(BACKGROUND_FEATURES, valid.background)) {
+        valid.background = 'None';
+    }
+    if (typeof CLASS_CONFIG !== 'undefined' && Array.isArray(CLASS_CONFIG.subclasses)) {
+        const validSubclassValues = new Set(CLASS_CONFIG.subclasses.map(sc => sc && sc.value));
+        if (!validSubclassValues.has(valid.subclass)) {
+            valid.subclass = 'None';
+        }
+    }
+    if (typeof UTILITY_SPELLS !== 'undefined' && valid.bgSpell !== 'None') {
+        const isKnownUtilitySpell = Object.values(UTILITY_SPELLS).some(schoolSpells =>
+            schoolSpells && Object.prototype.hasOwnProperty.call(schoolSpells, valid.bgSpell)
+        );
+        if (!isKnownUtilitySpell) {
+            valid.bgSpell = 'None';
+        }
+    }
 
     return valid;
 }
@@ -1284,7 +1374,11 @@ function loadState(config) {
         Object.assign(state, EMBEDDED_STATE);
     } else if (raw) {
         try {
-            const loaded = JSON.parse(raw);
+            // Issue #36: same reviver as EMBEDDED_STATE above -- localStorage is populated by
+            // this same app under normal use, but is still an untrusted-write surface (any other
+            // script/extension on the origin, or a hand-edited devtools value) reaching this same
+            // Object.assign(state, loaded) prototype-hijack vector.
+            const loaded = JSON.parse(raw, stripPrototypePollutionReviver);
             Object.assign(state, loaded);
         } catch(e) {
             console.error("Failed to load character state:", e);
