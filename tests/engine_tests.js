@@ -276,6 +276,16 @@ function runTests() {
     assert.strictEqual(islandMatches.length, 1, "re-exporting an already-exported file must still leave exactly one state island, not duplicate or corrupt it");
     assert.ok(secondExport.includes('"level":9'), "the second export's state island must carry the updated state, not the stale first-export payload");
 
+    // --- TEST 9: Wheel-to-adjust only fires on a focused, enabled number input ---
+    console.log("  [UI] Testing shouldHandleWheel requires focus, not just hover...");
+    vm.runInContext(fs.readFileSync(path.join(WORKSPACE_DIR, 'src', 'engine', 'app.js'), 'utf8'), ctx);
+    const numberInput = { type: 'number', disabled: false };
+    const otherInput = { type: 'number', disabled: false };
+    assert.strictEqual(ctx.shouldHandleWheel(numberInput, numberInput), true, "a focused, enabled number input must be handled");
+    assert.strictEqual(ctx.shouldHandleWheel(numberInput, otherInput), false, "a number input that is merely hovered (not the focused/active element) must NOT be handled");
+    assert.strictEqual(ctx.shouldHandleWheel({ type: 'number', disabled: true }, numberInput), false, "a disabled number input must never be handled even if somehow focused");
+    assert.strictEqual(ctx.shouldHandleWheel(null, null), false, "a null target must not be handled");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
