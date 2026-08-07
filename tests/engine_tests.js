@@ -386,6 +386,21 @@ function runTests() {
     assert.ok(publishedSnapshot, "STATE_LOADED must be published");
     assert.notStrictEqual(publishedSnapshot.hpCurrent, null, "the STATE_LOADED snapshot itself must already carry a finalized (non-null) hpCurrent, not publish before vitals are seeded and rely on a later dispatch to backfill");
 
+    // --- TEST 19: Equipped weapon proficiency is actually enforced ---
+    console.log("  [Weapon Proficiency] Testing an unlisted weapon category flags non-proficiency...");
+    const weaponCtx = createSandbox('shadowmancer'); // proficiencies.weapons: "Blades, Staves, Wands"
+    weaponCtx.dispatch({
+        type: 'ADD_ITEM',
+        payload: { item: { id: 777, name: 'Greatsword', type: 'melee', category: 'STR 2H', stat: 'str', equipped: true } }
+    });
+    assert.strictEqual(weaponCtx.charDerived().hasNonProficientWeaponEquipped, true, "a Shadowmancer (Blades, Staves, Wands) equipping a STR 2H weapon must flag hasNonProficientWeaponEquipped");
+    weaponCtx.dispatch({ type: 'DELETE_ITEM', payload: { id: 777 } });
+    weaponCtx.dispatch({
+        type: 'ADD_ITEM',
+        payload: { item: { id: 778, name: 'Dagger', type: 'melee', category: 'DEX 1H', stat: 'dex', equipped: true } }
+    });
+    assert.strictEqual(weaponCtx.charDerived().hasNonProficientWeaponEquipped, false, "a Shadowmancer equipping a DEX 1H (blade) weapon must NOT be flagged non-proficient");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
