@@ -943,7 +943,7 @@ function characterReducer(currentState, action) {
                 id: Date.now(),
                 name: itemData.name,
                 type: itemData.type,
-                category: category || itemData.category || '',
+                category: itemData.category || category || '',
                 slots: itemData.slots,
                 equipped: itemData.equipped,
                 dmgDice: itemData.dmgDice || '1d6',
