@@ -264,6 +264,17 @@ function runTests() {
     const whitelisted = ctx.ensureValidState({ bgSpell: '<img src=x onerror=alert(1)>' });
     assert.strictEqual(whitelisted.bgSpell, 'None', "ensureValidState must coerce an out-of-registry bgSpell value to the safe default instead of passing it through to a render sink");
 
+    // --- TEST 8: Shadowmancer greedyResult is HTML-escaped in the mechanic panel ---
+    console.log("  [Security] Testing Shadowmancer greedyResult is escaped in the mechanic panel...");
+    const smCtx = createSandbox('shadowmancer');
+    smCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 12 } });
+    smCtx.dispatch({ type: 'ADJ_RES', payload: { id: 'pilfer', amount: 0, isAbsolute: true } }); // drain Pilfered Power to 0 so the greedyResult line renders
+    smCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'greedyResult', value: '<img src=x onerror=alert(1)>' } });
+    const panelResult = smCtx.CLASS_CONFIG.getMechanicPanelHTML(smCtx.charState().level, smCtx.charState().subclass, smCtx.charState(), smCtx.charDerived());
+    const panelHtml = panelResult.sections.map(s => s.props && s.props.html ? s.props.html : '').join('\n');
+    assert.ok(!panelHtml.includes('<img src=x onerror=alert(1)>'), "greedyResult must not reach the mechanic panel HTML unescaped");
+    assert.ok(panelHtml.includes('&lt;img src=x onerror=alert(1)&gt;'), "greedyResult's angle brackets must be HTML-escaped in the mechanic panel");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
