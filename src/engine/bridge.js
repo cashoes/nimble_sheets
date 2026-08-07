@@ -104,7 +104,17 @@ function reconcile(src) {
                 for (let i = 0; i < minLen; i++) {
                     const subPath = path ? `${path}.${i}` : `${i}`;
                     if (typeof s[i] === 'object' && s[i] !== null) {
-                        merge(t[i], s[i], subPath);
+                        // Only recurse when the target slot is itself a mergeable object (issue
+                        // #39: a `null` slot — e.g. a spent dice-pool die — has nothing for
+                        // merge() to walk into, so it silently no-op'd and the refilled die never
+                        // replaced the stale null). Any non-object target (null, undefined, a
+                        // primitive left over from a prior type change) gets a direct assign
+                        // instead, same as the primitive branch below.
+                        if (typeof t[i] === 'object' && t[i] !== null) {
+                            merge(t[i], s[i], subPath);
+                        } else {
+                            t[i] = s[i]; // Triggers Proxy set
+                        }
                     } else if (t[i] !== s[i]) {
                         t[i] = s[i];
                     }
@@ -130,11 +140,20 @@ function reconcile(src) {
 
                 // Update or add keys from source
                 for (const key of sKeys) {
+                    // Defensive skip, not a full hardening pass (see issue #36, deferred): never
+                    // let a merge assignment walk the prototype chain via these special keys.
+                    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
+
                     const subPath = path ? `${path}.${key}` : key;
                     if (!(key in t)) {
                         t[key] = s[key]; // Triggers Proxy set
                     } else if (typeof s[key] === 'object' && s[key] !== null) {
-                        merge(t[key], s[key], subPath);
+                        // Same null/mismatched-target guard as the array branch above (issue #39).
+                        if (typeof t[key] === 'object' && t[key] !== null) {
+                            merge(t[key], s[key], subPath);
+                        } else {
+                            t[key] = s[key]; // Triggers Proxy set
+                        }
                     } else if (t[key] !== s[key]) {
                         t[key] = s[key]; // Triggers Proxy set
                     }
