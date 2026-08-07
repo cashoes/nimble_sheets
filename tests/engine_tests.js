@@ -280,6 +280,13 @@ function runTests() {
     assert.ok(khDetail.notation.includes('2d100kh1'), `an embedded "kh1" pool modifier must stay attached to the whole pool (2d100kh1), got: ${khDetail.notation}`);
     assert.ok(!khDetail.notation.includes('{primary}'), `a kh/kl-tagged pool must not be split into a primary/secondary attack decomposition, got: ${khDetail.notation}`);
 
+    // --- TEST 10: Heal/wound-gain rolls are classified as non-exploding pools ---
+    console.log("  [Dice Notation] Testing heal/wound-gain rolls are tagged type:pool...");
+    const healLink = ctx.iStats('Heal a creature 1d8 HP.', 5, { str: 0, dex: 0, int: 0, wil: 0 }, {});
+    assert.ok(healLink.includes('&quot;type&quot;:&quot;pool&quot;'), "a heal roll ('Heal a creature 1d8 HP') must be dispatched with type:'pool' so it can't explode/crit like an attack");
+    const woundGainLink = ctx.iStats('Gain 1d4 Wounds to cast this spell.', 5, { str: 0, dex: 0, int: 0, wil: 0 }, {});
+    assert.ok(woundGainLink.includes('&quot;type&quot;:&quot;pool&quot;'), "a self-inflicted Wound-gain roll ('Gain 1d4 Wounds') must also be tagged type:'pool'");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
