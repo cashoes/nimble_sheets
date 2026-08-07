@@ -466,6 +466,50 @@ function applyCantripScaling(notation, name, school, level) {
 }
 
 /**
+ * Escapes a roll-link label for the one place it's ever interpolated: a single-quoted JS string
+ * argument (`dispatchRoll('notation', '${label}', ...)`) sitting inside a double-quoted `onclick`
+ * HTML attribute, itself assigned via innerHTML. That's two nested contexts, both of which need
+ * their own escaping, or a label can break out of either one:
+ *   - `&` must go first (`&amp;`), or a literal "&quot;"/"&#39;" in the input would itself decode
+ *     to a real `"`/`'` once the browser parses the attribute, silently reopening the escape it
+ *     was meant to close.
+ *   - `\` then `'` are JS-string-escaped (`\\`, `\'`) so the label can't terminate its own quoted
+ *     argument and inject a second JS statement into the handler body.
+ *   - `"` is HTML-attribute-escaped (`&quot;`) so the label can't terminate the surrounding
+ *     onclick="..." attribute itself and inject new markup/attributes.
+ * @param {*} value
+ * @returns {string}
+ */
+function escapeRollLabel(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;');
+}
+
+/**
+ * Escapes a JSON.stringify'd roll-context object for the same onclick="..." HTML attribute
+ * escapeRollLabel targets, above -- the bare (unquoted) object-literal argument in
+ * `dispatchRoll('notation', 'label', ${escapeRollCtx(context)})`. `context` carries `name`, the
+ * same user-controlled value that reaches the label argument, verbatim, inside a JSON string
+ * value. `JSON.stringify` escapes `"`/`\` for JSON syntax but never touches `&`, so without
+ * escaping it here too, a name containing the literal text `&quot;` survives JSON.stringify
+ * untouched, and the browser's attribute decoder turns that literal text into a real `"` --
+ * closing the JSON string at an attacker-chosen point and turning the rest of the value into live
+ * JS in the object-literal argument. `&` must be escaped first, same reasoning as
+ * escapeRollLabel: escaping it after introducing our own `&quot;` would mangle the entity we just
+ * wrote instead of the attacker's smuggled one.
+ * @param {*} value
+ * @returns {string}
+ */
+function escapeRollCtx(value) {
+    return JSON.stringify(value)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;');
+}
+
+/**
  * ISTATS ENGINE
  * Parses text for special tokens (STR, DEX, INT, WIL, KEY, LVL) and converts them
  * into interactive, auto-calculating HTML elements.
@@ -544,12 +588,12 @@ function iStats(text, level, statsMap, context = {}) {
         const cleanNotation = resolved.replace(/\s+/g, '');
         if (context.type === 'cantrip') {
             const scaled = applyCantripScaling(cleanNotation, context.name, context.school, level);
-            return `<span class="dice-hl roll-link" onclick="dispatchRoll('${scaled}', '${context.name}', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${resolved}</span>`;
+            return `<span class="dice-hl roll-link" onclick="dispatchRoll('${scaled}', '${escapeRollLabel(context.name)}', ${escapeRollCtx(context)})">${resolved}</span>`;
         }
-        const label = (context.name || 'Roll').replace(/'/g, "\\'");
+        const label = escapeRollLabel(context.name || 'Roll');
         const hasStat = /STR|DEX|INT|WIL|KEY|LVL|WOUNDS/i.test(p1);
         const formula = hasStat ? `<span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p1})</span>` : "";
-        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${cleanNotation}', '${label}', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${resolved}</span>${formula}`;
+        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${cleanNotation}', '${label}', ${escapeRollCtx(context)})">${resolved}</span>${formula}`;
     });
 
     // Pass 3: Handle complex stat math (e.g. 10+KEY+1, LVL+WIL-1)
@@ -568,8 +612,8 @@ function iStats(text, level, statsMap, context = {}) {
 
     // Pass 4: Wrap individual stat values in clickable check links
     const wrapStat = (val, label) => {
-        const escapedLabel = (context.name || 'Roll').replace(/'/g, "\\'");
-        return `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${escapedLabel} Check', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
+        const escapedLabel = escapeRollLabel(context.name || 'Roll');
+        return `<span class="stat-hl roll-link" onclick="dispatchRoll('1d20+${val}', '${escapedLabel} Check', ${escapeRollCtx(context)})">${val}</span><span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${label})</span>`;
     };
 
     const statTokenRegex = new RegExp(skipPattern.source + '|(\\b(STR|DEX|INT|WIL|KEY|LVL)\\b(?!\\s+(?:save|check))|\\+\\s*WOUNDS\\b)', 'gi');
