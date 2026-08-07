@@ -275,6 +275,16 @@ function runTests() {
     assert.ok(!panelHtml.includes('<img src=x onerror=alert(1)>'), "greedyResult must not reach the mechanic panel HTML unescaped");
     assert.ok(panelHtml.includes('&lt;img src=x onerror=alert(1)&gt;'), "greedyResult's angle brackets must be HTML-escaped in the mechanic panel");
 
+    // --- TEST 9: Roll-link name is escaped for its HTML-attribute + JS-string context ---
+    console.log("  [Security] Testing roll-link name escaping (dice-roll, cantrip, and stat-check links)...");
+    const maliciousName = 'Evil" onmouseover="alert(1)';
+    const diceLink = ctx.iStats('1d6 damage', 5, { str: 0, dex: 0, int: 0, wil: 0 }, { name: maliciousName });
+    assert.ok(!diceLink.includes('" onmouseover="alert(1)'), "a dice-roll link must not let context.name break out of the onclick=\"...\" attribute");
+    assert.ok(diceLink.includes('Evil&quot; onmouseover=&quot;alert(1)'), "context.name's double-quote must be HTML-attribute-escaped in the roll-link label");
+
+    const statLink = ctx.iStats('Attack bonus: STR', 5, { str: 3, dex: 0, int: 0, wil: 0 }, { name: maliciousName });
+    assert.ok(!statLink.includes('" onmouseover="alert(1)'), "a stat-value link must not let context.name break out of the onclick=\"...\" attribute either");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
