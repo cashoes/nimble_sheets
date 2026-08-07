@@ -415,6 +415,15 @@ function runTests() {
     resClampCtx.dispatch({ type: 'ADJ_RES', payload: { id: 'mana', amount: 999, isAbsolute: true } });
     assert.strictEqual(resClampCtx.charState().resourceValues.mana, realMaxMana, `mana must clamp to its real derived max (${realMaxMana}), not stay at the raw 999 requested`);
 
+    // --- TEST 22: A background's options/stateKey choice renders without a "collection" field ---
+    console.log("  [Features] Testing 'Back Out of Retirement' renders its choice <select> without a collection...");
+    const bgCtx = createSandbox('hunter');
+    bgCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'background', value: 'Back Out of Retirement' } });
+    const bgFeatConfig = vm.runInContext("BACKGROUND_FEATURES['Back Out of Retirement']", bgCtx);
+    assert.ok(bgFeatConfig.options && bgFeatConfig.stateKey && !bgFeatConfig.collection, "sanity: 'Back Out of Retirement' must have options+stateKey but no collection field");
+    const bgHtml = bgCtx.renderBackgroundFeature(bgCtx.charState(), bgCtx.charState().level, {}, (t) => t, (title, lt, desc) => desc, () => '');
+    assert.ok(bgHtml.includes('bg-choice-selector'), "a background with options/stateKey but no collection must still render its choice <select>, not silently render nothing");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
