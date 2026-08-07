@@ -354,6 +354,21 @@ function runTests() {
     const addedItem = quickItemCtx.charState().inventory.find(i => i.name === 'Dagger');
     assert.strictEqual(addedItem.category, 'DEX 1H', "ADD_QUICK_ITEM must keep the library item's own category (DEX 1H), not fall back to the caller's guessed/generic category (melee)");
 
+    // --- TEST 16: A localStorage write failure does not freeze dispatch ---
+    console.log("  [Storage] Testing a failed localStorage write does not throw / freeze dispatch...");
+    const storageCtx = createSandbox('hunter');
+    const originalSetItem = storageCtx.localStorage.setItem;
+    storageCtx.localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+    let dispatchThrew = false;
+    try {
+        storageCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 5 } });
+    } catch (e) {
+        dispatchThrew = true;
+    }
+    assert.strictEqual(dispatchThrew, false, "a localStorage write failure must not escape as an uncaught exception and freeze dispatch");
+    assert.strictEqual(storageCtx.charState().level, 5, "the in-memory state must still update even when the storage write behind it fails");
+    storageCtx.localStorage.setItem = originalSetItem;
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
