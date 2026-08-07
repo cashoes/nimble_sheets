@@ -304,6 +304,19 @@ function runTests() {
     dragonbornCtx.dispatch({ type: 'START_COMBAT', payload: {} });
     assert.strictEqual(dragonbornCtx.charState().uDraconic, 0, "Dragonborn's ancestry-owned uDraconic (recharges on Safe Rest/Wound, never encounter start) must stay drained through START_COMBAT");
 
+    // --- TEST 11: A Level edit no longer drains attribute allocations to fit the new budget ---
+    console.log("  [Level Edit] Testing a level-down does not destroy over-budget attribute allocations...");
+    const berserkerCtx = createSandbox('berserker');
+    berserkerCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 20 } });
+    berserkerCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'addStr', value: 3 } });
+    berserkerCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'addDex', value: 2 } });
+    berserkerCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'addWil', value: 2 } });
+    // Single level-down dispatch (the same action the Level field commits on change/blur).
+    berserkerCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 12 } });
+    assert.strictEqual(berserkerCtx.charState().addStr, 3, "addStr must not be drained by a level-down, even if now over budget");
+    assert.strictEqual(berserkerCtx.charState().addDex, 2, "addDex must not be drained by a level-down, even if now over budget");
+    assert.strictEqual(berserkerCtx.charState().addWil, 2, "addWil must not be drained by a level-down, even if not itself over budget");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
