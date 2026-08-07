@@ -105,7 +105,7 @@ class CheatClass extends BaseClass {
      * Defines the core and subclass features for the Cheat class.
      */
     static get FEATURES() {
-        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or INT', 'STR or WIL', false, null, [2, 2, 4, 6, 8, 10, 13, 17, 19, 21]);
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or INT', 'STR or WIL', false);
 
         core[1] = [
             { 

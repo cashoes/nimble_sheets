@@ -52,9 +52,6 @@ class HunterClass extends BaseClass {
                 { value: "Beastmaster", label: "Beastmaster", accent: "#d9f99d" }
             ],
             scalingStats: {},
-            grantedSpells: [
-                { level: 1, spells: ["Hunter's Mark"] }
-            ],
             resources: [
                 createSimpleResource('tothCharges', 'TotH Momentum', (level, stats) => 10, { hideMechanic: true })
             ],
@@ -170,7 +167,7 @@ class HunterClass extends BaseClass {
      * Defines the core and subclass features for the Hunter class.
      */
     static get FEATURES() {
-        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or WIL', 'STR or INT', false, null, [2, 2, 4, 6, 8, 10, 13, 17, 19, 21]);
+        const { core, subclasses } = FeatureGen.generateStandardFeatures('DEX or WIL', 'STR or INT', false);
 
         core[1] = [
             { id: "quarry", name: "Hunter’s Mark", desc: "Action: A creature you can see is marked as your quarry for 1 day (or until you mark another creature). It can’t be hidden from you, and your attacks against it gain your choice of advantage OR +LVL damage (choose before each attack)." },

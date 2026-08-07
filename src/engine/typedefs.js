@@ -106,6 +106,6 @@
  * @property {Object[]} spellReplacements
  * @property {{}} scalingStats
  * @property {Object[]} rollTriggers
- * @property {{core: Object.<number, Object[]>, subclasses: Object.<string, Object[]}}} featuresData
+ * @property {{core: Object.<number, Object[]>, subclasses: Object.<string, Object[]>}} featuresData
  * @property {Object} optionsData
  */

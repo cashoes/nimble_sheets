@@ -354,7 +354,6 @@ class CommanderClass extends BaseClass {
                         return slots;
                     },
                     schools: ["Fire", "Ice", "Lightning", "Radiant", "Necrotic", "Wind"],
-                    milestones: [3, 7, 11, 15],
                     desc: (level) => FeatureGen.createScalingList("Choose any tier 1 (or lower) spell and any Utility Spell.", [
                         { level: 7, text: "Rank 2: Choose any tier 2 (or lower) spell and any Utility Spell." },
                         { level: 11, text: "Rank 3: Choose any tier 3 (or lower) spell and any Utility Spell." },

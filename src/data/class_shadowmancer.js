@@ -179,9 +179,6 @@ class ShadowmancerClass extends BaseClass {
                 { id: "fiendish_boon_stats", stat: "addDex", value: 1, condition: (l, s, state) => (state.selectedGreater || []).includes("Fiendish Boon") },
                 { id: "fiendish_boon_hd", stat: "hdMax", value: -1, condition: (l, s, state) => (state.selectedGreater || []).includes("Fiendish Boon") }
             ],
-            grantedSpells: [
-                { level: 1, spells: ["Shadow Blast", "Summon Shadows"] }
-            ],
             spellSchools: ["Necrotic"],
             spellProgression: [2, 2, 5, 7, 10, 13, 16, 19],
             includeUtilitySpells: createUtilityConfig((level) => level >= 14 ? ["Necrotic"] : false, ["selectedShadowmastery"]),
@@ -245,10 +242,10 @@ class ShadowmancerClass extends BaseClass {
             { id: "sum_shadows", name: "Summon Shadows", desc: (level, subclass, state, derived) => `Action: Summon a shadow minion within Reach 1 (you can summon a max of INT or LVL minions this way, whichever is lower). Expend 1 mana. Action: (1/turn) Command ALL of your minions to move 6 then attack (Reach 1, 1d12 each). <br><em>Shadow Minions have 1 HP, no damage bonus, and do not crit. Command them to attack without the Rushed Attack penalty! (see pg. 13 of the Core Rules).</em>` }
         ];
 
-        core[2] = [
+        core[2].push(
             { id: "master_darkness", name: "Master of Darkness", desc: "Your Patron grants you knowledge of Necrotic cantrips and tier 1 spells." },
             { id: "pilfer", name: "Pilfered Power", desc: (level, subclass, state, derived) => `You may steal power from your patron to cast tiered spells, always casting them at the highest tier you have unlocked. You can do this <strong>${getStatsMap(state).dex}</strong> (DEX) times before your patron takes notice. Each time you exceed this limit, your patron damages you for half your max HP as recompense. Resets on Safe Rest.` }
-        ];
+        );
 
         core[3] = [
             { id: "pact_is_sealed", name: "THE PACT IS SEALED", desc: "Choose a subclass and 1 Lesser Shadow Invocation." },

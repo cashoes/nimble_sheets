@@ -36,7 +36,6 @@
     "features": {
         "Academy Dropout": {
             "desc": "School just isn't for everyone! You learn by experience in the real world (or at least that's what you tell yourself). Learn any 1 Utility Spell.",
-            "type": "choice",
             "collection": "utility",
             "stateKey": "bgSpell"
         },
@@ -51,7 +50,6 @@
         },
         "Back Out of Retirement": {
             "desc": "You've forgotten more than most adventurers these days know! Talk with your GM, what made you come out of retirement?",
-            "type": "choice",
             "options": [
                 {
                     "label": "Let's see if I remember how to do this...",
@@ -90,8 +88,7 @@
             "desc": "You are haunted by voices that occasionally give you cryptic advice. The voices are sometimes VERY helpful. Other times they only want to see you suffer. Advantage against fear."
         },
         "History Buff": {
-            "desc": "Advantage on all Lore checks related to knowledge about items, facts, or events that happened more than 100 years ago.",
-            "modSkillAdv": "lore"
+            "desc": "Advantage on all Lore checks related to knowledge about items, facts, or events that happened more than 100 years ago."
         },
         "Home at Sea": {
             "desc": "Recover twice as many Wounds and HP while resting on a ship or near water. You can fill in for a first mate or captain in a pinch. Advantage on water-related skill checks."
@@ -101,10 +98,8 @@
         },
         "Raised by...": {
             "desc": "You speak their language, understand their customs, and have advantage on Influence checks when dealing with members of the ancestry that raised you. If you were raised by Goblins, you also automatically notice and can avoid crudely-made traps and have advantage to notice and disarm more sophisticated traps.",
-            "type": "choice",
             "collection": "ancestry",
-            "stateKey": "bgRaisedBy",
-            "modSkillAdv": "influence"
+            "stateKey": "bgRaisedBy"
         },
         "(Secretly) Undead": {
             "desc": "Unnatural Resilience: You are immune to disease and do not need to eat, drink, or breathe. Children, animals, and Celestials are uneasy in your presence; many will be horrified to discover your true nature."

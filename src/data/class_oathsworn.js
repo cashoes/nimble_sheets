@@ -253,11 +253,11 @@ class OathswornClass extends BaseClass {
             }
         ];
 
-        core[2] = [
+        core[2].push(
             { id: "radiant_casting", name: "Mana and Radiant Spellcasting", desc: (level, subclass, state, derived) => `You learn all Radiant cantrips and unlock tier 1 Radiant spells. You gain a mana pool of <strong>${derived.resourceMaxes.mana}</strong> (WIL+LVL) to cast these spells; it recharges on a Safe Rest.` },
             { id: "zealot", name: "Zealot", desc: "Whenever you attack with a melee weapon, you may spend mana (up to your highest unlocked spell tier) to choose one for each mana spent: <ul><li><strong>Condemning Strike:</strong> Deal +5 radiant damage.</li><li><strong>Blessed Aim:</strong> Decrease your target’s armor by 1 step for this attack.</li></ul>" },
             { id: "paragon", name: "Paragon of Virtue", desc: "Advantage on Influence checks to convince someone when you are forthrightly telling the truth, disadvantage when misleading." }
-        ];
+        );
 
         core[3].push({
             id: "decrees",

@@ -83,9 +83,6 @@ class SongweaverClass extends BaseClass {
             },            statModifiers: [
                 { id: "heroic_ballad_max", stat: "inspirationBonus", value: 2, condition: (l, s, state) => (state.selectedLyrical || []).includes("Heroic Ballad") }
             ],
-            grantedSpells: [
-                { level: 1, spells: ["Wind Cantrips", "Vicious Mockery"] }
-            ],
             spellSchools: ["Wind"],
             extraSchoolsKeys: ["secondarySchool"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
@@ -134,11 +131,11 @@ class SongweaverClass extends BaseClass {
             }
         ];
 
-        core[2] = [
+        core[2].push(
             { id: "mana", name: "Mana and Unlock Tier 1 Spells", desc: "You unlock tier 1 spells in the schools you know and gain a mana pool. This mana pool’s maximum is always equal to (INT×3)+LVL and recharges on a Safe Rest." },
             { id: "jack", name: "Jack of All Trades", desc: "([[uJackOfTrades]] 1/Safe Rest) When you Safe Rest, you may move a skill point as if you just leveled up." },
             { id: "song_rest", name: "Song of Rest", desc: "([[uSongRest]] 1/day) Whenever you Field Rest, you may play a song and allow anyone who spends Hit Dice to heal additional HP equal to your WIL." }
-        ];
+        );
 
         core[3] = [
             { id: "subclass", name: "Subclass", desc: "Choose a Songweaver subclass." },

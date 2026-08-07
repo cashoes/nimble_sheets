@@ -82,9 +82,6 @@ class StormshifterClass extends BaseClass {
                 { id: "fleet_footed_speed", stat: "speed", value: 2, condition: (l, s, state) => (state.selectedBoons || []).includes("Fleet Footed") },
                 { id: "earthwalker_armor", stat: "armor", value: 2, condition: (l, s, state) => (state.selectedBoons || []).includes("Earthwalker") }
             ],
-            grantedSpells: [
-                { level: 1, spells: ["Lightning Cantrips", "Wind Cantrips"] }
-            ],
             spellSchools: ["Wind", "Lightning"],
             extraSchoolsKeys: ["selectedStudy"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
@@ -139,10 +136,10 @@ class StormshifterClass extends BaseClass {
             }
         ];
 
-        core[2] = [
-            { 
-                id: "dire_fearsome", 
-                name: "Direbeast Form", 
+        core[2].push(
+            {
+                id: "dire_fearsome",
+                name: "Direbeast Form",
                 milestones: [2, 3, 5],
                 desc: (l) => FeatureGen.createScalingList("You can Beastshift into a <strong>Fearsome Beast</strong> (Large). Gain DEX+LVL temp HP. Gore: 1d6+LVL damage. Fearsome: Whenever you Interpose or Defend, you may spend 1 mana to force them to reroll.", [
                     { level: 3, text: "Rank 2: You can Beastshift into a <strong>Beast of the Pack</strong> (Medium). Gain +DEX speed. Thunderfang: 1d4+LVL piercing damage. Supercharge: Spend up to WIL mana for +1d8 lightning damage per mana (take damage on a miss)." },
@@ -150,7 +147,7 @@ class StormshifterClass extends BaseClass {
                 ], l)
             },
             { id: "mana", name: "Mana and Unlock Tier 1 Spells", desc: "You unlock tier 1 Wind and Lightning spells and gain a mana pool. This mana pool’s maximum is always equal to (WIL×3)+LVL and recharges on a Safe Rest." }
-        ];
+        );
 
         core[3] = [
             { id: "subclass", name: "Subclass", desc: "Choose a Stormshifter subclass." }

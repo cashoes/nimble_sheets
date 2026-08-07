@@ -122,10 +122,6 @@ class ShepherdClass extends BaseClass {
                     );
                 }
             },
-            grantedSpells: [
-                { level: 1, spells: ["Radiant Cantrips", "Necrotic Cantrips"] },
-                { level: 2, spells: ["Lifebinding Spirit"] }
-            ],
             spellSchools: ["Radiant", "Necrotic"],
             spellProgression: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18],
             includeUtilitySpells: createUtilityConfig((level) => level >= 11, ["selectedTwilight"]),
@@ -171,10 +167,10 @@ class ShepherdClass extends BaseClass {
             }
         ];
 
-        core[2] = [
+        core[2].push(
             { id: "mana", name: "Mana and Unlock Tier 1 Spells", desc: "You unlock tier 1 Radiant and Necrotic spells and gain a mana pool. This mana pool’s maximum is always equal to (WIL×3)+LVL and recharges on a Safe Rest." },
             { id: "spirit", name: "Lifebinding Spirit", desc: "Action: Summon a spirit companion that follows you and is immune to harm. It lasts until you cast this spell again, take a Safe Rest, or it heals a number of times equal to the mana spent summoning it. Action: It attacks or heals a creature within Reach 4. It attacks for 1d6+WIL radiant damage (ignoring armor), or heals for the same amount. Upcasting: Increment its die size by 1 (max d12), +1 healing use." }
-        ];
+        );
 
         core[3] = [
             { id: "subclass", name: "Subclass", desc: "Choose a Shepherd subclass." },
