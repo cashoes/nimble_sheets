@@ -255,9 +255,11 @@ function validateAndCorrectState(state) {
         state.gold = 0;
     }
 
-    // Ensure wounds non-negative
+    // Ensure wounds are clamped to [0, derived.woundMax] — the character's actual wound
+    // capacity (ancestry/background/class modifiers shift this away from the default 6; see
+    // issue #48), not just floored at 0.
     if (typeof state.wounds === 'number' && !isNaN(state.wounds)) {
-        state.wounds = Math.max(0, state.wounds);
+        state.wounds = Math.min(derived.woundMax || 6, Math.max(0, state.wounds));
     } else {
         state.wounds = 0;
     }
@@ -795,7 +797,10 @@ function characterReducer(currentState, action) {
 
             // Check if HP transitioned to 0
             if (oldHP > 0 && s.hpCurrent === 0) {
-                s.wounds = Math.min(6, (s.wounds || 0) + 2);
+                // Cap at the character's own woundMax (ancestry/background/class modifiers
+                // shift this away from the default 6 — issue #48), not a hardcoded 6.
+                const woundMax = computeDerived(s).woundMax || 6;
+                s.wounds = Math.min(woundMax, (s.wounds || 0) + 2);
             }
             break;
         }
@@ -1029,10 +1034,11 @@ function characterReducer(currentState, action) {
         }
         case 'HANDLE_WOUND_CLICK': {
             const { i, isAbsolute } = payload;
+            const woundMax = computeDerived(s).woundMax || 6;
             if (isAbsolute) {
-                s.wounds = i;
+                s.wounds = Math.min(woundMax, i);
             } else {
-                s.wounds = (s.wounds === i + 1) ? i : i + 1;
+                s.wounds = Math.min(woundMax, (s.wounds === i + 1) ? i : i + 1);
             }
             break;
         }
