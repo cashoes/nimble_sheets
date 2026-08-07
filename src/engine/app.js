@@ -150,33 +150,47 @@ window.addEventListener('keydown', (e) => {
 });
 
 /**
+ * Decides whether a `wheel` event over `target` should adjust a numeric value.
+ * Requires the target to be an enabled, *focused* number input — merely hovering a number
+ * field while scrolling the page must never mutate state or block the page's native scroll
+ * (issue #41). Extracted as a standalone, DOM-free function so it can be unit tested without
+ * a browser (see tests/wheel_handler_tests.js).
+ * @param {{type?: string, disabled?: boolean}|null} target - The wheel event's target element.
+ * @param {*} activeElement - `document.activeElement` at the time of the event.
+ * @returns {boolean}
+ */
+function shouldHandleWheel(target, activeElement) {
+    return !!target && target.type === 'number' && !target.disabled && target === activeElement;
+}
+
+/**
  * Mouse Wheel delegation for numeric inputs.
- * Allows rapid adjustment of HP, HD, and other number fields.
+ * Allows rapid adjustment of HP, HD, and other number fields — but only while the field is
+ * focused. Un-focused fields (including ones merely hovered while scrolling the page) are
+ * left completely alone: no mutation, and no preventDefault(), so the page scrolls normally.
  */
 window.addEventListener('wheel', (e) => {
-    if (e.target.type === 'number') {
-        if (e.target.disabled) return;
+    if (!shouldHandleWheel(e.target, document.activeElement)) return;
 
-        e.preventDefault();
-        const delta = e.deltaY < 0 ? 1 : -1;
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 1 : -1;
 
-        // Specialized adjustment for core vitals
-        if (e.target.id === 'displayCurrentHP') {
-            adjHP(delta, false);
-        } else if (e.target.id === 'displayTempHP') {
-            adjTempHP(delta, false);
-        } else if (e.target.id === 'displayHD') {
-            adjHD(delta, false);
-        } else {
-            // General handling for standard numeric fields (Gold, Attributes, etc.)
-            let val = parseInt(e.target.value || 0) + delta;
-            const min = e.target.hasAttribute('min') ? parseInt(e.target.getAttribute('min')) : -Infinity;
-            const max = e.target.hasAttribute('max') ? parseInt(e.target.getAttribute('max')) : Infinity;
+    // Specialized adjustment for core vitals
+    if (e.target.id === 'displayCurrentHP') {
+        adjHP(delta, false);
+    } else if (e.target.id === 'displayTempHP') {
+        adjTempHP(delta, false);
+    } else if (e.target.id === 'displayHD') {
+        adjHD(delta, false);
+    } else {
+        // General handling for standard numeric fields (Gold, Attributes, etc.)
+        let val = parseInt(e.target.value || 0) + delta;
+        const min = e.target.hasAttribute('min') ? parseInt(e.target.getAttribute('min')) : -Infinity;
+        const max = e.target.hasAttribute('max') ? parseInt(e.target.getAttribute('max')) : Infinity;
 
-            let newVal = Math.min(max, Math.max(min, val));
-            e.target.value = newVal;
-            e.target.dispatchEvent(new Event('input', { bubbles: true }));
-            e.target.dispatchEvent(new Event('change', { bubbles: true }));
-        }
+        let newVal = Math.min(max, Math.max(min, val));
+        e.target.value = newVal;
+        e.target.dispatchEvent(new Event('input', { bubbles: true }));
+        e.target.dispatchEvent(new Event('change', { bubbles: true }));
     }
 }, { passive: false });
