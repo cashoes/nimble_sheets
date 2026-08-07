@@ -236,15 +236,27 @@ function validateAndCorrectState(state) {
         state.lastLeveledUpAt = state.level;
     }
 
-    // Ensure resource values are non-negative numbers
+    // Ensure resource values are non-negative numbers and never exceed their derived max
+    // (issue #56). Previously only a level change re-clamped resourceValues (the block
+    // above) — any other change to the derived max (e.g. re-allocating an attribute point
+    // that a resource scales off of, or a subclass swap) left an already-topped-off value
+    // stranded above its new, lower max indefinitely. `derived` here reflects the
+    // already-corrected state.level/stats from earlier in this function, so its
+    // resourceMaxes are current. A resource id without a declared max (not present in
+    // derived.resourceMaxes) is only floored at 0, same as before. Uses `!= null` rather
+    // than truthiness so a legitimate max of 0 clamps the value to 0 instead of being
+    // treated as "no max".
     if (state.resourceValues && typeof state.resourceValues === 'object') {
         for (const [key, value] of Object.entries(state.resourceValues)) {
-            const num = parseFloat(value);
-            if (!isNaN(num) && num >= 0) {
-                state.resourceValues[key] = num;
-            } else {
-                state.resourceValues[key] = 0;
+            let num = parseFloat(value);
+            if (isNaN(num) || num < 0) num = 0;
+
+            const max = derived.resourceMaxes ? derived.resourceMaxes[key] : undefined;
+            if (max != null && Number.isFinite(max) && num > max) {
+                num = max;
             }
+
+            state.resourceValues[key] = num;
         }
     }
 
@@ -890,9 +902,17 @@ function characterReducer(currentState, action) {
         }
         case 'ADJ_RES': {
             const { id, amount, isAbsolute, max } = payload;
-            const maxLimit = max || 999;
+            // Resolve the ceiling from derived stats rather than trusting the caller-supplied
+            // `max` (issue #56): some class hooks pass no max at all, or a stale/fallback value
+            // (e.g. commander's `derived.resourceMaxes?.mana || intVal` substitutes a nonzero
+            // fallback whenever mana's true max is 0). A declared class resource's derived max
+            // is authoritative whenever this id has one. Use `!= null` rather than `||` so a
+            // legitimate max of 0 (a resource that's truly capped at 0) is respected instead of
+            // falling through to 999.
+            const derivedMax = computeDerived(s).resourceMaxes?.[id];
+            const maxLimit = derivedMax != null ? derivedMax : (max != null ? max : 999);
             const raw = s.resourceValues[id];
-            const current = raw === undefined ? (max || 0) : (parseFloat(raw) || 0);
+            const current = raw === undefined ? maxLimit : (parseFloat(raw) || 0);
             s.resourceValues[id] = adjustNumericField(current, amount, maxLimit, isAbsolute);
             break;
         }
