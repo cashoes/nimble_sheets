@@ -73,7 +73,13 @@ const ATTRIBUTE_SCHEMA = {
     
     // Newly registered class-specific stats
     auraReach: { type: 'number', default: 0, combine: COMBINERS.ADDITIVE },
+    // addStr/addDex/addInt/addWil (issue #55): flat attribute-boost modifier targets (e.g.
+    // Shadowmancer's Fiendish Boon). computeDerived folds these into the effective statsMap
+    // before any DEX/STR/INT/WIL-dependent baseline is computed -- see state.js computeDerived.
+    addStr: { type: 'number', default: 0, combine: COMBINERS.ADDITIVE },
     addDex: { type: 'number', default: 0, combine: COMBINERS.ADDITIVE },
+    addInt: { type: 'number', default: 0, combine: COMBINERS.ADDITIVE },
+    addWil: { type: 'number', default: 0, combine: COMBINERS.ADDITIVE },
     inspirationBonus: { type: 'number', default: 0, combine: COMBINERS.ADDITIVE }
 };
 

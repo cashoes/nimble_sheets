@@ -415,7 +415,7 @@ function computeDerived(s) {
         }
     });
 
-    const statsMap = getStatsMap(state);
+    let statsMap = getStatsMap(state);
     const ancFeat = ANCESTRY_FEATURES[state.ancestry];
     const bgFeat = BACKGROUND_FEATURES[state.background];
     const config = CLASS_CONFIG;
@@ -477,7 +477,51 @@ function computeDerived(s) {
 
     const hpPerLevelMap = { 6: 5, 8: 6, 10: 8, 12: 9, 20: 14 };
 
-    // 2. Define standard base values for all attributes in ATTRIBUTE_SCHEMA
+    // 2. Convert active Ancestry, Background, and Background Option to standard modifiers
+    const externalModifiers = [];
+    const addExternalMod = (feat) => {
+        if (!feat) return;
+        if (feat.modHD) externalModifiers.push({ stat: 'hdMax', value: feat.modHD });
+        if (feat.modInit) externalModifiers.push({ stat: 'init', value: feat.modInit });
+        if (feat.modInitAdv) externalModifiers.push({ stat: 'initAdv', value: true });
+        if (feat.modSpeed) externalModifiers.push({ stat: 'speed', value: feat.modSpeed });
+        if (feat.modWounds) externalModifiers.push({ stat: 'woundMax', value: feat.modWounds });
+        if (feat.modArmor) externalModifiers.push({ stat: 'armor', value: feat.modArmor });
+        if (feat.profArmor) externalModifiers.push({ stat: 'profArmor', value: feat.profArmor });
+        if (feat.profWeapons) externalModifiers.push({ stat: 'profWeapons', value: feat.profWeapons });
+    };
+
+    addExternalMod(ancFeat);
+    addExternalMod(bgFeat);
+    addExternalMod(bgSelectedOpt);
+
+    const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
+    let combinedModifiers = [
+        ...(CLASS_CONFIG.statModifiers || []),
+        ...(subConfig.statModifiers || []),
+        ...externalModifiers
+    ];
+
+    // Issue #55: class/subclass features can grant flat attribute increases via the same
+    // statModifiers pipeline as every other stat (e.g. Shadowmancer's Fiendish Boon:
+    // {stat:"addDex", value:1} paired with {stat:"hdMax", value:-1}). Those addStr/addDex/
+    // addInt/addWil modifiers must be folded into the *effective* statsMap before any
+    // DEX/STR/INT/WIL-dependent baseline is computed below (init, armorBase, the armor DEX cap,
+    // resource maxes, hdNotation, skill totals) -- otherwise the boost only ever lands in
+    // `folded.addDex`, a value nothing downstream reads, so only the paired penalty is felt.
+    // Passing derivedBase=null here is safe: these four stats default to 0 in ATTRIBUTE_SCHEMA
+    // and don't depend on any baseline value.
+    const statBoostFold = typeof reduceModifiers === 'function'
+        ? reduceModifiers(combinedModifiers, level, subclass, state, statsMap, null)
+        : {};
+    statsMap = {
+        str: statsMap.str + (statBoostFold.addStr || 0),
+        dex: statsMap.dex + (statBoostFold.addDex || 0),
+        int: statsMap.int + (statBoostFold.addInt || 0),
+        wil: statsMap.wil + (statBoostFold.addWil || 0)
+    };
+
+    // 3. Define standard base values for all attributes in ATTRIBUTE_SCHEMA
     const derivedBase = {
         baseHp: CLASS_CONFIG.baseHp || 10,
         hpPerLevel: hpPerLevelMap[hdFaceBase] || CLASS_CONFIG.hpPerLevel || 5,
@@ -501,33 +545,8 @@ function computeDerived(s) {
         panel_surge: false
     };
 
-    // 3. Convert active Ancestry, Background, and Background Option to standard modifiers
-    const externalModifiers = [];
-    const addExternalMod = (feat) => {
-        if (!feat) return;
-        if (feat.modHD) externalModifiers.push({ stat: 'hdMax', value: feat.modHD });
-        if (feat.modInit) externalModifiers.push({ stat: 'init', value: feat.modInit });
-        if (feat.modInitAdv) externalModifiers.push({ stat: 'initAdv', value: true });
-        if (feat.modSpeed) externalModifiers.push({ stat: 'speed', value: feat.modSpeed });
-        if (feat.modWounds) externalModifiers.push({ stat: 'woundMax', value: feat.modWounds });
-        if (feat.modArmor) externalModifiers.push({ stat: 'armor', value: feat.modArmor });
-        if (feat.profArmor) externalModifiers.push({ stat: 'profArmor', value: feat.profArmor });
-        if (feat.profWeapons) externalModifiers.push({ stat: 'profWeapons', value: feat.profWeapons });
-    };
-
-    addExternalMod(ancFeat);
-    addExternalMod(bgFeat);
-    addExternalMod(bgSelectedOpt);
-
     // First fold pass: fold class, subclass, ancestry, and background modifiers to determine baseline metrics (e.g. maxHP)
-    const subConfig = CLASS_CONFIG.getSubclassConfig(subclass, state);
-    let combinedModifiers = [
-        ...(CLASS_CONFIG.statModifiers || []), 
-        ...(subConfig.statModifiers || []),
-        ...externalModifiers
-    ];
-
-    let folded = typeof reduceModifiers === 'function' 
+    let folded = typeof reduceModifiers === 'function'
         ? reduceModifiers(combinedModifiers, level, subclass, state, statsMap, derivedBase)
         : { ...derivedBase };
 

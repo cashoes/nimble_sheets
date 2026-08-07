@@ -1,4 +1,22 @@
 /**
+ * Effective DEX total for Shadowmancer's own DEX-scaled `scalingStats`/`mechanicPanelExtension`
+ * values (Pilfered Power max, Minion Max, and the mechanic panel's live Pilfered Power display).
+ * Those are computed outside the engine's class-modifier fold -- `getDerivedStats` (base_class.js)
+ * calls scalingStats functions with the raw character `state`, and `getMechanicPanelHTML` builds
+ * its own raw `getStatsMap(state)` -- so without this they'd stay blind to class-granted attribute
+ * boosts like Fiendish Boon's +1 DEX (issue #55) even after the engine's statModifiers pipeline is
+ * fixed to apply it everywhere else (init, armor, skill totals). Mirrors the `fiendish_boon_stats`
+ * statModifier below; keep the two in sync if Fiendish Boon's value ever changes.
+ * @param {Object} state - Character state object.
+ * @returns {number} DEX total including the Fiendish Boon bonus, if selected.
+ */
+function shadowmancerEffectiveDex(state) {
+    const statsMap = getStatsMap(state);
+    const fiendishBonus = (state.selectedGreater || []).includes("Fiendish Boon") ? 1 : 0;
+    return statsMap.dex + fiendishBonus;
+}
+
+/**
  * Shadowmancer Class
  * Dark mystic who commands spirits & shadows.
  * @extends BaseClass
@@ -85,12 +103,11 @@ class ShadowmancerClass extends BaseClass {
                 blastStat: (l) => "INT",
                 multipliedBonus: (l) => false,
                 pilferMax: (level, subclass, state) => {
-                    const statsMap = getStatsMap(state);
-                    return level >= 2 ? statsMap.dex : 0;
+                    return level >= 2 ? shadowmancerEffectiveDex(state) : 0;
                 },
                 minionMax: (level, subclass, state) => {
                     const statsMap = getStatsMap(state);
-                    const mainStat = Math.max(statsMap.int, statsMap.dex);
+                    const mainStat = Math.max(statsMap.int, shadowmancerEffectiveDex(state));
                     let max = Math.max(1, Math.min(mainStat, level));
                     if (level >= 20) max *= 2;
                     return max;
@@ -103,7 +120,7 @@ class ShadowmancerClass extends BaseClass {
             },
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
                 if (level >= 2 && state.subclass !== "Reaver") {
-                    const pilferMax = statsMap.dex;
+                    const pilferMax = shadowmancerEffectiveDex(state);
                     const pilferRemaining = state.resourceValues.pilfer ?? pilferMax;
                     const hpCost = Math.floor(derived.maxHP / 2);
 
