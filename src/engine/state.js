@@ -350,6 +350,65 @@ const getPassMods = (s) => {
 };
 
 /**
+ * Builds the set of weapon-proficiency tokens a class's `profWeapons` strings unlock (issue
+ * #53). Class strings ("all STR weapons", "DEX Weapons", "Blades, Staves, Wands", "All Martial
+ * Weapons", "Melee") and item weapon categories ("STR 1H", "DEX 1H", "STR 2H", "DEX Scaling",
+ * "STR Scaling") share no vocabulary -- normalize both sides onto a small token set keyed off
+ * fields every weapon item already carries (stat/type/category/name) rather than inventing new
+ * item metadata. Global (not nested in computeDerived) so components/inventory.js's per-row
+ * proficiency warning can reuse the exact same matching rules the derived-stats pass uses.
+ * @param {string[]} profWeaponsList
+ * @returns {Set<string>}
+ */
+function buildAllowedWeaponSet(profWeaponsList) {
+    const allowed = new Set();
+    (profWeaponsList || []).forEach(p => {
+        const pLower = (p || "").toLowerCase();
+        if (pLower.includes("all martial") || pLower.includes("martial weapons")) allowed.add("all");
+        if (pLower.includes("str")) allowed.add("str");
+        if (pLower.includes("dex")) allowed.add("dex");
+        if (pLower.includes("blade")) allowed.add("blade");
+        if (pLower.includes("stave") || pLower.includes("staff")) allowed.add("staff");
+        if (pLower.includes("wand")) allowed.add("wand");
+        if (pLower.includes("melee")) allowed.add("melee");
+        if (pLower.includes("ranged")) allowed.add("ranged");
+    });
+    return allowed;
+}
+
+/**
+ * True if a weapon-typed inventory item is covered by `allowedWeapons` (see
+ * buildAllowedWeaponSet). "blade" matches the DEX 1H category -- dagger/sickle/shortsword/rapier,
+ * the only bladed weapons in the item library, and exactly what Shadowmancer starts with under a
+ * "Blades, Wands" proficiency. "staff" matches only the item literally named "Staff" (or a custom
+ * item a player named "Staff"), not every STR 2H weapon, so a "Staves, Wands" caster proficiency
+ * doesn't silently also cover a Battleaxe. "wand" has no matching library item today (there is no
+ * Wand weapon in items.json) -- it still matches a custom item explicitly named "Wand" so the
+ * token isn't a total dead end, and is otherwise a documented no-op until a Wand item exists.
+ * @param {Object} item
+ * @param {Set<string>} allowedWeapons
+ * @returns {boolean}
+ */
+function isWeaponItemProficient(item, allowedWeapons) {
+    if (!item || !allowedWeapons || allowedWeapons.size === 0) return false;
+    if (allowedWeapons.has("all")) return true;
+
+    const stat = (item.stat || "").toLowerCase();
+    const type = (item.type || "").toLowerCase();
+    const category = (item.category || "").toLowerCase();
+    const name = (item.name || "").toLowerCase();
+
+    if (allowedWeapons.has("str") && stat === "str") return true;
+    if (allowedWeapons.has("dex") && stat === "dex") return true;
+    if (allowedWeapons.has("melee") && type === "melee") return true;
+    if (allowedWeapons.has("ranged") && type === "ranged") return true;
+    if (allowedWeapons.has("blade") && category === "dex 1h") return true;
+    if (allowedWeapons.has("staff") && name === "staff") return true;
+    if (allowedWeapons.has("wand") && name === "wand") return true;
+    return false;
+}
+
+/**
  * master calculation engine for character stats.
  * Runs on every state change to refresh all derived numbers.
  * @param {Object} s - Character state object.
@@ -555,15 +614,24 @@ function computeDerived(s) {
         }
     });
 
+    // Weapon proficiency (#53): mirrors the armor matcher above -- an equipped weapon whose
+    // stat/type/category/name isn't covered by the class's normalized profWeapons tokens flags
+    // hasNonProficientWeaponEquipped, kept as its own flag rather than folded into
+    // hasNonProficientEquipped so armor/shield and weapon proficiency stay independently
+    // readable and testable.
+    const allowedWeapons = buildAllowedWeaponSet(folded.profWeapons);
+
     let hasNonProficientEquipped = false;
+    let hasNonProficientWeaponEquipped = false;
     let armorIsLight = true;
     let bestArmorVal = -1;
     let inventoryShieldBonus = 0;
     (state.inventory || []).forEach(item => {
         if (!item.equipped) return;
-        
+
         const isArmorItem = item.type === 'armor';
         const isShieldItem = item.type === 'shield';
+        const isWeaponItem = item.type === 'melee' || item.type === 'ranged';
         if (isArmorItem || isShieldItem) {
             const cat = (item.category || "").toLowerCase();
             const targetCat = cat.includes("shield") ? "shields" : cat;
@@ -575,6 +643,10 @@ function computeDerived(s) {
             if (!isProficient) {
                 hasNonProficientEquipped = true;
             }
+        }
+
+        if (isWeaponItem && !isWeaponItemProficient(item, allowedWeapons)) {
+            hasNonProficientWeaponEquipped = true;
         }
 
         if (isArmorItem) {
@@ -594,6 +666,7 @@ function computeDerived(s) {
     }
     foldedArmor += inventoryShieldBonus + folded.shieldBonus + folded.armor;
     folded.hasNonProficientEquipped = hasNonProficientEquipped;
+    folded.hasNonProficientWeaponEquipped = hasNonProficientWeaponEquipped;
 
     // 7. Resolve Condition Speed Multipliers and final actions
     let foldedSpeed = (folded.speedBase !== null ? folded.speedBase : 6) + folded.speed;

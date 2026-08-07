@@ -75,7 +75,7 @@ function Header() {
                     <label style="color:var(--gold-light)">Armor</label>
                     <div style="display:flex; align-items:center; gap:4px; justify-content:center;">
                         <div class="header-stat-val" style="color:var(--gold-light)">${armorVal}</div>
-                        ${() => d().hasNonProficientEquipped ? html`<span style="color:var(--save-dis); font-size:1.1em; cursor:help;" title="Warning: Wearing non-proficient armor or shield!">⚠️</span>` : ''}
+                        ${() => (d().hasNonProficientEquipped || d().hasNonProficientWeaponEquipped) ? html`<span style="color:var(--save-dis); font-size:1.1em; cursor:help;" title="Warning: Wearing non-proficient armor/shield or wielding a non-proficient weapon!">⚠️</span>` : ''}
                     </div>
                 </div>
                 ${customStatsNodes}

@@ -62,6 +62,14 @@ function InventoryRow(props) {
         return item.category || typeStr() || 'misc';
     };
 
+    // Delegates to the same token matcher state.js's derived-stats pass uses (issue #53) so the
+    // per-row warning icon and the header-level hasNonProficientWeaponEquipped flag never drift
+    // out of sync with each other.
+    const isProficientInWeapon = (weaponItem) => {
+        const allowed = buildAllowedWeaponSet(d().profWeapons);
+        return isWeaponItemProficient(weaponItem, allowed);
+    };
+
     const isProficientInArmor = (category) => {
         const profs = d().profArmor || [];
         const catLower = (category || "").toLowerCase();
@@ -158,12 +166,13 @@ function InventoryRow(props) {
                 weaponType = (item.category || "").toLowerCase().includes('ranged') ? 'ranged' : 'melee';
             }
             
-            const click = () => dispatchRoll(displayFormula, nameStr(), { 
-                stat: statKey(), 
+            const isProf = isProficientInWeapon(item);
+            const click = () => dispatchRoll(displayFormula, nameStr(), {
+                stat: statKey(),
                 type: 'attack',
-                metadata: { weaponType } 
+                metadata: { weaponType, weaponProficient: isProf }
             });
-            return html`<span class="roll-link" onclick=${click}>⚔️ ${displayFormula}</span>`;
+            return html`<span><span class="roll-link" onclick=${click}>⚔️ ${displayFormula}</span> ${!isProf && isEquipped() ? html`<span style="color:var(--save-dis); margin-left:4px; cursor:help;" title="Warning: Wielding a non-proficient weapon! Cannot crit (CL-13).">⚠️</span>` : ''}</span>`;
         }
         if (typeStr() === 'armor') {
             const base = parseInt(armorStr()) || 0;

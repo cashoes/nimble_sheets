@@ -175,7 +175,13 @@ function dispatchRoll(notation, label, options = {}) {
     if (label) {
         const cleanLabel = label.replace(/[#\[\]()]/g, '');
         const weaponType = options.metadata?.weaponType;
-        const tag = weaponType ? ` (${weaponType})` : '';
+        let tag = weaponType ? ` (${weaponType})` : '';
+        // CL-13 / issue #53: a weapon attack flagged non-proficient by the caller (see
+        // inventory.js's isProficientInWeapon) round-trips through this same "(tag)" convention
+        // used for melee/ranged, since dispatchRoll never rolls dice itself -- it only builds a
+        // notation string for an external VTT extension, and the numeric result comes back later
+        // through handleRollResult with only that notation string to read.
+        if (options.metadata?.weaponProficient === false) tag += ' (non-proficient)';
         labeledNotation = `${finalNotation} #${cleanLabel}${tag}`;
     }
 
@@ -236,16 +242,22 @@ function handleRollResult(data) {
         // Extract context from notation tags
         const isMelee = notation.toLowerCase().includes('(melee)');
         const isRanged = notation.toLowerCase().includes('(ranged)');
+        // CL-13 / issue #53: inventory.js tags a weapon attack "(non-proficient)" (via
+        // dispatchRoll's metadata.weaponProficient) whenever the equipped weapon isn't covered
+        // by the class's normalized profWeapons tokens (state.js's isWeaponItemProficient).
+        const isNonProficientWeapon = notation.toLowerCase().includes('(non-proficient)');
 
         // NIMBLE Crit: Standard faces, or (faces - offset) if rule-breakers are active
         const critOffset = (CLASS_CONFIG.rollOverrides && typeof CLASS_CONFIG.rollOverrides.getCritThresholdOffset === 'function')
             ? CLASS_CONFIG.rollOverrides.getCritThresholdOffset(notation, primaryGroup, s, faces)
             : 0;
         const critThreshold = faces - critOffset;
-        
-        // Note: primaryGroup.total includes explosions. 
+
+        // Note: primaryGroup.total includes explosions.
         // If they roll (faces - offset) and explode, total will be >= faces.
-        const isCrit = primaryGroup.total >= critThreshold;
+        // CL-13: heroes not proficient with the weapon they're attacking with (e.g. Unarmed
+        // Strike) cannot crit -- same as any other weapon used without proficiency.
+        const isCrit = primaryGroup.total >= critThreshold && !isNonProficientWeapon;
 
         // Auto-hit rule-breaker bypasses natural 1 miss check
         const forceAutoHit = (CLASS_CONFIG.rollOverrides && typeof CLASS_CONFIG.rollOverrides.forceAutoHit === 'function')
