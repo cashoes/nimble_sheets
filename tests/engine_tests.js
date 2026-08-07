@@ -264,6 +264,15 @@ function runTests() {
     cheatCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'subclass', value: 'SilentBlade' } });
     assert.strictEqual(cheatCtx.charDerived().speed, baseSpeed, "a level-11 SilentBlade Cheat must not get a baseless +2 speed bonus copy-pasted from Berserker's Onslaught feature");
 
+    // --- TEST 8: Shadowmancer Fiendish Boon applies its addDex benefit, not just its penalty ---
+    console.log("  [Shadowmancer] Testing Fiendish Boon's +1 DEX actually raises DEX-scaled values...");
+    const smBoonCtx = createSandbox('shadowmancer');
+    smBoonCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 4 } });
+    const pilferMaxBefore = smBoonCtx.charDerived().resourceMaxes.pilfer;
+    smBoonCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'selectedGreater', value: ['Fiendish Boon'] } });
+    const pilferMaxAfter = smBoonCtx.charDerived().resourceMaxes.pilfer;
+    assert.strictEqual(pilferMaxAfter, pilferMaxBefore + 1, "selecting Fiendish Boon must raise Pilfered Power's max by 1 (its addDex benefit), not leave it unboosted while only its hdMax penalty lands");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
