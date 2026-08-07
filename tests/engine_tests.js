@@ -262,6 +262,20 @@ function runTests() {
     assert.deepStrictEqual(Array.from(ctx.splitSubtextLines("")), [], "an empty/falsy subtext must split to an empty array");
     assert.ok(!ctx.splitSubtextLines("Gain on hit\nor dmg taken.").some(l => l.includes('<br>')), "the split lines must never contain a literal <br> tag (that was the bug: subtext rendered as a text node, so a literal '<br>' string showed as visible text instead of a line break)");
 
+    // --- TEST 8: Save-as-HTML export embeds state safely, once, and survives re-export ---
+    console.log("  [Export] Testing embedStateIntoHTML escapes </script and survives a second export...");
+    vm.runInContext(fs.readFileSync(path.join(WORKSPACE_DIR, 'src', 'engine', 'html_export.js'), 'utf8'), ctx);
+    const baseHtml = '<html><head><title>Old</title></head><body><script type="application/json" id="nimble-state">null</script></body></html>';
+    const maliciousState = { charName: 'Evil</script><script>alert(1)</script>', level: 5 };
+    const firstExport = ctx.embedStateIntoHTML(baseHtml, maliciousState, maliciousState.charName, 'Mage');
+    assert.ok(!firstExport.includes('</script><script>alert(1)'), "a charName containing a literal </script> must not be able to break out of the JSON island's <script> block");
+    assert.ok(firstExport.includes('<title>NIMBLE — Evil'), "the exported <title> must reflect the character name");
+    // Re-export the already-exported file (the scenario that used to truncate on state text containing "};").
+    const secondExport = ctx.embedStateIntoHTML(firstExport, { ...maliciousState, level: 9 }, maliciousState.charName, 'Mage');
+    const islandMatches = secondExport.match(/<script[^>]*id="nimble-state"[^>]*>/g);
+    assert.strictEqual(islandMatches.length, 1, "re-exporting an already-exported file must still leave exactly one state island, not duplicate or corrupt it");
+    assert.ok(secondExport.includes('"level":9'), "the second export's state island must carry the updated state, not the stale first-export payload");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
