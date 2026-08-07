@@ -1,4 +1,17 @@
 /**
+ * Renders subtext as real line-break elements (one `<br/>` HTM node per split, built with
+ * `splitSubtextLines` from ui.js) instead of interpolating the raw string as a single text
+ * node. This is a safe alternative to a `\n`-in-data convention: it never parses the
+ * subtext as HTML (no innerHTML/raw-string injection), so untrusted or malformed subtext
+ * still can't inject markup — it only ever produces text nodes plus literal `<br/>`
+ * elements written by this file (see issue #1: a literal "<br>" in data used to render as
+ * visible text because subtext was rendered as a text node).
+ */
+function renderSubtextLines(sub) {
+    return splitSubtextLines(sub).flatMap((line, idx) => idx === 0 ? [line] : [html`<br/>`, line]);
+}
+
+/**
  * Mechanic Panel Sub-Components
  */
 const PanelComponents = {
@@ -17,7 +30,7 @@ const PanelComponents = {
                     <${NumberSpinner} value=${val} onAdjust=${(amt) => adjRes(id, amt, max)} onSet=${(value) => adjRes(id, value, max, true)} />
                     <div style="font-family: 'Cinzel'; font-weight: bold; color: var(--text-muted); font-size: 1.0em;">/ <span style="color: var(--text-main);">${max}</span></div>
                 </div>
-                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-style: italic; margin-top: 4px; line-height: 1.1;">${sub}</div>` : ''}
+                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-style: italic; margin-top: 4px; line-height: 1.1;">${renderSubtextLines(sub)}</div>` : ''}
             </div>
         `;
     },
@@ -40,7 +53,7 @@ const PanelComponents = {
                      style="font-size: 2.2em; color: #fff; font-weight: bold; font-family: 'Cinzel', serif; line-height: 1; cursor: pointer;">
                     ${disp}
                 </div>
-                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">${sub}</div>` : ''}
+                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">${renderSubtextLines(sub)}</div>` : ''}
             </div>
         `;
     },
@@ -82,7 +95,7 @@ const PanelComponents = {
             <div style="display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 80px;">
                 <label style="font-size: 0.7em; color: var(--gold-light); text-transform: uppercase; font-family: 'Cinzel', serif; font-weight: bold; margin-bottom: 2px;">${lab}</label>
                 <span style=${valSty}>${valLab}</span>
-                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-style: italic; text-align: center; line-height: 1.1; margin-top: 4px;">${sub}</div>` : ''}
+                ${sub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-style: italic; text-align: center; line-height: 1.1; margin-top: 4px;">${renderSubtextLines(sub)}</div>` : ''}
                 ${() => indList ? html`
                     <div style="display: flex; flex-direction: column; gap: 3px; margin-top: 6px; width: 100%; align-items: flex-end;">
                         ${iNodes}
@@ -232,7 +245,7 @@ const PanelComponents = {
                 <select onchange=${changeFn} style="border-bottom-color: var(--class-accent); font-size: 0.9em; width: 100%;">
                     ${optNodes}
                 </select>
-                ${ssub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">${ssub}</div>` : ''}
+                ${ssub ? html`<div style="font-size: 0.75em; color: var(--text-muted); font-family: 'Crimson Text'; font-style: italic; line-height: 1.1; margin-top: 4px;">${renderSubtextLines(ssub)}</div>` : ''}
             </div>
         `;
     },

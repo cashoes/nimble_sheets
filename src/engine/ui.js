@@ -76,6 +76,20 @@ class MechanicPanelBuilder {
 
 const PanelBuilder = MechanicPanelBuilder;
 
+/**
+ * Splits a mechanic-panel subtext string into individual display lines on `\n`.
+ * Pure formatter (no DOM/HTML involved) so panel components can render each line as a
+ * real element/line-break instead of relying on markup embedded in the data string
+ * (see issue #1 — a literal "<br>" was previously shown as text because subtext is
+ * rendered as a text node, not parsed as HTML).
+ * @param {string} sub - Raw subtext string, e.g. "Gain on hit\nor dmg taken."
+ * @returns {string[]} Non-empty trimmed lines, in order. Empty/falsy input returns [].
+ */
+function splitSubtextLines(sub) {
+    if (!sub) return [];
+    return sub.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+}
+
 const getState = () => {
     if (typeof charState === 'function') return charState();
     if (typeof window !== 'undefined' && typeof window.charState === 'function') return window.charState();

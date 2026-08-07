@@ -86,7 +86,7 @@ class BerserkerClass extends BaseClass {
                     { static: true, flex: 3.5 }
                 );
 
-                builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit<br>or dmg taken.', { minWidth: 80, flex: 1 });
+                builder.addStatDisplay(totalFury, 'Total Damage', 'Gain on hit\nor dmg taken.', { minWidth: 80, flex: 1 });
             },
             rollTriggers: [
                 {
