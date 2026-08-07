@@ -369,6 +369,14 @@ function runTests() {
     assert.strictEqual(storageCtx.charState().level, 5, "the in-memory state must still update even when the storage write behind it fails");
     storageCtx.localStorage.setItem = originalSetItem;
 
+    // --- TEST 17: Wounds are capped at the character's own woundMax, not a hardcoded 6 ---
+    console.log("  [Wounds] Testing wounds clamp to derived.woundMax (Planarbeing: 4), not a hardcoded 6...");
+    const planarCtx = createSandbox('hunter');
+    planarCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'ancestry', value: 'Planarbeing' } });
+    assert.strictEqual(planarCtx.charDerived().woundMax, 4, "sanity: Planarbeing's -2 max Wounds must bring woundMax to 4");
+    planarCtx.dispatch({ type: 'HANDLE_WOUND_CLICK', payload: { i: 9, isAbsolute: true } });
+    assert.strictEqual(planarCtx.charState().wounds, 4, "wounds must clamp to the character's own woundMax (4 for Planarbeing), not a hardcoded 6");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
