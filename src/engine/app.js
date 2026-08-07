@@ -39,26 +39,29 @@ const importCharacter = (input) => {
 
 /**
  * Exports the current character sheet as a standalone HTML file.
- * Injects the current state into the EMBEDDED_STATE variable.
+ * Injects the current state into the `#nimble-state` JSON island.
  * @returns {void}
  */
 const saveAsHTML = () => {
-    const newHtml = document.documentElement.outerHTML;
+    // Clone the live DOM (not the page itself) so exporting doesn't disturb what the user is
+    // looking at, then empty every Solid mount container in the clone before serializing.
+    // Solid.render() APPENDS into a non-empty container instead of replacing it, so if the
+    // clone still carried the live, fully-mounted widgets, reopening the exported file would
+    // render a second copy on top of that frozen (event-handler-less) snapshot — see issue #35.
+    const clone = document.documentElement.cloneNode(true);
+    clearSolidMountContainers(clone);
 
-    // Inject current state into the template placeholder
-    const updatedHtml = newHtml.replace(
-        /const EMBEDDED_STATE = (null|{.*?});/,
-        `const EMBEDDED_STATE = ${JSON.stringify(state)};`
-    );
+    const rawHtml = clone.outerHTML;
 
-    // Update document title for the exported file
-    const titledHtml = updatedHtml.replace(
-        /<title>(.*?)<\/title>/,
-        `<title>NIMBLE — ${state.charName ?? 'Hero'} (${CLASS_CONFIG?.name ?? 'Unknown'})</title>`
-    );
+    // Embed the current state + an updated <title> via the pure, DOM-free embedStateIntoHTML
+    // seam (src/engine/html_export.js) — no more regex-splicing raw JSON into the executable
+    // <script> source, which used to (a) let a crafted charName break out of the script block,
+    // (b) truncate on state text containing "};", and (c) let charName's "$&"/"$1"/etc. get
+    // expanded as String.replace() replacement patterns.
+    const finalHtml = embedStateIntoHTML(rawHtml, state, state.charName, CLASS_CONFIG?.name);
 
     // Trigger download
-    const blob = new Blob([titledHtml], { type: 'text/html' });
+    const blob = new Blob([finalHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -93,27 +96,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 FeaturesAndSpellsLayout, MechanicPanel, IdentityBar, LogFeed
             } = window.NIMBLE_COMPONENTS;
 
-            const logMount = document.getElementById('solid-action-log');
-            if (logMount) Solid.render(() => Solid.createComponent(LogFeed, {}), logMount);
+            // Defensively clear every mount container before mounting. A reopened Save-as-HTML
+            // export can carry a stale, pre-rendered (event-handler-less) snapshot inside these
+            // divs; Solid.render() APPENDS into a non-empty container rather than replacing it,
+            // so without this every widget would visibly duplicate on every export/reopen cycle
+            // (issue #35).
+            clearSolidMountContainers(document);
 
-            const headerMount = document.getElementById('solid-header');
-            if (headerMount) Solid.render(() => Solid.createComponent(Header, {}), headerMount);
+            const mount = (id, Component) => {
+                const el = document.getElementById(id);
+                if (el) Solid.render(() => Solid.createComponent(Component, {}), el);
+            };
 
-            const identityMount = document.getElementById('topBarContainer');
-            if (identityMount) Solid.render(() => Solid.createComponent(IdentityBar, {}), identityMount);
-
-            const attrMount = document.getElementById('solid-attributes');
-            if (attrMount) Solid.render(() => Solid.createComponent(AttributesSection, {}), attrMount);
-
-            Solid.render(() => Solid.createComponent(HPTracker, {}), document.getElementById('solid-hp'));
-            Solid.render(() => Solid.createComponent(WoundTracker, {}), document.getElementById('solid-wounds'));
-            Solid.render(() => Solid.createComponent(ProficiencyRow, {}), document.getElementById('solid-proficiency'));
-            Solid.render(() => Solid.createComponent(InventorySection, {}), document.getElementById('solid-inventory-section'));
-            Solid.render(() => Solid.createComponent(Skills, {}), document.getElementById('solid-skills'));
-            Solid.render(() => Solid.createComponent(Conditions, {}), document.getElementById('solid-conditions'));
-            Solid.render(() => Solid.createComponent(CombatControls, {}), document.getElementById('combatControlsContainer'));
-            Solid.render(() => Solid.createComponent(FeaturesAndSpellsLayout, {}), document.getElementById('solid-features-spells'));
-            Solid.render(() => Solid.createComponent(MechanicPanel, {}), document.getElementById('classMechanicPanel'));
+            mount('solid-action-log', LogFeed);
+            mount('solid-header', Header);
+            mount('topBarContainer', IdentityBar);
+            mount('solid-attributes', AttributesSection);
+            mount('solid-hp', HPTracker);
+            mount('solid-wounds', WoundTracker);
+            mount('solid-proficiency', ProficiencyRow);
+            mount('solid-inventory-section', InventorySection);
+            mount('solid-skills', Skills);
+            mount('solid-conditions', Conditions);
+            mount('combatControlsContainer', CombatControls);
+            mount('solid-features-spells', FeaturesAndSpellsLayout);
+            mount('classMechanicPanel', MechanicPanel);
         }
     } catch (err) {
         console.error("Failed to initialize app:", err);

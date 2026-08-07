@@ -38,8 +38,8 @@ async function compileAll() {
 
         // Read Engine modules in correct order
         const engineModules = [
-            'solid.js', 'attributes.js', 'rolls.js', 'features.js', 'ui.js', 'core.js', 'base_class.js', 
-            'event_bus.js', 'state.js', 'bridge.js', 'app.js'
+            'solid.js', 'attributes.js', 'rolls.js', 'features.js', 'ui.js', 'core.js', 'base_class.js',
+            'event_bus.js', 'state.js', 'bridge.js', 'html_export.js', 'app.js'
         ];
         const engineParts = engineModules.map(m => fs.readFileSync(path.join(engineDir, m), 'utf8'));
 
@@ -53,11 +53,11 @@ async function compileAll() {
         const componentParts = componentModules.map(m => fs.readFileSync(path.join(componentsDir, m), 'utf8'));
         const componentsContent = componentParts.join('\n\n');
 
-        // Inject components at index 10 (before app.js)
-        engineParts.splice(10, 0, componentsContent);
+        // Inject components at index 11 (before app.js)
+        engineParts.splice(11, 0, componentsContent);
 
         // Deconstruct engine parts
-        const [solid, attributes, rolls, features, ui, corePart, baseClass, eventBus, state, bridge, components, app] = engineParts;
+        const [solid, attributes, rolls, features, ui, corePart, baseClass, eventBus, state, bridge, htmlExport, components, app] = engineParts;
 
         // Compile each class
         for (const className of CLASSES) {
@@ -78,7 +78,7 @@ async function compileAll() {
             jsContent += `// --- SolidJS Runtime ---\n${solid}\n\n`;
             jsContent += `// --- Engine Helpers & Base ---\n${attributes}\n${rolls}\n${features}\n${ui}\n${corePart}\n${baseClass}\n${eventBus}\n\n`;
             jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
-            jsContent += `// --- Engine Logic ---\n${state}\n${bridge}\n${components}\n${app}\n\n`;
+            jsContent += `// --- Engine Logic ---\n${state}\n${bridge}\n${htmlExport}\n${components}\n${app}\n\n`;
 
             const fullScript = `<script>\n${jsContent}<\/script>`;
             const parts = template.split('<!-- INJECT_SCRIPTS -->');

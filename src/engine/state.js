@@ -728,10 +728,26 @@ const getStorageKey = () => {
 const STORAGE_KEY = getStorageKey();
 
 /**
- * Placeholder for embedded state injection.
- * This is used when a character sheet is exported as a standalone HTML file.
+ * Embedded state, read from the `#nimble-state` JSON island (src/base_template.html) rather
+ * than from a source-level placeholder. When a character sheet is exported via "Save as HTML"
+ * (see saveAsHTML/embedStateIntoHTML in app.js/html_export.js), the exported file's island
+ * carries the character state as JSON; parsing it here means a persisted state string can never
+ * break out of a <script> block or get truncated by a naive regex over the page source (issue
+ * #35). A freshly-built (never exported) tracker ships the island with a literal `null` body,
+ * which JSON.parse()s to `null` — identical to this file's previous hardcoded default.
  */
-const EMBEDDED_STATE = null;
+const EMBEDDED_STATE = (() => {
+    if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return null;
+    const island = document.getElementById('nimble-state');
+    const text = island && island.textContent && island.textContent.trim();
+    if (!text) return null;
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("Failed to parse embedded state island:", e);
+        return null;
+    }
+})();
 
 /** The master character state object. Initialized with defaults to prevent race conditions during UI setup. */
 let state = ensureValidState({});
