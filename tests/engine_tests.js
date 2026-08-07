@@ -255,6 +255,15 @@ function runTests() {
     assert.strictEqual(rollResult.total, 10, "Die should explode to a total of 6 + 4 = 10");
     assert.strictEqual(rollResult.detail, "6!! + 4", "Die detail should accurately record recursion sequence");
 
+    // --- TEST 7: Cheat does not carry a baseless onslaught_speed +2 modifier ---
+    console.log("  [Cheat] Testing SilentBlade 11 does not get an unwarranted +2 speed...");
+    const baseCheatCtx = createSandbox('cheat');
+    const baseSpeed = baseCheatCtx.charDerived().speed;
+    const cheatCtx = createSandbox('cheat');
+    cheatCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 11 } });
+    cheatCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'subclass', value: 'SilentBlade' } });
+    assert.strictEqual(cheatCtx.charDerived().speed, baseSpeed, "a level-11 SilentBlade Cheat must not get a baseless +2 speed bonus copy-pasted from Berserker's Onslaught feature");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
