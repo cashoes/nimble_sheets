@@ -356,6 +356,14 @@ function defaultGetFeaturesHTML(level, subclass, state, derived, buildFeatureHtm
         if (f.replaces) {
             const r = Array.isArray(f.replaces) ? f.replaces : [f.replaces];
             r.forEach(oldId => {
+                // Defensive guard (issue #40): a feature whose `replaces` list names its OWN id
+                // would otherwise add that id to `replacedIds` below, and step 3 skips ANY
+                // feature whose id appears there — silently deleting both the self-referencing
+                // replacement and every other feature sharing that id (the one it was actually
+                // meant to supersede). The real fix is giving the replacement a distinct id (see
+                // the class_*.js data files); this guard just stops a reintroduced self-reference
+                // from silently reproducing the same class of bug.
+                if (oldId === f.id) return;
                 replacedById[oldId] = f.id;
                 replacedIds.add(oldId);
             });

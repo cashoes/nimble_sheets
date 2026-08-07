@@ -312,8 +312,8 @@ class OathswornClass extends BaseClass {
         };
 
         subclasses["Oathbreaker"] = {
-            1: [{ id: "judgment", replaces: "judgment", name: "Aura of Suffering", desc: "You gain an aura with a Reach of 4 and can Interpose for an ally anywhere within your aura; however, your Radiant Judgment ability no longer triggers when attacked. Instead, it triggers whenever you could Interpose but don’t." }],
-            2: [{ id: "paragon", replaces: "paragon", name: "Paragon of Power", desc: "Advantage on Might checks when attempting to intimidate others." }],
+            1: [{ id: "aura_of_suffering", replaces: "judgment", name: "Aura of Suffering", desc: "You gain an aura with a Reach of 4 and can Interpose for an ally anywhere within your aura; however, your Radiant Judgment ability no longer triggers when attacked. Instead, it triggers whenever you could Interpose but don’t." }],
+            2: [{ id: "paragon_of_power", replaces: "paragon", name: "Paragon of Power", desc: "Advantage on Might checks when attempting to intimidate others." }],
             3: [
                 { id: "we_all_suffer", name: "We All Suffer", desc: "Gain +2 max Wounds. When an ally within your aura would gain any Wounds or fail a save, you may suffer the effect instead and trigger your Radiant Judgment ability." },
                 { id: "bring_pain", name: "Bring Me Your Pain", desc: "Reaction (When a willing ally within your aura would drop to 0 HP): Switch HP with them (if your current HP is higher than their max HP, they gain Temp HP equal to the difference), dropping to 0 hp and gaining the Wound instead." },

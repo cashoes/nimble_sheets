@@ -364,7 +364,7 @@ class CommanderClass extends BaseClass {
             ],
             4: [
                 {
-                    id: "training", replaces: ["training", "mastery"], name: "Arcane Command", level: 4, milestones: [4, 6, 8, 10, 12, 14, 16], type: "dynamic_choice", stateKey: "selectedTraining",
+                    id: "arcane_command", replaces: ["training", "mastery"], name: "Arcane Command", level: 4, milestones: [4, 6, 8, 10, 12, 14, 16], type: "dynamic_choice", stateKey: "selectedTraining",
                     allowDuplicates: ["+1 Order"],
                     getSlots: (level) => {
                         const slots = [];

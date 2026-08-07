@@ -151,7 +151,7 @@ class CheatClass extends BaseClass {
 
         core[5].push(
             { id: "twist", name: "Twist the Blade", desc: "Action: Change one of your Sneak Attack dice to whatever you like. (Lvl 13: You can do this 1/turn for free)." },
-            { id: "quick_read", replaces: ["quick_read"], name: "Quick Read", desc: "<ul><li>([[uQuickReadEnc]] 1/encounter) Gain advantage on an Assess check.</li><li>([[uQuickReadDay]] 1/day) Gain advantage on an Examination check.</li></ul>" }
+            { id: "quick_read", name: "Quick Read", desc: "<ul><li>([[uQuickReadEnc]] 1/encounter) Gain advantage on an Assess check.</li><li>([[uQuickReadDay]] 1/day) Gain advantage on an Examination check.</li></ul>" }
         );
 
         core[6] = [
