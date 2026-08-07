@@ -128,7 +128,7 @@ class ShadowmancerClass extends BaseClass {
                         const btnLabel = level >= 12 ? "Greedy Pact Cast" : "Cast for HP";
                         pilferHtml += `
                             <button onclick="${onclickCode}" style="margin-top:6px; font-size:0.75em; font-family:'Cinzel'; background:rgba(239, 68, 68, 0.2); border:1px solid #ef4444; color:#fff; border-radius:3px; cursor:pointer; padding:4px 8px;">${btnLabel} (${hpCost} HP)</button>
-                            ${state.greedyResult ? `<div style="font-size:0.65em; color:var(--text-muted); font-style:italic; margin-top:4px;">${state.greedyResult}</div>` : ''}
+                            ${state.greedyResult ? `<div style="font-size:0.65em; color:var(--text-muted); font-style:italic; margin-top:4px;">${escapeHtmlText(state.greedyResult)}</div>` : ''}
                         `;
                     }
 
