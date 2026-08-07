@@ -563,18 +563,40 @@ function iStats(text, level, statsMap, context = {}) {
     // them (see issue #50: "1d4 Wounds" -> "1d40"). Requiring the sign prevents plain trailing
     // prose from being absorbed into the die notation while still allowing "1d6+STR"/"1d4+2".
     const diceRegex = new RegExp(skipPattern.source + '|(\\b(?:(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\s*d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!)*(?:\\s*[\\+-]\\s*(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS|\\d+))*\\b)', 'gi');
-    processed = processed.replace(diceRegex, (match, p1) => {
+    // Issue #66: an untyped roll-link (no context.type) falls through dispatchRoll's default
+    // exploding "NIMBLE Combat" decomposition -- correct for attack/damage rolls, wrong for
+    // heal/wound-gain/temp-HP UTILITY rolls (a rolled max shouldn't crit-fish a heal or a
+    // self-inflicted Wound). The roll's label is always the feature/spell NAME (context.name),
+    // which carries no hint of intent, so classify from the prose immediately surrounding the
+    // matched dice notation instead: a heal/regain/restore verb shortly BEFORE the roll ("Heal a
+    // creature {X} HP", "Action: Heal yourself ... WIL d6 HP") or "Wound(s)"/"temp HP"
+    // immediately AFTER it ("Gain 1d4 Wounds"). Bounded lookback/lookahead windows keep this from
+    // reaching into an unrelated clause -- e.g. Vampiric Greed's "Gain 1 Wound. 4d12 to all
+    // adjacent creatures..." is a real damage roll that happens to follow an unrelated
+    // Wound-gain sentence and must keep exploding; Searing Light's "Heal WIL d8 HP ... Inflict
+    // WIL d8 radiant damage" is two rolls in one feature and only the first is a heal.
+    const UTILITY_LEADING_RE = /\b(?:heal(?:s|ing)?|regain(?:s)?|restore(?:s)?)\b/i;
+    const UTILITY_TRAILING_RE = /^\s*(?:wounds?\b|temp\s*hp\b)/i;
+    processed = processed.replace(diceRegex, (match, p1, offset, str) => {
         if (!p1) return match;
         const resolved = resolveNotation(p1);
         const cleanNotation = resolved.replace(/\s+/g, '');
-        if (context.type === 'cantrip') {
+
+        const leadingWindow = str.slice(Math.max(0, offset - 45), offset);
+        const trailingWindow = str.slice(offset + match.length, offset + match.length + 20);
+        const isUtilityRoll = UTILITY_LEADING_RE.test(leadingWindow) || UTILITY_TRAILING_RE.test(trailingWindow);
+        // Never downgrade an explicit cantrip type -- no cantrip is a heal today, but if one ever
+        // is, cantrip scaling must still apply.
+        const rollCtx = isUtilityRoll ? { ...context, type: context.type === 'cantrip' ? context.type : 'pool' } : context;
+
+        if (rollCtx.type === 'cantrip') {
             const scaled = applyCantripScaling(cleanNotation, context.name, context.school, level);
-            return `<span class="dice-hl roll-link" onclick="dispatchRoll('${scaled}', '${context.name}', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${resolved}</span>`;
+            return `<span class="dice-hl roll-link" onclick="dispatchRoll('${scaled}', '${context.name}', ${JSON.stringify(rollCtx).replace(/"/g, '&quot;')})">${resolved}</span>`;
         }
         const label = (context.name || 'Roll').replace(/'/g, "\\'");
         const hasStat = /STR|DEX|INT|WIL|KEY|LVL|WOUNDS/i.test(p1);
         const formula = hasStat ? `<span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p1})</span>` : "";
-        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${cleanNotation}', '${label}', ${JSON.stringify(context).replace(/"/g, '&quot;')})">${resolved}</span>${formula}`;
+        return `<span class="dice-hl roll-link" onclick="dispatchRoll('${cleanNotation}', '${label}', ${JSON.stringify(rollCtx).replace(/"/g, '&quot;')})">${resolved}</span>${formula}`;
     });
 
     // Pass 3: Handle complex stat math (e.g. 10+KEY+1, LVL+WIL-1)
