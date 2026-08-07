@@ -442,8 +442,8 @@ function renderBackgroundFeature(state, level, statsMap, iStats, buildFeatureHtm
     const bgFeat = BACKGROUND_FEATURES[state.background];
     if (!bgFeat) return "";
 
-    const bgSelectedOpt = (bgFeat.options && state.selectedBackgroundOption) 
-        ? bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === state.selectedBackgroundOption) 
+    const bgSelectedOpt = (bgFeat.options && bgFeat.stateKey && state[bgFeat.stateKey])
+        ? bgFeat.options.find(o => (typeof o === 'string' ? o : o.label) === state[bgFeat.stateKey])
         : null;
 
     let bgDesc = iStats(bgFeat.desc, level, statsMap);
@@ -451,63 +451,64 @@ function renderBackgroundFeature(state, level, statsMap, iStats, buildFeatureHtm
         bgDesc += `<div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">${iStats(bgSelectedOpt.desc, level, statsMap)}</div>`;
     }
 
+    // NOTE: these branches are siblings, not nested under `if (bgFeat.collection)` -- a
+    // background can carry `options`/`stateKey` (a plain choice <select>) with no `collection`
+    // at all (e.g. "Back Out of Retirement"), and that branch must still be reachable. See #70.
     let choiceHtml = "";
-    if (bgFeat.collection) {
-        if (bgFeat.collection === "spells" || bgFeat.collection === "utility") {
-            const targetSchool = bgFeat.school;
-            let opts = `<option value="None">-- Select Spell --</option>`;
-            let selectedSpellDesc = "";
-            let selectedSpellSchool = targetSchool || "Utility";
+    if (bgFeat.collection === "spells" || bgFeat.collection === "utility") {
+        const targetSchool = bgFeat.school;
+        let opts = `<option value="None">-- Select Spell --</option>`;
+        let selectedSpellDesc = "";
+        let selectedSpellSchool = targetSchool || "Utility";
 
-            if (targetSchool) {
-                // Specific school provided
-                const schoolSpells = UTILITY_SPELLS[targetSchool] || {};
-                opts += Object.keys(schoolSpells).map(s => `<option value="${s}" ${state.bgSpell === s ? 'selected' : ''}>${s}</option>`).join('');
-                if (state.bgSpell !== "None" && schoolSpells[state.bgSpell]) {
-                    selectedSpellDesc = schoolSpells[state.bgSpell];
-                }
-            } else {
-                // Any utility spell allowed - Organize by school
-                Object.entries(UTILITY_SPELLS).forEach(([school, spells]) => {
-                    opts += `<optgroup label="${school}">`;
-                    Object.keys(spells).forEach(s => {
-                        const isSelected = state.bgSpell === s;
-                        opts += `<option value="${s}" ${isSelected ? 'selected' : ''}>${s}</option>`;
-                        if (isSelected) {
-                            selectedSpellDesc = spells[s];
-                            selectedSpellSchool = school;
-                        }
-                    });
-                    opts += `</optgroup>`;
-                });
+        if (targetSchool) {
+            // Specific school provided
+            const schoolSpells = UTILITY_SPELLS[targetSchool] || {};
+            opts += Object.keys(schoolSpells).map(s => `<option value="${s}" ${state.bgSpell === s ? 'selected' : ''}>${s}</option>`).join('');
+            if (state.bgSpell !== "None" && schoolSpells[state.bgSpell]) {
+                selectedSpellDesc = schoolSpells[state.bgSpell];
             }
-            
-            choiceHtml = renderSingleSpellCard({
-                name: state.bgSpell !== "None" ? state.bgSpell : state.background,
-                tier: "Utility",
-                school: selectedSpellSchool,
-                customHtml: `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)">${opts}</select></div><div>${state.bgSpell !== "None" ? iStats(selectedSpellDesc, level, statsMap) : ''}</div>`
-            }, level, statsMap);
-        } else if (bgFeat.collection === "ancestry") {
-            let opts = `<option value="None">-- Select Ancestry --</option>`;
-            Object.keys(ANCESTRIES).forEach(group => {
-                opts += `<optgroup label="${group}">`;
-                ANCESTRIES[group].forEach(a => {
-                    opts += `<option value="${a}" ${state[bgFeat.stateKey] === a ? 'selected' : ''}>${a}</option>`;
+        } else {
+            // Any utility spell allowed - Organize by school
+            Object.entries(UTILITY_SPELLS).forEach(([school, spells]) => {
+                opts += `<optgroup label="${school}">`;
+                Object.keys(spells).forEach(s => {
+                    const isSelected = state.bgSpell === s;
+                    opts += `<option value="${s}" ${isSelected ? 'selected' : ''}>${s}</option>`;
+                    if (isSelected) {
+                        selectedSpellDesc = spells[s];
+                        selectedSpellSchool = school;
+                    }
                 });
                 opts += `</optgroup>`;
             });
-            choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px;"><select onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
-        } else if (bgFeat.options && bgFeat.stateKey) {
-            let opts = `<option value="None">-- Select Option --</option>` + 
-                bgFeat.options.map(opt => {
-                    const label = typeof opt === 'string' ? opt : opt.label;
-                    return `<option value="${label}" ${state[bgFeat.stateKey] === label ? 'selected' : ''}>${label}</option>`;
-                }).join('');
-            choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px;"><select onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
         }
-        bgDesc += choiceHtml;
+
+        choiceHtml = renderSingleSpellCard({
+            name: state.bgSpell !== "None" ? state.bgSpell : state.background,
+            tier: "Utility",
+            school: selectedSpellSchool,
+            customHtml: `<div style="margin-bottom:8px;"><select onchange="updateBgSpell(this.value)">${opts}</select></div><div>${state.bgSpell !== "None" ? iStats(selectedSpellDesc, level, statsMap) : ''}</div>`
+        }, level, statsMap);
+    } else if (bgFeat.collection === "ancestry") {
+        let opts = `<option value="None">-- Select Ancestry --</option>`;
+        Object.keys(ANCESTRIES).forEach(group => {
+            opts += `<optgroup label="${group}">`;
+            ANCESTRIES[group].forEach(a => {
+                opts += `<option value="${a}" ${state[bgFeat.stateKey] === a ? 'selected' : ''}>${a}</option>`;
+            });
+            opts += `</optgroup>`;
+        });
+        choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px;"><select onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
+    } else if (bgFeat.options && bgFeat.stateKey) {
+        let opts = `<option value="None">-- Select Option --</option>` +
+            bgFeat.options.map(opt => {
+                const label = typeof opt === 'string' ? opt : opt.label;
+                return `<option value="${label}" ${state[bgFeat.stateKey] === label ? 'selected' : ''}>${label}</option>`;
+            }).join('');
+        choiceHtml = `<div class="bg-choice-selector" style="margin-top:10px;"><select onchange="updateBgChoice('${bgFeat.stateKey}', this.value)">${opts}</select></div>`;
     }
+    bgDesc += choiceHtml;
 
     return buildFeatureHtml(`Background: ${state.background}`, "", bgDesc, "", false, level, statsMap);
 }
