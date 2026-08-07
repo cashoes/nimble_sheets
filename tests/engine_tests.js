@@ -255,6 +255,15 @@ function runTests() {
     assert.strictEqual(rollResult.total, 10, "Die should explode to a total of 6 + 4 = 10");
     assert.strictEqual(rollResult.detail, "6!! + 4", "Die detail should accurately record recursion sequence");
 
+    // --- TEST 7: Trust-Boundary Sanitization (prototype pollution + XSS) ---
+    console.log("  [Security] Testing prototype-pollution stripping and bgSpell registry whitelist...");
+    const malicious = JSON.parse('{"__proto__":{"polluted":true},"charName":"x"}', ctx.stripPrototypePollutionReviver);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(malicious, '__proto__'), false, "stripPrototypePollutionReviver must drop a literal __proto__ own-key during JSON.parse");
+    assert.strictEqual({}.polluted, undefined, "global Object.prototype must not be polluted by the parse above");
+
+    const whitelisted = ctx.ensureValidState({ bgSpell: '<img src=x onerror=alert(1)>' });
+    assert.strictEqual(whitelisted.bgSpell, 'None', "ensureValidState must coerce an out-of-registry bgSpell value to the safe default instead of passing it through to a render sink");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
