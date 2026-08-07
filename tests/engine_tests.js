@@ -407,6 +407,14 @@ function runTests() {
     const hasTierCard = tierCardCtx.CLASS_CONFIG.featuresData.core[2].some(f => f.id === 'tier_1');
     assert.ok(hasTierCard, "Shadowmancer's core[2] must still contain the auto-generated 'Tier 1 Spells' card (generateStandardFeatures' customTierProgression), not have it silently dropped by a class-level core[2] = [...] overwrite");
 
+    // --- TEST 21: A resource clamps to its real derived max, not a stale 999 fallback ---
+    console.log("  [Resources] Testing ADJ_RES clamps mana to its real derived max, not 999...");
+    const resClampCtx = createSandbox('mage');
+    resClampCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 3 } });
+    const realMaxMana = resClampCtx.charDerived().resourceMaxes.mana;
+    resClampCtx.dispatch({ type: 'ADJ_RES', payload: { id: 'mana', amount: 999, isAbsolute: true } });
+    assert.strictEqual(resClampCtx.charState().resourceValues.mana, realMaxMana, `mana must clamp to its real derived max (${realMaxMana}), not stay at the raw 999 requested`);
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
