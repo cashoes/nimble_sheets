@@ -291,6 +291,19 @@ function runTests() {
     smGlacialCtx.dispatch({ type: 'START_COMBAT', payload: {} });
     assert.strictEqual(smGlacialCtx.charState().uGlacial, 0, "uGlacial (Glacial Resilience, Safe-Rest-only) must stay drained through START_COMBAT, not silently refill like a per-encounter power");
 
+    // --- TEST 10: protectedPips coverage gaps (Stormshifter class pip, Dragonborn ancestry pip) ---
+    console.log("  [protectedPips] Testing Stormshifter uShift and Dragonborn uDraconic stay drained on START_COMBAT...");
+    const stormCtx = createSandbox('stormshifter');
+    stormCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'uShift', value: 0 } });
+    stormCtx.dispatch({ type: 'START_COMBAT', payload: {} });
+    assert.strictEqual(stormCtx.charState().uShift, 0, "Stormshifter's uShift (Safe-Rest-only) must stay drained through START_COMBAT");
+
+    const dragonbornCtx = createSandbox('hunter');
+    dragonbornCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'ancestry', value: 'Dragonborn' } });
+    dragonbornCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'uDraconic', value: 0 } });
+    dragonbornCtx.dispatch({ type: 'START_COMBAT', payload: {} });
+    assert.strictEqual(dragonbornCtx.charState().uDraconic, 0, "Dragonborn's ancestry-owned uDraconic (recharges on Safe Rest/Wound, never encounter start) must stay drained through START_COMBAT");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
