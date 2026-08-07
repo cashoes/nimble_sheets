@@ -284,6 +284,13 @@ function runTests() {
     oathswornCtx.dispatch({ type: 'START_COMBAT', payload: {} });
     assert.deepStrictEqual(Array.from(oathswornCtx.charState().uRadiant), [0, 0], "uRadiant (Radiant Aura, Safe-Rest-only) must stay drained through START_COMBAT, not silently refill like a per-encounter power");
 
+    // --- TEST 9: Shadowmancer's Abyssal Depths uGlacial is protected from encounter-start refill ---
+    console.log("  [Shadowmancer] Testing uGlacial (Glacial Resilience, 1/Safe Rest) stays drained on START_COMBAT...");
+    const smGlacialCtx = createSandbox('shadowmancer');
+    smGlacialCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'uGlacial', value: 0 } });
+    smGlacialCtx.dispatch({ type: 'START_COMBAT', payload: {} });
+    assert.strictEqual(smGlacialCtx.charState().uGlacial, 0, "uGlacial (Glacial Resilience, Safe-Rest-only) must stay drained through START_COMBAT, not silently refill like a per-encounter power");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
