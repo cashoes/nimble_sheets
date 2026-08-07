@@ -255,6 +255,12 @@ function runTests() {
     assert.strictEqual(rollResult.total, 10, "Die should explode to a total of 6 + 4 = 10");
     assert.strictEqual(rollResult.detail, "6!! + 4", "Die detail should accurately record recursion sequence");
 
+    // --- TEST 7: Dice notation does not weld a trailing word onto the die faces ---
+    console.log("  [Dice Notation] Testing '1d4 Wounds' is not welded into '1d40'...");
+    const woundsLink = ctx.iStats('Gain 1d4 Wounds to cast this spell', 5, { str: 0, dex: 0, int: 0, wil: 0 }, {});
+    assert.ok(woundsLink.includes("dispatchRoll('1d4', "), "'1d4 Wounds' must dispatch as notation '1d4', not '1d40'");
+    assert.ok(!woundsLink.includes("dispatchRoll('1d40', "), "the trailing word 'Wounds' must not be welded onto the die face count");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
