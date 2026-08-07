@@ -317,6 +317,14 @@ function runTests() {
     assert.strictEqual(berserkerCtx.charState().addDex, 2, "addDex must not be drained by a level-down, even if now over budget");
     assert.strictEqual(berserkerCtx.charState().addWil, 2, "addWil must not be drained by a level-down, even if not itself over budget");
 
+    // --- TEST 12: A marked import preserves a wounded character's real vitals ---
+    console.log("  [Import] Testing an already-initialized import is not full-healed on load...");
+    const importCtx = createSandbox('hunter');
+    importCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 8 } });
+    const importedState = { ...importCtx.charState(), level: 8, hpCurrent: 13, vitalsInitialized: true };
+    importCtx.dispatch({ type: 'IMPORT_STATE', payload: { newState: importedState } });
+    assert.strictEqual(importCtx.charState().hpCurrent, 13, "an already-marked-initialized import's real (wounded) hpCurrent must be preserved verbatim, not silently corrected to full HP");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
