@@ -537,7 +537,13 @@ function iStats(text, level, statsMap, context = {}) {
     });
 
     // Pass 2: Handle Dice/Table rolls (e.g., 1d6+KEY, 2d100kh1)
-    const diceRegex = new RegExp(skipPattern.source + '|(\\b(?:(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\s*d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!)*(?:[\\s\\+-]+(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS|\\d+))*\\b)', 'gi');
+    // The trailing modifier group requires an explicit +/- operator (optionally surrounded by
+    // whitespace) before a stat/number token. It previously accepted pure whitespace alone as
+    // the separator, so a following descriptive word like "Wounds" in "1d4 Wounds" was captured
+    // as part of the same match and later welded onto the face count with no operator between
+    // them (see issue #50: "1d4 Wounds" -> "1d40"). Requiring the sign prevents plain trailing
+    // prose from being absorbed into the die notation while still allowing "1d6+STR"/"1d4+2".
+    const diceRegex = new RegExp(skipPattern.source + '|(\\b(?:(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\s*d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!)*(?:\\s*[\\+-]\\s*(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS|\\d+))*\\b)', 'gi');
     processed = processed.replace(diceRegex, (match, p1) => {
         if (!p1) return match;
         const resolved = resolveNotation(p1);
