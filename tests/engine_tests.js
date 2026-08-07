@@ -377,6 +377,15 @@ function runTests() {
     planarCtx.dispatch({ type: 'HANDLE_WOUND_CLICK', payload: { i: 9, isAbsolute: true } });
     assert.strictEqual(planarCtx.charState().wounds, 4, "wounds must clamp to the character's own woundMax (4 for Planarbeing), not a hardcoded 6");
 
+    // --- TEST 18: Vitals/resources are finalized before STATE_LOADED publishes ---
+    console.log("  [Boot] Testing STATE_LOADED's snapshot already has finalized vitals/resources...");
+    const bootCtx = createSandbox('mage');
+    let publishedSnapshot = null;
+    bootCtx.window.eventBus.subscribe('STATE_LOADED', (payload) => { publishedSnapshot = payload.state; });
+    bootCtx.loadState(bootCtx.CLASS_CONFIG);
+    assert.ok(publishedSnapshot, "STATE_LOADED must be published");
+    assert.notStrictEqual(publishedSnapshot.hpCurrent, null, "the STATE_LOADED snapshot itself must already carry a finalized (non-null) hpCurrent, not publish before vitals are seeded and rely on a later dispatch to backfill");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
