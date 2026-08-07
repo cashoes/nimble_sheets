@@ -335,6 +335,15 @@ function runTests() {
     `, ctx);
     assert.ok(ctx.__reconcileResult && ctx.__reconcileResult.active === 1, "a null array slot (e.g. a spent dice-pool die) must be replaced by the refilled source object, not silently left null");
 
+    // --- TEST 14: A self-referential "replaces" no longer deletes its own feature ---
+    console.log("  [Features] Testing a feature whose replaces list names its own id still renders...");
+    vm.runInContext(`
+        const __featuresRef = { core: { 1: [{ id: 'quick_read', replaces: ['quick_read'], name: 'Quick Read' }] }, subclasses: {} };
+        const __html = defaultGetFeaturesHTML(1, 'None', {}, {}, (title) => title, (t) => t, (t) => t, (t) => t, __featuresRef, {}, {});
+        this.__selfReplaceResult = __html;
+    `, ctx);
+    assert.ok(ctx.__selfReplaceResult.includes('Quick Read'), "a feature whose own replaces list names its own id must still render, not be silently deleted alongside every other feature sharing that id");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
