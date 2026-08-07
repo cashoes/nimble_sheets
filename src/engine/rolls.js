@@ -5,6 +5,49 @@
  */
 
 /**
+ * Safely evaluates a chain of signed integers (e.g. "5+2-10", "+-1", "--2") without eval()/
+ * Function() -- issue #57(d). Both call sites that used to `eval()` here only ever need to sum a
+ * run of `+`/`-`-separated numbers (flat dice-notation modifiers, and iStats' resolved stat math
+ * after every STR/DEX/INT/WIL/KEY/LVL/WOUNDS token has already been substituted with a number),
+ * never real arithmetic (no `*`, `/`, parens, or function calls) -- so a small explicit parser
+ * covers the legitimate use fully while refusing to execute anything else. Also tolerates stacked
+ * unary signs (e.g. "1d6+-1" from welding a "+" onto a negative stat value) the same way `eval()`
+ * did, rather than rejecting them outright.
+ * @param {string} expr - A string that should contain only whitespace, digits, `+`, and `-`.
+ * @returns {number|null} The summed value, or null if `expr` isn't a pure signed-integer chain.
+ */
+function evalArithmetic(expr) {
+    const cleaned = String(expr).replace(/\s+/g, '');
+    if (!cleaned) return 0;
+    if (!/^[+-]*\d+([+-]+\d+)*$/.test(cleaned)) return null;
+    const terms = cleaned.match(/[+-]*\d+/g);
+    if (!terms) return null;
+    return terms.reduce((sum, term) => {
+        const m = term.match(/^([+-]*)(\d+)$/);
+        const negCount = (m[1].match(/-/g) || []).length;
+        const sign = (negCount % 2 === 0) ? 1 : -1;
+        return sum + sign * parseInt(m[2], 10);
+    }, 0);
+}
+
+/**
+ * Collapses adjacent `+`/`-` sign runs (e.g. "+-1", "--2") produced when a stat token is
+ * substituted with a negative number (e.g. "1d6+STR" at STR=-1 -> "1d6+-1") into a single sign --
+ * issue #57's `+-` double-sign case. Applied to both the text shown to the player and the
+ * notation dispatched to the roller, not just one or the other.
+ * @param {string} str
+ * @returns {string}
+ */
+function normalizeSignChain(str) {
+    let prev;
+    do {
+        prev = str;
+        str = str.replace(/([+-])\s*([+-])/, (m, a, b) => (a === b ? '+' : '-'));
+    } while (str !== prev);
+    return str;
+}
+
+/**
  * Dispatches a roll event after processing notation, modifiers, and conditions.
  * @param {string} notation - The dice notation to roll (e.g., "1d20+5").
  * @param {string} label - The label for the roll (e.g., "Sword Attack").
@@ -105,22 +148,27 @@ function dispatchRoll(notation, label, options = {}) {
     }
 
     let totalAdv = s.advantage + condAdv + (options.inherentAdv || 0) + (options.forceAdv ? 1 : 0);
-    
-    const dieMatch = finalNotation.match(/^(\d+)?d(\d+)(.*)$/i);
+
+    // Issue #57(a): tolerate a leading sign on the die count so a negative count (e.g. "STR d8"
+    // resolved at STR=-1 -> "-1d8") is actually captured by this regex instead of bypassing it
+    // entirely -- previously the raw "-1d8" string shipped to the VTT completely unhandled.
+    const dieMatch = finalNotation.match(/^(-?\d+)?d(\d+)(.*)$/i);
     if (dieMatch) {
         let count = parseInt(dieMatch[1] || "1");
         let faces = parseInt(dieMatch[2]);
         let rest = dieMatch[3];
-        
+
         // Combine consecutive flat math modifiers (e.g., +2+10) into a single modifier (+12)
-        // to prevent parsing errors in VTT dice extensions.
+        // to prevent parsing errors in VTT dice extensions. Issue #57(d): was eval() on a string
+        // that (here) only ever needs summing signed integers -- evalArithmetic covers exactly
+        // that without executing arbitrary code.
         if (rest && /^[\s\+\-\d]+$/.test(rest)) {
-            try {
-                let combined = eval(rest.replace(/\s+/g, ''));
+            const combined = evalArithmetic(rest);
+            if (combined !== null) {
                 rest = combined === 0 ? '' : (combined > 0 ? '+' : '') + combined;
-            } catch(e) {}
+            }
         }
-        
+
         // Issue #60: a keep/drop modifier (kh/kl/dh/dl) already present at the head of `rest` --
         // e.g. from applyScaling welding "+1d100kh1" onto a base die to form "2d100kh1" (Radiant
         // Vengeance's upcast) -- targets the WHOLE die pool ("keep the highest of all N dice").
@@ -131,10 +179,52 @@ function dispatchRoll(notation, label, options = {}) {
         // the modifier stays applied to the combined pool it was written against.
         const hasPoolDiceModifier = /^(?:kh|kl|dh|dl)\d*/i.test(rest);
 
-        if (isCheckOrSaveOrPool || hasPoolDiceModifier) {
+        if (count <= 0) {
+            // Issue #57(a): a computed die count of zero or negative (e.g. "STR d8"/"WIL d6" at
+            // stat<=0 -- class_commander.js:111, class_hunter.js:89/250) must roll ZERO dice, not
+            // silently become "1d8" via the decomposition branch's hardcoded single-primary-die
+            // assumption below (verified: Commander at STR 0 -> dispatchRoll('0d8') ->
+            // "1d8!!{primary}"). Negative counts are clamped the same way as zero -- there's no
+            // such thing as "negative dice", and the regex above only exists to keep them from
+            // bypassing this block, not to give them a distinct meaning. Emit a flat "0" (plus
+            // any surviving trailing modifier) instead of dice notation.
+            finalNotation = rest ? (/^[+-]/.test(rest) ? `0${rest}` : `0+${rest}`) : '0';
+        } else if (isCheckOrSaveOrPool || hasPoolDiceModifier) {
             // Standard Advantage/Disadvantage for checks, saves, pools, and any notation that
             // already carries its own keep/drop modifier on the full pool.
-            let diePart = (totalAdv > 0) ? `${count + totalAdv}d${faces}kh${count}` : (totalAdv < 0) ? `${count + Math.abs(totalAdv)}d${faces}kl${count}` : `${count}d${faces}`;
+            let diePart;
+            if (hasPoolDiceModifier) {
+                // Issue #57 (F2): a keep/drop modifier already embedded in `rest` (e.g. "kh1"
+                // welded on by applyScaling for an upcast pool -- Thousand Cuts 2d44kh1,
+                // Unspeakable Word 2d66kh1, Vengeance upcast 2d100kh1 -- spells.json:351/570/465)
+                // already targets the WHOLE pool. The #60 changelog entry claimed no real content
+                // combines a scaled kh/kl notation with an advantage-eligible roll, but damage
+                // rolls read the live `s.advantage` toggle regardless of label, so all three of
+                // those real spells DO reach here with totalAdv != 0 whenever advantage/
+                // disadvantage is active -- layering the toggle's own kh/kl wrapper on top used
+                // to nest two keep operations on the same pool ("3d44kh2kh1"/"3d66kl2kh1"),
+                // malformed for strict VTT parsers. There's no rules ruling yet for how
+                // advantage/disadvantage should compose with an already-keep-highest-or-lowest
+                // pool (kh and kl pull in opposite directions, so "just add dice" isn't obviously
+                // correct for both signs) -- refuse rather than guess: leave the pool's own
+                // embedded modifier untouched and drop the live advantage/disadvantage state for
+                // THIS roll. Deferred pending a rules ruling -- see issue #57.
+                diePart = `${count}d${faces}`;
+            } else {
+                // Issue #57(b): `s.advantage` is a sticky UI toggle (combat_controls.js) that
+                // persists in state until the player changes it, and it used to be applied to
+                // every roll that reaches this branch -- including pure damage/resource pools
+                // with no roll-to-hit of their own (verified: Zephyr's Way of Flame, `type:
+                // 'pool'`, at s.advantage=1 -> "4d6kh3*2" instead of "3d6*2"; the Cheat's
+                // automated Sneak Attack, also `type: 'pool'`, -> "4d20kh3" instead of "3d20").
+                // Exempt explicit `type: 'pool'` rolls from the STICKY toggle specifically (a
+                // caller can still opt a pool into it via `options.poolAdvantage`);
+                // condAdv/inherentAdv/forceAdv are non-sticky, per-call decisions the calling code
+                // makes for THIS roll, so they still apply even to an advantage-exempt pool.
+                const poolAdvExempt = options.type === 'pool' && !options.poolAdvantage;
+                const poolAdv = poolAdvExempt ? (totalAdv - s.advantage) : totalAdv;
+                diePart = (poolAdv > 0) ? `${count + poolAdv}d${faces}kh${count}` : (poolAdv < 0) ? `${count + Math.abs(poolAdv)}d${faces}kl${count}` : `${count}d${faces}`;
+            }
             finalNotation = diePart + rest;
         } else {
             // NIMBLE Combat Logic: Decompose into Primary + Secondary
@@ -336,11 +426,21 @@ function applyScaling(baseStr, scaleStr, tiersUp) {
     if (numMatch) {
         const scaleVal = parseInt(numMatch[1]) * tiersUp;
         // Try to merge into a leading number (e.g. "10+KEY" -> "11+KEY")
-        // We use (?!d) to ensure we don't accidentally merge into a dice count (e.g. "3d8")
-        const leadingNumMatch = base.match(/^(\d+)(?!d)/i);
+        // Issue #57(c): `(?!d)` only excludes a LITERAL "d" immediately after the FIRST digit
+        // it manages to match, and `\d+` backtracks -- on "12d6" it fails the lookahead at "12"
+        // (next char IS "d") but then backtracks to "1" (next char is "2", not "d"), so it wrongly
+        // matches just "1" out of a 2-digit dice count. `(?!\d*d)` excludes a "d" preceded by any
+        // run of digits too, so it correctly refuses to match ANY leading count that's actually a
+        // dice notation (e.g. "12d6", "10d6"), leaving those to fall through to the trailing/
+        // generic append branches below instead of getting corrupted (verified:
+        // applyScaling("12d6","+2",1) used to return "32d6" instead of "12d6+2").
+        const leadingNumMatch = base.match(/^(\d+)(?!\d*d)/i);
         if (leadingNumMatch) {
             const newVal = parseInt(leadingNumMatch[1]) + scaleVal;
-            return base.replace(leadingNumMatch[1], newVal);
+            // Slice rather than String.replace(searchString, ...) so this only ever touches the
+            // matched LEADING run, not the first coincidental occurrence of that substring
+            // anywhere else in `base`.
+            return newVal + base.slice(leadingNumMatch[1].length);
         }
         // Else try to merge into trailing flat mod
         const baseFlatMatch = base.match(/([+-]\s*\d+)$/);
@@ -510,8 +610,16 @@ function iStats(text, level, statsMap, context = {}) {
         key: keyValue
     };
 
+    // Issue #57's "+-" double-sign case: substituting a stat token with a negative value (e.g.
+    // "1d6+STR" at STR=-1) leaves the notation's own "+" adjacent to the substituted value's own
+    // "-", producing "1d6+-1" both in the text shown to the player and in the notation later
+    // dispatched to the roller, instead of the normalized "1d6-1". normalizeSignChain collapses
+    // any adjacent sign run into a single sign; applied here so every caller of resolveNotation
+    // (the dice-roll link display/dispatch in Pass 2, and the stat-math evaluation in Pass 3)
+    // gets the fix for free.
     const resolveNotation = (notation) => {
-        return notation.replace(/\b(KEY|LVL|WOUNDS|STR|DEX|INT|WIL)\b/gi, (match) => tokens[match.toLowerCase()]);
+        const substituted = notation.replace(/\b(KEY|LVL|WOUNDS|STR|DEX|INT|WIL)\b/gi, (match) => tokens[match.toLowerCase()]);
+        return normalizeSignChain(substituted);
     };
 
     const skipPattern = /(?:<span[^>]*class="[^"]*(?:dice-hl|stat-hl|formula-label|pip-inline)[^"]*"[^>]*>.*?<\/span>|<[^>]*>)/gi;
@@ -604,13 +712,16 @@ function iStats(text, level, statsMap, context = {}) {
     processed = processed.replace(mathRegex, (match, p1) => {
         if (!p1) return match;
         const resolvedExpr = resolveNotation(p1);
-        try {
-            const result = eval(resolvedExpr.replace(/\s+/g, ''));
-            const formula = `<span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p1})</span>`;
-            return `<span class="stat-hl">${result}</span>${formula}`;
-        } catch(e) {
-            return match;
-        }
+        // Issue #57(d): was eval() on a string built from feature/spell DESCRIPTION text (an
+        // authored-today-but-untrusted-in-principle sink -- the same "data string reaches a
+        // dangerous sink" family flagged elsewhere) -- replaced with evalArithmetic, which only
+        // ever sums a `+`/`-` chain of already-resolved numbers (exactly what mathRegex captures)
+        // and refuses (returns null) anything else, so no expression can execute arbitrary code
+        // through this path regardless of what description text a spell/feature ever contains.
+        const result = evalArithmetic(resolvedExpr);
+        if (result === null) return match;
+        const formula = `<span class="formula-label" style="font-size:0.8em; opacity:0.7; font-family:'Cinzel',serif;"> (${p1})</span>`;
+        return `<span class="stat-hl">${result}</span>${formula}`;
     });
 
     // Pass 4: Wrap individual stat values in clickable check links

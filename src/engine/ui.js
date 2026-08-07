@@ -248,13 +248,17 @@ function adjWounds(a, isAbsolute = false) {
 /**
  * Recursive die roller with support for exploding dice and a minimum floor.
  */
-function _rollDie(faces, allowExplode = false, floor = 1) {
+function _rollDie(faces, allowExplode = false, floor = 1, depth = 0) {
     let total = Math.floor(Math.random() * faces) + 1;
     if (total < floor) total = floor;
     let detail = total.toString();
 
-    if (allowExplode && total === faces) {
-        const next = _rollDie(faces, true, floor);
+    // Issue #57(d): no config today sets a pool's floor >= its faces, but if one ever did,
+    // floor-clamping would force `total === faces` on EVERY recursive call, exploding forever and
+    // hanging the tab. A depth cap is cheap insurance against that (and against any other future
+    // path to unbounded recursion here) without changing behavior for any real pool in play.
+    if (allowExplode && total === faces && depth < 1000) {
+        const next = _rollDie(faces, true, floor, depth + 1);
         total += next.total;
         detail = `${detail}!! + ${next.detail}`;
     }
