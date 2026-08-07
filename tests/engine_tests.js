@@ -261,6 +261,16 @@ function runTests() {
     assert.ok(woundsLink.includes("dispatchRoll('1d4', "), "'1d4 Wounds' must dispatch as notation '1d4', not '1d40'");
     assert.ok(!woundsLink.includes("dispatchRoll('1d40', "), "the trailing word 'Wounds' must not be welded onto the die face count");
 
+    // --- TEST 8: Untyped/initiative rolls stay flat instead of exploding like an attack ---
+    console.log("  [Dice Notation] Testing initiative and untyped rolls do not explode/crit...");
+    let dispatchedDetail = null;
+    ctx.CustomEvent = class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } };
+    ctx.window.dispatchEvent = (evt) => { dispatchedDetail = evt.detail; };
+    ctx.dispatchRoll('1d20', 'Initiative', {});
+    assert.ok(dispatchedDetail, "dispatchRoll must dispatch a NIMBLE_ROLL_EVENT");
+    assert.ok(!dispatchedDetail.notation.includes('!!'), "an Initiative roll must not carry an explosion (!!) marker");
+    assert.ok(!dispatchedDetail.notation.includes('{primary}'), "an Initiative roll must not go through the attack-decomposition primary/secondary split");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
