@@ -121,8 +121,19 @@ function dispatchRoll(notation, label, options = {}) {
             } catch(e) {}
         }
         
-        if (isCheckOrSaveOrPool) {
-            // Standard Advantage/Disadvantage for checks, saves, and pools
+        // Issue #60: a keep/drop modifier (kh/kl/dh/dl) already present at the head of `rest` --
+        // e.g. from applyScaling welding "+1d100kh1" onto a base die to form "2d100kh1" (Radiant
+        // Vengeance's upcast) -- targets the WHOLE die pool ("keep the highest of all N dice").
+        // The NIMBLE Combat decomposition below splits that pool into a primary die + secondary
+        // dice, which would weld the modifier onto the lone secondary die instead ("keep highest
+        // of 1" -- a no-op that silently discards the pool's keep/drop semantics). Route these
+        // through the same flat pool logic used for checks/saves/pools instead of decomposing, so
+        // the modifier stays applied to the combined pool it was written against.
+        const hasPoolDiceModifier = /^(?:kh|kl|dh|dl)\d*/i.test(rest);
+
+        if (isCheckOrSaveOrPool || hasPoolDiceModifier) {
+            // Standard Advantage/Disadvantage for checks, saves, pools, and any notation that
+            // already carries its own keep/drop modifier on the full pool.
             let diePart = (totalAdv > 0) ? `${count + totalAdv}d${faces}kh${count}` : (totalAdv < 0) ? `${count + Math.abs(totalAdv)}d${faces}kl${count}` : `${count}d${faces}`;
             finalNotation = diePart + rest;
         } else {
