@@ -28,7 +28,12 @@ class BaseClass {
         this.customHeaderStats = config.customHeaderStats || [];
         this.mechanicPanelExtension = config.mechanicPanelExtension || null;
         this.onInitiative = config.onInitiative || null;
-        
+        this.onSafeRest = config.onSafeRest || null;
+        this.onTogglePip = config.onTogglePip || null;
+        this.onRollResult = config.onRollResult || null;
+        this.protectedPips = config.protectedPips || [];
+        this.getUpcastBonus = config.getUpcastBonus || null;
+
         // Declarative Extensions (v2.2)
         this.lvl20StatBonus = config.lvl20StatBonus || 0;
         this.optionExtensions = config.optionExtensions || {}; 
