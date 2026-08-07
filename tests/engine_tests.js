@@ -273,6 +273,15 @@ function runTests() {
     const pilferMaxAfter = smBoonCtx.charDerived().resourceMaxes.pilfer;
     assert.strictEqual(pilferMaxAfter, pilferMaxBefore + 1, "selecting Fiendish Boon must raise Pilfered Power's max by 1 (its addDex benefit), not leave it unboosted while only its hdMax penalty lands");
 
+    // --- TEST 9: Hero-stat label renamed Armor -> Defense (display only, state key unchanged) ---
+    console.log("  [UI] Testing the hero-stat display label reads Defense, not Armor...");
+    const cheatOptCtx = createSandbox('cheat');
+    const misdirectionDesc = cheatOptCtx.CLASS_CONFIG.optionsData.underhanded['Misdirection'].desc;
+    assert.ok(misdirectionDesc.includes('Gain INT Defense'), `Cheat's Misdirection option text must read "Gain INT Defense", got: ${misdirectionDesc}`);
+    assert.ok(!misdirectionDesc.includes('Gain INT armor') && !misdirectionDesc.includes('Gain INT Armor'), "Misdirection's text must not still read the old \"Armor\" label");
+    // The underlying state/derived key must be untouched by the label-only rename.
+    assert.strictEqual(typeof cheatOptCtx.charDerived().armor, 'number', "the derived 'armor' key itself must be unchanged (label-only rename, no save-file migration)");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
