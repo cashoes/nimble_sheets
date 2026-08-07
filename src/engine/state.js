@@ -994,12 +994,12 @@ function characterReducer(currentState, action) {
             break;
         }
         case 'ADD_ITEM': {
-            s.inventory.push({ 
-                id: Date.now(), 
+            s.inventory.push({
+                id: Date.now(),
                 type: 'melee', // Default for custom items
                 category: 'melee',
                 reach: '1',
-                ...payload.item 
+                ...payload.item
             });
             break;
         }

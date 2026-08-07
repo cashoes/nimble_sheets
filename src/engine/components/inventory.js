@@ -140,7 +140,7 @@ function InventoryRow(props) {
                 <option value="shield" selected=${() => (item.category || '').toLowerCase().includes('shield')}>Shield</option>
             </select>
             <input type="number" class="inv-input" value=${() => armorStr()} style="width:26px; text-align:center; padding:0;" onchange=${handleArmor} />
-            <span style="font-size:0.85em; opacity:0.8;">AC</span>
+            <span style="font-size:0.85em; opacity:0.8;">Defense</span>
         </div>
     `;
 

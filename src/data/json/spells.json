@@ -519,14 +519,16 @@
             },
             "Dread Visage": {
                 "tier": "Tier 2",
-                "desc": "1 Action, Self. Reaction: When attacked, Defend for free. Melee attackers are Frightened of you and suffer {dmg} damage if they attack you this round. Costs 2 mana less while dying. Upcast: +{armor} Defense.",
+                "desc": "1 Action, Self. Reaction: When attacked, Defend for free. Melee attackers are Frightened of you and suffer {dmg} damage if they attack you this round. Costs 2 mana less while dying. Upcast: +{dmgBonus} damage, +{armor} Defense.",
                 "base": {
                     "dmg": "1d12",
-                    "armor": 0
+                    "armor": 0,
+                    "dmgBonus": 0
                 },
                 "scaling": {
                     "dmg": "+2",
-                    "armor": 2
+                    "armor": 2,
+                    "dmgBonus": 2
                 }
             },
             "Vampiric Greed": {

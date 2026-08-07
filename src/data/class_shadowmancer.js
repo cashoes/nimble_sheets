@@ -264,7 +264,7 @@ class ShadowmancerClass extends BaseClass {
 
         core[2] = [
             { id: "master_darkness", name: "Master of Darkness", desc: "Your Patron grants you knowledge of Necrotic cantrips and tier 1 spells." },
-            { id: "pilfer", name: "Pilfered Power", desc: (level, subclass, state, derived) => `You may steal power from your patron to cast tiered spells, always casting them at the highest tier you have unlocked. You can do this <strong>${getStatsMap(state).dex}</strong> (DEX) times before your patron takes notice. Each time you exceed this limit, your patron damages you for half your max HP as recompense. Resets on Safe Rest.` }
+            { id: "pilfer", name: "Pilfered Power", desc: (level, subclass, state, derived) => `You may steal power from your patron to cast tiered spells, always casting them at the highest tier you have unlocked. You can do this <strong>${shadowmancerEffectiveDex(state)}</strong> (DEX) times before your patron takes notice. Each time you exceed this limit, your patron damages you for half your max HP as recompense. Resets on Safe Rest.` }
         ];
 
         core[3] = [
