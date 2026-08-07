@@ -255,6 +255,13 @@ function runTests() {
     assert.strictEqual(rollResult.total, 10, "Die should explode to a total of 6 + 4 = 10");
     assert.strictEqual(rollResult.detail, "6!! + 4", "Die detail should accurately record recursion sequence");
 
+    // --- TEST 7: Mechanic-panel subtext splits on real line breaks, not a literal <br> ---
+    console.log("  [UI] Testing splitSubtextLines splits multi-line subtext correctly...");
+    const lines = ctx.splitSubtextLines("Gain on hit\nor dmg taken.");
+    assert.deepStrictEqual(Array.from(lines), ["Gain on hit", "or dmg taken."], "splitSubtextLines must split a \\n-joined subtext string into its individual trimmed lines");
+    assert.deepStrictEqual(Array.from(ctx.splitSubtextLines("")), [], "an empty/falsy subtext must split to an empty array");
+    assert.ok(!ctx.splitSubtextLines("Gain on hit\nor dmg taken.").some(l => l.includes('<br>')), "the split lines must never contain a literal <br> tag (that was the bug: subtext rendered as a text node, so a literal '<br>' string showed as visible text instead of a line break)");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
