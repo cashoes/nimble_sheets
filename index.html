@@ -212,6 +212,15 @@
             jsContent += `// --- Source: src/data/class_${className}.js ---\n${classData}\n\n`;
             jsContent += `// --- Engine Logic ---\n${state}\n${bridge}\n${htmlExport}\n${components}\n${app}\n\n`;
 
+            // Escape every `</script` (any case) so the browser's HTML parser can never close the
+            // inline <script> block early — a literal `</script>` buried in a comment (e.g.
+            // html_export.js) would otherwise truncate the ~400KB program mid-file and produce a
+            // blank tracker (issue #69). Must stay in sync with build.js's identical pass.
+            jsContent = jsContent.replace(/<\/script/gi, '<\\/script');
+            if (/<\/script/i.test(jsContent)) {
+                console.warn(`Tracker script for "${className}" still contains an unescaped "</script" sequence after escaping — this would truncate the inline <script> block in a browser (issue #69).`);
+            }
+
             const fullScript = `<script>\n${jsContent}<\/script>`;
             const parts = core.template.split('<!-- INJECT_SCRIPTS -->');
             if (parts.length < 2) throw new Error("Template is missing injection placeholder.");

@@ -14,3 +14,6 @@ package-lock.json
 
 # Assets
 /assets
+
+# Playwright MCP browser session artifacts
+.playwright-mcp/

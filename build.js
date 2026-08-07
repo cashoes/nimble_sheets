@@ -45,6 +45,20 @@ function assertTrackerScriptParses(scriptCode, className) {
     }
 }
 
+/**
+ * Fails the build if `scriptCode` still contains a raw (unescaped) `</script` sequence after the
+ * `</script` -> `<\/script` pass. A browser's HTML parser closes an inline <script> block at the
+ * first `</script`, wherever it occurs — including inside a JS comment or string — truncating the
+ * tracker's engine into an unterminated fragment that silently fails to mount (issue #69). This is
+ * a static, browser-free tripwire so any future module reintroducing a literal `</script>` (e.g.
+ * in a comment) fails `node build.js` instead of shipping a blank tracker.
+ */
+function assertNoUnescapedScriptClose(scriptCode, className) {
+    if (/<\/script/i.test(scriptCode)) {
+        throw new Error(`Generated tracker script for "${className}" contains an unescaped "</script" sequence, which would truncate the inline <script> block in a browser (issue #69).`);
+    }
+}
+
 async function compileAll() {
     console.log(`🚀 Starting Node compilation for NIMBLE v${VERSION} trackers...`);
 
@@ -118,6 +132,16 @@ async function compileAll() {
         // syntactically broken output that would otherwise only surface when a player opens the
         // tracker in a browser.
         assertTrackerScriptParses(jsContent, className);
+
+        // Escape every `</script` (any case) so the browser's HTML parser can never close the
+        // inline <script> block early. node's vm.Script above parses raw JS with no notion of
+        // HTML tag boundaries, so a literal `</script>` buried in a comment (e.g. html_export.js)
+        // parses fine here yet truncates the ~400KB program mid-file in a real browser, producing
+        // a blank tracker (issue #69). `<\/script` is semantically identical JS (the backslash is
+        // a no-op escape inside a string/regex, and inert inside a comment) but can't match the
+        // browser's script-end token, so this is safe wherever it lands in the source.
+        jsContent = jsContent.replace(/<\/script/gi, '<\\/script');
+        assertNoUnescapedScriptClose(jsContent, className);
 
         const fullScript = `<script>\n${jsContent}<\/script>`;
         const parts = template.split('<!-- INJECT_SCRIPTS -->');
