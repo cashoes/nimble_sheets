@@ -293,6 +293,13 @@ function runTests() {
     const proseDex = proseMatch ? parseInt(proseMatch[1], 10) : null;
     assert.strictEqual(proseDex, pilferProseCtx.charDerived().resourceMaxes.pilfer, `Pilfered Power's feature-card prose count (${proseDex}) must match the actual (Fiendish-Boon-boosted) resource max (${pilferProseCtx.charDerived().resourceMaxes.pilfer})`);
 
+    // --- TEST 11: Shadowmancer minion cap is INT-only, not inflated by a DEX>INT build ---
+    console.log("  [Shadowmancer] Testing Summon Shadows minion cap is min(INT, LVL), not max(INT, DEX)...");
+    const minionCtx = createSandbox('shadowmancer');
+    const dexBuiltState = { ...minionCtx.charState(), level: 5, baseInt: 0, addInt: 0, baseDex: 0, addDex: 5, selectedGreater: [] };
+    const minionMax = minionCtx.CLASS_CONFIG.getDerivedStats(5, dexBuiltState.subclass, dexBuiltState).minionMax;
+    assert.strictEqual(minionMax, Math.max(1, Math.min(0, 5)), "a DEX>INT Shadowmancer build (INT 0, DEX 5) must cap Summon Shadows minions at INT (floored at 1), never inflated by the higher DEX");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
