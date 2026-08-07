@@ -277,6 +277,13 @@ function runTests() {
     assert.deepStrictEqual(Array.from(probeResult.protectedPips), ['uProbe'], "protectedPips must survive the BaseClass constructor allowlist");
     assert.strictEqual(probeResult.hasGetUpcastBonus, true, "getUpcastBonus must survive the BaseClass constructor allowlist");
 
+    // --- TEST 8: Oathsworn's Radiant Aura decree pips are protected from encounter-start refill ---
+    console.log("  [Oathsworn] Testing uRadiant decree pips stay drained on START_COMBAT...");
+    const oathswornCtx = createSandbox('oathsworn');
+    oathswornCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'uRadiant', value: [0, 0] } });
+    oathswornCtx.dispatch({ type: 'START_COMBAT', payload: {} });
+    assert.deepStrictEqual(Array.from(oathswornCtx.charState().uRadiant), [0, 0], "uRadiant (Radiant Aura, Safe-Rest-only) must stay drained through START_COMBAT, not silently refill like a per-encounter power");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
