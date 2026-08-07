@@ -115,26 +115,6 @@ function validateAndCorrectState(state) {
 
     const level = state.level;
     const stats = ['Str', 'Dex', 'Int', 'Wil'];
-    const keyStats = (config.keyStats || []).map(s => s.charAt(0).toUpperCase() + s.slice(1));
-    
-    // 1. Calculate Budgets (NIMBLE v2.2 Revised Rules)
-    const keyMilestones = [4, 8, 12, 16];
-    const secMilestones = [5, 9, 13, 17];
-    const keyGains = keyMilestones.filter(l => level >= l).length;
-    const secGains = secMilestones.filter(l => level >= l).length;
-    const flexBudget = level >= 20 ? 2 : 0;
-
-    const init = config.initialStats || {};
-    let baseKeyBudget = 0;
-    let baseSecBudget = 0;
-    stats.forEach(s => {
-        const val = init[`base${s}`] || 0;
-        if (keyStats.includes(s)) baseKeyBudget += val;
-        else baseSecBudget += val;
-    });
-
-    const keyBudget = baseKeyBudget + keyGains;
-    const secBudget = baseSecBudget + secGains;
 
     // 2. Base Attribute Protection (NIMBLE v2.2)
     // Base attributes are fixed after Level 1.
@@ -143,51 +123,33 @@ function validateAndCorrectState(state) {
         // For now, the UI disables these inputs, but we'll ensure they are clamped if they somehow change.
     }
 
-    // 3. Normalize and Total Spent
-    let keySpent = 0;
-    let secSpent = 0;
+    // 3. Normalize and hard-cap each attribute
     stats.forEach(s => {
         state[`base${s}`] = Math.max(-1, parseInt(state[`base${s}`]) || 0);
         state[`add${s}`] = Math.max(0, parseInt(state[`add${s}`]) || 0);
-        
-        // Final Total Cap: sum (Base + Add) <= 5
-        let total = state[`base${s}`] + state[`add${s}`];
+
+        // Final Total Cap: sum (Base + Add) <= 5 — a hard rule independent of level/budget.
+        const total = state[`base${s}`] + state[`add${s}`];
         if (total > 5) {
             state[`add${s}`] = Math.max(0, 5 - state[`base${s}`]);
             if (state[`base${s}`] > 5) state[`base${s}`] = 5;
-            total = state[`base${s}`] + state[`add${s}`];
         }
-
-        if (keyStats.includes(s)) keySpent += total;
-        else secSpent += total;
     });
 
-    // 4. Enforce Budgets with Flex points
-    let keyOver = Math.max(0, keySpent - keyBudget);
-    let secOver = Math.max(0, secSpent - secBudget);
-    let totalOver = keyOver + secOver;
-
-    if (totalOver > flexBudget) {
-        let excess = totalOver - flexBudget;
-        // Prioritize reducing "Add" stats in reverse order
-        for (let i = stats.length - 1; i >= 0 && excess > 0; i--) {
-            const s = stats[i];
-            const reduce = Math.min(state[`add${s}`], excess);
-            state[`add${s}`] -= reduce;
-            excess -= reduce;
-        }
-        // If still excess and level 1, reduce "Base" stats to enforce the starting pool
-        if (excess > 0 && level === 1) {
-            for (let i = stats.length - 1; i >= 0 && excess > 0; i--) {
-                const s = stats[i];
-                // Base stats can go as low as -1 in NIMBLE
-                const currentBase = state[`base${s}`];
-                const reduce = Math.min(currentBase + 1, excess);
-                state[`base${s}`] -= reduce;
-                excess -= reduce;
-            }
-        }
-    }
+    // 4. Attribute Budget Guard (non-destructive — issue #37)
+    // This used to subtract directly from the persisted `add*` fields whenever spent exceeded
+    // budget, with no record of what was taken. Because this function runs after EVERY dispatch
+    // — including one per keystroke while retyping the Level field (identity_bar.js handleLevel
+    // used to fire on `input`) — a transient low level passing through on the way to the intended
+    // value would zero out `add*` permanently; correcting the field to the real level afterward
+    // never restored what had been destroyed. Budgets are level-dependent, so "over budget" can
+    // also be a legitimate, persistent state (e.g. an intentional level-down) — either way the
+    // non-destructive choice is to leave the allocations alone and let the UI surface the overage
+    // as a warning instead of silently erasing build choices. computeDerived() already exposes
+    // `flexRemaining` (goes negative when over budget), which attribute_card.js's
+    // AttributesSection reads to render the "UNSPENT" indicator in the warning color — no
+    // separate persisted flag is needed. The proactive guard that stops a player from typing an
+    // over-budget value directly into an `add*` field (SET_STATE_KEY below) is unaffected.
 
     // 5. Skill Validation (NIMBLE v2.4 Revised)
     // - Skill budget: 4 (Level 1) + 1 per additional level.
@@ -195,8 +157,6 @@ function validateAndCorrectState(state) {
     // - Total Skill modifier cannot be reallocated below 0.
     // - One-way exception: If points are 0, total can be negative (base attribute).
     const maxSkillMod = 12;
-    const skillBudget = 4 + (level - 1);
-    let skillSpent = 0;
 
     const ancFeat = ANCESTRY_FEATURES[state.ancestry];
     const bgFeat = BACKGROUND_FEATURES[state.background];
@@ -243,30 +203,17 @@ function validateAndCorrectState(state) {
             }
 
             state.skills[sk.id] = pts;
-            skillSpent += pts;
         });
 
-        // Enforce Skill Budget
-        if (skillSpent > skillBudget) {
-            let excess = skillSpent - skillBudget;
-            // Reduce skill points in reverse order to fit budget
-            // Note: We can reduce pts into negative range as long as total >= 0
-            for (let i = SKILL_LIST.length - 1; i >= 0 && excess > 0; i--) {
-                const sk = SKILL_LIST[i];
-                let pts = state.skills[sk.id] || 0;
-                const attrBonus = statsMap[sk.stat] || 0;
-                const passive = passMods[sk.id] || 0;
-                
-                // How many points can we take away? 
-                // Only until total (attr + pts + passive) reaches 0.
-                const currentTotal = attrBonus + pts + passive;
-                const maxReduction = Math.max(0, currentTotal); 
-                
-                const reduce = Math.min(maxReduction, excess);
-                state.skills[sk.id] -= reduce;
-                excess -= reduce;
-            }
-        }
+        // Skill Budget Guard (non-destructive — issue #37): previously, spending over
+        // `skillBudget` here reduced persisted `skills[id]` values in place. `skillBudget` is
+        // level-dependent (4 + level - 1), so this fired destructively on every transient level
+        // value while retyping the Level field, with no way to restore the reduction once the
+        // field settled on the intended level. Skills() in skills.js already computes its own
+        // "UNSPENT" total live from `s().level`/`s().skills` and renders it in the warning color
+        // when negative, so an over-budget skill spend is already visible without mutating state.
+        // The proactive guard that stops a player from typing an over-budget value directly into
+        // a single skill field (UPDATE_SKILL below) is unaffected.
     }
 
     // 6. Automatic recovery on level change (Resource Restore)

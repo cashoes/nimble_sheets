@@ -7,6 +7,13 @@ function IdentityBar() {
 
     const handleSet = (key, val) => dispatch({ type: 'SET_STATE_KEY', payload: { key, value: val } });
 
+    // Fires on blur/Enter (`change`), not on every keystroke (`input`) — retyping a multi-digit
+    // level (e.g. clearing "20" and typing "1" then "5" to reach "15") used to dispatch a
+    // SET_STATE_KEY for the transient value "1" before the intended "15" ever committed. That's
+    // no longer destructive on its own (see the budget-guard comments in state.js's
+    // validateAndCorrectState, issue #37), but committing only once the field is done being
+    // edited avoids ever showing a spurious over-budget warning mid-edit, matching how base/add
+    // stat inputs in attribute_card.js already commit on `change`.
     const handleLevel = (e) => {
         const val = parseInt(e.target.value) || 1;
         handleSet('level', val);
@@ -42,7 +49,7 @@ function IdentityBar() {
             </div>
             <div class="panel">
                 <label class="panel-title">Level</label>
-                <input type="number" id="level" min="1" max="20" value=${() => s().level} oninput=${handleLevel} />
+                <input type="number" id="level" min="1" max="20" value=${() => s().level} onchange=${handleLevel} />
             </div>
             <div class="panel">
                 <label class="panel-title">Ancestry</label>
