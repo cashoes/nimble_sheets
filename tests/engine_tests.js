@@ -255,6 +255,28 @@ function runTests() {
     assert.strictEqual(rollResult.total, 10, "Die should explode to a total of 6 + 4 = 10");
     assert.strictEqual(rollResult.detail, "6!! + 4", "Die detail should accurately record recursion sequence");
 
+    // --- TEST 7: BaseClass allowlist wires onSafeRest/onTogglePip/onRollResult/protectedPips/getUpcastBonus ---
+    console.log("  [BaseClass] Testing config hooks aren't silently dropped by the constructor allowlist...");
+    vm.runInContext(`
+        const __probe = new BaseClass({
+            name: 'Probe', onSafeRest: () => 'safeRest', onTogglePip: () => 'togglePip',
+            onRollResult: () => 'rollResult', protectedPips: ['uProbe'], getUpcastBonus: () => 1
+        });
+        this.__probeResult = {
+            hasOnSafeRest: typeof __probe.onSafeRest === 'function',
+            hasOnTogglePip: typeof __probe.onTogglePip === 'function',
+            hasOnRollResult: typeof __probe.onRollResult === 'function',
+            protectedPips: __probe.protectedPips,
+            hasGetUpcastBonus: typeof __probe.getUpcastBonus === 'function'
+        };
+    `, ctx);
+    const probeResult = ctx.__probeResult;
+    assert.strictEqual(probeResult.hasOnSafeRest, true, "onSafeRest must survive the BaseClass constructor allowlist, not be silently dropped to undefined");
+    assert.strictEqual(probeResult.hasOnTogglePip, true, "onTogglePip must survive the BaseClass constructor allowlist");
+    assert.strictEqual(probeResult.hasOnRollResult, true, "onRollResult must survive the BaseClass constructor allowlist");
+    assert.deepStrictEqual(Array.from(probeResult.protectedPips), ['uProbe'], "protectedPips must survive the BaseClass constructor allowlist");
+    assert.strictEqual(probeResult.hasGetUpcastBonus, true, "getUpcastBonus must survive the BaseClass constructor allowlist");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
