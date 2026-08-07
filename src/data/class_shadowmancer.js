@@ -107,8 +107,11 @@ class ShadowmancerClass extends BaseClass {
                 },
                 minionMax: (level, subclass, state) => {
                     const statsMap = getStatsMap(state);
-                    const mainStat = Math.max(statsMap.int, shadowmancerEffectiveDex(state));
-                    let max = Math.max(1, Math.min(mainStat, level));
+                    // House-Rules/03-Classes/07-Shadowmancer.md:214 (Summon Shadows): "max of INT
+                    // or LVL minions, whichever is lower" -- INT-only. DEX drives Pilfered Power
+                    // (shadowmancerEffectiveDex above), not minion count; a DEX>INT build must not
+                    // be over-granted minions (issue #76, was Math.max(INT, effective DEX)).
+                    let max = Math.max(1, Math.min(statsMap.int, level));
                     if (level >= 20) max *= 2;
                     return max;
                 },
