@@ -1327,12 +1327,11 @@ function loadState(config) {
 
     // Vitals are now authoritative for this character — preserved verbatim above for an
     // already-marked save, or backfilled exactly once above for a genuine legacy one — so mark
-    // them here (ahead of the STATE_LOADED publish just below) so every future load/import
-    // preserves hpCurrent/hdCurrent/wounds/tempHP verbatim, never re-running the legacy
-    // stuck-level-1 correction based on value alone (issue #38). A brand new character's
-    // hpCurrent/hdCurrent are still null at this point and get seeded further below (step 5);
-    // marking the marker here regardless is still correct — by the time this function persists
-    // to localStorage, vitals are always finalized either way.
+    // them here so every future load/import preserves hpCurrent/hdCurrent/wounds/tempHP
+    // verbatim, never re-running the legacy stuck-level-1 correction based on value alone
+    // (issue #38). A brand new character's hpCurrent/hdCurrent are still null at this point and
+    // get seeded immediately below (step 4) — marking the marker here regardless is still
+    // correct, since vitals are always finalized either way before anything reads `state`.
     state.vitalsInitialized = true;
 
     // 3. Apply class-specific initial stats for brand new characters
@@ -1342,12 +1341,11 @@ function loadState(config) {
         }
     }
 
-    // 4. Publish state loaded event (if eventBus is available)
-    if (typeof window !== 'undefined' && window.eventBus !== null) {
-        window.eventBus.publish('STATE_LOADED', { state: {...state}, config });
-    }
-
-    // 5. Ensure derived totals are calculated and persisted
+    // 4. Finalize vitals and dynamic class resources BEFORE publishing STATE_LOADED (issue #49).
+    // bridge.js's STATE_LOADED subscriber writes this snapshot straight into the reactive store
+    // via `reconcile`, and nothing re-publishes afterward — so a brand-new character's
+    // hpCurrent/hdCurrent/resourceValues must already be finalized here, not left for a later
+    // dispatch to backfill, or the very first render sees null vitals and an empty resourceValues.
     const derived = computeDerived(state);
     const isNewChar = state.level === 1 && !state.charName;
     if (state.hpCurrent === null || isNewChar) state.hpCurrent = derived.maxHP;
@@ -1358,6 +1356,13 @@ function loadState(config) {
         Object.keys(derived.resourceMaxes).forEach(id => {
             state.resourceValues[id] = derived.resourceMaxes[id];
         });
+    }
+
+    // 5. Publish state loaded event (if eventBus is available) — vitals/resources above are
+    // already finalized, so this is the one and only snapshot the reactive store needs to boot
+    // correctly; no follow-up dispatch is required to fill in blanks.
+    if (typeof window !== 'undefined' && window.eventBus !== null) {
+        window.eventBus.publish('STATE_LOADED', { state: {...state}, config });
     }
 
     // Best-effort persist — a storage failure here must not stop boot; STATE_LOADED has already
