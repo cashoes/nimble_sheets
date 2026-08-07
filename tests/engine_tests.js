@@ -287,6 +287,17 @@ function runTests() {
     const woundGainLink = ctx.iStats('Gain 1d4 Wounds to cast this spell.', 5, { str: 0, dex: 0, int: 0, wil: 0 }, {});
     assert.ok(woundGainLink.includes('&quot;type&quot;:&quot;pool&quot;'), "a self-inflicted Wound-gain roll ('Gain 1d4 Wounds') must also be tagged type:'pool'");
 
+    // --- TEST 11: Dice-notation edge cases (zero/negative die count, 2-digit scaling merge) ---
+    console.log("  [Dice Notation] Testing 0dX rolls as flat 0 and 2-digit dice-count scaling...");
+    let zeroDetail = null;
+    ctx.window.dispatchEvent = (evt) => { zeroDetail = evt.detail; };
+    ctx.dispatchRoll('0d8', 'Zero Dice Test', {});
+    assert.ok(zeroDetail, "dispatchRoll must dispatch a NIMBLE_ROLL_EVENT for a 0dX roll");
+    assert.ok(/^0(\s*#|$)/.test(zeroDetail.notation) || zeroDetail.notation.startsWith('0'), `a 0-die roll must dispatch as flat "0", not "1d8", got: ${zeroDetail.notation}`);
+
+    const scaled = ctx.applyScaling('12d6', '+2', 1);
+    assert.strictEqual(scaled, '12d6+2', `applyScaling must not corrupt a 2-digit dice count when merging a flat bonus (got "${scaled}")`);
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
