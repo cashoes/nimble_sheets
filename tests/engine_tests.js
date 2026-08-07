@@ -298,6 +298,13 @@ function runTests() {
     const scaled = ctx.applyScaling('12d6', '+2', 1);
     assert.strictEqual(scaled, '12d6+2', `applyScaling must not corrupt a 2-digit dice count when merging a flat bonus (got "${scaled}")`);
 
+    // --- TEST 12: An explicit [[flat]] marker classifies a roll regardless of surrounding prose ---
+    console.log("  [Dice Notation] Testing the [[flat]] marker overrides the bounded prose-window heuristic...");
+    const farAwayFlatText = 'This spell has a long unrelated preamble well past forty five characters of padding text before the number. Deal [[flat]]1d4 damage.';
+    const flatLink = ctx.iStats(farAwayFlatText, 5, { str: 0, dex: 0, int: 0, wil: 0 }, {});
+    assert.ok(flatLink.includes('&quot;flat&quot;:true'), "a [[flat]]-tagged die must be classified non-exploding even with no heal/regain/restore verb anywhere near it");
+    assert.ok(!flatLink.includes('[[flat]]'), "the [[flat]] marker itself must be consumed, not left visible in the rendered text");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
