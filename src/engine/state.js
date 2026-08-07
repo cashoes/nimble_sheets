@@ -679,6 +679,31 @@ const getStorageKey = () => {
 
 const STORAGE_KEY = getStorageKey();
 
+// Set once a storage write has failed, so the console warning fires exactly once per session
+// instead of once per dispatch (issue #46: a blocked/exhausted store would otherwise throw and
+// warn on every single action).
+let storageWriteFailed = false;
+
+/**
+ * Writes to localStorage without letting a storage failure (quota exceeded, private-mode
+ * Safari, storage disabled by browser settings/extensions) escape as an uncaught exception.
+ * `dispatch`/`loadState` must keep running — and keep publishing STATE_CHANGED/STATE_LOADED so
+ * the reactive store stays in sync with the already-mutated in-memory `state` — regardless of
+ * whether the write to disk actually succeeded (issue #46).
+ * @param {string} key
+ * @param {string} value
+ */
+function safeSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) {
+        if (!storageWriteFailed) {
+            storageWriteFailed = true;
+            console.warn("Character state could not be saved to localStorage; changes will not persist across reloads:", e);
+        }
+    }
+}
+
 /**
  * Placeholder for embedded state injection.
  * This is used when a character sheet is exported as a standalone HTML file.
@@ -1193,8 +1218,10 @@ function saveState(newState = null) {
         }
     }
 
-    // 7. Persist to storage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // 7. Persist to storage (best-effort — a storage failure must not prevent the cache clear
+    // or STATE_SAVED publish below, since `state` above is already the authoritative in-memory
+    // value regardless of whether the write to disk succeeds; issue #46).
+    safeSetItem(STORAGE_KEY, JSON.stringify(state));
 
     // Clear pure function cache since state has changed
     clearPureFunctionCache();
@@ -1327,7 +1354,10 @@ function loadState(config) {
         });
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // Best-effort persist — a storage failure here must not stop boot; STATE_LOADED has already
+    // been published above with the in-memory `state`, so the reactive store is unaffected either
+    // way (issue #46).
+    safeSetItem(STORAGE_KEY, JSON.stringify(state));
 
     // Clear pure function cache since state has been initialized/loaded
     clearPureFunctionCache();
