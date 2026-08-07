@@ -25,8 +25,8 @@ function highlightMechanicalTerms(text) {
     let processed = text;
     
     // 1. Highlight standard properties (Term: Value OR Value Term)
-    // Supports Reach, Range, Line, DC, Armor, Damage, Actions, Targets, Allies, Area, Temp HP, HP, Advantage, Minutes, Rounds, Turns, Spaces, Feet
-    const terms = "Reach|Range|Line|DC|Armor|Damage|Actions?|Targets?|Allies?|Area|Temp\\s+HP|HP|Advantage|Minutes?|Rounds?|Turns?|Spaces?|Feet";
+    // Supports Reach, Range, Line, DC, Armor, Defense, Damage, Actions, Targets, Allies, Area, Temp HP, HP, Advantage, Minutes, Rounds, Turns, Spaces, Feet
+    const terms = "Reach|Range|Line|DC|Armor|Defense|Damage|Actions?|Targets?|Allies?|Area|Temp\\s+HP|HP|Advantage|Minutes?|Rounds?|Turns?|Spaces?|Feet";
     
     // Strict greedy value pattern (Dice w/ modifiers, Table rolls, Math, Stat tokens, Placeholders, Keywords)
     // Now explicitly includes kh/kl/dh/dl/! and table roll prefixes to avoid splitting

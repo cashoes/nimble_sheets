@@ -107,7 +107,7 @@ class StormshifterClass extends BaseClass {
                 "Beast of the Sea": { desc: "Can move, breathe, and fight underwater without penalty." },
                 "Climber": { desc: "Can walk across walls and ceilings; ignores difficult terrain." },
                 "Fleet Footed": { desc: "+2 speed. Advantage on Stealth checks and against the Grappled condition." },
-                "Earthwalker": { desc: "+2 armor. Can burrow through dirt and unworked rock at half speed. Advantage against the Prone condition." },
+                "Earthwalker": { desc: "+2 Defense. Can burrow through dirt and unworked rock at half speed. Advantage against the Prone condition." },
                 "Keen Senses": { desc: "Advantage on Perception and Assess checks. Unaffected by Blinded." },
                 "Leader of the Pack": { desc: "Advantage against fear and charm effects for yourself and allies within 6 spaces." },
                 "Phasebeast": { desc: "Whenever you shift between this form and your normal form (and vice versa), you may teleport up to 6 spaces away to a place you can see." },

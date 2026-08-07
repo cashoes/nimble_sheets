@@ -76,12 +76,12 @@
             "desc": "Advantage on checks to know or obtain gossip for events that will soon happen or have happened less than 1 year ago."
         },
         "Fearless": {
-            "desc": "You are immune to the Frightened condition. +1 Initiative. -1 Armor.",
+            "desc": "You are immune to the Frightened condition. +1 Initiative. -1 Defense.",
             "modInit": 1,
             "modArmor": -1
         },
         "Fey Touched": {
-            "desc": "You take half damage from all magical effects, double from weapons made of metal (before armor is applied)."
+            "desc": "You take half damage from all magical effects, double from weapons made of metal (before Defense is applied)."
         },
         "(Former) Con Artist": {
             "desc": "You can forge most documents or mimic voices flawlessly. You have a criminal contact in most major cities. However, your reputation often precedes you—until you prove yourself to be trustworthy."

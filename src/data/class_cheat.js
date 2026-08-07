@@ -91,7 +91,7 @@ class CheatClass extends BaseClass {
                 "Feinting Attack": { desc: "If you miss for the 2nd time in a single round, you may change the primary die roll to any result instead." },
                 "How’d YOU get here?!": { desc: "2 actions: “Teleport” up to 4 spaces away, adjacent to a Distracted target, and make a melee attack against them. If you crit, you may \"teleport\" again." },
                 "I’m Outta Here!": { desc: "When an ally within 4 spaces is crit, you may turn invisible until the end of your next turn and then move up to half your speed for free." },
-                "Misdirection": { desc: "Gain INT armor. Whenever you Defend, you may halve the damage instead." },
+                "Misdirection": { desc: "Gain INT Defense. Whenever you Defend, you may halve the damage instead." },
                 "Steal Tempo": { desc: "When you land a critical hit for the second time on a turn, your target loses 1 action and you gain 1 action." },
                 "Sunder Armor (Medium)": { desc: "Action: When you crit an enemy with medium armor, sunder their armor. Until the start of your next turn, ALL melee attacks against that target ignore its armor." },
                 "Sunder Armor (Heavy)": { desc: "Req. Sunder Armor (Medium). Your Sunder Armor ability now also applies to enemies wearing heavy armor." },

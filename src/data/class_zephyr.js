@@ -63,7 +63,7 @@ class ZephyrClass extends BaseClass {
                 const isUnarmored = this.isUnarmored(state);
                 let acVal = isUnarmored ? (statsMap.dex + statsMap.str) : 0;
                 if (level >= 13) acVal *= 2;
-                builder.addStatDisplay(isUnarmored ? acVal : '--', 'Armor', 'Iron Defense', { borderRight: true });
+                builder.addStatDisplay(isUnarmored ? acVal : '--', 'Defense', 'Iron Defense', { borderRight: true });
 
                 const rbBonus = level >= 5 ? level : 0;
                 const totalBonus = statsMap.str + rbBonus;
@@ -117,7 +117,7 @@ class ZephyrClass extends BaseClass {
                 id: "iron_defense", 
                 name: "Iron Defense", 
                 milestones: [1, 13],
-                desc: (l) => FeatureGen.createScalingList("Your armor equals DEX+STR as long as you are unarmored.", [{ level: 13, text: "Rank 2: Your armor is doubled while unarmored." }], l)
+                desc: (l) => FeatureGen.createScalingList("Your Defense equals DEX+STR as long as you are unarmored.", [{ level: 13, text: "Rank 2: Your Defense is doubled while unarmored." }], l)
             },
             { id: "swift_fists", name: "Swift Fists", desc: "Your unarmed strikes are not subject to disadvantage imposed by Rushed Attacks, and their damage is 1d4+STR." }
         ];
@@ -129,7 +129,7 @@ class ZephyrClass extends BaseClass {
                 milestones: [2, 9],
                 desc: (l) => FeatureGen.createScalingList("While unarmored, gain +2 speed and +LVL Initiative.", [{ level: 9, text: "Rank 2: Gain an additional +2 speed as long as you are unarmored." }], l)
             },
-            { id: "bursts", name: "Burst of Speed", desc: "When you roll Initiative, gain DEX Bursts of Speed. You may spend 1 Burst of Speed ([[uBursts:DEX]]) for a free maneuver: <ul><li>Slipstream: Defend, and the attack misses.</li><li>Whirling Defense: Defend and apply your armor to every attack this round.</li><li>Swiftstrike: Attack on your turn, and ignore disadvantage from Rushed Attacks.</li><li>Windstep: Move on your turn, ignoring difficult terrain.</li></ul>" }
+            { id: "bursts", name: "Burst of Speed", desc: "When you roll Initiative, gain DEX Bursts of Speed. You may spend 1 Burst of Speed ([[uBursts:DEX]]) for a free maneuver: <ul><li>Slipstream: Defend, and the attack misses.</li><li>Whirling Defense: Defend and apply your Defense to every attack this round.</li><li>Swiftstrike: Attack on your turn, and ignore disadvantage from Rushed Attacks.</li><li>Windstep: Move on your turn, ignoring difficult terrain.</li></ul>" }
         ];
 
         core[3] = [

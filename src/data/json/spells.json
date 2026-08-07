@@ -104,7 +104,7 @@
             },
             "Dragonform": {
                 "tier": "Tier 9",
-                "desc": "5 Actions, Self. Transform into a Huge dragon. Gain 3 actions, a fly speed of 12, {armor} Armor, {temp} temp HP, and:<ul><li>Tooth & Claw. Action: (Reach 2) {dmg} damage (ignoring armor). Inflicts Smoldering.</li><li>Immolating Breath. 2 Actions: (Reach: Cone 8). DC 20 DEX save, {breath} damage, half on save. Smoldering targets fail.</li></ul>You can maintain this form for as long as the temp HP granted by this spell remain (max. 10 minutes). When it ends, you drop to 0 HP.",
+                "desc": "5 Actions, Self. Transform into a Huge dragon. Gain 3 actions, a fly speed of 12, {armor} Defense, {temp} temp HP, and:<ul><li>Tooth & Claw. Action: (Reach 2) {dmg} damage (ignoring armor). Inflicts Smoldering.</li><li>Immolating Breath. 2 Actions: (Reach: Cone 8). DC 20 DEX save, {breath} damage, half on save. Smoldering targets fail.</li></ul>You can maintain this form for as long as the temp HP granted by this spell remain (max. 10 minutes). When it ends, you drop to 0 HP.",
                 "base": {
                     "armor": "LVL",
                     "temp": "10xLVL",
@@ -256,7 +256,7 @@
             },
             "Electrocharge": {
                 "tier": "Tier 5",
-                "desc": "2 Actions, {targets} Target(s). Concentration: Up to 1 minute. A creature you touch gains the Charged condition, +1 max action, +5 armor, 2x speed, and advantage on DEX saves. Range: {range}.",
+                "desc": "2 Actions, {targets} Target(s). Concentration: Up to 1 minute. A creature you touch gains the Charged condition, +1 max action, +5 Defense, 2x speed, and advantage on DEX saves. Range: {range}.",
                 "base": {
                     "targets": 1,
                     "range": 1
@@ -435,7 +435,7 @@
             },
             "Shield of Justice": {
                 "tier": "Tier 3",
-                "desc": "1 Action, Self. Reaction: When attacked, Defend for free and reflect Radiant damage back at the attacker equal to the amount blocked (ignoring armor). Upcast: +{armor} Armor.",
+                "desc": "1 Action, Self. Reaction: When attacked, Defend for free and reflect Radiant damage back at the attacker equal to the amount blocked (ignoring armor). Upcast: +{armor} Defense.",
                 "base": {
                     "armor": 0
                 },
@@ -519,7 +519,7 @@
             },
             "Dread Visage": {
                 "tier": "Tier 2",
-                "desc": "1 Action, Self. Reaction: When attacked, Defend for free. Melee attackers are Frightened of you and suffer {dmg} damage if they attack you this round. Costs 2 mana less while dying. Upcast: +{armor} armor.",
+                "desc": "1 Action, Self. Reaction: When attacked, Defend for free. Melee attackers are Frightened of you and suffer {dmg} damage if they attack you this round. Costs 2 mana less while dying. Upcast: +{armor} Defense.",
                 "base": {
                     "dmg": "1d12",
                     "armor": 0

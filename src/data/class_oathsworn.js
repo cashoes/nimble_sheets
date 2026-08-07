@@ -305,7 +305,7 @@ class OathswornClass extends BaseClass {
         };
 
         subclasses["Refuge"] = {
-            3: [{ id: "aura_refuge", name: "Aura of Refuge", desc: "Your shields gain +WIL armor and count as your spellcasting focus. Gain an aura with a Reach of 4; you can Interpose for an ally anywhere within your aura." }],
+            3: [{ id: "aura_refuge", name: "Aura of Refuge", desc: "Your shields gain +WIL Defense and count as your spellcasting focus. Gain an aura with a Reach of 4; you can Interpose for an ally anywhere within your aura." }],
             7: [{ id: "face_me", name: "Face Me, Foul Creature!", desc: "When you Interpose, the attacking enemy is also Taunted by you until the end of their next turn." }],
             11: [{ id: "reprieve", name: "Glorious Reprieve", desc: "You and allies in your aura cannot drop below 1 HP. Whenever this triggers, they gain 1 Wound instead (heroes still die at max Wounds)." }],
             15: [{ id: "grace", name: "Divine Grace", desc: "You are resistant to all damage while Interposing." }]

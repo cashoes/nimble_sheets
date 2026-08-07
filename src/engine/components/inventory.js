@@ -169,10 +169,10 @@ function InventoryRow(props) {
             const base = parseInt(armorStr()) || 0;
             const dmax = atypeStr() === 'light' ? 99 : (atypeStr() === 'medium' ? 2 : 0);
             const ac = base + Math.min(smap.dex, dmax);
-            return html`<span>🛡️ ${ac} AC ${!isProf && isEquipped() ? html`<span style="color:var(--save-dis); margin-left:4px; cursor:help;" title="Warning: Wearing non-proficient armor!">⚠️</span>` : ''}</span>`;
+            return html`<span>🛡️ ${ac} Defense ${!isProf && isEquipped() ? html`<span style="color:var(--save-dis); margin-left:4px; cursor:help;" title="Warning: Wearing non-proficient armor!">⚠️</span>` : ''}</span>`;
         }
         if (typeStr() === 'shield') {
-            return html`<span>🛡️ +${armorStr()} AC ${!isProf && isEquipped() ? html`<span style="color:var(--save-dis); margin-left:4px; cursor:help;" title="Warning: Wearing non-proficient shield!">⚠️</span>` : ''}</span>`;
+            return html`<span>🛡️ +${armorStr()} Defense ${!isProf && isEquipped() ? html`<span style="color:var(--save-dis); margin-left:4px; cursor:help;" title="Warning: Wearing non-proficient shield!">⚠️</span>` : ''}</span>`;
         }
         return '-';
     };

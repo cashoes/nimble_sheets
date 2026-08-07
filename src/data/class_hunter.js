@@ -253,7 +253,7 @@ class HunterClass extends BaseClass {
                 { id: "healing_salve", name: "Healing Salve", desc: "Action: Heal yourself or an adjacent creature WIL d6 HP. Only you or another experienced Herbalist may administer these, and they expire whenever you Safe Rest." }
             ],
             11: [{ id: "im_over_here", name: "Ha! I’m Over Here!", desc: "([[uOverHere]] 1/Safe Rest) If an attack would cause you to drop to 0 HP, you instead move up to your speed away and take no damage." }],
-            15: [{ id: "unparalleled_survivalist", name: "Unparalleled Survivalist", desc: "Gain +WIL armor. When you attack with a ranged weapon, you may first move half your speed for free." }]
+            15: [{ id: "unparalleled_survivalist", name: "Unparalleled Survivalist", desc: "Gain +WIL Defense. When you attack with a ranged weapon, you may first move half your speed for free." }]
         };
 
         subclasses["Beastmaster"] = {
