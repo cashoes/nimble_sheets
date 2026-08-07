@@ -28,7 +28,7 @@ class OathswornClass extends BaseClass {
             onSafeRest: (state, derived) => {
                 state.judgmentDice = [];
             },
-            protectedPips: ["uBlinding"],
+            protectedPips: ["uBlinding", "uRadiant"],
             rollOverrides: {
                 forceAutoHit: (label, options, state) => {
                     const isVengeance = state.subclass === 'Vengeance';
