@@ -29,6 +29,11 @@ function ensureValidState(state) {
         tempHP: 0,
         hdCurrent: null,
         wounds: 0,
+        // Set once vitals (hpCurrent/hdCurrent) have been legitimately seeded for this character
+        // by loadState/IMPORT_STATE — never based on the numeric value of hpCurrent/hdCurrent
+        // (issue #38). Absent/false means "genuinely never initialized" (a legacy save from
+        // before this marker existed), the only case where load-time vitals backfill is allowed.
+        vitalsInitialized: false,
         skills: {},
         activeConditions: [],
         inventory: [],
@@ -1011,13 +1016,17 @@ function characterReducer(currentState, action) {
             break;
         }
         case 'IMPORT_STATE': {
+            // Same marker-gated rule as loadState (issue #38): only trust value-matching to
+            // detect a genuinely stuck-at-level-1 legacy import — never for a file that already
+            // carries the marker, no matter what hpCurrent/hdCurrent happen to equal.
+            const hadPersistedVitalsMarker = !!(payload.newState && payload.newState.vitalsInitialized);
             const imported = validateAndCorrectState(ensureValidState(payload.newState));
-            if (imported.level > 1) {
+            if (!hadPersistedVitalsMarker && imported.level > 1) {
                 const derived = computeDerived(imported);
                 const level1State = { ...imported, level: 1 };
                 const level1Derived = computeDerived(level1State);
                 const classBaseHp = CLASS_CONFIG.baseHp || 10;
-                
+
                 if ((imported.hpCurrent === level1Derived.maxHP || imported.hpCurrent === classBaseHp) && derived.maxHP > imported.hpCurrent) {
                     const oldHp = imported.hpCurrent;
                     imported.hpCurrent = derived.maxHP;
@@ -1029,6 +1038,7 @@ function characterReducer(currentState, action) {
                     console.log(`🩺 Corrected stuck level 1 HD on import from ${oldHd} to ${derived.hdMax}`);
                 }
             }
+            imported.vitalsInitialized = true;
             return imported;
         }
         case 'SYNC_STATE': {
@@ -1212,6 +1222,7 @@ function loadState(config) {
         tempHP: 0,
         hdCurrent: null,
         wounds: 0,
+        vitalsInitialized: false,
         skills: {},
         activeConditions: [],
         inventory: [],
@@ -1242,19 +1253,33 @@ function loadState(config) {
             console.error("Failed to load character state:", e);
         }
     }
-    
+
     console.log("💾 character state loaded:", state);
+
+    // Capture this BEFORE validateAndCorrectState/ensureValidState run: whether the persisted
+    // payload we just merged in (EMBEDDED_STATE or the parsed localStorage JSON) itself already
+    // carried the `vitalsInitialized` marker. `state` still holds only the schema default
+    // (false) unless the loaded payload overwrote it, so this is exactly "did the save on disk
+    // say its vitals are already legitimate."
+    const hadPersistedVitalsMarker = !!state.vitalsInitialized;
 
     // Ensure state is valid and has correct types/defaults, and apply game-specific corrections
     state = validateAndCorrectState(ensureValidState(state));
 
-    // Correct stuck level 1 vitals if the loaded character is level > 1 but vitals match level 1 max values
-    if (state.level > 1) {
+    // Backfill a genuinely stuck-at-level-1 vitals save — but ONLY for a legacy save that
+    // predates the `vitalsInitialized` marker (issue #38). The old heuristic compared
+    // hpCurrent/hdCurrent by VALUE against level-1 maxima (`level1Derived.maxHP`/`classBaseHp`
+    // for HP, `level1Derived.hdMax`/`1` for HD), which is indistinguishable from a real
+    // mid-combat total — a level-8 character resting at 13 HP / 1 HD looks identical, by value,
+    // to a save that never left its level-1 defaults, so every reload/import silently full-healed
+    // wounded characters. The marker lets us tell "never initialized" apart from "legitimately
+    // loaded and wounded" without inspecting the numbers at all.
+    if (!hadPersistedVitalsMarker && state.level > 1) {
         const derived = computeDerived(state);
         const level1State = { ...state, level: 1 };
         const level1Derived = computeDerived(level1State);
         const classBaseHp = CLASS_CONFIG.baseHp || 10;
-        
+
         if ((state.hpCurrent === level1Derived.maxHP || state.hpCurrent === classBaseHp) && derived.maxHP > state.hpCurrent) {
             const oldHp = state.hpCurrent;
             state.hpCurrent = derived.maxHP;
@@ -1266,6 +1291,16 @@ function loadState(config) {
             console.log(`🩺 Corrected stuck level 1 HD on load from ${oldHd} to ${derived.hdMax}`);
         }
     }
+
+    // Vitals are now authoritative for this character — preserved verbatim above for an
+    // already-marked save, or backfilled exactly once above for a genuine legacy one — so mark
+    // them here (ahead of the STATE_LOADED publish just below) so every future load/import
+    // preserves hpCurrent/hdCurrent/wounds/tempHP verbatim, never re-running the legacy
+    // stuck-level-1 correction based on value alone (issue #38). A brand new character's
+    // hpCurrent/hdCurrent are still null at this point and get seeded further below (step 5);
+    // marking the marker here regardless is still correct — by the time this function persists
+    // to localStorage, vitals are always finalized either way.
+    state.vitalsInitialized = true;
 
     // 3. Apply class-specific initial stats for brand new characters
     if (state.level === 1 && !state.charName) {
