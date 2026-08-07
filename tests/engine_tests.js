@@ -286,6 +286,14 @@ function runTests() {
     assert.strictEqual(ctx.shouldHandleWheel({ type: 'number', disabled: true }, numberInput), false, "a disabled number input must never be handled even if somehow focused");
     assert.strictEqual(ctx.shouldHandleWheel(null, null), false, "a null target must not be handled");
 
+    // --- TEST 10: build.js's parse-check tripwire actually rejects broken generated JS ---
+    console.log("  [Build] Testing build.js's assertTrackerScriptParses rejects a syntax error...");
+    const buildModule = require(path.join(WORKSPACE_DIR, 'build.js'));
+    assert.strictEqual(buildModule.isParseableScript('const x = 1;').ok, true, "valid JS must parse-check clean");
+    assert.strictEqual(buildModule.isParseableScript('const x = ;').ok, false, "a syntax error must be caught by isParseableScript, not silently pass through to disk");
+    assert.throws(() => buildModule.assertTrackerScriptParses('const x = ;', 'probe'),
+        /failed to parse/, "assertTrackerScriptParses must throw (failing the build) for a class whose generated script doesn't parse");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
