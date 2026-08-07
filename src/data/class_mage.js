@@ -72,7 +72,10 @@ class MageClass extends BaseClass {
                         includeCantripSpells: ["selectedTempestMage"],
                         includeTieredSpells: ["selectedTempestMage"],
                         mechanicPanelExtension: (builder) => {
-                            builder.addRollDisplay('1d20', 'Invoke Chaos', '1d20', 'Force of Chaos');
+                            // Issue #54: untyped d20 table-lookup roll (no attack/hit involved) —
+                            // mark it { type: 'pool' } so it stays a flat 1d20 instead of falling
+                            // through to the exploding attack-decomposition branch.
+                            builder.addRollDisplay('1d20', 'Invoke Chaos', '1d20', 'Force of Chaos', { type: 'pool' });
                         }
                     }
                 }
@@ -96,7 +99,10 @@ class MageClass extends BaseClass {
                     builder.addResource('mana', 'Mana Pool', state.resourceValues.mana, derived.resourceMaxes.mana);
                 }
                 if (level >= 5) {
-                    builder.addRollDisplay(derived.surgeNotation, 'Elemental Surge', derived.surgeDisplay, 'Regain on Init');
+                    // Issue #54: untyped mana-regain die roll (not an attack) — mark it
+                    // { type: 'pool' } so it stays flat instead of falling through to the
+                    // exploding attack-decomposition branch.
+                    builder.addRollDisplay(derived.surgeNotation, 'Elemental Surge', derived.surgeDisplay, 'Regain on Init', { type: 'pool' });
                 }
             },
             spellSchools: ["Fire", "Ice", "Lightning"],

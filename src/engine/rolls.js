@@ -69,7 +69,15 @@ function dispatchRoll(notation, label, options = {}) {
     // -------------------------
 
     const isSave = /save/i.test(label);
-    const isCheckOrSaveOrPool = isSave || /check|rest|hit die|pool|fury|judgment/i.test(label) || options.type === 'pool';
+    // Issue #54: this keyword/`options.type` allowlist decides whether a roll stays a flat
+    // check/save/pool roll or falls through to the NIMBLE Combat decomposition below (exploding
+    // primary die + `{primary}` crit-group tag). "Initiative" matched none of the prior keywords
+    // and carried no `options.type`, so it silently fell into the attack-decomposition branch —
+    // exploding on a nat 20 and minting a crit group for a plain DEX check that must never
+    // explode or crit. Added here rather than inverting the default (attack-typed vs.
+    // pool-typed) because spell/cantrip damage rolls throughout src/data/class_*.js rely on the
+    // current default-to-decompose behavior without setting `type: 'attack'` explicitly.
+    const isCheckOrSaveOrPool = isSave || /check|rest|hit die|pool|fury|judgment|initiative/i.test(label) || options.type === 'pool';
     const derived = computeDerived(s);
 
     let condAdv = 0;

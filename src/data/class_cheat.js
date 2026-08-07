@@ -69,7 +69,11 @@ class CheatClass extends BaseClass {
                 { id: "onslaught_speed", stat: "speed", value: 2, condition: (l, s, state) => s === "SilentBlade" && l >= 11 }
             ],
             mechanicPanelExtension: (builder, level, state, derived, statsMap) => {
-                builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, 'Added to Critical Hits');
+                // Issue #54: give the manual button the same { type: 'pool' } the automated
+                // crit-triggered roll above (:46) already passes, so both paths for the same
+                // roll agree on a flat pool notation instead of the manual button falling
+                // through to the exploding attack-decomposition branch.
+                builder.addRollDisplay(derived.saDice, 'Sneak Attack', derived.saDice, 'Added to Critical Hits', { type: 'pool' });
                 builder.addRollDisplay('1d20', 'Vicious Opp.', 'MAX', 'On Distracted Target', { type: 'attack', isCrit: true });
 
                 if (level >= 2) {
