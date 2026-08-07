@@ -401,6 +401,12 @@ function runTests() {
     });
     assert.strictEqual(weaponCtx.charDerived().hasNonProficientWeaponEquipped, false, "a Shadowmancer equipping a DEX 1H (blade) weapon must NOT be flagged non-proficient");
 
+    // --- TEST 20: The auto-generated "Tier 1 Spells" card survives the class's own core[2] features ---
+    console.log("  [Features] Testing Shadowmancer's core[2] still carries its auto-generated Tier 1 Spells card...");
+    const tierCardCtx = createSandbox('shadowmancer');
+    const hasTierCard = tierCardCtx.CLASS_CONFIG.featuresData.core[2].some(f => f.id === 'tier_1');
+    assert.ok(hasTierCard, "Shadowmancer's core[2] must still contain the auto-generated 'Tier 1 Spells' card (generateStandardFeatures' customTierProgression), not have it silently dropped by a class-level core[2] = [...] overwrite");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
