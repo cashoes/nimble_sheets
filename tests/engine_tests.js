@@ -325,6 +325,16 @@ function runTests() {
     importCtx.dispatch({ type: 'IMPORT_STATE', payload: { newState: importedState } });
     assert.strictEqual(importCtx.charState().hpCurrent, 13, "an already-marked-initialized import's real (wounded) hpCurrent must be preserved verbatim, not silently corrected to full HP");
 
+    // --- TEST 13: bridge.js reconcile() replaces a null array slot with a refilled object ---
+    console.log("  [Bridge] Testing reconcile() replaces a null pool-die slot instead of no-op'ing...");
+    vm.runInContext(`
+        const __t = { pool: [null, { active: 1 }] };
+        const __s = { pool: [{ active: 1 }, { active: 1 }] };
+        reconcile(__s)(__t);
+        this.__reconcileResult = __t.pool[0];
+    `, ctx);
+    assert.ok(ctx.__reconcileResult && ctx.__reconcileResult.active === 1, "a null array slot (e.g. a spent dice-pool die) must be replaced by the refilled source object, not silently left null");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
