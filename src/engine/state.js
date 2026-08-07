@@ -1097,7 +1097,12 @@ function characterReducer(currentState, action) {
             
             // 1. Refill all encounter-based powers (keys starting with 'u')
             const classProtected = CLASS_CONFIG.protectedPips || [];
-            const globalProtected = ['ubg', 'uRelentless', 'uElusive', 'uNewFace', 'uBeenAround'];
+            // uDraconic (Dragonborn, Draconic Heritage) recharges on Safe Rest or gaining a
+            // Wound — never on encounter start. uOptimistic (Gnome, Optimistic) resets only
+            // when healed to max HP; there's no engine hook for that trigger yet (tracked
+            // below), so the correct interim behavior is the same as any other non-encounter
+            // pip: don't auto-refill it on START_COMBAT. See issue #43.
+            const globalProtected = ['ubg', 'uRelentless', 'uElusive', 'uNewFace', 'uBeenAround', 'uDraconic', 'uOptimistic'];
             
             Object.keys(s).forEach(key => {
                 if (key.startsWith('u')) {

@@ -24,6 +24,13 @@ class StormshifterClass extends BaseClass {
                 selectedBoons: [],
                 selectedStudy: []
             },
+            // uShift (DEX Beastshift charges, reset on Safe Rest), uStormbornDay (Stormborn,
+            // 1/day), uAttunedDay (Attuned to Nature, SkyStorm L3, 1/day), and uMasterStorm
+            // (Master of Storm, SkyStorm L15, 1/Safe Rest) all recharge only on a Safe Rest per
+            // House-Rules/03-Classes/10-Stormshifter.md — none refill per-encounter. 1/day pips
+            // follow the same protectedPips convention already established for Songweaver's
+            // uSongRest (also 1/day). See issue #43.
+            protectedPips: ["uShift", "uStormbornDay", "uAttunedDay", "uMasterStorm"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "SkyStorm", label: "Circle of Sky & Storm", accent: "#38bdf8" },

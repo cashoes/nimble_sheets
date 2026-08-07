@@ -24,7 +24,11 @@ class SongweaverClass extends BaseClass {
                 selectedFriends: [],
                 selectedWindbag: []
             },
-            protectedPips: ["uSongRest"],
+            // uInspiration (2×WIL/Safe Rest, L1), uJackOfTrades (1/Safe Rest, L2), and
+            // uPeoplePerson (2/Safe Rest, L5) all recharge only on a Safe Rest per
+            // House-Rules/03-Classes/09-Songweaver.md — none refill per-encounter. Previously
+            // only uSongRest (1/day) was protected. See issue #43.
+            protectedPips: ["uSongRest", "uInspiration", "uJackOfTrades", "uPeoplePerson"],
             subclasses: [
                 { value: "None", label: "None (Lvl 3)" },
                 { value: "HeraldSnark", label: "Herald of Snark", accent: "#f59e0b" },
