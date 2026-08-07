@@ -271,6 +271,15 @@ function runTests() {
     assert.ok(!dispatchedDetail.notation.includes('!!'), "an Initiative roll must not carry an explosion (!!) marker");
     assert.ok(!dispatchedDetail.notation.includes('{primary}'), "an Initiative roll must not go through the attack-decomposition primary/secondary split");
 
+    // --- TEST 9: An embedded kh/kl pool modifier is not split by combat decomposition ---
+    console.log("  [Dice Notation] Testing an embedded kh1 pool modifier stays on the whole pool...");
+    let khDetail = null;
+    ctx.window.dispatchEvent = (evt) => { khDetail = evt.detail; };
+    ctx.dispatchRoll('2d100kh1', 'Upcast Damage', {});
+    assert.ok(khDetail, "dispatchRoll must dispatch a NIMBLE_ROLL_EVENT for the kh1 pool roll");
+    assert.ok(khDetail.notation.includes('2d100kh1'), `an embedded "kh1" pool modifier must stay attached to the whole pool (2d100kh1), got: ${khDetail.notation}`);
+    assert.ok(!khDetail.notation.includes('{primary}'), `a kh/kl-tagged pool must not be split into a primary/secondary attack decomposition, got: ${khDetail.notation}`);
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
