@@ -344,6 +344,16 @@ function runTests() {
     `, ctx);
     assert.ok(ctx.__selfReplaceResult.includes('Quick Read'), "a feature whose own replaces list names its own id must still render, not be silently deleted alongside every other feature sharing that id");
 
+    // --- TEST 15: ADD_QUICK_ITEM keeps the library item's own category ---
+    console.log("  [Inventory] Testing ADD_QUICK_ITEM prefers the library item's own category...");
+    const quickItemCtx = createSandbox('hunter');
+    quickItemCtx.dispatch({
+        type: 'ADD_QUICK_ITEM',
+        payload: { itemData: { name: 'Dagger', type: 'melee', category: 'DEX 1H', cost: 0 }, category: 'melee' }
+    });
+    const addedItem = quickItemCtx.charState().inventory.find(i => i.name === 'Dagger');
+    assert.strictEqual(addedItem.category, 'DEX 1H', "ADD_QUICK_ITEM must keep the library item's own category (DEX 1H), not fall back to the caller's guessed/generic category (melee)");
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
