@@ -34,7 +34,7 @@ class ShadowmancerClass extends BaseClass {
             getUpcastBonus: (spell, state) => {
                 return state.greedyBonus === 'BOOM' ? 1 : 0;
             },
-            protectedPips: ["uBeguiling", "uBloodSight", "uWhispers"],
+            protectedPips: ["uBeguiling", "uBloodSight", "uWhispers", "uGlacial"],
             onRollResult: (data, state, derived, dispatch, dispatchRoll, context) => {
                 if (context.isCrit && (state.selectedGreater || []).includes("Hungering Shadows")) {
                     dispatch({ type: 'ADD_LOG', payload: { msg: "Crit! Hungering Shadows: Next tiered spell costs 0 Pilfered Power." } });
