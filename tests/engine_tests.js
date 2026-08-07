@@ -282,6 +282,17 @@ function runTests() {
     // The underlying state/derived key must be untouched by the label-only rename.
     assert.strictEqual(typeof cheatOptCtx.charDerived().armor, 'number', "the derived 'armor' key itself must be unchanged (label-only rename, no save-file migration)");
 
+    // --- TEST 10: Pilfered Power feature prose matches the actual (Fiendish-Boon-boosted) DEX ---
+    console.log("  [Shadowmancer] Testing Pilfered Power prose count matches the real resource max...");
+    const pilferProseCtx = createSandbox('shadowmancer');
+    pilferProseCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'level', value: 15 } });
+    pilferProseCtx.dispatch({ type: 'SET_STATE_KEY', payload: { key: 'selectedGreater', value: ['Fiendish Boon'] } });
+    const pilferFeat = pilferProseCtx.CLASS_CONFIG.featuresData.core[2].find(f => f.id === 'pilfer');
+    const pilferDesc = pilferFeat.desc(pilferProseCtx.charState().level, pilferProseCtx.charState().subclass, pilferProseCtx.charState(), pilferProseCtx.charDerived());
+    const proseMatch = pilferDesc.match(/<strong>(\d+)<\/strong>/);
+    const proseDex = proseMatch ? parseInt(proseMatch[1], 10) : null;
+    assert.strictEqual(proseDex, pilferProseCtx.charDerived().resourceMaxes.pilfer, `Pilfered Power's feature-card prose count (${proseDex}) must match the actual (Fiendish-Boon-boosted) resource max (${pilferProseCtx.charDerived().resourceMaxes.pilfer})`);
+
     console.log("✅ All NIMBLE Sheets engine unit tests passed successfully!");
 }
 
