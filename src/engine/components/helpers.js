@@ -30,7 +30,17 @@ function highlightMechanicalTerms(text) {
     
     // Strict greedy value pattern (Dice w/ modifiers, Table rolls, Math, Stat tokens, Placeholders, Keywords)
     // Now explicitly includes kh/kl/dh/dl/! and table roll prefixes to avoid splitting
-    const valPattern = `(?:(?:\\d+d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!|\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL))*|(?:\\d+|STR|DEX|INT|WIL|KEY|LVL)(?:\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL))+|{.*?}|(?:Cone|Line|AoE)\\s*[\\d{}x\\+]+|AoE|Self|Single|[+-]?\\d+(?:\\.\\d+)?|[\\d+x/]+)`;
+    // Issue #67: an optional leading "[[flat]]" -- iStats' explicit non-exploding-roll marker
+    // (src/engine/rolls.js Pass 2) -- is folded into the value itself so it ends up INSIDE the
+    // <span> this function wraps around "Restore 1d4 HP"-shaped text, staying textually adjacent
+    // to its die notation for iStats to consume later. Without this, a spell whose value gets
+    // wrapped here (e.g. "[[flat]]1d4 HP" -> "[[flat]]<span ...>1d4 HP</span>") would strand the
+    // marker outside the span, with the tag itself sitting between marker and notation -- iStats'
+    // marker+notation match requires them to be literally adjacent characters, so it would
+    // silently fall back to the (weaker) prose-proximity heuristic for every spell roll this runs
+    // on. Feature text never goes through highlightMechanicalTerms at all, so this only matters
+    // for spell_card.js's "HIGHLIGHT FIRST, then resolve stats" order.
+    const valPattern = `(?:\\[\\[flat\\]\\]\\s*)?(?:(?:\\d+d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!|\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL))*|(?:\\d+|STR|DEX|INT|WIL|KEY|LVL)(?:\\s*[\\+\\-]\\s*(?:\\d+|STR|DEX|INT|WIL|KEY|LVL))+|{.*?}|(?:Cone|Line|AoE)\\s*[\\d{}x\\+]+|AoE|Self|Single|[+-]?\\d+(?:\\.\\d+)?|[\\d+x/]+)`;
     
     // Pattern A: Term: Value (Preserving separator)
     const regA = new RegExp(`\\b(${terms})\\b(:?\\s*)(${valPattern})`, 'gi');

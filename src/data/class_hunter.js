@@ -250,7 +250,7 @@ class HunterClass extends BaseClass {
             ],
             7: [
                 { id: "herbalist", name: "Resourceful Herbalist", desc: "Whenever you Safe Rest in a location near where plants or fungi can grow, you may spend a day collecting healing herbs to craft a number of Healing Salves equal to your WIL." },
-                { id: "healing_salve", name: "Healing Salve", desc: "Action: Heal yourself or an adjacent creature WIL d6 HP. Only you or another experienced Herbalist may administer these, and they expire whenever you Safe Rest." }
+                { id: "healing_salve", name: "Healing Salve", desc: "Action: Heal yourself or an adjacent creature [[flat]]WIL d6 HP. Only you or another experienced Herbalist may administer these, and they expire whenever you Safe Rest." }
             ],
             11: [{ id: "im_over_here", name: "Ha! I’m Over Here!", desc: "([[uOverHere]] 1/Safe Rest) If an attack would cause you to drop to 0 HP, you instead move up to your speed away and take no damage." }],
             15: [{ id: "unparalleled_survivalist", name: "Unparalleled Survivalist", desc: "Gain +WIL armor. When you attack with a ranged weapon, you may first move half your speed for free." }]

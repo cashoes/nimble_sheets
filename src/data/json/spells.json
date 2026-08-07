@@ -287,7 +287,7 @@
             },
             "Breath of Life": {
                 "tier": "Cantrip",
-                "desc": "1 Action, 1 Target(s). Range: 6. Restore 1 HP to a Dying creature. High Levels: +2 Range every 5 levels."
+                "desc": "1 Action, 1 Target(s). Range: 6. Restore [[flat]]1 HP to a Dying creature. High Levels: +2 Range every 5 levels."
             },
             "Blustery Gale": {
                 "tier": "Tier 1",
@@ -392,7 +392,7 @@
             },
             "Heal": {
                 "tier": "Tier 1",
-                "desc": "1 Action, {targets} Target(s). Reach: {reach}. Heal a creature {heal} HP. {upcastDesc}",
+                "desc": "1 Action, {targets} Target(s). Reach: {reach}. Heal a creature [[flat]]{heal} HP. {upcastDesc}",
                 "base": {
                     "targets": 1,
                     "reach": 1,

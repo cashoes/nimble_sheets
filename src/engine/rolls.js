@@ -120,7 +120,11 @@ function dispatchRoll(notation, label, options = {}) {
     // explode or crit. Added here rather than inverting the default (attack-typed vs.
     // pool-typed) because spell/cantrip damage rolls throughout src/data/class_*.js rely on the
     // current default-to-decompose behavior without setting `type: 'attack'` explicitly.
-    const isCheckOrSaveOrPool = isSave || /check|rest|hit die|pool|fury|judgment|initiative/i.test(label) || options.type === 'pool';
+    // Issue #67: `options.flat` is the independent "must not explode" signal iStats attaches
+    // alongside `type` (which a cantrip-heal like Breath of Life still needs set to 'cantrip' for
+    // its scaling branch) -- checked here so a flat-tagged roll takes this same non-exploding path
+    // regardless of what `type` says.
+    const isCheckOrSaveOrPool = isSave || /check|rest|hit die|pool|fury|judgment|initiative/i.test(label) || options.type === 'pool' || options.flat === true;
     const derived = computeDerived(s);
 
     let condAdv = 0;
@@ -221,7 +225,9 @@ function dispatchRoll(notation, label, options = {}) {
                 // caller can still opt a pool into it via `options.poolAdvantage`);
                 // condAdv/inherentAdv/forceAdv are non-sticky, per-call decisions the calling code
                 // makes for THIS roll, so they still apply even to an advantage-exempt pool.
-                const poolAdvExempt = options.type === 'pool' && !options.poolAdvantage;
+                // Issue #67: a `flat`-tagged cantrip-heal (type stays 'cantrip' for scaling) is a
+                // pool for every OTHER purpose here too, so it gets the same exemption.
+                const poolAdvExempt = (options.type === 'pool' || options.flat === true) && !options.poolAdvantage;
                 const poolAdv = poolAdvExempt ? (totalAdv - s.advantage) : totalAdv;
                 diePart = (poolAdv > 0) ? `${count + poolAdv}d${faces}kh${count}` : (poolAdv < 0) ? `${count + Math.abs(poolAdv)}d${faces}kl${count}` : `${count}d${faces}`;
             }
@@ -670,14 +676,22 @@ function iStats(text, level, statsMap, context = {}) {
     // as part of the same match and later welded onto the face count with no operator between
     // them (see issue #50: "1d4 Wounds" -> "1d40"). Requiring the sign prevents plain trailing
     // prose from being absorbed into the die notation while still allowing "1d6+STR"/"1d4+2".
-    const diceRegex = new RegExp(skipPattern.source + '|(\\b(?:(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\s*d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!)*(?:\\s*[\\+-]\\s*(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS|\\d+))*\\b)', 'gi');
+    //
+    // Issue #67: an optional "[[flat]]" marker immediately before the notation is the CANONICAL
+    // heal/utility classification -- authored directly in the data, adjacent to the specific die
+    // it tags, so rewording the surrounding prose (phase-1/3 spell/class text edits) can never
+    // silently drift it back into exploding. Captured as its own group so the replace callback
+    // below can tell "marker present" apart from "no marker" without re-scanning text.
+    const FLAT_MARKER_SRC = '\\[\\[flat\\]\\]\\s*';
+    const diceRegex = new RegExp(skipPattern.source + '|(' + FLAT_MARKER_SRC + ')?(\\b(?:(?:\\d+|STR|DEX|INT|WIL|KEY|LVL|WOUNDS)\\s*d\\d+|t\\d+)(?:kh\\d*|kl\\d*|dh\\d*|dl\\d*|!)*(?:\\s*[\\+-]\\s*(?:STR|DEX|INT|WIL|KEY|LVL|WOUNDS|\\d+))*\\b)', 'gi');
     // Issue #66: an untyped roll-link (no context.type) falls through dispatchRoll's default
     // exploding "NIMBLE Combat" decomposition -- correct for attack/damage rolls, wrong for
     // heal/wound-gain/temp-HP UTILITY rolls (a rolled max shouldn't crit-fish a heal or a
     // self-inflicted Wound). The roll's label is always the feature/spell NAME (context.name),
-    // which carries no hint of intent, so classify from the prose immediately surrounding the
-    // matched dice notation instead: a heal/regain/restore verb shortly BEFORE the roll ("Heal a
-    // creature {X} HP", "Action: Heal yourself ... WIL d6 HP") or "Wound(s)"/"temp HP"
+    // which carries no hint of intent. Issue #67 promoted the [[flat]] marker above to the
+    // canonical classification; this bounded prose-window scan now runs only as a FALLBACK for
+    // text that hasn't been tagged yet -- a heal/regain/restore verb shortly BEFORE the roll
+    // ("Heal a creature {X} HP", "Action: Heal yourself ... WIL d6 HP") or "Wound(s)"/"temp HP"
     // immediately AFTER it ("Gain 1d4 Wounds"). Bounded lookback/lookahead windows keep this from
     // reaching into an unrelated clause -- e.g. Vampiric Greed's "Gain 1 Wound. 4d12 to all
     // adjacent creatures..." is a real damage roll that happens to follow an unrelated
@@ -685,17 +699,31 @@ function iStats(text, level, statsMap, context = {}) {
     // WIL d8 radiant damage" is two rolls in one feature and only the first is a heal.
     const UTILITY_LEADING_RE = /\b(?:heal(?:s|ing)?|regain(?:s)?|restore(?:s)?)\b/i;
     const UTILITY_TRAILING_RE = /^\s*(?:wounds?\b|temp\s*hp\b)/i;
-    processed = processed.replace(diceRegex, (match, p1, offset, str) => {
+    processed = processed.replace(diceRegex, (match, marker, p1, offset, str) => {
         if (!p1) return match;
         const resolved = resolveNotation(p1);
         const cleanNotation = resolved.replace(/\s+/g, '');
 
-        const leadingWindow = str.slice(Math.max(0, offset - 45), offset);
-        const trailingWindow = str.slice(offset + match.length, offset + match.length + 20);
-        const isUtilityRoll = UTILITY_LEADING_RE.test(leadingWindow) || UTILITY_TRAILING_RE.test(trailingWindow);
-        // Never downgrade an explicit cantrip type -- no cantrip is a heal today, but if one ever
-        // is, cantrip scaling must still apply.
-        const rollCtx = isUtilityRoll ? { ...context, type: context.type === 'cantrip' ? context.type : 'pool' } : context;
+        // The marker is authoritative -- skip the heuristic entirely when present, so a tagged
+        // roll can never be talked out of its classification by nearby prose in either direction.
+        let isUtilityRoll;
+        if (marker) {
+            isUtilityRoll = true;
+        } else {
+            const leadingWindow = str.slice(Math.max(0, offset - 45), offset);
+            const trailingWindow = str.slice(offset + match.length, offset + match.length + 20);
+            isUtilityRoll = UTILITY_LEADING_RE.test(leadingWindow) || UTILITY_TRAILING_RE.test(trailingWindow);
+        }
+        // `type` still selects the SCALING path (cantrip vs. plain) -- a cantrip roll keeps
+        // `type: 'cantrip'` so applyCantripScaling still runs below. `flat` is the independent
+        // signal dispatchRoll's isCheckOrSaveOrPool actually explodes/decomposes on, so a roll can
+        // be "cantrip-scaled AND non-exploding" at once. That combination is real, not
+        // hypothetical: Breath of Life (spells.json, Wind cantrip) is "Restore 1d4 HP to a Dying
+        // creature" -- the "no cantrip is a heal today" assumption #66 shipped with was wrong, and
+        // its cantrip type silently exempted it from #66's own heuristic (never downgraded).
+        const rollCtx = isUtilityRoll
+            ? { ...context, type: context.type === 'cantrip' ? context.type : 'pool', flat: true }
+            : context;
 
         if (rollCtx.type === 'cantrip') {
             const scaled = applyCantripScaling(cleanNotation, context.name, context.school, level);

@@ -282,7 +282,7 @@ class ShadowmancerClass extends BaseClass {
                 FeatureGen.createSpellChoiceFeature({ id: "red_utility", name: "Fire Utility", level: 7, spellType: "utility", schools: ["Fire"], stateKey: "selectedRedDragonUtility", getCount: () => 1, desc: "Choose 1 Fire Utility Spell." })
             ],
             11: [{ id: "heart_fire", name: "Heart of Burning Fire", desc: "Regain 1 use of Pilfered Power each time you roll Initiative. This expires at the end of combat if unused." }],
-            15: [{ id: "enveloped", name: "Enveloped by the Master", desc: "Gain 1d4 Wounds to cast Dragonform." }]
+            15: [{ id: "enveloped", name: "Enveloped by the Master", desc: "Gain [[flat]]1d4 Wounds to cast Dragonform." }]
         };
 
         subclasses["AbyssalDepths"] = {

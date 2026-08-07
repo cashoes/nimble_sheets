@@ -166,7 +166,7 @@ class ShepherdClass extends BaseClass {
                 id: "searing", 
                 name: "Searing Light", 
                 desc: (level, subclass, state, derived) => {
-                    return `Action: Heal or Inflict grievous injuries. You may use this WIL times/Safe Rest ([[uSearing:WIL]]): <ul><li>Heal WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>`;
+                    return `Action: Heal or Inflict grievous injuries. You may use this WIL times/Safe Rest ([[uSearing:WIL]]): <ul><li>Heal [[flat]]WIL d8 HP to a Dying creature within Reach 6.</li><li>Inflict WIL d8 radiant damage to an undead or Bloodied enemy within Reach 6.</li></ul>`;
                 }
             }
         ];
