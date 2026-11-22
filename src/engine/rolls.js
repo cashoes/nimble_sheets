@@ -107,10 +107,9 @@ function dispatchRoll(notation, label, options = {}) {
         // Combine consecutive flat math modifiers (e.g., +2+10) into a single modifier (+12)
         // to prevent parsing errors in VTT dice extensions.
         if (rest && /^[\s\+\-\d]+$/.test(rest)) {
-            try {
-                let combined = eval(rest.replace(/\s+/g, ''));
-                rest = combined === 0 ? '' : (combined > 0 ? '+' : '') + combined;
-            } catch(e) {}
+            const terms = rest.replace(/\s+/g, '').match(/[+-]?\d+/g) || [];
+            const combined = terms.reduce((sum, term) => sum + parseInt(term, 10), 0);
+            rest = combined === 0 ? '' : (combined > 0 ? '+' : '') + combined;
         }
         
         if (isCheckOrSaveOrPool) {
@@ -163,7 +162,7 @@ function dispatchRoll(notation, label, options = {}) {
     if (tableMatch) {
         let faces = tableMatch[1];
         let rest = tableMatch[2];
-        let tablePart = (totalAdv > 0) ? `2t${faces}kh1` : (totalAdv < 0) ? `2t${faces}kl1` : `t${faces}`;
+        let tablePart = (totalAdv > 0) ? `${1 + totalAdv}t${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}t${faces}kl1` : `t${faces}`;
         finalNotation = tablePart + rest;
     }
 
@@ -192,7 +191,8 @@ function dispatchRoll(notation, label, options = {}) {
     // --- POST-DISPATCH SIDE EFFECTS ---
     // Run hooks after the event loop tick to ensure the roll event is "out the door" 
     // and hasn't been interrupted by reactive UI re-renders.
-    if (matchedTriggers.length > 0) {
+    const shouldResetAdv = s.advantage !== 0;
+    if (matchedTriggers.length > 0 || shouldResetAdv) {
         setTimeout(() => {
             const d = (typeof dispatch === 'function' ? dispatch : window.dispatch);
             if (typeof d === 'function') {
@@ -201,6 +201,9 @@ function dispatchRoll(notation, label, options = {}) {
                         trigger.onRoll(s, d);
                     }
                 });
+                if (shouldResetAdv) {
+                    d({ type: 'SET_STATE_KEY', payload: { key: 'advantage', value: 0 } });
+                }
             }
         }, 50);
     }

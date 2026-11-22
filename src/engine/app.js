@@ -43,18 +43,31 @@ const importCharacter = (input) => {
  * @returns {void}
  */
 const saveAsHTML = () => {
-    const newHtml = document.documentElement.outerHTML;
+    const clone = document.documentElement.cloneNode(true);
+    const mountIds = [
+        'solid-action-log', 'solid-header', 'topBarContainer', 'solid-attributes',
+        'solid-hp', 'solid-wounds', 'solid-proficiency', 'solid-inventory-section',
+        'solid-skills', 'solid-conditions', 'combatControlsContainer',
+        'solid-features-spells', 'classMechanicPanel'
+    ];
+    mountIds.forEach(id => {
+        const el = clone.querySelector(`#${id}`);
+        if (el) el.innerHTML = '';
+    });
 
-    // Inject current state into the template placeholder
+    const safeStateJson = JSON.stringify(state).replace(/</g, '\\u003c');
+    const newHtml = `<!DOCTYPE html>\n${clone.outerHTML}`;
+
+    // Inject current state using a replacer function so $ sequences in user text cannot corrupt output
     const updatedHtml = newHtml.replace(
-        /const EMBEDDED_STATE = (null|{.*?});/,
-        `const EMBEDDED_STATE = ${JSON.stringify(state)};`
+        /^const EMBEDDED_STATE = .*?;$/m,
+        () => `const EMBEDDED_STATE = ${safeStateJson};`
     );
 
     // Update document title for the exported file
     const titledHtml = updatedHtml.replace(
-        /<title>(.*?)<\/title>/,
-        `<title>NIMBLE — ${state.charName ?? 'Hero'} (${CLASS_CONFIG?.name ?? 'Unknown'})</title>`
+        /<title>[\s\S]*?<\/title>/,
+        () => `<title>NIMBLE — ${state.charName ?? 'Hero'} (${CLASS_CONFIG?.name ?? 'Unknown'})</title>`
     );
 
     // Trigger download

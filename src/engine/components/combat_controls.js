@@ -18,7 +18,7 @@ function CombatControls() {
     return html`
         <div class="advantage-controls">
             <button class="adv-btn" onclick=${handleDown}>-</button>
-            <div id="advDisplay" class=${() => `adv-val ${getCss()}`}>{${getLabel}}</div>
+            <div id="advDisplay" class=${() => `adv-val ${getCss()}`}>${getLabel}</div>
             <button class="adv-btn" onclick=${handleUp}>+</button>
         </div>
     `;
