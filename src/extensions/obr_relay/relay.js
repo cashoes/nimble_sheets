@@ -39,9 +39,40 @@ OBR.onReady(async () => {
     }, 2000);
 
     // 3. Listen for Roll Results from Dice+
+    let lastToastRollId = null;
     OBR.broadcast.onMessage("nimble-bridge/roll-result", (delivery) => {
         const result = delivery.data;
         console.log("NIMBLE Bridge: Roll result received from Dice+:", result);
+
+        // Show native OBR toast notification on Primary Die Miss or Crit
+        const res = result?.result;
+        const notation = res?.diceNotation || "";
+        const rollId = result?.rollId || res?.rollId;
+        if (res && !notation.includes("#Crit Explosion") && (!rollId || rollId !== lastToastRollId)) {
+            const primaryGroup = (res.groups || []).find(g => g.diceModel === "primary");
+            if (primaryGroup) {
+                const faces = parseInt((primaryGroup.diceType || "").replace(/\D/g, ""), 10) || 20;
+                const isExploding = notation.includes("!!");
+                const keptDice = (Array.isArray(primaryGroup.dice) ? primaryGroup.dice : [])
+                    .filter(d => d && d.dropped !== true && d.kept !== false);
+                const primaryVal = (!isExploding && keptDice.length > 0 && typeof keptDice[0].value === "number")
+                    ? keptDice[0].value
+                    : primaryGroup.total;
+
+                const player = result.playerName || name;
+                const labelMatch = notation.match(/#(.+)$/);
+                const rollLabel = labelMatch ? labelMatch[1].trim() : "";
+                const suffix = rollLabel ? ` — ${rollLabel}` : "";
+
+                if (primaryVal === 1 && !notation.includes("min2")) {
+                    lastToastRollId = rollId;
+                    OBR.notification.show(`❌ MISS! ${player}${suffix}`, "ERROR");
+                } else if (primaryVal >= faces) {
+                    lastToastRollId = rollId;
+                    OBR.notification.show(`💥 CRIT! ${player}${suffix}`, "SUCCESS");
+                }
+            }
+        }
         
         // Forward the result back to the parent OBR tab content script
         window.parent.postMessage({
