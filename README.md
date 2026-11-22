@@ -18,12 +18,15 @@ To get the most out of the NIMBLE Tracker, especially if you are playing on **Ow
 To send your rolls directly from your character sheet to Owlbear Rodeo's **Dice+**, you need to install the browser extension.
 
 1. Download this repository as a ZIP (Click **Code** > **Download ZIP**) and extract it.
-2. Open your browser's Extension page:
-   - **Chrome/Edge/Brave**: Go to `chrome://extensions/`
-3. Enable **Developer Mode** (usually a toggle in the top-right).
-4. Click **Load Unpacked**.
-5. Select the folder: `src/extensions/browser_bridge` inside the extracted repository.
-6. The "NIMBLE Dice+ Bridge" should now appear in your extensions list.
+2. Load the extension in your browser:
+   - **Chrome / Edge / Brave**:
+     1. Go to `chrome://extensions/` and enable **Developer Mode** (top-right).
+     2. Click **Load Unpacked** and select the `src/extensions/browser_bridge` folder.
+   - **Firefox (121+)**:
+     1. Go to `about:debugging#/runtime/this-firefox`.
+     2. Click **Load Temporary Add-on...** and select `src/extensions/browser_bridge/manifest.json`.
+     3. *(Note: Temporary add-ons reset when Firefox restarts; if prompted, allow site permissions for `owlbear.rodeo` and `github.io` in the extension's Permissions tab.)*
+3. The "NIMBLE Dice+ Bridge" should now appear in your extensions list.
 
 ### 3. Add the Extension to Owlbear Rodeo
 Finally, the OBR room needs to be able to receive the rolls.

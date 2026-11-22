@@ -1,7 +1,9 @@
 // Content script for the Owlbear Rodeo tab
 console.log("NIMBLE Bridge: OBR relay listener active");
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+const extApi = typeof browser !== "undefined" ? browser : chrome;
+
+extApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "FORWARD_NIMBLE_ROLL") {
     // 1. Send to the main window
     window.postMessage({
@@ -28,8 +30,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 window.addEventListener("message", (event) => {
     if (event.data?.type === "NIMBLE_ROLL_RESULT") {
         console.log("NIMBLE Bridge: Forwarding roll result to background script");
-        if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
-            chrome.runtime.sendMessage({
+        if (typeof extApi !== "undefined" && extApi.runtime && extApi.runtime.sendMessage) {
+            extApi.runtime.sendMessage({
                 type: "NIMBLE_ROLL_RESULT",
                 result: event.data.result
             });
