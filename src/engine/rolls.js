@@ -117,8 +117,11 @@ function dispatchRoll(notation, label, options = {}) {
             let diePart = (totalAdv > 0) ? `${count + totalAdv}d${faces}kh${count}` : (totalAdv < 0) ? `${count + Math.abs(totalAdv)}d${faces}kl${count}` : `${count}d${faces}`;
             finalNotation = diePart + rest;
         } else {
-            // NIMBLE Combat Logic: Decompose into Primary + Secondary
-            // Advantage/Disadvantage applies ONLY to the Primary die
+            // NIMBLE Combat Logic:
+            // - Single-die Normal/Adv & Multi-die Normal: pure single-roll Dice+ with !! explosion
+            // - Any Disadvantage & Multi-die Adv: roll full pool without !! so dropped dice don't
+            //   fake-explode and secondary dice don't double-explode; handleRollResult() triggers
+            //   a follow-up 1dX!!{primary} explosion only if the surviving Primary Die crits.
             
             // --- Decoupled Roll Overrides ---
             const forceAutoHit = (CLASS_CONFIG.rollOverrides && typeof CLASS_CONFIG.rollOverrides.forceAutoHit === 'function')
@@ -129,32 +132,54 @@ function dispatchRoll(notation, label, options = {}) {
                 ? CLASS_CONFIG.rollOverrides.getExplosionThresholdOffset(label, options, s, faces)
                 : 0;
 
-            let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : (totalAdv < 0) ? `${1 + Math.abs(totalAdv)}d${faces}kl1` : `1d${faces}`;
+            const isMultiDie = count > 1;
+            const usePoolRoll = (isMultiDie && totalAdv !== 0) || totalAdv < 0;
 
-            // Order is critical for Dice+ parsing: !! (explosion) -> min (floor) -> {primary} -> + (face modifiers)
+            if (usePoolRoll) {
+                const absAdv = Math.abs(totalAdv);
+                let poolPart = (totalAdv > 0)
+                    ? `${count + absAdv}d${faces}kh${count}`
+                    : `${count + absAdv}d${faces}kl${count}`;
 
-            // 1. Apply Dynamic Crit Thresholds
-            if (explosionOffset > 0) {
-                primaryPart += `!!>${faces - explosionOffset}`;
+                if (forceAutoHit && !isMultiDie) {
+                    poolPart += 'min2';
+                }
+
+                poolPart += `{primary}`;
+
+                if (faceMod > 0) {
+                    poolPart += `+${faceMod}`;
+                }
+
+                finalNotation = poolPart + rest;
             } else {
-                primaryPart += `!!`;
-            }
+                let primaryPart = (totalAdv > 0) ? `${1 + totalAdv}d${faces}kh1` : `1d${faces}`;
 
-            // 2. Apply Physical Miss Prevention (min2)
-            if (forceAutoHit) {
-                primaryPart += 'min2';
-            }
+                // Order is critical for Dice+ parsing: !! (explosion) -> min (floor) -> {primary} -> + (face modifiers)
 
-            // 3. Named {primary} for result parsing (MUST follow functional modifiers)
-            primaryPart += `{primary}`;
+                // 1. Apply Dynamic Crit Thresholds
+                if (explosionOffset > 0) {
+                    primaryPart += `!!>${faces - explosionOffset}`;
+                } else {
+                    primaryPart += `!!`;
+                }
 
-            // 4. Apply Physical Modifiers to Primary Face (e.g. Unerring Judgment +1)
-            if (faceMod > 0) {
-                primaryPart += `+${faceMod}`;
+                // 2. Apply Physical Miss Prevention (min2)
+                if (forceAutoHit) {
+                    primaryPart += 'min2';
+                }
+
+                // 3. Named {primary} for result parsing (MUST follow functional modifiers)
+                primaryPart += `{primary}`;
+
+                // 4. Apply Physical Modifiers to Primary Face (e.g. Unerring Judgment +1)
+                if (faceMod > 0) {
+                    primaryPart += `+${faceMod}`;
+                }
+                
+                let secondaryPart = isMultiDie ? ` + ${count - 1}d${faces}` : "";
+                finalNotation = primaryPart + secondaryPart + rest;
             }
-            
-            let secondaryPart = (count > 1) ? ` + ${count - 1}d${faces}` : "";
-            finalNotation = primaryPart + secondaryPart + rest;
         }
     }
 
@@ -224,6 +249,9 @@ function handleRollResult(data) {
     const res = data.result;
     const groups = res.groups || [];
     const notation = res.diceNotation || "";
+
+    // Ignore follow-up crit explosion rolls to prevent re-triggering hooks/explosions
+    if (notation.includes('#Crit Explosion')) return;
     
     // 2. Identify NIMBLE Primary Die Group
     const primaryGroup = groups.find(g => g.diceModel === 'primary');
@@ -246,18 +274,43 @@ function handleRollResult(data) {
             : 0;
         const critThreshold = faces - critOffset;
         
-        // Note: primaryGroup.total includes explosions. 
-        // If they roll (faces - offset) and explode, total will be >= faces.
-        const isCrit = primaryGroup.total >= critThreshold;
+        // For non-exploding pool rolls (Disadvantage / Multi-die Adv), evaluate the leftmost kept die.
+        // For exploding single-die rolls, primaryGroup.total already includes explosions.
+        const isExplodingNotation = notation.includes('!!');
+        const rawDice = Array.isArray(primaryGroup.dice) ? primaryGroup.dice : [];
+        const keptDice = rawDice.filter(die => die && die.dropped !== true && die.kept !== false);
+        const primaryVal = (!isExplodingNotation && keptDice.length > 0 && typeof keptDice[0].value === 'number')
+            ? keptDice[0].value
+            : primaryGroup.total;
+
+        const isCrit = primaryVal >= critThreshold;
 
         // Auto-hit rule-breaker bypasses natural 1 miss check
         const forceAutoHit = (CLASS_CONFIG.rollOverrides && typeof CLASS_CONFIG.rollOverrides.forceAutoHit === 'function')
             ? CLASS_CONFIG.rollOverrides.forceAutoHit(notation, { metadata: { weaponType: isMelee ? 'melee' : (isRanged ? 'ranged' : '') } }, s)
             : false;
-        const isMiss = primaryGroup.total === 1 && !forceAutoHit;
+        const isMiss = primaryVal === 1 && !forceAutoHit;
         const isHit = !isMiss;
 
-        console.log(`🎲 handleRollResult [${CLASS_CONFIG.name}]:`, { isCrit, isMiss, critThreshold, isMelee, forceAutoHit });
+        console.log(`🎲 handleRollResult [${CLASS_CONFIG.name}]:`, { primaryVal, isCrit, isMiss, critThreshold, isMelee, forceAutoHit });
+
+        // Trigger follow-up crit explosion for non-exploding pool rolls (Disadvantage / Multi-die Adv)
+        if (isCrit && !isExplodingNotation) {
+            const expSyntax = critOffset > 0 ? `!!>${faces - critOffset}` : '!!';
+            window.dispatchEvent(new CustomEvent("NIMBLE_ROLL_EVENT", {
+                detail: {
+                    notation: `1d${faces}${expSyntax}{primary} #Crit Explosion`,
+                    label: "Crit Explosion",
+                    playerName: s.charName || "Adventurer",
+                    rollTarget: 'everyone',
+                    timestamp: Date.now()
+                }
+            }));
+        }
+
+        if (isMiss && typeof dispatch === 'function') {
+            dispatch({ type: 'ADD_LOG', payload: { msg: `❌ Miss! (Primary Die rolled 1)` } });
+        }
 
         // Run Decoupled Lifecycle Hooks
         if (typeof CLASS_CONFIG.onRollResult === 'function') {
